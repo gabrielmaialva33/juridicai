@@ -10,15 +10,17 @@ import {
   beforePaginate,
   beforeSave,
   column,
+  hasMany,
   manyToMany,
   SnakeCaseNamingStrategy,
 } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import * as model from '@adonisjs/lucid/types/model'
-import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import Role from '#models/role'
 import Permission from '#models/permission'
+import TenantUser from '#models/tenant_user'
 import IRole from '#interfaces/role_interface'
 
 const AuthFinder = withAuthFinder(() => hash.use('argon'), {
@@ -97,6 +99,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
     pivotColumns: ['granted', 'expires_at'],
   })
   declare permissions: ManyToMany<typeof Permission>
+
+  @hasMany(() => TenantUser)
+  declare tenant_users: HasMany<typeof TenantUser>
 
   /**
    * ------------------------------------------------------
