@@ -15,6 +15,7 @@ import router from '@adonisjs/core/services/router'
 
 import '#routes/files/index'
 import '#routes/roles/index'
+import '#routes/tenants/index'
 import '#routes/users/index'
 import '#routes/users/session_routes'
 import '#routes/permissions/index'
