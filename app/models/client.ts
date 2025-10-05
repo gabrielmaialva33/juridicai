@@ -18,6 +18,11 @@ interface ClientAddress {
 }
 
 export default class Client extends TenantAwareModel {
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: number
 
@@ -27,21 +32,18 @@ export default class Client extends TenantAwareModel {
   @column()
   declare client_type: ClientType
 
-  // Individual (pessoa física)
   @column()
   declare full_name: string | null
 
   @column()
   declare cpf: string | null
 
-  // Company (pessoa jurídica)
   @column()
   declare company_name: string | null
 
   @column()
   declare cnpj: string | null
 
-  // Common fields
   @column()
   declare email: string | null
 
@@ -86,24 +88,27 @@ export default class Client extends TenantAwareModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
   @hasMany(() => Case, {
     foreignKey: 'client_id',
   })
   declare cases: HasMany<typeof Case>
 
   /**
-   * Helper: Get display name (individual or company)
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
    */
   get display_name(): string {
     return this.client_type === 'individual'
-      ? this.full_name || 'Sem nome'
-      : this.company_name || 'Sem razão social'
+      ? this.full_name || 'No name'
+      : this.company_name || 'No company name'
   }
 
-  /**
-   * Helper: Get tax ID (CPF or CNPJ)
-   */
   get tax_id(): string | null {
     return this.client_type === 'individual' ? this.cpf : this.cnpj
   }

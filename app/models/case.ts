@@ -19,6 +19,11 @@ interface CaseParties {
 }
 
 export default class Case extends TenantAwareModel {
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: number
 
@@ -28,14 +33,12 @@ export default class Case extends TenantAwareModel {
   @column()
   declare client_id: number
 
-  // Identificação
   @column()
   declare case_number: string | null
 
   @column()
   declare internal_number: string | null
 
-  // Tipo e classificação
   @column()
   declare case_type: CaseType
 
@@ -45,7 +48,6 @@ export default class Case extends TenantAwareModel {
   @column()
   declare court_instance: string | null
 
-  // Status
   @column()
   declare status: CaseStatus
 
@@ -108,7 +110,11 @@ export default class Case extends TenantAwareModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
   @belongsTo(() => Client, {
     foreignKey: 'client_id',
   })
@@ -135,22 +141,18 @@ export default class Case extends TenantAwareModel {
   declare documents: HasMany<typeof Document>
 
   /**
-   * Helper: Get display identifier (case_number or internal_number)
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
    */
   get display_identifier(): string {
     return this.case_number || this.internal_number || `#${this.id}`
   }
 
-  /**
-   * Helper: Check if case is active
-   */
   get is_active(): boolean {
     return this.status === 'active'
   }
 
-  /**
-   * Helper: Check if case is overdue (simplified, will need deadline logic)
-   */
   get is_urgent(): boolean {
     return this.priority === 'urgent'
   }
