@@ -24,7 +24,7 @@ function generateCNJNumber(faker: any): string {
 
   // Simplified check digit calculation (not the real CNJ algorithm)
   const base = sequential + year.toString() + segment + court + origin
-  const checkDigit = (parseInt(base.substring(0, 10)) % 97).toString().padStart(2, '0')
+  const checkDigit = (Number.parseInt(base.substring(0, 10)) % 97).toString().padStart(2, '0')
 
   return `${sequential}-${checkDigit}.${year}.${segment}.${court}.${origin}`
 }

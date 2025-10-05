@@ -24,14 +24,14 @@ export default class ListTenantsService {
     filters: ListTenantsFilters = {},
     options: ListTenantsOptions = {}
   ): Promise<ModelPaginatorContract<Tenant>> {
-    const { is_active, plan, search } = filters
+    const { is_active: isActive, plan, search } = filters
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'desc' } = options
 
     const query = Tenant.query()
 
     // Apply filters
-    if (is_active !== undefined) {
-      query.where('is_active', is_active)
+    if (isActive !== undefined) {
+      query.where('is_active', isActive)
     }
 
     if (plan) {

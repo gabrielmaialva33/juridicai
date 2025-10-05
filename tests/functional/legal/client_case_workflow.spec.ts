@@ -10,6 +10,7 @@ import { DocumentFactory } from '#database/factories/document_factory'
 import { CaseEventFactory } from '#database/factories/case_event_factory'
 import TenantContextService from '#services/tenants/tenant_context_service'
 import { DateTime } from 'luxon'
+import Case from '#models/case'
 
 test.group('Client-Case Workflow', (group) => {
   group.each.setup(async () => {
@@ -171,7 +172,6 @@ test.group('Client-Case Workflow', (group) => {
     const loadedCase = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        const Case = (await import('#models/case')).default
         const caseWithRelations = await Case.query()
           .where('id', caseModel.id)
           .preload('client')
@@ -272,7 +272,6 @@ test.group('Client-Case Workflow', (group) => {
     const loadedCase = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        const Case = (await import('#models/case')).default
         return await Case.query().where('id', caseModel.id).preload('documents').firstOrFail()
       }
     )

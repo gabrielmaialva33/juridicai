@@ -7,6 +7,10 @@ import { CaseFactory } from '#database/factories/case_factory'
 import { DeadlineFactory } from '#database/factories/deadline_factory'
 import { DocumentFactory } from '#database/factories/document_factory'
 import TenantContextService from '#services/tenants/tenant_context_service'
+import Client from '#models/client'
+import Case from '#models/case'
+import Deadline from '#models/deadline'
+import Document from '#models/document'
 
 test.group('Multi-Tenant Isolation', (group) => {
   group.each.setup(async () => {
@@ -36,7 +40,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const foundClient = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Client = (await import('#models/client')).default
         return await Client.find(client2.id)
       }
     )
@@ -47,7 +50,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const ownClient = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Client = (await import('#models/client')).default
         return await Client.find(client1.id)
       }
     )
@@ -90,7 +92,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const foundCase = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Case = (await import('#models/case')).default
         return await Case.find(case2.id)
       }
     )
@@ -141,7 +142,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const tenant1Deadlines = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Deadline = (await import('#models/deadline')).default
         return await Deadline.all()
       }
     )
@@ -177,7 +177,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const foundDoc = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const Document = (await import('#models/document')).default
         return await Document.find(doc1.id)
       }
     )
@@ -209,7 +208,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const count1 = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Client = (await import('#models/client')).default
         const result = await Client.query().count('* as total')
         return Number(result[0].$extras.total)
       }
@@ -221,7 +219,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const count2 = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const Client = (await import('#models/client')).default
         const result = await Client.query().count('* as total')
         return Number(result[0].$extras.total)
       }
@@ -270,7 +267,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const sum1 = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Case = (await import('#models/case')).default
         const result = await Case.query().sum('case_value as total')
         return Number(result[0].$extras.total)
       }
@@ -282,7 +278,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const sum2 = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const Case = (await import('#models/case')).default
         const result = await Case.query().sum('case_value as total')
         return Number(result[0].$extras.total)
       }
@@ -312,7 +307,6 @@ test.group('Multi-Tenant Isolation', (group) => {
     const loadedClient = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const Client = (await import('#models/client')).default
         const client = await Client.find(client1.id)
         await client?.load('cases')
         return client
