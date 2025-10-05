@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import TenantAwareModel from '#models/tenant_aware_model'
+import Case from '#models/case'
 
 type ClientType = 'individual' | 'company'
 
@@ -82,8 +83,8 @@ export default class Client extends TenantAwareModel {
   declare updated_at: DateTime
 
   // Relationships (will be added later)
-  // @hasMany(() => Case)
-  // declare cases: HasMany<typeof Case>
+  @hasMany(() => Case)
+  declare cases: HasMany<typeof Case>
 
   /**
    * Helper: Get display name (individual or company)

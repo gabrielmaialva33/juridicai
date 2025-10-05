@@ -4,7 +4,7 @@ import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
 import ListTenantsService from '#services/tenants/list_tenant_service'
 import Tenant from '#models/tenant'
-import { createTenantValidator, updateTenantValidator } from '#validators/tenant_validator'
+import { createTenantValidator, updateTenantValidator } from '#validators/tenant'
 
 @inject()
 export default class TenantsController {
@@ -18,7 +18,7 @@ export default class TenantsController {
    * GET /api/v1/tenants
    * List all tenants (admin only) or user's tenants
    */
-  async index({ request, response, auth }: HttpContext) {
+  async index({ request, response }: HttpContext) {
     try {
       const filters = {
         is_active: request.input('is_active'),

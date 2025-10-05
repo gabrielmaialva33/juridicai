@@ -4,6 +4,9 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import TenantAwareModel from '#models/tenant_aware_model'
 import Client from '#models/client'
 import User from '#models/user'
+import CaseEvent from '#models/case_event'
+import Deadline from '#models/deadline'
+import Document from '#models/document'
 
 type CaseType = 'civil' | 'criminal' | 'labor' | 'family' | 'tax' | 'administrative' | 'other'
 type CaseStatus = 'active' | 'closed' | 'archived' | 'suspended'
@@ -57,11 +60,7 @@ export default class Case extends TenantAwareModel {
     prepare: (value: number[] | null) => (value ? `{${value.join(',')}}` : null),
     consume: (value: string | null) => {
       if (!value) return null
-      return value
-        .replace(/[{}]/g, '')
-        .split(',')
-        .filter(Boolean)
-        .map(Number)
+      return value.replace(/[{}]/g, '').split(',').filter(Boolean).map(Number)
     },
   })
   declare team_members: number[] | null
@@ -116,14 +115,14 @@ export default class Case extends TenantAwareModel {
   })
   declare responsible_lawyer: BelongsTo<typeof User>
 
-  // @hasMany(() => CaseEvent)
-  // declare events: HasMany<typeof CaseEvent>
+  @hasMany(() => CaseEvent)
+  declare events: HasMany<typeof CaseEvent>
 
-  // @hasMany(() => Deadline)
-  // declare deadlines: HasMany<typeof Deadline>
+  @hasMany(() => Deadline)
+  declare deadlines: HasMany<typeof Deadline>
 
-  // @hasMany(() => Document)
-  // declare documents: HasMany<typeof Document>
+  @hasMany(() => Document)
+  declare documents: HasMany<typeof Document>
 
   /**
    * Helper: Get display identifier (case_number or internal_number)

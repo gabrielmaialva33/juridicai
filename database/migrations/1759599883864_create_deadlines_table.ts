@@ -28,10 +28,17 @@ export default class extends BaseSchema {
 
       // Datas
       table.date('deadline_date').notNullable().comment('Data limite do prazo')
-      table.date('internal_deadline_date').nullable().comment('Data interna com margem de segurança')
+      table
+        .date('internal_deadline_date')
+        .nullable()
+        .comment('Data interna com margem de segurança')
 
       // Classificação
-      table.boolean('is_fatal').notNullable().defaultTo(false).comment('Prazo fatal (não pode perder)')
+      table
+        .boolean('is_fatal')
+        .notNullable()
+        .defaultTo(false)
+        .comment('Prazo fatal (não pode perder)')
       table
         .enum('status', ['pending', 'completed', 'expired', 'cancelled'])
         .notNullable()
@@ -53,10 +60,14 @@ export default class extends BaseSchema {
     // Indexes
     this.schema.raw('CREATE INDEX idx_deadlines_tenant_id ON deadlines(tenant_id)')
     this.schema.raw('CREATE INDEX idx_deadlines_case_id ON deadlines(tenant_id, case_id)')
-    this.schema.raw('CREATE INDEX idx_deadlines_responsible ON deadlines(tenant_id, responsible_id)')
+    this.schema.raw(
+      'CREATE INDEX idx_deadlines_responsible ON deadlines(tenant_id, responsible_id)'
+    )
     this.schema.raw('CREATE INDEX idx_deadlines_status ON deadlines(tenant_id, status)')
     this.schema.raw('CREATE INDEX idx_deadlines_date ON deadlines(tenant_id, deadline_date)')
-    this.schema.raw('CREATE INDEX idx_deadlines_is_fatal ON deadlines(tenant_id, is_fatal, deadline_date)')
+    this.schema.raw(
+      'CREATE INDEX idx_deadlines_is_fatal ON deadlines(tenant_id, is_fatal, deadline_date)'
+    )
   }
 
   async down() {

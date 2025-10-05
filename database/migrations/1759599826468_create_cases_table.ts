@@ -22,7 +22,15 @@ export default class extends BaseSchema {
 
       // Tipo e classificação
       table
-        .enum('case_type', ['civil', 'criminal', 'labor', 'family', 'tax', 'administrative', 'other'])
+        .enum('case_type', [
+          'civil',
+          'criminal',
+          'labor',
+          'family',
+          'tax',
+          'administrative',
+          'other',
+        ])
         .notNullable()
         .defaultTo('civil')
       table.string('court', 100).nullable().comment('Tribunal (TJ-SP, TRT-2, etc)')
@@ -33,10 +41,7 @@ export default class extends BaseSchema {
         .enum('status', ['active', 'closed', 'archived', 'suspended'])
         .notNullable()
         .defaultTo('active')
-      table
-        .enum('priority', ['low', 'medium', 'high', 'urgent'])
-        .notNullable()
-        .defaultTo('medium')
+      table.enum('priority', ['low', 'medium', 'high', 'urgent']).notNullable().defaultTo('medium')
 
       // Responsáveis
       table

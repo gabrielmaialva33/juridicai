@@ -12,8 +12,7 @@ export const createTenantValidator = vine.compile(
       .toLowerCase()
       .minLength(3)
       .maxLength(100)
-      .regex(/^[a-z0-9-]+$/)
-      .withoutDecimals(),
+      .regex(/^[a-z0-9-]+$/),
     custom_domain: vine.string().trim().maxLength(255).optional(),
     plan: vine.enum(['free', 'starter', 'pro', 'enterprise']).optional(),
     limits: vine
@@ -40,7 +39,6 @@ export const updateTenantValidator = vine.compile(
       .minLength(3)
       .maxLength(100)
       .regex(/^[a-z0-9-]+$/)
-      .withoutDecimals()
       .optional(),
     custom_domain: vine.string().trim().maxLength(255).nullable().optional(),
     plan: vine.enum(['free', 'starter', 'pro', 'enterprise']).optional(),

@@ -57,10 +57,7 @@ export default class extends BaseSchema {
       table.string('original_filename', 255).notNullable()
 
       // Storage provider
-      table
-        .enum('storage_provider', ['local', 's3', 'gcs'])
-        .notNullable()
-        .defaultTo('local')
+      table.enum('storage_provider', ['local', 's3', 'gcs']).notNullable().defaultTo('local')
 
       // OCR e conteúdo
       table.text('ocr_text').nullable().comment('Texto extraído por OCR')

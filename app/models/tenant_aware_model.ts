@@ -1,5 +1,4 @@
-import { BaseModel, beforeCreate, beforeFind, beforeFetch } from '@adonisjs/lucid/orm'
-import { SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
@@ -22,43 +21,54 @@ import TenantContextService from '#services/tenants/tenant_context_service'
  * }
  * ```
  *
- * IMPORTANT: All models extending this class MUST have a 'tenant_id' column (UUID)
+ * IMPORTANT:
+ * - All models extending this class MUST have a 'tenant_id' column (UUID)
+ * - Do not instantiate this class directly - only extend it in concrete models
  */
-export default abstract class TenantAwareModel extends BaseModel {
+export default class TenantAwareModel extends BaseModel {
   static namingStrategy = new SnakeCaseNamingStrategy()
 
   /**
-   * Hook: Auto-set tenant_id before creating a record
+   * Boot method to register hooks programmatically
+   * This approach works correctly with abstract classes, unlike decorators
    */
-  @beforeCreate()
-  static assignTenantId(model: TenantAwareModel) {
-    // Only set if tenant_id is not already set
-    if (!(model as any).tenant_id) {
-      const tenantId = TenantContextService.assertTenantId()
-      ;(model as any).tenant_id = tenantId
+  static boot() {
+    if (this.booted) {
+      return
     }
-  }
 
-  /**
-   * Hook: Scope queries to current tenant (for findBy, find, etc.)
-   */
-  @beforeFind()
-  static scopeToTenantOnFind(query: ModelQueryBuilderContract<typeof TenantAwareModel>) {
-    const tenantId = TenantContextService.getCurrentTenantId()
-    if (tenantId) {
-      query.where('tenant_id', tenantId)
-    }
-  }
+    super.boot()
 
-  /**
-   * Hook: Scope queries to current tenant (for all, paginate, etc.)
-   */
-  @beforeFetch()
-  static scopeToTenantOnFetch(query: ModelQueryBuilderContract<typeof TenantAwareModel>) {
-    const tenantId = TenantContextService.getCurrentTenantId()
-    if (tenantId) {
-      query.where('tenant_id', tenantId)
-    }
+    /**
+     * Hook: Auto-set tenant_id before creating a record
+     */
+    this.before('create', (model: TenantAwareModel) => {
+      // Only set if tenant_id is not already set
+      if (!(model as any).tenant_id) {
+        const tenantId = TenantContextService.assertTenantId()
+        ;(model as any).tenant_id = tenantId
+      }
+    })
+
+    /**
+     * Hook: Scope queries to current tenant (for findBy, find, etc.)
+     */
+    this.before('find', (query: ModelQueryBuilderContract<typeof TenantAwareModel>) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+
+    /**
+     * Hook: Scope queries to current tenant (for all, paginate, etc.)
+     */
+    this.before('fetch', (query: ModelQueryBuilderContract<typeof TenantAwareModel>) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId) {
+        query.where('tenant_id', tenantId)
+      }
+    })
   }
 
   /**
