@@ -31,8 +31,8 @@ class TenantContextService {
   /**
    * Get the current tenant context
    */
-  getContext(): TenantContext | undefined {
-    return this.storage.getStore()
+  getContext(): TenantContext | null {
+    return this.storage.getStore() ?? null
   }
 
   /**

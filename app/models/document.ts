@@ -76,7 +76,8 @@ export default class Document extends TenantAwareModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare signature_data: Record<string, any> | null
 
@@ -87,8 +88,11 @@ export default class Document extends TenantAwareModel {
   // Organização
   @column({
     prepare: (value: string[] | null) => (value ? `{${value.join(',')}}` : null),
-    consume: (value: string | null) => {
+    consume: (value: string | string[] | null) => {
       if (!value) return null
+      // PostgreSQL returns arrays as JavaScript arrays directly
+      if (Array.isArray(value)) return value
+      // But in some cases it might be a string: {tag1,tag2,tag3}
       return value.replace(/[{}]/g, '').split(',').filter(Boolean)
     },
   })
@@ -107,10 +111,14 @@ export default class Document extends TenantAwareModel {
   declare updated_at: DateTime
 
   // Relationships
-  @belongsTo(() => Case)
+  @belongsTo(() => Case, {
+    foreignKey: 'case_id',
+  })
   declare case: BelongsTo<typeof Case>
 
-  @belongsTo(() => Client)
+  @belongsTo(() => Client, {
+    foreignKey: 'client_id',
+  })
   declare client: BelongsTo<typeof Client>
 
   @belongsTo(() => User, {

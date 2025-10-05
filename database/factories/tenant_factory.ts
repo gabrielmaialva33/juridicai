@@ -19,11 +19,6 @@ export const TenantFactory = factory
       plan: faker.helpers.arrayElement(['free', 'starter', 'pro', 'enterprise'] as const),
       is_active: true,
       trial_ends_at: DateTime.now().plus({ days: 14 }),
-      settings: {
-        timezone: 'America/Sao_Paulo',
-        language: 'pt-BR',
-        currency: 'BRL',
-      },
     }
   })
   .state('free', (tenant) => {

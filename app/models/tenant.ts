@@ -37,7 +37,8 @@ export default class Tenant extends BaseModel {
 
   @column({
     prepare: (value: TenantLimits | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare limits: TenantLimits | null
 
@@ -57,6 +58,8 @@ export default class Tenant extends BaseModel {
   declare updated_at: DateTime
 
   // Relationships
-  @hasMany(() => TenantUser)
+  @hasMany(() => TenantUser, {
+    foreignKey: 'tenant_id',
+  })
   declare tenant_users: HasMany<typeof TenantUser>
 }

@@ -23,7 +23,8 @@ export default class TenantUser extends BaseModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare custom_permissions: Record<string, any> | null
 
@@ -43,9 +44,13 @@ export default class TenantUser extends BaseModel {
   declare updated_at: DateTime
 
   // Relationships
-  @belongsTo(() => Tenant)
+  @belongsTo(() => Tenant, {
+    foreignKey: 'tenant_id',
+  })
   declare tenant: BelongsTo<typeof Tenant>
 
-  @belongsTo(() => User)
+  @belongsTo(() => User, {
+    foreignKey: 'user_id',
+  })
   declare user: BelongsTo<typeof User>
 }

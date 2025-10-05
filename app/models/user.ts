@@ -100,7 +100,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   })
   declare permissions: ManyToMany<typeof Permission>
 
-  @hasMany(() => TenantUser)
+  @hasMany(() => TenantUser, {
+    foreignKey: 'user_id',
+  })
   declare tenant_users: HasMany<typeof TenantUser>
 
   /**

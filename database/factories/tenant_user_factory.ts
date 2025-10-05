@@ -11,7 +11,6 @@ export const TenantUserFactory = factory
       role: faker.helpers.arrayElement(['lawyer', 'assistant', 'admin'] as const),
       is_active: true,
       custom_permissions: null,
-      invited_by: null,
       joined_at: DateTime.now(),
     }
   })

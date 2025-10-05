@@ -44,7 +44,8 @@ export default class CaseEvent extends TenantAwareModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare metadata: Record<string, any> | null
 
@@ -58,7 +59,9 @@ export default class CaseEvent extends TenantAwareModel {
   declare updated_at: DateTime
 
   // Relationships
-  @belongsTo(() => Case)
+  @belongsTo(() => Case, {
+    foreignKey: 'case_id',
+  })
   declare case: BelongsTo<typeof Case>
 
   @belongsTo(() => User, {

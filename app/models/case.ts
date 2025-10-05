@@ -87,13 +87,15 @@ export default class Case extends TenantAwareModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare custom_fields: Record<string, any> | null
 
   @column({
     prepare: (value: CaseParties | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare parties: CaseParties | null
 
@@ -107,7 +109,9 @@ export default class Case extends TenantAwareModel {
   declare updated_at: DateTime
 
   // Relationships
-  @belongsTo(() => Client)
+  @belongsTo(() => Client, {
+    foreignKey: 'client_id',
+  })
   declare client: BelongsTo<typeof Client>
 
   @belongsTo(() => User, {
@@ -115,13 +119,19 @@ export default class Case extends TenantAwareModel {
   })
   declare responsible_lawyer: BelongsTo<typeof User>
 
-  @hasMany(() => CaseEvent)
+  @hasMany(() => CaseEvent, {
+    foreignKey: 'case_id',
+  })
   declare events: HasMany<typeof CaseEvent>
 
-  @hasMany(() => Deadline)
+  @hasMany(() => Deadline, {
+    foreignKey: 'case_id',
+  })
   declare deadlines: HasMany<typeof Deadline>
 
-  @hasMany(() => Document)
+  @hasMany(() => Document, {
+    foreignKey: 'case_id',
+  })
   declare documents: HasMany<typeof Document>
 
   /**

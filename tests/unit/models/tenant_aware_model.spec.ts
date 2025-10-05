@@ -30,7 +30,7 @@ test.group('TenantAwareModel', (group) => {
   test('throws error when creating without tenant context', async ({ assert }) => {
     await assert.rejects(async () => {
       await ClientFactory.create()
-    }, 'Tenant context is required but not set')
+    }, 'No tenant ID in current context')
   })
 
   test('automatically scopes queries to current tenant on find', async ({ assert }) => {

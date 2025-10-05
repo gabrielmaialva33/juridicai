@@ -21,10 +21,7 @@ test.group('TenantContextService', () => {
   })
 
   test('assertTenantId throws error when no context is set', ({ assert }) => {
-    assert.throws(
-      () => TenantContextService.assertTenantId(),
-      'Tenant context is required but not set'
-    )
+    assert.throws(() => TenantContextService.assertTenantId(), 'No tenant ID in current context')
   })
 
   test('assertTenantId returns tenant_id when context is set', ({ assert }) => {

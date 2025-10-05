@@ -50,15 +50,18 @@ export default class Client extends TenantAwareModel {
 
   @column({
     prepare: (value: ClientAddress | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare address: ClientAddress | null
 
   @column({
     prepare: (value: string[] | null) => (value ? `{${value.join(',')}}` : null),
-    consume: (value: string | null) => {
+    consume: (value: string | string[] | null) => {
       if (!value) return null
-      // PostgreSQL array format: {tag1,tag2,tag3}
+      // PostgreSQL returns arrays as JavaScript arrays directly
+      if (Array.isArray(value)) return value
+      // But in some cases it might be a string: {tag1,tag2,tag3}
       return value.replace(/[{}]/g, '').split(',').filter(Boolean)
     },
   })
@@ -69,7 +72,8 @@ export default class Client extends TenantAwareModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare custom_fields: Record<string, any> | null
 
@@ -82,8 +86,10 @@ export default class Client extends TenantAwareModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships (will be added later)
-  @hasMany(() => Case)
+  // Relationships
+  @hasMany(() => Case, {
+    foreignKey: 'client_id',
+  })
   declare cases: HasMany<typeof Case>
 
   /**

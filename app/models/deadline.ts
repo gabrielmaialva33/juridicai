@@ -48,7 +48,8 @@ export default class Deadline extends TenantAwareModel {
 
   @column({
     prepare: (value: AlertConfig | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare alert_config: AlertConfig | null
 
@@ -71,7 +72,9 @@ export default class Deadline extends TenantAwareModel {
   declare updated_at: DateTime
 
   // Relationships
-  @belongsTo(() => Case)
+  @belongsTo(() => Case, {
+    foreignKey: 'case_id',
+  })
   declare case: BelongsTo<typeof Case>
 
   @belongsTo(() => User, {
