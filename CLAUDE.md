@@ -9,6 +9,7 @@ JuridicAI is a multi-tenant SaaS platform for law firm management built with Ado
 ## Development Commands
 
 ### Essential Commands
+
 ```bash
 # Development
 pnpm dev                           # Start dev server with hot-reload
@@ -36,6 +37,7 @@ pnpm start                        # Start production server
 ```
 
 ### Code Generation Commands
+
 ```bash
 # Generate tenant-aware model with migration
 node ace make:model Client -m
@@ -63,6 +65,7 @@ node ace make:test clients/create_client --suite=functional
 The system uses **row-level tenant isolation** with automatic query scoping. Every tenant-scoped table has a `tenant_id` column that's automatically managed.
 
 **Key Components:**
+
 - `TenantAwareModel` (app/models/tenant_aware_model.ts): Base class for all tenant-scoped models
 - `TenantContextService` (app/services/tenants/tenant_context_service.ts): Manages tenant context using AsyncLocalStorage
 - `TenantResolverMiddleware` (app/middleware/tenant_resolver_middleware.ts): Resolves tenant from headers/subdomain
@@ -89,7 +92,7 @@ export default class Client extends TenantAwareModel {
   declare id: number
 
   @column()
-  declare tenant_id: string  // Automatically managed - don't set manually
+  declare tenant_id: string // Automatically managed - don't set manually
 
   @column()
   declare full_name: string
@@ -100,7 +103,7 @@ export default class Client extends TenantAwareModel {
 
 ```typescript
 // In controllers/services, tenant context is already set by middleware
-const clients = await Client.all()  // Automatically filtered by current tenant
+const clients = await Client.all() // Automatically filtered by current tenant
 
 // For background jobs or CLI commands, manually set context:
 await TenantContextService.run(
@@ -112,8 +115,7 @@ await TenantContextService.run(
 )
 
 // Bypass tenant scoping (admin operations only):
-const allClients = await Client.query()
-  .apply((scopes) => scopes.withoutTenantScope())
+const allClients = await Client.query().apply((scopes) => scopes.withoutTenantScope())
 ```
 
 ### JSONB/Array Column Pattern
@@ -158,12 +160,10 @@ All API routes follow `/api/v1/{resource}` pattern with middleware chains:
 
 ```typescript
 // Tenant-scoped routes require tenant middleware
-router.get('/clients', [ClientsController, 'index'])
-  .use([middleware.auth(), middleware.tenant()])
+router.get('/clients', [ClientsController, 'index']).use([middleware.auth(), middleware.tenant()])
 
 // Non-tenant routes don't use tenant middleware
-router.get('/tenants', [TenantsController, 'index'])
-  .use([middleware.auth()])
+router.get('/tenants', [TenantsController, 'index']).use([middleware.auth()])
 ```
 
 ## Key Middleware Stack
