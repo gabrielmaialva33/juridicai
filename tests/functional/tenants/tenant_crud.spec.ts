@@ -83,16 +83,11 @@ test.group('Tenants CRUD', (group) => {
 
   test('POST /api/v1/tenants validates subdomain format', async ({ client }) => {
     const user = await UserFactory.create()
-    const tenant = await setupTenantForUser(user)
 
-    const response = await client
-      .post('/api/v1/tenants')
-      .header('X-Tenant-ID', tenant.id)
-      .loginAs(user)
-      .json({
-        name: 'Test Firm',
-        subdomain: 'INVALID_SUBDOMAIN!', // Should fail - uppercase and special chars
-      })
+    const response = await client.post('/api/v1/tenants').loginAs(user).json({
+      name: 'Test Firm',
+      subdomain: 'INVALID_SUBDOMAIN!', // Should fail - uppercase and special chars
+    })
 
     response.assertStatus(422)
     response.assertBodyContains({
@@ -107,19 +102,12 @@ test.group('Tenants CRUD', (group) => {
   test('POST /api/v1/tenants rejects duplicate subdomain', async ({ client }) => {
     const user = await UserFactory.create()
 
-    // Setup tenant for user
-    const tenant = await setupTenantForUser(user)
-
     await TenantFactory.merge({ subdomain: 'existing-firm' }).create()
 
-    const response = await client
-      .post('/api/v1/tenants')
-      .header('X-Tenant-ID', tenant.id)
-      .loginAs(user)
-      .json({
-        name: 'Another Firm',
-        subdomain: 'existing-firm',
-      })
+    const response = await client.post('/api/v1/tenants').loginAs(user).json({
+      name: 'Another Firm',
+      subdomain: 'existing-firm',
+    })
 
     response.assertStatus(409)
   })
@@ -146,28 +134,28 @@ test.group('Tenants CRUD', (group) => {
   test('GET /api/v1/tenants/:id returns 404 for non-member tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const otherTenant = await TenantFactory.create()
-    const userTenant = await setupTenantForUser(user)
+    const userTenant = await TenantFactory.create()
 
-    const response = await client
-      .get(`/api/v1/tenants/${otherTenant.id}`)
-      .loginAs(user)
-      .header('X-Tenant-ID', userTenant.id)
+    await TenantUserFactory.apply('owner')
+      .merge({ tenant_id: userTenant.id, user_id: user.id })
+      .create()
+
+    const response = await client.get(`/api/v1/tenants/${otherTenant.id}`).loginAs(user)
 
     response.assertStatus(404)
   })
 
   test('PUT /api/v1/tenants/:id updates tenant', async ({ client }) => {
     const user = await UserFactory.create()
-    const tenant = await setupTenantForUser(user)
+    const tenant = await TenantFactory.create()
+    await TenantUserFactory.apply('owner')
+      .merge({ tenant_id: tenant.id, user_id: user.id })
+      .create()
 
-    const response = await client
-      .put(`/api/v1/tenants/${tenant.id}`)
-      .loginAs(user)
-      .header('X-Tenant-ID', tenant.id)
-      .json({
-        name: 'Updated Name',
-        max_users: 50,
-      })
+    const response = await client.put(`/api/v1/tenants/${tenant.id}`).loginAs(user).json({
+      name: 'Updated Name',
+      max_users: 50,
+    })
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -179,15 +167,14 @@ test.group('Tenants CRUD', (group) => {
 
   test('PUT /api/v1/tenants/:id requires owner or admin role', async ({ client }) => {
     const user = await UserFactory.create()
-    const tenant = await setupTenantForUser(user, 'lawyer') // Not owner or admin
+    const tenant = await TenantFactory.create()
+    await TenantUserFactory.apply('lawyer') // Not owner or admin
+      .merge({ tenant_id: tenant.id, user_id: user.id })
+      .create()
 
-    const response = await client
-      .put(`/api/v1/tenants/${tenant.id}`)
-      .loginAs(user)
-      .header('X-Tenant-ID', tenant.id)
-      .json({
-        name: 'Should Fail',
-      })
+    const response = await client.put(`/api/v1/tenants/${tenant.id}`).loginAs(user).json({
+      name: 'Should Fail',
+    })
 
     response.assertStatus(403)
   })
