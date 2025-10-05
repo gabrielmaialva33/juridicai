@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import Tenant from '#models/tenant'
+import { TenantUserRole } from '#models/tenant_user'
 import { DateTime } from 'luxon'
 import TenantsRepository from '#repositories/tenants_repository'
 import UsersRepository from '#repositories/users_repository'
@@ -69,7 +70,7 @@ export default class CreateTenantService {
     await this.tenantUsersRepository.create({
       tenant_id: tenant.id,
       user_id: owner.id,
-      role: 'owner',
+      role: TenantUserRole.OWNER,
       is_active: true,
       invited_at: DateTime.now(),
       joined_at: DateTime.now(),

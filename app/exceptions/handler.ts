@@ -38,11 +38,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       error.code === 'E_VALIDATION_ERROR'
     ) {
       const validationError = error as any
-      if (ctx.request.accepts(['html', 'json']) === 'json') {
+      const acceptType = ctx.request.accepts(['html', 'json'])
+
+      // Always return JSON for API routes
+      if (acceptType === 'json' || ctx.request.url().startsWith('/api/')) {
         return ctx.response.status(422).json({
           errors: validationError.messages || [],
         })
       }
+
       ctx.session.flashAll()
       ctx.session.flash('errors', validationError.messages || {})
       return ctx.response.redirect().back()

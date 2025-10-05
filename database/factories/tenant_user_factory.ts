@@ -1,14 +1,19 @@
 import factory from '@adonisjs/lucid/factories'
 import { FactoryContextContract } from '@adonisjs/lucid/types/factory'
 import { DateTime } from 'luxon'
-import TenantUser from '#models/tenant_user'
+import TenantUser, { TenantUserRole } from '#models/tenant_user'
 import { TenantFactory } from './tenant_factory.js'
 import { UserFactory } from './user_factory.js'
 
 export const TenantUserFactory = factory
   .define(TenantUser, async ({ faker }: FactoryContextContract) => {
     return {
-      role: faker.helpers.arrayElement(['lawyer', 'assistant', 'admin'] as const),
+      role: faker.helpers.arrayElement([
+        TenantUserRole.OWNER,
+        TenantUserRole.ADMIN,
+        TenantUserRole.LAWYER,
+        TenantUserRole.ASSISTANT,
+      ]),
       is_active: true,
       custom_permissions: null,
       joined_at: DateTime.now(),
@@ -17,17 +22,17 @@ export const TenantUserFactory = factory
   .relation('tenant', () => TenantFactory)
   .relation('user', () => UserFactory)
   .state('owner', (tenantUser) => {
-    tenantUser.role = 'owner'
+    tenantUser.role = TenantUserRole.OWNER
     tenantUser.custom_permissions = null
   })
   .state('admin', (tenantUser) => {
-    tenantUser.role = 'admin'
+    tenantUser.role = TenantUserRole.ADMIN
   })
   .state('lawyer', (tenantUser) => {
-    tenantUser.role = 'lawyer'
+    tenantUser.role = TenantUserRole.LAWYER
   })
   .state('assistant', (tenantUser) => {
-    tenantUser.role = 'assistant'
+    tenantUser.role = TenantUserRole.ASSISTANT
     tenantUser.custom_permissions = ['cases:view', 'documents:view']
   })
   .state('inactive', (tenantUser) => {

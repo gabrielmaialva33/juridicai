@@ -4,6 +4,8 @@ import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
 import GetUserTenantsService from '#services/tenants/get_user_tenant_service'
 import Tenant from '#models/tenant'
+import TenantUsersRepository from '#repositories/tenant_users_repository'
+import { TenantUserRole } from '#models/tenant_user'
 import { createTenantValidator, updateTenantValidator } from '#validators/tenant'
 
 export default class TenantsController {
@@ -55,8 +57,17 @@ export default class TenantsController {
    * GET /api/v1/tenants/:id
    * Show tenant details
    */
-  async get({ params, response }: HttpContext) {
+  async get({ params, response, auth }: HttpContext) {
+    await auth.authenticateUsing(['jwt', 'api'])
     const tenantId = params.id
+
+    // Check if the user is a member of this tenant
+    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
+    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+
+    if (!membership) {
+      return response.notFound({ message: 'Tenant not found' })
+    }
 
     const tenant = await Tenant.findOrFail(tenantId)
 
@@ -67,9 +78,22 @@ export default class TenantsController {
    * PATCH /api/v1/tenants/:id
    * Update tenant
    */
-  async update({ params, request, response }: HttpContext) {
+  async update({ params, request, response, auth }: HttpContext) {
+    await auth.authenticateUsing(['jwt', 'api'])
     const tenantId = params.id
     const payload = await request.validateUsing(updateTenantValidator)
+
+    // Check if a user is a member and has the appropriate role
+    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
+    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+
+    if (!membership) {
+      return response.notFound({ message: 'Tenant not found' })
+    }
+
+    if (membership.role !== TenantUserRole.OWNER && membership.role !== TenantUserRole.ADMIN) {
+      return response.forbidden({ message: 'Insufficient permissions to update this tenant' })
+    }
 
     const service = await app.container.make(UpdateTenantService)
     const tenant = await service.run(tenantId, payload)
@@ -81,8 +105,21 @@ export default class TenantsController {
    * DELETE /api/v1/tenants/:id
    * Soft delete tenant (deactivate)
    */
-  async delete({ params, response }: HttpContext) {
+  async delete({ params, response, auth }: HttpContext) {
+    await auth.authenticateUsing(['jwt', 'api'])
     const tenantId = params.id
+
+    // Check if a user is a member and has the appropriate role
+    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
+    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+
+    if (!membership) {
+      return response.notFound({ message: 'Tenant not found' })
+    }
+
+    if (membership.role !== TenantUserRole.OWNER && membership.role !== TenantUserRole.ADMIN) {
+      return response.forbidden({ message: 'Insufficient permissions to delete this tenant' })
+    }
 
     const service = await app.container.make(UpdateTenantService)
     await service.run(tenantId, {

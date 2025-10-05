@@ -12,7 +12,7 @@ import { createUserValidator, editUserValidator } from '#validators/user'
 
 @inject()
 export default class UsersController {
-  async paginate({ request, response }: HttpContext) {
+  async paginate({ request, response, tenant }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('per_page', 10)
     const sortBy = request.input('sort_by', 'id')
@@ -26,6 +26,7 @@ export default class UsersController {
       sortBy,
       direction,
       search,
+      tenant_id: tenant?.id,
     })
 
     return response.json(users)

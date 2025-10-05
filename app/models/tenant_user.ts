@@ -4,7 +4,14 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Tenant from '#models/tenant'
 import User from '#models/user'
 
-type TenantUserRole = 'owner' | 'admin' | 'lawyer' | 'assistant'
+export enum TenantUserRole {
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  LAWYER = 'lawyer',
+  ASSISTANT = 'assistant',
+}
+
+type TenantUserRoleType = 'owner' | 'admin' | 'lawyer' | 'assistant'
 
 export default class TenantUser extends BaseModel {
   static namingStrategy = new SnakeCaseNamingStrategy()

@@ -4,6 +4,8 @@ import { UserFactory } from '#database/factories/user_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
+import TenantUser, { TenantUserRole } from '#models/tenant_user'
+import { DateTime } from 'luxon'
 
 test.group('Tenants CRUD', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -145,34 +147,46 @@ test.group('Tenants CRUD', (group) => {
     response.assertStatus(404)
   })
 
-  test('PUT /api/v1/tenants/:id updates tenant', async ({ client }) => {
+  test('PATCH /api/v1/tenants/:id updates tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
-    await TenantUserFactory.apply('owner')
-      .merge({ tenant_id: tenant.id, user_id: user.id })
-      .create()
-
-    const response = await client.put(`/api/v1/tenants/${tenant.id}`).loginAs(user).json({
-      name: 'Updated Name',
-      max_users: 50,
+    await TenantUser.create({
+      tenant_id: tenant.id,
+      user_id: user.id,
+      role: TenantUserRole.OWNER,
+      is_active: true,
+      custom_permissions: null,
+      joined_at: DateTime.now(),
     })
+
+    const response = await client
+      .patch(`/api/v1/tenants/${tenant.id}`)
+      .loginAs(user)
+      .json({
+        name: 'Updated Name',
+        limits: {
+          max_users: 50,
+        },
+      })
 
     response.assertStatus(200)
     response.assertBodyContains({
       id: tenant.id,
       name: 'Updated Name',
-      max_users: 50,
+      limits: {
+        max_users: 50,
+      },
     })
   })
 
-  test('PUT /api/v1/tenants/:id requires owner or admin role', async ({ client }) => {
+  test('PATCH /api/v1/tenants/:id requires owner or admin role', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUserFactory.apply('lawyer') // Not owner or admin
       .merge({ tenant_id: tenant.id, user_id: user.id })
       .create()
 
-    const response = await client.put(`/api/v1/tenants/${tenant.id}`).loginAs(user).json({
+    const response = await client.patch(`/api/v1/tenants/${tenant.id}`).loginAs(user).json({
       name: 'Should Fail',
     })
 

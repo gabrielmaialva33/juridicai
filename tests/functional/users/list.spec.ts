@@ -274,7 +274,15 @@ test.group('Users list', (group) => {
   })
 
   test('should include user roles in response', async ({ client }) => {
-    const userRole = await Role.firstOrCreate(
+    // Create unique user first to avoid conflicts
+    const user = await User.create({
+      full_name: 'John Doe Test Roles',
+      email: `john.roles.${Date.now()}@example.com`,
+      username: `johndoe${Date.now()}`,
+      password: 'password123',
+    })
+
+    const userRole = await Role.updateOrCreate(
       { slug: IRole.Slugs.USER },
       {
         name: 'User',
@@ -283,7 +291,7 @@ test.group('Users list', (group) => {
       }
     )
 
-    const adminRole = await Role.firstOrCreate(
+    const adminRole = await Role.updateOrCreate(
       { slug: IRole.Slugs.ADMIN },
       {
         name: 'Admin',
@@ -292,23 +300,12 @@ test.group('Users list', (group) => {
       }
     )
 
-    const user = await User.create({
-      full_name: 'John Doe',
-      email: 'john@example.com',
-      username: 'johndoe',
-      password: 'password123',
-    })
+    // Clear any existing permissions from roles
+    await userRole.related('permissions').sync([])
+    await adminRole.related('permissions').sync([])
 
-    await db.table('user_roles').insert([
-      {
-        user_id: user.id,
-        role_id: userRole.id,
-      },
-      {
-        user_id: user.id,
-        role_id: adminRole.id,
-      },
-    ])
+    // Attach roles to user
+    await user.related('roles').sync([userRole.id, adminRole.id])
 
     // Setup tenant for user
     const tenant = await setupTenantForUser(user)
@@ -322,20 +319,29 @@ test.group('Users list', (group) => {
       .loginAs(user)
 
     response.assertStatus(200)
-    response.assertBodyContains({
-      data: [
-        {
-          id: user.id,
-          roles: [
-            {
-              slug: IRole.Slugs.USER,
-            },
-            {
-              slug: IRole.Slugs.ADMIN,
-            },
-          ],
-        },
-      ],
-    })
+
+    // Find the specific user we created in the response
+    const responseData = response.body().data
+    const createdUser = responseData.find((u: any) => u.id === user.id)
+
+    // Debug logging
+    console.log('Created user ID:', user.id)
+    console.log('Response users count:', responseData.length)
+    if (createdUser) {
+      console.log('Found user roles:', createdUser.roles)
+    } else {
+      console.log('User not found in response')
+      console.log(
+        'Available user IDs:',
+        responseData.map((u: any) => u.id)
+      )
+    }
+
+    response.assert!.exists(createdUser, 'User should be in response')
+    response.assert!.equal(createdUser.id, user.id)
+    response.assert!.lengthOf(createdUser.roles, 2, 'User should have 2 roles')
+
+    const roleSlugs = createdUser.roles.map((r: any) => r.slug).sort()
+    response.assert!.deepEqual(roleSlugs, [IRole.Slugs.ADMIN, IRole.Slugs.USER].sort())
   })
 })
