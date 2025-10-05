@@ -53,8 +53,9 @@ export default class TenantsRepository
     const query = this.model.query()
 
     if (search && search.trim()) {
+      const searchTerm = `%${search}%`
       query.where((builder) => {
-        builder.whereILike('name', `%${search}%`).orWhereILike('subdomain', `%${search}%`)
+        builder.whereILike('name', searchTerm).orWhereILike('subdomain', searchTerm)
       })
     }
 
@@ -97,11 +98,12 @@ export default class TenantsRepository
     }
 
     if (search) {
+      const searchTerm = `%${search}%`
       query.where((subQuery) => {
         subQuery
-          .whereLike('name', `%${search}%`)
-          .orWhereLike('subdomain', `%${search}%`)
-          .orWhereLike('custom_domain', `%${search}%`)
+          .whereILike('name', searchTerm)
+          .orWhereILike('subdomain', searchTerm)
+          .orWhereILike('custom_domain', searchTerm)
       })
     }
 
@@ -125,5 +127,6 @@ export default class TenantsRepository
       })
       .where('is_active', true)
       .orderBy('created_at', 'desc')
+      .exec()
   }
 }

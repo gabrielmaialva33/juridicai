@@ -4,6 +4,7 @@ import IAuditLog from '#interfaces/audit_log_interface'
 import LucidRepository from '#shared/lucid/lucid_repository'
 import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
 
 @inject()
 export default class AuditLogsRepository
@@ -26,7 +27,6 @@ export default class AuditLogsRepository
       .where('user_id', userId)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .preload('user')
       .exec()
   }
 
@@ -43,7 +43,6 @@ export default class AuditLogsRepository
       .where('result', 'denied')
       .where('created_at', '>=', cutoffDate.toISO())
       .orderBy('created_at', 'desc')
-      .preload('user')
       .exec()
   }
 
@@ -54,8 +53,8 @@ export default class AuditLogsRepository
    * @returns Aggregated statistics including total logs, granted/denied counts, unique users, and resources
    */
   async getStatsByDateRange(startDate: DateTime, endDate: DateTime): Promise<any> {
-    const stats = await this.model
-      .query()
+    const stats = await db
+      .from('audit_logs')
       .whereBetween('created_at', [startDate.toISO()!, endDate.toISO()!])
       .select('result')
       .count('* as total')
@@ -63,29 +62,29 @@ export default class AuditLogsRepository
       .countDistinct('resource as unique_resources')
       .groupBy('result')
 
-    const dailyStats = await this.model
-      .query()
+    const dailyStats = await db
+      .from('audit_logs')
       .whereBetween('created_at', [startDate.toISO()!, endDate.toISO()!])
-      .groupByRaw('DATE(created_at)')
-      .select('created_at')
+      .select(db.raw('DATE(created_at) as date'))
       .count('* as total')
       .countDistinct('user_id as unique_users')
-      .orderBy('created_at', 'asc')
+      .groupByRaw('DATE(created_at)')
+      .orderByRaw('DATE(created_at) asc')
 
-    const actionStats = await this.model
-      .query()
+    const actionStats = await db
+      .from('audit_logs')
       .whereBetween('created_at', [startDate.toISO()!, endDate.toISO()!])
-      .groupBy('action', 'result')
       .select('action', 'result')
       .count('* as total')
+      .groupBy('action', 'result')
       .orderBy('total', 'desc')
 
-    const resourceStats = await this.model
-      .query()
+    const resourceStats = await db
+      .from('audit_logs')
       .whereBetween('created_at', [startDate.toISO()!, endDate.toISO()!])
-      .groupBy('resource', 'result')
       .select('resource', 'result')
       .count('* as total')
+      .groupBy('resource', 'result')
       .orderBy('total', 'desc')
 
     return {
@@ -121,7 +120,6 @@ export default class AuditLogsRepository
       .where('action', action)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .preload('user')
       .exec()
   }
 
@@ -137,7 +135,6 @@ export default class AuditLogsRepository
       .where('resource', resource)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .preload('user')
       .exec()
   }
 
@@ -153,7 +150,6 @@ export default class AuditLogsRepository
       .where('result', result)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .preload('user')
       .exec()
   }
 
@@ -169,7 +165,6 @@ export default class AuditLogsRepository
       .where('ip_address', ipAddress)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .preload('user')
       .exec()
   }
 
@@ -231,6 +226,6 @@ export default class AuditLogsRepository
       query.where('created_at', '<=', filters.end_date.toISO()!)
     }
 
-    return query.orderBy('created_at', 'desc').preload('user').paginate(page, limit)
+    return query.orderBy('created_at', 'desc').paginate(page, limit)
   }
 }

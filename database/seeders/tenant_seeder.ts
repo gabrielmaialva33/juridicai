@@ -5,6 +5,8 @@ import { UserFactory } from '#database/factories/user_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 
 export default class extends BaseSeeder {
+  static environment = ['development']
+
   async run() {
     // Create 3 test tenants with different plans
     const freeTenant = await TenantFactory.apply('free').create()

@@ -1,4 +1,5 @@
 import { inject } from '@adonisjs/core'
+import { DateTime } from 'luxon'
 import Tenant from '#models/tenant'
 import TenantsRepository from '#repositories/tenants_repository'
 
@@ -57,7 +58,7 @@ export default class UpdateTenantService {
       tenant.is_active = data.is_active
       // Set suspended_at timestamp when deactivating
       if (!data.is_active) {
-        tenant.suspended_at = new Date() as any
+        tenant.suspended_at = DateTime.now()
       } else {
         tenant.suspended_at = null
         tenant.suspended_reason = null
