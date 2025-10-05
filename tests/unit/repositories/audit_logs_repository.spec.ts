@@ -12,7 +12,7 @@ test.group('AuditLogsRepository', (group) => {
   test('getUserLogs returns logs for specific user', async ({ assert }) => {
     const user = await UserFactory.create()
     await AuditLogFactory.merge({ user_id: user.id }).createMany(3)
-    await AuditLogFactory.createMany(2) // Outros usuários
+    await AuditLogFactory.createMany(2) // Other users
 
     const repository = await app.container.make(AuditLogsRepository)
     const result = await repository.getUserLogs(user.id)
@@ -44,7 +44,7 @@ test.group('AuditLogsRepository', (group) => {
 
   test('getSecurityAlerts filters by date range', async ({ assert }) => {
     const oldLog = await AuditLogFactory.apply('denied').create()
-    // Força created_at para 30 dias atrás
+    // Force created_at to 30 days ago
     oldLog.created_at = DateTime.now().minus({ days: 30 })
     await oldLog.save()
 

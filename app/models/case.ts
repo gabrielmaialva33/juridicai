@@ -54,7 +54,7 @@ export default class Case extends TenantAwareModel {
   @column()
   declare priority: CasePriority
 
-  // Responsáveis
+  // Responsible parties
   @column()
   declare responsible_lawyer_id: number
 
@@ -67,14 +67,14 @@ export default class Case extends TenantAwareModel {
   })
   declare team_members: number[] | null
 
-  // Datas
+  // Dates
   @column.date()
   declare filed_at: DateTime | null
 
   @column.date()
   declare closed_at: DateTime | null
 
-  // Organização
+  // Organization
   @column({
     prepare: (value: string[] | null) => (value ? `{${value.join(',')}}` : null),
     consume: (value: string | null) => {

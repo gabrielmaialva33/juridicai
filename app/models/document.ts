@@ -81,11 +81,11 @@ export default class Document extends TenantAwareModel {
   })
   declare signature_data: Record<string, any> | null
 
-  // Controle de acesso
+  // Access control
   @column()
   declare access_level: AccessLevel
 
-  // Organização
+  // Organization
   @column({
     prepare: (value: string[] | null) => (value ? `{${value.join(',')}}` : null),
     consume: (value: string | string[] | null) => {
