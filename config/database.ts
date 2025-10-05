@@ -36,6 +36,7 @@ const dbConfig = defineConfig({
       seeders: {
         paths: ['database/seeders'],
       },
+      debug: env.get('DB_DEBUG', false),
     },
   },
 })
