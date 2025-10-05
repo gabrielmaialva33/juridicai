@@ -6,9 +6,7 @@ import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Tenants CRUD', (group) => {
-  group.each.setup(async () => {
-    await testUtils.db().truncate()
-  })
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('GET /api/v1/tenants/me returns current tenant', async ({ client }) => {
     // Create user, tenant, and relationship
@@ -85,8 +83,6 @@ test.group('Tenants CRUD', (group) => {
 
   test('POST /api/v1/tenants validates subdomain format', async ({ client }) => {
     const user = await UserFactory.create()
-
-    // Setup tenant for user (same as create test)
     const tenant = await setupTenantForUser(user)
 
     const response = await client
@@ -95,11 +91,17 @@ test.group('Tenants CRUD', (group) => {
       .loginAs(user)
       .json({
         name: 'Test Firm',
-        subdomain: 'invalid-subdomain', // Valid format subdomain
+        subdomain: 'INVALID_SUBDOMAIN!', // Should fail - uppercase and special chars
       })
 
-    // This should now pass - let's see if validation works at all
-    response.assertStatus(201)
+    response.assertStatus(422)
+    response.assertBodyContains({
+      errors: [
+        {
+          field: 'subdomain',
+        },
+      ],
+    })
   })
 
   test('POST /api/v1/tenants rejects duplicate subdomain', async ({ client }) => {
@@ -144,11 +146,7 @@ test.group('Tenants CRUD', (group) => {
   test('GET /api/v1/tenants/:id returns 404 for non-member tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const otherTenant = await TenantFactory.create()
-    const userTenant = await TenantFactory.create()
-
-    await TenantUserFactory.apply('owner')
-      .merge({ tenant_id: userTenant.id, user_id: user.id })
-      .create()
+    const userTenant = await setupTenantForUser(user)
 
     const response = await client
       .get(`/api/v1/tenants/${otherTenant.id}`)
@@ -160,10 +158,7 @@ test.group('Tenants CRUD', (group) => {
 
   test('PUT /api/v1/tenants/:id updates tenant', async ({ client }) => {
     const user = await UserFactory.create()
-    const tenant = await TenantFactory.create()
-    await TenantUserFactory.apply('owner')
-      .merge({ tenant_id: tenant.id, user_id: user.id })
-      .create()
+    const tenant = await setupTenantForUser(user)
 
     const response = await client
       .put(`/api/v1/tenants/${tenant.id}`)
@@ -184,10 +179,7 @@ test.group('Tenants CRUD', (group) => {
 
   test('PUT /api/v1/tenants/:id requires owner or admin role', async ({ client }) => {
     const user = await UserFactory.create()
-    const tenant = await TenantFactory.create()
-    await TenantUserFactory.apply('lawyer') // Not owner or admin
-      .merge({ tenant_id: tenant.id, user_id: user.id })
-      .create()
+    const tenant = await setupTenantForUser(user, 'lawyer') // Not owner or admin
 
     const response = await client
       .put(`/api/v1/tenants/${tenant.id}`)

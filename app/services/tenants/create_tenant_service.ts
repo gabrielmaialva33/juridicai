@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import TenantsRepository from '#repositories/tenants_repository'
 import UsersRepository from '#repositories/users_repository'
 import TenantUsersRepository from '#repositories/tenant_users_repository'
+import ConflictException from '#exceptions/conflict_exception'
 
 interface CreateTenantData {
   name: string
@@ -34,7 +35,7 @@ export default class CreateTenantService {
     // Validate subdomain uniqueness
     const existingTenant = await this.tenantsRepository.findBySubdomain(data.subdomain)
     if (existingTenant) {
-      throw new Error(`Subdomain '${data.subdomain}' is already taken`)
+      throw new ConflictException(`Subdomain '${data.subdomain}' is already taken`)
     }
 
     // Validate custom_domain uniqueness if provided
@@ -43,7 +44,7 @@ export default class CreateTenantService {
         data.custom_domain
       )
       if (existingCustomDomain) {
-        throw new Error(`Custom domain '${data.custom_domain}' is already in use`)
+        throw new ConflictException(`Custom domain '${data.custom_domain}' is already in use`)
       }
     }
 

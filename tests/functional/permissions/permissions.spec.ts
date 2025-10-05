@@ -145,7 +145,7 @@ test.group('Permissions', (group) => {
       .get('/api/v1/admin/permissions')
       .header('X-Tenant-ID', tenant.id)
       .bearerToken(token)
-      .qs({ page: 1, perPage: 3 })
+      .qs({ page: 1, per_page: 3 })
 
     response.assertStatus(200)
     assert.equal(response.body().meta.per_page, 3)

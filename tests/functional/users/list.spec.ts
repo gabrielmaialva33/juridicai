@@ -126,7 +126,7 @@ test.group('Users list', (group) => {
     const response = await client
       .get('/api/v1/users')
       .header('X-Tenant-ID', tenant.id)
-      .qs({ page: 2, limit: 10 })
+      .qs({ page: 2, per_page: 10 })
       .loginAs(authUser)
 
     response.assertStatus(200)
