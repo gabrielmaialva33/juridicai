@@ -4,6 +4,7 @@ import string from '@adonisjs/core/helpers/string'
 import { DateTime } from 'luxon'
 
 import User from '#models/user'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Email verification', () => {
   test('should send verification email on sign up', async ({ client, assert, cleanup }) => {
@@ -140,6 +141,9 @@ test.group('Email verification', () => {
       },
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Sign in to get auth token
     const signInResponse = await client.post('/api/v1/sessions/sign-in').json({
       uid: 'resendtest@example.com',
@@ -150,7 +154,10 @@ test.group('Email verification', () => {
     const token = signInResponse.body().auth.access_token
 
     // Request resend
-    const response = await client.post('/api/v1/resend-verification-email').bearerToken(token)
+    const response = await client
+      .post('/api/v1/resend-verification-email')
+      .header('X-Tenant-ID', tenant.id)
+      .bearerToken(token)
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -173,7 +180,7 @@ test.group('Email verification', () => {
 
   test('should not resend if already verified', async ({ client }) => {
     // Create verified user
-    await User.create({
+    const user = await User.create({
       full_name: 'Already Verified Resend',
       email: 'verifiedresend@example.com',
       password: 'password123',
@@ -185,6 +192,9 @@ test.group('Email verification', () => {
       },
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Sign in to get auth token
     const signInResponse = await client.post('/api/v1/sessions/sign-in').json({
       uid: 'verifiedresend@example.com',
@@ -195,7 +205,10 @@ test.group('Email verification', () => {
     const token = signInResponse.body().auth.access_token
 
     // Request resend
-    const response = await client.post('/api/v1/resend-verification-email').bearerToken(token)
+    const response = await client
+      .post('/api/v1/resend-verification-email')
+      .header('X-Tenant-ID', tenant.id)
+      .bearerToken(token)
 
     response.assertStatus(400)
     response.assertBodyContains({

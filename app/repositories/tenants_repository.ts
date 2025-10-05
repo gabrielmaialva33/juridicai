@@ -129,4 +129,30 @@ export default class TenantsRepository
       .orderBy('created_at', 'desc')
       .exec()
   }
+
+  /**
+   * Find active tenants for a specific user with pagination
+   * @param userId - The user ID to search for
+   * @param page - Page number (1-based)
+   * @param perPage - Number of results per page
+   * @param sortBy - Column to sort by
+   * @param sortOrder - Sort direction
+   * @returns Paginated results of active tenants where the user is an active member
+   */
+  async findByUserIdPaginated(
+    userId: number,
+    page: number = 1,
+    perPage: number = 10,
+    sortBy: 'created_at' | 'name' | 'subdomain' = 'created_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ): Promise<ModelPaginatorContract<Tenant>> {
+    return this.model
+      .query()
+      .whereHas('tenant_users', (tenantUserQuery) => {
+        tenantUserQuery.where('user_id', userId).where('is_active', true)
+      })
+      .where('is_active', true)
+      .orderBy(sortBy, sortOrder)
+      .paginate(page, perPage)
+  }
 }

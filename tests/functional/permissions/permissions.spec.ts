@@ -7,6 +7,7 @@ import Permission from '#models/permission'
 
 import IRole from '#interfaces/role_interface'
 import IPermission from '#interfaces/permission_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Permissions', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -29,6 +30,9 @@ test.group('Permissions', (group) => {
     })
 
     await rootUser.related('roles').attach([rootRole.id])
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(rootUser)
 
     // Create permissions.create permission
     const permission = await Permission.firstOrCreate(
@@ -55,11 +59,15 @@ test.group('Permissions', (group) => {
     const token = loginResponse.body().auth.access_token
 
     // Create new permission
-    const response = await client.post('/api/v1/admin/permissions').bearerToken(token).json({
-      resource: IPermission.Resources.USERS,
-      action: IPermission.Actions.EXPORT,
-      description: 'Export users',
-    })
+    const response = await client
+      .post('/api/v1/admin/permissions')
+      .header('X-Tenant-ID', tenant.id)
+      .bearerToken(token)
+      .json({
+        resource: IPermission.Resources.USERS,
+        action: IPermission.Actions.EXPORT,
+        description: 'Export users',
+      })
 
     response.assertStatus(201)
     response.assertBodyContains({
@@ -91,6 +99,9 @@ test.group('Permissions', (group) => {
     })
 
     await adminUser.related('roles').attach([adminRole.id])
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
 
     // Create permissions
     const listPermission = await Permission.firstOrCreate(
@@ -132,6 +143,7 @@ test.group('Permissions', (group) => {
     // List permissions
     const response = await client
       .get('/api/v1/admin/permissions')
+      .header('X-Tenant-ID', tenant.id)
       .bearerToken(token)
       .qs({ page: 1, perPage: 3 })
 
@@ -158,6 +170,9 @@ test.group('Permissions', (group) => {
     })
 
     await rootUser.related('roles').attach([rootRole.id])
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(rootUser)
 
     // Create permissions
     const updatePermission = await Permission.firstOrCreate(
@@ -217,6 +232,7 @@ test.group('Permissions', (group) => {
     // Sync permissions
     const response = await client
       .put('/api/v1/admin/roles/permissions/sync')
+      .header('X-Tenant-ID', tenant.id)
       .bearerToken(token)
       .json({
         role_id: testRole.id,
@@ -251,6 +267,9 @@ test.group('Permissions', (group) => {
     )
 
     await user.related('roles').attach([userRole.id])
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
 
     // Create permissions
     const readPermission = await Permission.firstOrCreate(
@@ -304,6 +323,7 @@ test.group('Permissions', (group) => {
     // Check permissions
     const response = await client
       .post(`/api/v1/admin/users/${user.id}/permissions/check`)
+      .header('X-Tenant-ID', tenant.id)
       .bearerToken(token)
       .json({
         permissions: ['users.read', 'users.update'],
@@ -318,6 +338,7 @@ test.group('Permissions', (group) => {
     // Check for permission user doesn't have
     const response2 = await client
       .post(`/api/v1/admin/users/${user.id}/permissions/check`)
+      .header('X-Tenant-ID', tenant.id)
       .bearerToken(token)
       .json({
         permissions: ['users.delete'],
@@ -353,6 +374,9 @@ test.group('Permissions', (group) => {
 
     await user.related('roles').attach([userRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Ensure the user role has no permissions for this test
     await userRole.related('permissions').detach()
 
@@ -365,7 +389,10 @@ test.group('Permissions', (group) => {
     const token = loginResponse.body().auth.access_token
 
     // Try to access a permissions list without permission
-    const response = await client.get('/api/v1/admin/permissions').bearerToken(token)
+    const response = await client
+      .get('/api/v1/admin/permissions')
+      .header('X-Tenant-ID', tenant.id)
+      .bearerToken(token)
 
     response.assertStatus(403)
     response.assertBodyContains({

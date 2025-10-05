@@ -175,11 +175,13 @@ test.group('Client-Case Workflow', (group) => {
         const caseWithRelations = await Case.query()
           .where('id', caseModel.id)
           .preload('client')
-          .preload('responsible_lawyer')
           .preload('deadlines')
           .preload('documents')
           .preload('events')
           .firstOrFail()
+
+        // Load responsible_lawyer separately to avoid context issues
+        await caseWithRelations.load('responsible_lawyer')
 
         return caseWithRelations
       }

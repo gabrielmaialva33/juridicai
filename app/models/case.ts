@@ -60,8 +60,9 @@ export default class Case extends TenantAwareModel {
 
   @column({
     prepare: (value: number[] | null) => (value ? `{${value.join(',')}}` : null),
-    consume: (value: string | null) => {
+    consume: (value: string | number[] | null) => {
       if (!value) return null
+      if (Array.isArray(value)) return value
       return value.replace(/[{}]/g, '').split(',').filter(Boolean).map(Number)
     },
   })
@@ -77,8 +78,9 @@ export default class Case extends TenantAwareModel {
   // Organization
   @column({
     prepare: (value: string[] | null) => (value ? `{${value.join(',')}}` : null),
-    consume: (value: string | null) => {
+    consume: (value: string | string[] | null) => {
       if (!value) return null
+      if (Array.isArray(value)) return value
       return value.replace(/[{}]/g, '').split(',').filter(Boolean)
     },
   })

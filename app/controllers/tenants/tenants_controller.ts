@@ -2,7 +2,6 @@ import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
-import ListTenantsService from '#services/tenants/list_tenant_service'
 import GetUserTenantsService from '#services/tenants/get_user_tenant_service'
 import Tenant from '#models/tenant'
 import { createTenantValidator, updateTenantValidator } from '#validators/tenant'
@@ -10,34 +9,28 @@ import { createTenantValidator, updateTenantValidator } from '#validators/tenant
 export default class TenantsController {
   /**
    * GET /api/v1/tenants
-   * List all tenants (admin only) or user's tenants
+   * List user's tenants with pagination
    */
-  async paginate({ request, response }: HttpContext) {
-    const isActive = request.input('is_active', undefined)
-    const plan = request.input('plan', undefined)
-    const search = request.input('search', undefined)
+  async paginate({ request, response, auth }: HttpContext) {
+    await auth.authenticateUsing(['jwt', 'api'])
+
     const page = request.input('page', 1)
-    const limit = request.input('limit', 20)
+    const perPage = request.input('per_page', 10)
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
-    const service = await app.container.make(ListTenantsService)
-    const tenants = await service.run(isActive, plan, search, page, limit, sortBy, sortOrder)
+    const service = await app.container.make(GetUserTenantsService)
+    const tenants = await service.run(auth.user!.id, page, perPage, sortBy, sortOrder)
 
     return response.json(tenants)
   }
 
   /**
    * GET /api/v1/tenants/me
-   * Get current user's tenants
+   * Get current tenant (based on X-Tenant-ID header)
    */
-  async me({ response, auth }: HttpContext) {
-    await auth.authenticateUsing(['jwt', 'api'])
-
-    const service = await app.container.make(GetUserTenantsService)
-    const tenants = await service.run(auth.user!.id)
-
-    return response.json(tenants)
+  async me({ response, tenant }: HttpContext) {
+    return response.json(tenant)
   }
 
   /**
