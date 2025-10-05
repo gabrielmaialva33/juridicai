@@ -27,6 +27,30 @@ import TenantContextService from '#services/tenants/tenant_context_service'
  */
 export default class TenantAwareModel extends BaseModel {
   static namingStrategy = new SnakeCaseNamingStrategy()
+  /**
+   * Scope to filter by specific tenant
+   *
+   * Usage:
+   * ```ts
+   * const clients = await Client.query().apply((scopes) => scopes.forTenant(tenantId))
+   * ```
+   */
+  static forTenant = scope((query: ModelQueryBuilderContract<any>, tenantId: string) => {
+    query.where('tenant_id', tenantId)
+  })
+  /**
+   * Scope to disable automatic tenant filtering
+   * USE WITH EXTREME CAUTION - only for admin operations or cross-tenant queries
+   *
+   * Usage:
+   * ```ts
+   * const allClients = await Client.query().apply((scopes) => scopes.withoutTenantScope())
+   * ```
+   */
+  static withoutTenantScope = scope((query: ModelQueryBuilderContract<any>) => {
+    // Mark query to skip automatic tenant scope in hooks
+    ;(query as any)._skipTenantScope = true
+  })
 
   /**
    * Boot method to register hooks programmatically
@@ -80,30 +104,4 @@ export default class TenantAwareModel extends BaseModel {
       }
     })
   }
-
-  /**
-   * Scope to filter by specific tenant
-   *
-   * Usage:
-   * ```ts
-   * const clients = await Client.query().apply((scopes) => scopes.forTenant(tenantId))
-   * ```
-   */
-  static forTenant = scope((query: ModelQueryBuilderContract<any>, tenantId: string) => {
-    query.where('tenant_id', tenantId)
-  })
-
-  /**
-   * Scope to disable automatic tenant filtering
-   * USE WITH EXTREME CAUTION - only for admin operations or cross-tenant queries
-   *
-   * Usage:
-   * ```ts
-   * const allClients = await Client.query().apply((scopes) => scopes.withoutTenantScope())
-   * ```
-   */
-  static withoutTenantScope = scope((query: ModelQueryBuilderContract<any>) => {
-    // Mark query to skip automatic tenant scope in hooks
-    ;(query as any)._skipTenantScope = true
-  })
 }
