@@ -4,7 +4,7 @@
   "description": "Multi-tenant SaaS platform for law firm management",
   "private": true,
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "node bin/server.js",
     "build": "node ace build",
@@ -89,7 +89,7 @@
     "luxon": "^3.7.2",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "hotHook": {
     "boundaries": [
