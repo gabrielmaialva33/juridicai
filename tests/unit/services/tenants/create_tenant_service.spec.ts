@@ -5,7 +5,6 @@ import app from '@adonisjs/core/services/app'
 import CreateTenantService from '#services/tenants/create_tenant_service'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import { UserFactory } from '#database/factories/user_factory'
-import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 
 test.group('CreateTenantService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())

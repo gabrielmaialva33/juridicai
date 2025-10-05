@@ -12,15 +12,15 @@ test.group('GenerateAuditReportService', (group) => {
 
   test('should return statistics by date range', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 7 })
-    const end_date = DateTime.now()
+    const startDate = DateTime.now().minus({ days: 7 })
+    const endDate = DateTime.now()
 
     // Create logs within range
     await AuditLogFactory.merge({ user_id: user.id, result: 'granted' }).createMany(3)
     await AuditLogFactory.merge({ user_id: user.id, result: 'denied' }).createMany(2)
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.exists(result)
     assert.isDefined(result.summary)
@@ -31,14 +31,14 @@ test.group('GenerateAuditReportService', (group) => {
 
   test('should return correct structure with summary data', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 1 })
-    const end_date = DateTime.now()
+    const startDate = DateTime.now().minus({ days: 1 })
+    const endDate = DateTime.now()
 
     await AuditLogFactory.merge({ user_id: user.id, result: 'granted' }).createMany(5)
     await AuditLogFactory.merge({ user_id: user.id, result: 'denied' }).createMany(3)
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.isArray(result.summary)
     assert.isArray(result.daily)
@@ -48,50 +48,50 @@ test.group('GenerateAuditReportService', (group) => {
 
   test('should include daily statistics', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 2 })
-    const end_date = DateTime.now()
+    const startDate = DateTime.now().minus({ days: 2 })
+    const endDate = DateTime.now()
 
     // Create logs
     await AuditLogFactory.merge({ user_id: user.id }).createMany(3)
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.isArray(result.daily)
   })
 
   test('should include statistics by action', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 1 })
-    const end_date = DateTime.now()
+    const startDate = DateTime.now().minus({ days: 1 })
+    const endDate = DateTime.now()
 
     await AuditLogFactory.merge({ user_id: user.id, action: 'create' }).createMany(2)
     await AuditLogFactory.merge({ user_id: user.id, action: 'read' }).createMany(3)
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.isArray(result.byAction)
   })
 
   test('should include statistics by resource', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 1 })
-    const end_date = DateTime.now()
+    const startDate = DateTime.now().minus({ days: 1 })
+    const endDate = DateTime.now()
 
     await AuditLogFactory.merge({ user_id: user.id, resource: 'users' }).createMany(4)
     await AuditLogFactory.merge({ user_id: user.id, resource: 'files' }).createMany(2)
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.isArray(result.byResource)
   })
 
   test('should exclude logs outside date range', async ({ assert }) => {
     const user = await UserFactory.create()
-    const start_date = DateTime.now().minus({ days: 2 })
-    const end_date = DateTime.now().minus({ days: 1 })
+    const startDate = DateTime.now().minus({ days: 2 })
+    const endDate = DateTime.now().minus({ days: 1 })
 
     // Create log within range
     const logInRange = await AuditLogFactory.merge({ user_id: user.id }).create()
@@ -107,7 +107,7 @@ test.group('GenerateAuditReportService', (group) => {
     await oldLog.save()
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.exists(result)
     // Should only count logs within range
@@ -115,11 +115,11 @@ test.group('GenerateAuditReportService', (group) => {
   })
 
   test('should handle empty date range', async ({ assert }) => {
-    const start_date = DateTime.now().minus({ days: 10 })
-    const end_date = DateTime.now().minus({ days: 9 })
+    const startDate = DateTime.now().minus({ days: 10 })
+    const endDate = DateTime.now().minus({ days: 9 })
 
     const service = await app.container.make(GenerateAuditReportService)
-    const result = await service.run(start_date, end_date)
+    const result = await service.run(startDate, endDate)
 
     assert.exists(result)
     assert.isArray(result.summary)
