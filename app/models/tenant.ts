@@ -1,6 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
-import { SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import TenantUser from '#models/tenant_user'
 
@@ -11,6 +10,7 @@ interface TenantLimits {
   max_cases?: number
   max_storage_gb?: number
   max_documents?: number
+
   [key: string]: any
 }
 

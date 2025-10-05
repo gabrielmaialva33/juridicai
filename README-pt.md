@@ -27,9 +27,15 @@
 
 ## :bookmark: Sobre
 
-O **Adonis Kit** é um _starter kit_ de API moderno, opinativo e focado em IA, projetado para acelerar o desenvolvimento de aplicações backend robustas. Construído com **AdonisJS v6**, ele fornece uma base poderosa para criar APIs REST escaláveis com recursos abrangentes de autenticação, autorização e gerenciamento de dados.
+O **Adonis Kit** é um _starter kit_ de API moderno, opinativo e focado em IA, projetado para acelerar o desenvolvimento
+de aplicações backend robustas. Construído com **AdonisJS v6**, ele fornece uma base poderosa para criar APIs REST
+escaláveis com recursos abrangentes de autenticação, autorização e gerenciamento de dados.
 
-Este projeto não é apenas uma coleção de tecnologias; é uma fundação projetada para eficiência, escalabilidade e colaboração transparente com parceiros de desenvolvimento de IA. Ao fornecer uma arquitetura bem definida com recursos como autenticação multi-guard, controle de acesso baseado em papéis (RBAC) e gerenciamento de arquivos prontos para uso, ele permite que desenvolvedores (humanos e IAs) se concentrem na construção de lógicas de negócio únicas, em vez de código repetitivo.
+Este projeto não é apenas uma coleção de tecnologias; é uma fundação projetada para eficiência, escalabilidade e
+colaboração transparente com parceiros de desenvolvimento de IA. Ao fornecer uma arquitetura bem definida com recursos
+como autenticação multi-guard, controle de acesso baseado em papéis (RBAC) e gerenciamento de arquivos prontos para uso,
+ele permite que desenvolvedores (humanos e IAs) se concentrem na construção de lógicas de negócio únicas, em vez de
+código repetitivo.
 
 ### 🏗️ Visão Geral da Arquitetura
 
@@ -75,16 +81,22 @@ graph TD
 
 Este _starter kit_ foi projetado de forma única para maximizar a eficácia da codificação assistida por IA.
 
-- **Base de API Bem Estruturada**: A clara separação de responsabilidades (controllers, serviços, repositórios) facilita para uma IA localizar, entender e modificar partes específicas do código com precisão.
-- **Base Fortemente Tipada**: O uso completo de TypeScript cria um contrato claro entre todas as camadas da API. Isso reduz a ambiguidade e permite que a IA entenda estruturas de dados e assinaturas de funções, resultando em menos erros.
-- **Arquitetura Modular e Opinativa**: Organização de serviços orientada a domínio e padrões consistentes tornam simples para a IA estender funcionalidades seguindo convenções estabelecidas.
-- **Foco na Lógica de Negócio**: Com o boilerplate de autenticação, permissões e armazenamento de arquivos já resolvido, a IA pode ser direcionada para resolver problemas de negócio de nível superior desde o primeiro dia.
+- **Base de API Bem Estruturada**: A clara separação de responsabilidades (controllers, serviços, repositórios) facilita
+  para uma IA localizar, entender e modificar partes específicas do código com precisão.
+- **Base Fortemente Tipada**: O uso completo de TypeScript cria um contrato claro entre todas as camadas da API. Isso
+  reduz a ambiguidade e permite que a IA entenda estruturas de dados e assinaturas de funções, resultando em menos
+  erros.
+- **Arquitetura Modular e Opinativa**: Organização de serviços orientada a domínio e padrões consistentes tornam simples
+  para a IA estender funcionalidades seguindo convenções estabelecidas.
+- **Foco na Lógica de Negócio**: Com o boilerplate de autenticação, permissões e armazenamento de arquivos já resolvido,
+  a IA pode ser direcionada para resolver problemas de negócio de nível superior desde o primeiro dia.
 
 ## 🌟 Principais Funcionalidades
 
 - **🔐 Autenticação Multi-Guard**: Autenticação baseada em JWT pronta para uso.
 - **👥 Controle de Acesso Avançado (RBAC)**: Gerencie permissões de usuário com papéis e regras detalhadas.
-- **📁 Gerenciamento de Arquivos**: Serviço de upload de arquivos pré-configurado com suporte para drivers locais, S3 e GCS.
+- **📁 Gerenciamento de Arquivos**: Serviço de upload de arquivos pré-configurado com suporte para drivers locais, S3 e
+  GCS.
 - **⚡️ API de Alta Performance**: Endpoints REST otimizados com cache inteligente e processamento de filas.
 - **🔄 Arquitetura Orientada a Eventos**: Sistema de eventos integrado para lógica de aplicação desacoplada e escalável.
 - **✅ API Type-Safe**: Cobertura completa de TypeScript com autocompletar e verificação de tipos.

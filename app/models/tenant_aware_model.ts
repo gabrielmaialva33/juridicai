@@ -1,4 +1,4 @@
-import { BaseModel, SnakeCaseNamingStrategy, scope } from '@adonisjs/lucid/orm'
+import { BaseModel, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import TenantContextService from '#services/tenants/tenant_context_service'
 

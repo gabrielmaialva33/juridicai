@@ -93,17 +93,17 @@ export default class extends BaseSchema {
     // Full-text search on OCR text
     this.schema.raw(`
       CREATE INDEX idx_documents_ocr_search
-      ON documents
-      USING GIN(to_tsvector('portuguese', COALESCE(ocr_text, '')))
+        ON documents
+          USING GIN (to_tsvector('portuguese', COALESCE(ocr_text, '')))
     `)
 
     // Title and description search
     this.schema.raw(`
       CREATE INDEX idx_documents_title_search
-      ON documents
-      USING GIN(to_tsvector('portuguese',
-        COALESCE(title, '') || ' ' || COALESCE(description, '')
-      ))
+        ON documents
+          USING GIN (to_tsvector('portuguese',
+                                 COALESCE(title, '') || ' ' || COALESCE(description, '')
+                     ))
     `)
   }
 

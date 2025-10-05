@@ -91,12 +91,12 @@ export default class extends BaseSchema {
     // Full-text search
     this.schema.raw(`
       CREATE INDEX idx_cases_search
-      ON cases
-      USING GIN(to_tsvector('portuguese',
-        COALESCE(case_number, '') || ' ' ||
-        COALESCE(internal_number, '') || ' ' ||
-        COALESCE(description, '')
-      ))
+        ON cases
+          USING GIN (to_tsvector('portuguese',
+                                 COALESCE(case_number, '') || ' ' ||
+                                 COALESCE(internal_number, '') || ' ' ||
+                                 COALESCE(description, '')
+                     ))
     `)
   }
 

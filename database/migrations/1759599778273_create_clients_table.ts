@@ -50,8 +50,8 @@ export default class extends BaseSchema {
     // Full-text search (nome e razão social)
     this.schema.raw(`
       CREATE INDEX idx_clients_search
-      ON clients
-      USING GIN(to_tsvector('portuguese', COALESCE(full_name, '') || ' ' || COALESCE(company_name, '')))
+        ON clients
+          USING GIN (to_tsvector('portuguese', COALESCE(full_name, '') || ' ' || COALESCE(company_name, '')))
     `)
   }
 
