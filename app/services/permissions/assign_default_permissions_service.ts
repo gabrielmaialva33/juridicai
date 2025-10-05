@@ -42,7 +42,7 @@ export default class AssignDefaultPermissionsService {
     const rootRole = await Role.findBy('slug', IRole.Slugs.ROOT, { client: trx })
     if (rootRole) {
       const allPermissions = await Permission.query({ client: trx }).select('id')
-      await this.syncRolePermissionsService.handle(
+      await this.syncRolePermissionsService.run(
         rootRole.id,
         allPermissions.map((p) => p.id),
         trx
@@ -62,7 +62,7 @@ export default class AssignDefaultPermissionsService {
         })
         .select('id')
 
-      await this.syncRolePermissionsService.handle(
+      await this.syncRolePermissionsService.run(
         adminRole.id,
         adminPermissions.map((p) => p.id),
         trx
@@ -90,7 +90,7 @@ export default class AssignDefaultPermissionsService {
         })
         .select('id')
 
-      await this.syncRolePermissionsService.handle(
+      await this.syncRolePermissionsService.run(
         userRole.id,
         userPermissions.map((p) => p.id),
         trx
@@ -106,7 +106,7 @@ export default class AssignDefaultPermissionsService {
         .whereNotIn('resource', [IPermission.Resources.PERMISSIONS, IPermission.Resources.AUDIT])
         .select('id')
 
-      await this.syncRolePermissionsService.handle(
+      await this.syncRolePermissionsService.run(
         guestRole.id,
         guestPermissions.map((p) => p.id),
         trx

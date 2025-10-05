@@ -10,14 +10,14 @@ router
     router.get('/me', [TenantsController, 'me']).as('tenants.me')
 
     // GET /api/v1/tenants - List all tenants (paginated)
-    router.get('/', [TenantsController, 'index']).as('tenants.index')
+    router.get('/', [TenantsController, 'paginate']).as('tenants.index')
 
     // POST /api/v1/tenants - Create a new tenant
-    router.post('/', [TenantsController, 'store']).as('tenants.store')
+    router.post('/', [TenantsController, 'create']).as('tenants.store')
 
     // GET /api/v1/tenants/:id - Get tenant details
     router
-      .get('/:id', [TenantsController, 'show'])
+      .get('/:id', [TenantsController, 'get'])
       .where('id', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/) // UUID regex
       .as('tenants.show')
 
@@ -29,7 +29,7 @@ router
 
     // DELETE /api/v1/tenants/:id - Deactivate tenant
     router
-      .delete('/:id', [TenantsController, 'destroy'])
+      .delete('/:id', [TenantsController, 'delete'])
       .where('id', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
       .as('tenants.destroy')
   })

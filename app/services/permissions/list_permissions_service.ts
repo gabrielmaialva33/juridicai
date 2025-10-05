@@ -3,7 +3,7 @@ import Permission from '#models/permission'
 
 @inject()
 export default class ListPermissionsService {
-  async handle(page: number = 1, perPage: number = 10, resource?: string, action?: string) {
+  async run(page: number = 1, perPage: number = 10, resource?: string, action?: string) {
     const query = Permission.query()
 
     if (resource) {

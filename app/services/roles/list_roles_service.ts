@@ -6,11 +6,11 @@ import RolesRepository from '#repositories/roles_repository'
 export default class ListRolesService {
   constructor(private rolesRepository: RolesRepository) {}
 
-  async run(options?: { page?: number; perPage?: number }) {
-    if (options?.page) {
+  async run(page: number = 1, perPage: number = 10) {
+    if (page) {
       return this.rolesRepository.paginate({
-        page: options.page,
-        perPage: options.perPage || 10,
+        page: page,
+        perPage: perPage,
       })
     }
     const roles = await this.rolesRepository.list()

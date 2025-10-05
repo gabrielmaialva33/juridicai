@@ -7,7 +7,7 @@ import { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 @inject()
 export default class SyncRolePermissionsService {
-  async handle(
+  async run(
     roleId: number,
     permissionIds: number[],
     trx?: TransactionClientContract

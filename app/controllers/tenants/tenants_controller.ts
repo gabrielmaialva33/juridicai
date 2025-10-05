@@ -1,49 +1,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
+import app from '@adonisjs/core/services/app'
 import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
 import ListTenantsService from '#services/tenants/list_tenant_service'
+import GetUserTenantsService from '#services/tenants/get_user_tenant_service'
 import Tenant from '#models/tenant'
 import { createTenantValidator, updateTenantValidator } from '#validators/tenant'
 
-@inject()
 export default class TenantsController {
-  constructor(
-    private createTenantService: CreateTenantService,
-    private updateTenantService: UpdateTenantService,
-    private listTenantsService: ListTenantsService
-  ) {}
-
   /**
    * GET /api/v1/tenants
    * List all tenants (admin only) or user's tenants
    */
-  async index({ request, response }: HttpContext) {
-    try {
-      const filters = {
-        is_active: request.input('is_active'),
-        plan: request.input('plan'),
-        search: request.input('search'),
-      }
+  async paginate({ request, response }: HttpContext) {
+    const isActive = request.input('is_active', undefined)
+    const plan = request.input('plan', undefined)
+    const search = request.input('search', undefined)
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 20)
+    const sortBy = request.input('sort_by', 'created_at')
+    const sortOrder = request.input('sort_order', 'desc')
 
-      const options = {
-        page: request.input('page', 1),
-        limit: request.input('limit', 20),
-        sortBy: request.input('sort_by', 'created_at'),
-        sortOrder: request.input('sort_order', 'desc'),
-      }
+    const service = await app.container.make(ListTenantsService)
+    const tenants = await service.run(isActive, plan, search, page, limit, sortBy, sortOrder)
 
-      // If user is not admin, only show their tenants
-      // For now, we'll show all tenants for simplicity (add permission check later)
-      const tenants = await this.listTenantsService.execute(filters, options)
-
-      return response.ok(tenants)
-    } catch (error) {
-      return response.badRequest({
-        message: 'Failed to list tenants',
-        error: error.message,
-      })
-    }
+    return response.json(tenants)
   }
 
   /**
@@ -51,60 +32,42 @@ export default class TenantsController {
    * Get current user's tenants
    */
   async me({ response, auth }: HttpContext) {
-    try {
-      await auth.authenticateUsing(['jwt', 'api'])
-      const tenants = await this.listTenantsService.forUser(auth.user!.id)
+    await auth.authenticateUsing(['jwt', 'api'])
 
-      return response.ok({ data: tenants })
-    } catch (error) {
-      return response.badRequest({
-        message: 'Failed to get user tenants',
-        error: error.message,
-      })
-    }
+    const service = await app.container.make(GetUserTenantsService)
+    const tenants = await service.run(auth.user!.id)
+
+    return response.json(tenants)
   }
 
   /**
    * POST /api/v1/tenants
    * Create a new tenant
    */
-  async store({ request, response, auth }: HttpContext) {
-    try {
-      await auth.authenticateUsing(['jwt', 'api'])
+  async create({ request, response, auth }: HttpContext) {
+    await auth.authenticateUsing(['jwt', 'api'])
 
-      const payload = await request.validateUsing(createTenantValidator)
+    const payload = await request.validateUsing(createTenantValidator)
 
-      const tenant = await this.createTenantService.execute({
-        ...payload,
-        owner_user_id: auth.user!.id,
-      })
+    const service = await app.container.make(CreateTenantService)
+    const tenant = await service.run({
+      ...payload,
+      owner_user_id: auth.user!.id,
+    })
 
-      return response.created({
-        message: 'Tenant created successfully',
-        data: tenant,
-      })
-    } catch (error) {
-      return response.badRequest({
-        message: 'Failed to create tenant',
-        error: error.message,
-      })
-    }
+    return response.created(tenant)
   }
 
   /**
    * GET /api/v1/tenants/:id
    * Show tenant details
    */
-  async show({ params, response }: HttpContext) {
-    try {
-      const tenant = await Tenant.findOrFail(params.id)
+  async get({ params, response }: HttpContext) {
+    const tenantId = params.id
 
-      return response.ok({ data: tenant })
-    } catch (error) {
-      return response.notFound({
-        message: 'Tenant not found',
-      })
-    }
+    const tenant = await Tenant.findOrFail(tenantId)
+
+    return response.json(tenant)
   }
 
   /**
@@ -112,43 +75,28 @@ export default class TenantsController {
    * Update tenant
    */
   async update({ params, request, response }: HttpContext) {
-    try {
-      const payload = await request.validateUsing(updateTenantValidator)
+    const tenantId = params.id
+    const payload = await request.validateUsing(updateTenantValidator)
 
-      const tenant = await this.updateTenantService.execute(params.id, payload)
+    const service = await app.container.make(UpdateTenantService)
+    const tenant = await service.run(tenantId, payload)
 
-      return response.ok({
-        message: 'Tenant updated successfully',
-        data: tenant,
-      })
-    } catch (error) {
-      return response.badRequest({
-        message: 'Failed to update tenant',
-        error: error.message,
-      })
-    }
+    return response.json(tenant)
   }
 
   /**
    * DELETE /api/v1/tenants/:id
    * Soft delete tenant (deactivate)
    */
-  async destroy({ params, response }: HttpContext) {
-    try {
-      const tenant = await this.updateTenantService.execute(params.id, {
-        is_active: false,
-        suspended_reason: 'Deleted by owner',
-      })
+  async delete({ params, response }: HttpContext) {
+    const tenantId = params.id
 
-      return response.ok({
-        message: 'Tenant deactivated successfully',
-        data: tenant,
-      })
-    } catch (error) {
-      return response.badRequest({
-        message: 'Failed to delete tenant',
-        error: error.message,
-      })
-    }
+    const service = await app.container.make(UpdateTenantService)
+    await service.run(tenantId, {
+      is_active: false,
+      suspended_reason: 'Deleted by owner',
+    })
+
+    return response.noContent()
   }
 }

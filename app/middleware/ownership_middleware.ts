@@ -2,7 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { inject } from '@adonisjs/core'
 import OwnershipService from '#services/ownerships/ownership_service'
-import AuditService from '#services/audits/audit_service'
+import LogPermissionCheckService from '#services/audits/log_permission_check_service'
 
 export interface OwnershipMiddlewareOptions {
   resource: string
@@ -16,7 +16,7 @@ export interface OwnershipMiddlewareOptions {
 export default class OwnershipMiddleware {
   constructor(
     private ownershipService: OwnershipService,
-    private auditService: AuditService
+    private logPermissionCheckService: LogPermissionCheckService
   ) {}
 
   async handle(ctx: HttpContext, next: NextFn, options: OwnershipMiddlewareOptions) {
@@ -32,7 +32,7 @@ export default class OwnershipMiddleware {
     // Check if user is authenticated
     const user = auth.user
     if (!user) {
-      await this.auditService.logPermissionCheck(
+      await this.logPermissionCheckService.run(
         {
           resource,
           action,
@@ -51,9 +51,9 @@ export default class OwnershipMiddleware {
     // Get resource ID from params
     const resourceId = Number.parseInt(params[resourceIdParam])
     if (!resourceId || Number.isNaN(resourceId)) {
-      await this.auditService.logPermissionCheck(
+      await this.logPermissionCheckService.run(
         {
-          userId: user.id,
+          user_id: user.id,
           resource,
           action,
           context,
@@ -77,13 +77,13 @@ export default class OwnershipMiddleware {
       )
 
       if (!ownershipLevel || !allowedLevels.includes(ownershipLevel)) {
-        await this.auditService.logPermissionCheck(
+        await this.logPermissionCheckService.run(
           {
-            userId: user.id,
+            user_id: user.id,
             resource,
             action,
             context,
-            resourceId,
+            resource_id: resourceId,
             result: 'denied',
             reason: `Insufficient ownership level: ${ownershipLevel || 'none'}`,
           },
@@ -96,13 +96,13 @@ export default class OwnershipMiddleware {
       }
 
       // Log successful access
-      await this.auditService.logPermissionCheck(
+      await this.logPermissionCheckService.run(
         {
-          userId: user.id,
+          user_id: user.id,
           resource,
           action,
           context,
-          resourceId,
+          resource_id: resourceId,
           result: 'granted',
           reason: `Ownership level: ${ownershipLevel}`,
         },
@@ -115,13 +115,13 @@ export default class OwnershipMiddleware {
 
       await next()
     } catch (error) {
-      await this.auditService.logPermissionCheck(
+      await this.logPermissionCheckService.run(
         {
-          userId: user.id,
+          user_id: user.id,
           resource,
           action,
           context,
-          resourceId,
+          resource_id: resourceId,
           result: 'denied',
           reason: `Error checking ownership: ${error.message}`,
         },

@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import Tenant from '#models/tenant'
+import TenantsRepository from '#repositories/tenants_repository'
 
 interface UpdateTenantData {
   name?: string
@@ -18,18 +19,20 @@ interface UpdateTenantData {
 
 @inject()
 export default class UpdateTenantService {
+  constructor(private tenantsRepository: TenantsRepository) {}
+
   /**
    * Update an existing tenant
    */
-  async execute(tenantId: string, data: UpdateTenantData): Promise<Tenant> {
-    const tenant = await Tenant.find(tenantId)
+  async run(tenantId: string, data: UpdateTenantData): Promise<Tenant> {
+    const tenant = await this.tenantsRepository.findBy('id', tenantId)
     if (!tenant) {
       throw new Error('Tenant not found')
     }
 
     // Validate subdomain uniqueness if changed
     if (data.subdomain && data.subdomain !== tenant.subdomain) {
-      const existingTenant = await Tenant.findBy('subdomain', data.subdomain)
+      const existingTenant = await this.tenantsRepository.findBySubdomain(data.subdomain)
       if (existingTenant) {
         throw new Error(`Subdomain '${data.subdomain}' is already taken`)
       }
@@ -37,7 +40,9 @@ export default class UpdateTenantService {
 
     // Validate custom_domain uniqueness if changed
     if (data.custom_domain && data.custom_domain !== tenant.custom_domain) {
-      const existingCustomDomain = await Tenant.findBy('custom_domain', data.custom_domain)
+      const existingCustomDomain = await this.tenantsRepository.findByCustomDomain(
+        data.custom_domain
+      )
       if (existingCustomDomain) {
         throw new Error(`Custom domain '${data.custom_domain}' is already in use`)
       }

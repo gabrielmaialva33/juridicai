@@ -17,11 +17,16 @@ export default class PermissionsController {
   /**
    * List all permissions with pagination
    */
-  async list({ request }: HttpContext) {
-    const { page = 1, perPage = 10, resource, action } = request.qs()
+  async paginate({ request, response }: HttpContext) {
+    const page = request.input('page', 1)
+    const perPage = request.input('per_page', 10)
+    const resource = request.input('resource', undefined)
+    const action = request.input('action', undefined)
 
     const service = await app.container.make(ListPermissionsService)
-    return await service.handle(page, perPage, resource, action)
+    const result = await service.run(page, perPage, resource, action)
+
+    return response.json(result)
   }
 
   /**
@@ -31,9 +36,9 @@ export default class PermissionsController {
     const data = await request.validateUsing(createPermissionValidator)
 
     const service = await app.container.make(CreatePermissionService)
-    const permission = await service.handle(data)
+    const permission = await service.run(data)
 
-    return response.status(201).json(permission)
+    return response.created(permission)
   }
 
   /**
@@ -45,7 +50,7 @@ export default class PermissionsController {
     )
 
     const service = await app.container.make(SyncRolePermissionsService)
-    await service.handle(roleId, permissionIds)
+    await service.run(roleId, permissionIds)
 
     return response.json({ message: 'Permissions synced successfully' })
   }
@@ -85,7 +90,7 @@ export default class PermissionsController {
     const data = await request.validateUsing(syncUserPermissionsValidator)
 
     const service = await app.container.make(SyncUserPermissionsService)
-    await service.handle(data.user_id, data.permissions)
+    await service.run(data.user_id, data.permissions)
 
     return response.json({ message: 'User permissions synced successfully' })
   }
@@ -93,28 +98,26 @@ export default class PermissionsController {
   /**
    * Get user permissions
    */
-  async getUserPermissions({ params }: HttpContext) {
+  async getUserPermissions({ params, response }: HttpContext) {
     const userId = params.id
 
     const service = await app.container.make(CheckUserPermissionService)
     const permissions = await service.getUserPermissions(userId)
 
-    return { permissions }
+    return response.json({ permissions })
   }
 
   /**
    * Check if user has specific permissions
    */
-  async checkUserPermissions({ request, params }: HttpContext) {
+  async checkUserPermissions({ request, params, response }: HttpContext) {
     const userId = params.id
-    const { permissions, require_all: requireAll = false } = request.only([
-      'permissions',
-      'require_all',
-    ])
+    const permissions = request.input('permissions')
+    const requireAll = request.input('require_all', false)
 
     const service = await app.container.make(CheckUserPermissionService)
-    const hasPermission = await service.handle(userId, permissions, requireAll)
+    const hasPermission = await service.run(userId, permissions, requireAll)
 
-    return { has_permission: hasPermission }
+    return response.json({ has_permission: hasPermission })
   }
 }

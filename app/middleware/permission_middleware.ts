@@ -4,7 +4,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 
 import ForbiddenException from '#exceptions/forbidden_exception'
 import PermissionService from '#services/permissions/optimized_permission_service'
-import AuditService from '#services/audits/audit_service'
+import LogPermissionCheckService from '#services/audits/log_permission_check_service'
 
 interface PermissionOptions {
   permissions: string | string[]
@@ -21,7 +21,7 @@ export default class PermissionMiddleware {
     const user = auth.getUserOrFail()
 
     const permissionService = await app.container.make(PermissionService)
-    const auditService = await app.container.make(AuditService)
+    const logPermissionCheckService = await app.container.make(LogPermissionCheckService)
 
     // Get resource ID if specified
     let resourceId: number | undefined
@@ -47,13 +47,13 @@ export default class PermissionMiddleware {
 
     if (!hasPermission) {
       // Log failed permission check
-      await auditService.logPermissionCheck(
+      await logPermissionCheckService.run(
         {
-          userId: user.id,
+          user_id: user.id,
           resource,
           action,
           context: options.context,
-          resourceId,
+          resource_id: resourceId,
           result: 'denied',
           reason: 'Insufficient permissions',
         },
@@ -70,13 +70,13 @@ export default class PermissionMiddleware {
     }
 
     // Log successful permission check
-    await auditService.logPermissionCheck(
+    await logPermissionCheckService.run(
       {
-        userId: user.id,
+        user_id: user.id,
         resource,
         action,
         context: options.context,
-        resourceId,
+        resource_id: resourceId,
         result: 'granted',
         reason: 'Permission granted',
       },

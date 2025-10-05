@@ -12,7 +12,7 @@ interface UserPermissionData {
 
 @inject()
 export default class SyncUserPermissionsService {
-  async handle(userId: number, permissions: UserPermissionData[]): Promise<void> {
+  async run(userId: number, permissions: UserPermissionData[]): Promise<void> {
     const { i18n } = HttpContext.getOrFail()
     const user = await User.find(userId)
     if (!user) {

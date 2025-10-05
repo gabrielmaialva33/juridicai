@@ -9,7 +9,7 @@ router
   .group(() => {
     // Permission management routes
     router
-      .get('/permissions', [PermissionsController, 'list'])
+      .get('/permissions', [PermissionsController, 'paginate'])
       .as('permission.list')
       .use(
         middleware.permission({

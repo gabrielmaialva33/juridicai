@@ -8,7 +8,7 @@ import IPermission from '#interfaces/permission_interface'
 export default class CreatePermissionService {
   constructor(private permissionRepository: PermissionRepository) {}
 
-  async handle(data: IPermission.PermissionData): Promise<Permission> {
+  async run(data: IPermission.PermissionData): Promise<Permission> {
     // Check if a permission with the same resource and action already exists
     const existingPermission = await this.permissionRepository.findByResourceAction(
       data.resource,

@@ -54,7 +54,7 @@ export const ClientFactory = factory
       address: {
         street: faker.location.streetAddress(),
         number: faker.location.buildingNumber(),
-        complement: faker.datatype.boolean() ? faker.location.secondaryAddress() : null,
+        complement: faker.datatype.boolean() ? faker.location.secondaryAddress() : undefined,
         neighborhood: faker.location.county(),
         city: faker.location.city(),
         state: faker.location.state({ abbreviated: true }),

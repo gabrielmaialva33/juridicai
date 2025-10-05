@@ -6,7 +6,7 @@ const RolesController = () => import('#controllers/role/roles_controller')
 
 router
   .group(() => {
-    router.get('/', [RolesController, 'list']).as('role.list')
+    router.get('/', [RolesController, 'paginate']).as('role.list')
     router.put('/attach', [RolesController, 'attach']).as('role.attach')
   })
   .use([

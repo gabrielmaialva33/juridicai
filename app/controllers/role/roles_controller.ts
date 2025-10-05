@@ -1,4 +1,3 @@
-import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
@@ -8,14 +7,14 @@ import { attachRoleValidator } from '#validators/role'
 import ListRolesService from '#services/roles/list_roles_service'
 import SyncRolesService from '#services/roles/sync_roles_service'
 
-@inject()
 export default class RolesController {
-  async list({ request, response }: HttpContext) {
-    const service = await app.container.make(ListRolesService)
+  async paginate({ request, response }: HttpContext) {
     const page = request.input('page', 1)
-    const perPage = request.input('perPage', 10)
+    const perPage = request.input('per_page', 10)
 
-    const roles = await service.run({ page, perPage })
+    const service = await app.container.make(ListRolesService)
+    const roles = await service.run(page, perPage)
+
     return response.json(roles)
   }
 

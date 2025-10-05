@@ -1,8 +1,9 @@
 import { inject } from '@adonisjs/core'
 import Tenant from '#models/tenant'
-import TenantUser from '#models/tenant_user'
-import User from '#models/user'
 import { DateTime } from 'luxon'
+import TenantsRepository from '#repositories/tenants_repository'
+import UsersRepository from '#repositories/users_repository'
+import TenantUsersRepository from '#repositories/tenant_users_repository'
 
 interface CreateTenantData {
   name: string
@@ -20,32 +21,40 @@ interface CreateTenantData {
 
 @inject()
 export default class CreateTenantService {
+  constructor(
+    private tenantsRepository: TenantsRepository,
+    private usersRepository: UsersRepository,
+    private tenantUsersRepository: TenantUsersRepository
+  ) {}
+
   /**
    * Create a new tenant and assign the owner
    */
-  async execute(data: CreateTenantData): Promise<Tenant> {
+  async run(data: CreateTenantData): Promise<Tenant> {
     // Validate subdomain uniqueness
-    const existingTenant = await Tenant.findBy('subdomain', data.subdomain)
+    const existingTenant = await this.tenantsRepository.findBySubdomain(data.subdomain)
     if (existingTenant) {
       throw new Error(`Subdomain '${data.subdomain}' is already taken`)
     }
 
     // Validate custom_domain uniqueness if provided
     if (data.custom_domain) {
-      const existingCustomDomain = await Tenant.findBy('custom_domain', data.custom_domain)
+      const existingCustomDomain = await this.tenantsRepository.findByCustomDomain(
+        data.custom_domain
+      )
       if (existingCustomDomain) {
         throw new Error(`Custom domain '${data.custom_domain}' is already in use`)
       }
     }
 
     // Validate owner exists
-    const owner = await User.find(data.owner_user_id)
+    const owner = await this.usersRepository.findBy('id', data.owner_user_id)
     if (!owner) {
       throw new Error('Owner user not found')
     }
 
     // Create tenant
-    const tenant = await Tenant.create({
+    const tenant = await this.tenantsRepository.create({
       name: data.name,
       subdomain: data.subdomain,
       custom_domain: data.custom_domain ?? null,
@@ -56,7 +65,7 @@ export default class CreateTenantService {
     })
 
     // Assign owner to tenant
-    await TenantUser.create({
+    await this.tenantUsersRepository.create({
       tenant_id: tenant.id,
       user_id: owner.id,
       role: 'owner',

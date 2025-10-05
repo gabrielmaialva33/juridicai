@@ -4,7 +4,7 @@ import User from '#models/user'
 
 @inject()
 export default class CheckUserPermissionService {
-  async handle(
+  async run(
     userId: number,
     permissionNames: string | string[],
     requireAll: boolean = false
