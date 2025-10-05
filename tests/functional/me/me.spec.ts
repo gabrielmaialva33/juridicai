@@ -8,6 +8,7 @@ import Permission from '#models/permission'
 
 import IRole from '#interfaces/role_interface'
 import IPermission from '#interfaces/permission_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Me endpoints', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -31,7 +32,10 @@ test.group('Me endpoints', (group) => {
     )
     await user.related('roles').attach([role.id])
 
-    const response = await client.get('/api/v1/me').loginAs(user)
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
+    const response = await client.get('/api/v1/me').header('X-Tenant-ID', tenant.id).loginAs(user)
 
     response.assertStatus(200)
     assert.equal(response.body().email, 'test@example.com')
@@ -59,6 +63,9 @@ test.group('Me endpoints', (group) => {
     )
     await user.related('roles').attach([role.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Add direct permission
     const permission = await Permission.firstOrCreate(
       {
@@ -78,7 +85,10 @@ test.group('Me endpoints', (group) => {
       },
     })
 
-    const response = await client.get('/api/v1/me/permissions').loginAs(user)
+    const response = await client
+      .get('/api/v1/me/permissions')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
 
     response.assertStatus(200)
     assert.isNumber(response.body().total)
@@ -118,7 +128,13 @@ test.group('Me endpoints', (group) => {
 
     await user.related('roles').sync([userRole.id, editorRole.id])
 
-    const response = await client.get('/api/v1/me/roles').loginAs(user)
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
+    const response = await client
+      .get('/api/v1/me/roles')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
 
     response.assertStatus(200)
     assert.equal(response.body().total, 2)

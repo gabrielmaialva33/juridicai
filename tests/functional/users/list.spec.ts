@@ -8,6 +8,7 @@ import User from '#models/user'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Users list', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -54,10 +55,16 @@ test.group('Users list', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign list permission to user role
     await assignPermissions(userRole, [IPermission.Actions.LIST])
 
-    const response = await client.get('/api/v1/users').loginAs(user)
+    const response = await client
+      .get('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -99,20 +106,28 @@ test.group('Users list', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign list permission to user role
     await assignPermissions(userRole, [IPermission.Actions.LIST])
 
-    // Create 15 additional users
+    // Create 15 additional users in the same tenant
     for (let i = 1; i <= 15; i++) {
-      await User.create({
+      const newUser = await User.create({
         full_name: `User${i} Test`,
         email: `user${i}@example.com`,
         username: `user${i}`,
         password: 'password123',
       })
+      await setupTenantForUser(newUser, 'lawyer', tenant)
     }
 
-    const response = await client.get('/api/v1/users').qs({ page: 2, limit: 10 }).loginAs(authUser)
+    const response = await client
+      .get('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
+      .qs({ page: 2, limit: 10 })
+      .loginAs(authUser)
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -150,24 +165,33 @@ test.group('Users list', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign list permission to user role
     await assignPermissions(userRole, [IPermission.Actions.LIST])
 
-    await User.create({
+    const janeUser = await User.create({
       full_name: 'Jane Smith',
       email: 'jane@example.com',
       username: 'janesmith',
       password: 'password123',
     })
+    await setupTenantForUser(janeUser, 'lawyer', tenant)
 
-    await User.create({
+    const bobUser = await User.create({
       full_name: 'Bob Johnson',
       email: 'bob@example.com',
       username: 'bobjohnson',
       password: 'password123',
     })
+    await setupTenantForUser(bobUser, 'lawyer', tenant)
 
-    const response = await client.get('/api/v1/users').qs({ search: 'jane' }).loginAs(authUser)
+    const response = await client
+      .get('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
+      .qs({ search: 'jane' })
+      .loginAs(authUser)
 
     response.assertStatus(200)
     const data = response.body().data
@@ -204,25 +228,31 @@ test.group('Users list', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign list permission to user role
     await assignPermissions(userRole, [IPermission.Actions.LIST])
 
-    await User.create({
+    const charlieUser = await User.create({
       full_name: 'Charlie Brown',
       email: 'charlie@example.com',
       username: 'charliebrown',
       password: 'password123',
     })
+    await setupTenantForUser(charlieUser, 'lawyer', tenant)
 
-    await User.create({
+    const aliceUser = await User.create({
       full_name: 'Alice Wonder',
       email: 'alice@example.com',
       username: 'alicewonder',
       password: 'password123',
     })
+    await setupTenantForUser(aliceUser, 'lawyer', tenant)
 
     const response = await client
       .get('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
       .qs({ sort_by: 'full_name', order: 'asc' })
       .loginAs(authUser)
 
@@ -280,10 +310,16 @@ test.group('Users list', (group) => {
       },
     ])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign list permission to user role (admin inherits this too)
     await assignPermissions(userRole, [IPermission.Actions.LIST])
 
-    const response = await client.get('/api/v1/users').loginAs(user)
+    const response = await client
+      .get('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
 
     response.assertStatus(200)
     response.assertBodyContains({

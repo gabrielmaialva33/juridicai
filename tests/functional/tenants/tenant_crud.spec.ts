@@ -3,6 +3,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import { UserFactory } from '#database/factories/user_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Tenants CRUD', (group) => {
   group.each.setup(async () => {
@@ -61,10 +62,17 @@ test.group('Tenants CRUD', (group) => {
   test('POST /api/v1/tenants creates new tenant', async ({ client }) => {
     const user = await UserFactory.create()
 
-    const response = await client.post('/api/v1/tenants').loginAs(user).json({
-      name: 'Nova Advocacia LTDA',
-      subdomain: 'nova-adv',
-    })
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
+    const response = await client
+      .post('/api/v1/tenants')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
+      .json({
+        name: 'Nova Advocacia LTDA',
+        subdomain: 'nova-adv',
+      })
 
     response.assertStatus(201)
     response.assertBodyContains({
@@ -78,10 +86,17 @@ test.group('Tenants CRUD', (group) => {
   test('POST /api/v1/tenants validates subdomain format', async ({ client }) => {
     const user = await UserFactory.create()
 
-    const response = await client.post('/api/v1/tenants').loginAs(user).json({
-      name: 'Test Firm',
-      subdomain: 'INVALID_SUBDOMAIN!', // Should fail - uppercase and special chars
-    })
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
+    const response = await client
+      .post('/api/v1/tenants')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
+      .json({
+        name: 'Test Firm',
+        subdomain: 'INVALID_SUBDOMAIN!', // Should fail - uppercase and special chars
+      })
 
     response.assertStatus(422)
     response.assertBodyContains({
@@ -95,12 +110,20 @@ test.group('Tenants CRUD', (group) => {
 
   test('POST /api/v1/tenants rejects duplicate subdomain', async ({ client }) => {
     const user = await UserFactory.create()
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     await TenantFactory.merge({ subdomain: 'existing-firm' }).create()
 
-    const response = await client.post('/api/v1/tenants').loginAs(user).json({
-      name: 'Another Firm',
-      subdomain: 'existing-firm',
-    })
+    const response = await client
+      .post('/api/v1/tenants')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
+      .json({
+        name: 'Another Firm',
+        subdomain: 'existing-firm',
+      })
 
     response.assertStatus(409)
   })
@@ -215,7 +238,7 @@ test.group('Tenants CRUD', (group) => {
       .merge({ tenant_id: tenant.id, user_id: user.id })
       .create()
 
-    // Request without X-Tenant-ID header
+    // Request without X-Tenant-ID header - should use default tenant
     const response = await client.get('/api/v1/tenants/me').loginAs(user)
 
     response.assertStatus(200)

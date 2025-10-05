@@ -17,5 +17,5 @@ router
       ])
       .as('files.upload')
   })
-  .use(middleware.auth())
+  .use([middleware.tenant(), middleware.auth()])
   .prefix('/api/v1/files')

@@ -6,8 +6,8 @@ test.group('Basic API', () => {
 
     response.assertStatus(200)
     response.assertBodyContains({
-      name: 'adonis-kit',
-      version: '0.0.0',
+      name: 'juridicai',
+      version: '1.0.0',
     })
   })
 

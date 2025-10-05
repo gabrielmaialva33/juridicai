@@ -38,7 +38,6 @@ router.use([
   () => import('@adonisjs/shield/shield_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
   () => import('#middleware/detect_user_locale_middleware'),
-  () => import('#middleware/tenant_resolver_middleware'),
 ])
 
 /**
@@ -51,4 +50,5 @@ export const middleware = router.named({
   acl: () => import('#middleware/acl_middleware'),
   permission: () => import('#middleware/permission_middleware'),
   ownership: () => import('#middleware/ownership_middleware'),
+  tenant: () => import('#middleware/tenant_resolver_middleware'),
 })

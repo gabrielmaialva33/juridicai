@@ -8,6 +8,7 @@ import User from '#models/user'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Users CRUD', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -54,6 +55,9 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign read permission to user role
     await assignPermissions(userRole, [IPermission.Actions.READ])
 
@@ -63,8 +67,12 @@ test.group('Users CRUD', (group) => {
       username: 'targetuser',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
-    const response = await client.get(`/api/v1/users/${targetUser.id}`).loginAs(authUser)
+    const response = await client
+      .get(`/api/v1/users/${targetUser.id}`)
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(authUser)
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -97,10 +105,16 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign read permission to user role
     await assignPermissions(userRole, [IPermission.Actions.READ])
 
-    const response = await client.get('/api/v1/users/999999').loginAs(authUser)
+    const response = await client
+      .get('/api/v1/users/999999')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(authUser)
 
     response.assertStatus(404)
     response.assertBodyContains({
@@ -130,6 +144,9 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -141,7 +158,11 @@ test.group('Users CRUD', (group) => {
       password_confirmation: 'password123',
     }
 
-    const response = await client.post('/api/v1/users').json(newUserData).loginAs(authUser)
+    const response = await client
+      .post('/api/v1/users')
+      .header('X-Tenant-ID', tenant.id)
+      .json(newUserData)
+      .loginAs(authUser)
 
     response.assertStatus(201)
     response.assertBodyContains({
@@ -176,12 +197,16 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
     const response = await client
       .post('/api/v1/users')
       .header('Accept', 'application/json')
+      .header('X-Tenant-ID', tenant.id)
       .json({
         full_name: 'New User',
         email: 'invalid-email',
@@ -231,6 +256,9 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign update permission to user role
     await assignPermissions(userRole, [IPermission.Actions.UPDATE])
 
@@ -240,6 +268,7 @@ test.group('Users CRUD', (group) => {
       username: 'olduser',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
     const updateData = {
       full_name: 'Updated Name',
@@ -247,6 +276,7 @@ test.group('Users CRUD', (group) => {
 
     const response = await client
       .put(`/api/v1/users/${targetUser.id}`)
+      .header('X-Tenant-ID', tenant.id)
       .json(updateData)
       .loginAs(authUser)
 
@@ -284,6 +314,9 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign update permission to user role
     await assignPermissions(userRole, [IPermission.Actions.UPDATE])
 
@@ -296,9 +329,11 @@ test.group('Users CRUD', (group) => {
       username: originalUsername,
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
     const response = await client
       .put(`/api/v1/users/${targetUser.id}`)
+      .header('X-Tenant-ID', tenant.id)
       .json({
         email: 'newemail@example.com',
         username: 'newusername',
@@ -336,6 +371,9 @@ test.group('Users CRUD', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(authUser)
+
     // Assign delete permission to user role
     await assignPermissions(userRole, [IPermission.Actions.DELETE])
 
@@ -345,8 +383,12 @@ test.group('Users CRUD', (group) => {
       username: 'deleteme',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
-    const response = await client.delete(`/api/v1/users/${targetUser.id}`).loginAs(authUser)
+    const response = await client
+      .delete(`/api/v1/users/${targetUser.id}`)
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(authUser)
 
     response.assertStatus(204)
 

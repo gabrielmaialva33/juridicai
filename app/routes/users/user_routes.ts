@@ -54,5 +54,5 @@ router
       )
       .as('user.delete')
   })
-  .use([middleware.auth(), apiThrottle])
+  .use([middleware.tenant(), middleware.auth(), apiThrottle])
   .prefix('/api/v1/users')

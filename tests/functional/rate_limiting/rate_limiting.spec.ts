@@ -8,6 +8,7 @@ import Role from '#models/role'
 
 import IRole from '#interfaces/role_interface'
 import IPermission from '#interfaces/permission_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Rate Limiting', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -80,12 +81,15 @@ test.group('Rate Limiting', (group) => {
 
     await user.related('roles').sync([userRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Test basic guest access (no rate limiting check due to configuration issues)
     const guestResponse = await client.get('/version')
     assert.equal(guestResponse.status(), 200)
 
     // Test authenticated access (should use different rate limiter)
-    const authResponse = await client.get('/version').loginAs(user)
+    const authResponse = await client.get('/version').header('X-Tenant-ID', tenant.id).loginAs(user)
     assert.equal(authResponse.status(), 200)
 
     // Verify that both authenticated and guest users can access the endpoint
@@ -135,6 +139,9 @@ test.group('Rate Limiting', (group) => {
 
     await user.related('roles').sync([userRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Create file upload permission
 
     const uploadPermission = await Permission.firstOrCreate(
@@ -171,6 +178,7 @@ test.group('Rate Limiting', (group) => {
     for (let i = 0; i < 10; i++) {
       const response = await client
         .post('/api/v1/files/upload')
+        .header('X-Tenant-ID', tenant.id)
         .file('file', testFiles[i])
         .loginAs(user)
 
@@ -180,6 +188,7 @@ test.group('Rate Limiting', (group) => {
     // 11th upload should be rate limited
     const rateLimitedResponse = await client
       .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFiles[10])
       .loginAs(user)
 
@@ -218,10 +227,16 @@ test.group('Rate Limiting', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     // Admin endpoints should allow 200 requests per minute
     const responses = []
     for (let i = 0; i < 5; i++) {
-      const response = await client.get('/api/v1/admin/permissions').loginAs(adminUser)
+      const response = await client
+        .get('/api/v1/admin/permissions')
+        .header('X-Tenant-ID', tenant.id)
+        .loginAs(adminUser)
       responses.push(response)
     }
 

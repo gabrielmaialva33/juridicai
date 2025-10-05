@@ -10,6 +10,7 @@ router
     router.put('/attach', [RolesController, 'attach']).as('role.attach')
   })
   .use([
+    middleware.tenant(),
     middleware.auth(),
     middleware.acl({
       role_slugs: [IRole.Slugs.ROOT, IRole.Slugs.ADMIN],

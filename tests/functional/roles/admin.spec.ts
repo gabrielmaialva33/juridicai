@@ -7,6 +7,7 @@ import Role from '#models/role'
 import User from '#models/user'
 
 import IRole from '#interfaces/role_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Roles admin', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -39,7 +40,13 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
-    const response = await client.get('/api/v1/admin/roles').loginAs(adminUser)
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
+    const response = await client
+      .get('/api/v1/admin/roles')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(adminUser)
 
     response.assertStatus(200)
     response.assertBodyContains({
@@ -77,7 +84,13 @@ test.group('Roles admin', (group) => {
 
     await rootUser.related('roles').sync([rootRole.id])
 
-    const response = await client.get('/api/v1/admin/roles').loginAs(rootUser)
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(rootUser)
+
+    const response = await client
+      .get('/api/v1/admin/roles')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(rootUser)
 
     response.assertStatus(200)
     assert.properties(response.body(), ['data', 'meta'])
@@ -102,7 +115,13 @@ test.group('Roles admin', (group) => {
 
     await regularUser.related('roles').sync([userRole.id])
 
-    const response = await client.get('/api/v1/admin/roles').loginAs(regularUser)
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(regularUser)
+
+    const response = await client
+      .get('/api/v1/admin/roles')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(regularUser)
 
     response.assertStatus(403)
     response.assertBodyContains({
@@ -138,15 +157,20 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     const targetUser = await User.create({
       full_name: 'Target User',
       email: 'target@example.com',
       username: 'targetuser',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
     const response = await client
       .put('/api/v1/admin/roles/attach')
+      .header('X-Tenant-ID', tenant.id)
       .json({
         user_id: targetUser.id,
         role_ids: [editorRole.id],
@@ -185,9 +209,13 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     const response = await client
       .put('/api/v1/admin/roles/attach')
       .header('Accept', 'application/json')
+      .header('X-Tenant-ID', tenant.id)
       .json({})
       .loginAs(adminUser)
 
@@ -234,8 +262,12 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     const response = await client
       .put('/api/v1/admin/roles/attach')
+      .header('X-Tenant-ID', tenant.id)
       .json({
         user_id: 999999,
         role_ids: [userRole.id],
@@ -267,15 +299,20 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     const targetUser = await User.create({
       full_name: 'Target User',
       email: 'target@example.com',
       username: 'targetuser',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
     const response = await client
       .put('/api/v1/admin/roles/attach')
+      .header('X-Tenant-ID', tenant.id)
       .json({
         user_id: targetUser.id,
         role_ids: [999999],
@@ -316,12 +353,16 @@ test.group('Roles admin', (group) => {
 
     await adminUser.related('roles').sync([adminRole.id])
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(adminUser)
+
     const targetUser = await User.create({
       full_name: 'Target User',
       email: 'target@example.com',
       username: 'targetuser',
       password: 'password123',
     })
+    await setupTenantForUser(targetUser, 'lawyer', tenant)
 
     // First attachment
     await targetUser.related('roles').sync([userRole.id])
@@ -329,6 +370,7 @@ test.group('Roles admin', (group) => {
     // Try to attach same role again
     const response = await client
       .put('/api/v1/admin/roles/attach')
+      .header('X-Tenant-ID', tenant.id)
       .json({
         user_id: targetUser.id,
         role_ids: [userRole.id],

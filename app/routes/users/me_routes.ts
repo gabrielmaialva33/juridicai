@@ -10,5 +10,5 @@ router
     router.get('/roles', [MeController, 'roles']).as('me.roles')
   })
   .prefix('/api/v1/me')
-  .use(middleware.auth())
+  .use([middleware.tenant(), middleware.auth()])
   .as('me')

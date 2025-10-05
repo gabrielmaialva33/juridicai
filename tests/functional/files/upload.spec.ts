@@ -14,6 +14,7 @@ import File from '#models/file'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
+import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Files upload', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -65,6 +66,9 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -78,6 +82,7 @@ test.group('Files upload', (group) => {
 
     const response = await client
       .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFilePath)
       .loginAs(user)
 
@@ -118,6 +123,9 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -134,6 +142,7 @@ test.group('Files upload', (group) => {
 
     const response = await client
       .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFilePath)
       .loginAs(user)
 
@@ -174,10 +183,16 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
-    const response = await client.post('/api/v1/files/upload').loginAs(user)
+    const response = await client
+      .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
+      .loginAs(user)
 
     response.assertStatus(422)
     response.assertBodyContains({
@@ -212,6 +227,9 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -226,6 +244,7 @@ test.group('Files upload', (group) => {
     const response = await client
       .post('/api/v1/files/upload')
       .header('Accept', 'application/json')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFilePath)
       .loginAs(user)
 
@@ -265,6 +284,9 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -278,6 +300,7 @@ test.group('Files upload', (group) => {
     const response = await client
       .post('/api/v1/files/upload')
       .header('Accept', 'application/json')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFilePath)
       .loginAs(user)
 
@@ -317,6 +340,9 @@ test.group('Files upload', (group) => {
       role_id: userRole.id,
     })
 
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
+
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
 
@@ -332,6 +358,7 @@ test.group('Files upload', (group) => {
     // Upload first file
     const response1 = await client
       .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFile1Path)
       .loginAs(user)
 
@@ -340,6 +367,7 @@ test.group('Files upload', (group) => {
     // Upload second file
     const response2 = await client
       .post('/api/v1/files/upload')
+      .header('X-Tenant-ID', tenant.id)
       .file('file', testFile2Path)
       .loginAs(user)
 
@@ -374,6 +402,9 @@ test.group('Files upload', (group) => {
       user_id: user.id,
       role_id: userRole.id,
     })
+
+    // Setup tenant for user
+    const tenant = await setupTenantForUser(user)
 
     // Assign create permission to user role
     await assignPermissions(userRole, [IPermission.Actions.CREATE])
@@ -431,6 +462,7 @@ test.group('Files upload', (group) => {
 
       const response = await client
         .post('/api/v1/files/upload')
+        .header('X-Tenant-ID', tenant.id)
         .file('file', testFilePath)
         .loginAs(user)
 

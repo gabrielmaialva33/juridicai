@@ -11,6 +11,6 @@ router
     // Authenticated route - resend verification email
     router
       .post('/resend-verification-email', [EmailVerificationController, 'resend'])
-      .use(middleware.auth({ guards: ['jwt'] }))
+      .use([middleware.tenant(), middleware.auth({ guards: ['jwt'] })])
   })
   .prefix('/api/v1')

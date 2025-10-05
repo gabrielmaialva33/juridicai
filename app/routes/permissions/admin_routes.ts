@@ -82,5 +82,5 @@ router
         })
       )
   })
-  .use([middleware.auth(), adminThrottle])
+  .use([middleware.tenant(), middleware.auth(), adminThrottle])
   .prefix('/api/v1/admin')
