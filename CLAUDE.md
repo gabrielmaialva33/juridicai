@@ -2,419 +2,226 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚠️ CRITICAL RULE: ALWAYS USE ADONISJS COMMANDS
+## Project Overview
 
-**NEVER manually create files in this project.** Always use AdonisJS Ace commands:
+JuridicAI is a multi-tenant SaaS platform for law firm management built with AdonisJS v6. The architecture implements row-level tenant isolation using UUID-based `tenant_id` columns throughout the database, with automatic query scoping via `TenantAwareModel`.
 
-- `node ace make:controller` for controllers
-- `node ace make:model` for models
-- `node ace make:migration` for migrations
-- `node ace make:service` for services
-- See "AdonisJS Commands Reference" section below for complete list
+## Development Commands
 
-This ensures proper file structure, naming conventions, and boilerplate code.
-
-## Common Development Commands
-
-### Development
-
-- `pnpm run dev` - Start development server with hot reload
-- `pnpm run build` - Build application for production
-- `pnpm start` - Start production server
-
-### Testing
-
-- `pnpm test` - Run unit tests only
-- `pnpm run test:e2e` - Run all tests (functional and e2e)
-
-### Code Quality
-
-- `pnpm run lint` - Run ESLint
-- `pnpm run lint:fix` - Fix linting issues automatically
-- `pnpm run format` - Format code with Prettier
-- `pnpm run typecheck` - Run TypeScript type checking
-
-### Database
-
-- `node ace migration:run` - Run pending migrations
-- `node ace db:seed` - Run database seeders
-- `node ace migration:rollback` - Rollback last migration
-
-### Docker
-
-- `pnpm run docker` - Run migrations, seeders, and start server
-
-## Architecture Overview
-
-This is an AdonisJS v6 application with React frontend using Inertia.js. The project follows a modular structure with
-clear separation of concerns.
-
-### Key Technologies
-
-- **Backend**: AdonisJS v6 (Node.js framework)
-- **Frontend**: React 19 with Inertia.js for SPA-like experience
-- **Database**: PostgreSQL (production), SQLite (testing)
-- **Styling**: TailwindCSS v4
-- **Authentication**: Multiple guards - JWT (default), API tokens, session, basic auth
-- **Validation**: VineJS
-- **Testing**: Japa framework
-- **Queue**: Bull Queue with Redis
-
-### Project Structure
-
-#### Backend Architecture (`app/`)
-
-- **controllers/**: HTTP request handlers organized by domain (user, role, permission, file, health)
-- **models/**: Lucid ORM models with relationships and hooks
-- **services/**: Business logic layer organized by domain with specific use cases
-- **repositories/**: Data access layer abstraction
-- **middleware/**: HTTP middleware for auth, ACL, ownership checks
-- **validators/**: Request validation schemas
-- **events/**: Domain events and listeners
-- **exceptions/**: Custom exception classes
-
-#### Frontend (`inertia/`)
-
-- **app/**: React application entry points
-- **pages/**: React page components
-- **css/**: Stylesheets
-
-#### Configuration (`config/`)
-
-- **auth.ts**: Multi-guard authentication (JWT default, API tokens, session, basic auth)
-- **database.ts**: PostgreSQL/SQLite configuration
-- **drive.ts**: File storage (local, S3, GCS)
-
-### Authentication & Authorization
-
-The application uses a comprehensive RBAC (Role-Based Access Control) system:
-
-- **Multiple Auth Guards**: JWT (default), API tokens, session, basic auth
-- **Role-Permission System**: Users have roles, roles have permissions, users can have direct permissions
-- **Permission Inheritance**: Roles can inherit permissions from other roles
-- **Permission Caching**: Optimized permission checking with caching
-- **Ownership-based Access**: Middleware for resource ownership validation
-
-### Key Features
-
-- **User Management**: CRUD operations with email verification
-- **Role Management**: Dynamic role creation and permission assignment
-- **File Upload**: Multi-provider file storage (local, S3, GCS)
-- **Audit Logging**: Track user actions and changes
-- **Rate Limiting**: API throttling
-- **Internationalization**: Multi-language support (en/pt)
-- **Health Checks**: System health monitoring
-
-### Import Aliases
-
-The project uses extensive import aliases defined in `package.json`:
-
-- `#controllers/*` → `./app/controllers/*.js`
-- `#models/*` → `./app/models/*.js`
-- `#services/*` → `./app/services/*.js`
-- `#repositories/*` → `./app/repositories/*.js`
-- `#middleware/*` → `./app/middleware/*.js`
-- `#validators/*` → `./app/validators/*.js`
-- `#config/*` → `./config/*.js`
-- And many more...
-
-### Database
-
-- **ORM**: Lucid with snake_case naming strategy
-- **Migrations**: Located in `database/migrations/`
-- **Soft Deletes**: Implemented in User model
-- **Relationships**: Extensive use of many-to-many relationships for RBAC
-
-### Testing
-
-Two test suites configured in `adonisrc.ts`:
-
-- **Unit tests**: `tests/unit/**/*.spec.ts` (2s timeout)
-- **Functional tests**: `tests/functional/**/*.spec.ts` (30s timeout)
-
-Uses Japa testing framework with API client and OpenAPI assertion support.
-
-### File Organization
-
-Services are organized by domain with specific use cases:
-
-- `app/services/users/` - User-related operations
-- `app/services/permissions/` - Permission management
-- `app/services/roles/` - Role management
-- `app/services/audits/` - Audit logging
-- `app/services/upload/` - File upload handling
-
-This structure promotes maintainability and clear separation of business logic.
-
-## AdonisJS Commands Reference (MUST USE)
-
-### File Generation Commands
-
-#### Controllers
-
+### Essential Commands
 ```bash
-node ace make:controller User
-# Creates: app/controllers/users_controller.ts
+# Development
+pnpm dev                           # Start dev server with hot-reload
+node ace serve --hmr              # Alternative dev server command
 
-node ace make:controller Post --resource
-# Creates controller with all RESTful methods
+# Testing
+pnpm test                         # Run unit tests (SQLite in-memory)
+pnpm test:e2e                     # Run all tests including functional
+node ace test unit --force-exit   # Direct test execution
+
+# Code Quality
+pnpm lint:fix                     # Fix linting issues
+pnpm typecheck                    # TypeScript type checking
+pnpm format                       # Format with Prettier
+
+# Database
+node ace migration:run            # Run pending migrations
+node ace migration:rollback      # Rollback last migration batch
+node ace migration:fresh          # Drop all tables and re-run migrations
+node ace db:seed                  # Seed development data
+
+# Build & Production
+pnpm build                        # Build for production
+pnpm start                        # Start production server
 ```
 
-#### Models
-
+### Code Generation Commands
 ```bash
-node ace make:model User
-# Creates: app/models/user.ts
+# Generate tenant-aware model with migration
+node ace make:model Client -m
 
-node ace make:model Post -m
-# Creates model with migration
+# Generate controller with resource methods
+node ace make:controller clients/clients_controller --resource
+
+# Generate service layer
+node ace make:service clients/create_client_service
+
+# Generate validator
+node ace make:validator CreateClientValidator
+
+# Generate factory for testing
+node ace make:factory Client
+
+# Generate test
+node ace make:test clients/create_client --suite=functional
 ```
 
-#### Migrations
+## Architecture & Core Patterns
 
-```bash
-node ace make:migration users
-# Creates: database/migrations/[timestamp]_create_users_table.ts
+### Multi-Tenant Architecture
 
-node ace make:migration add_email_to_users --alter
-# Creates migration for altering existing table
+The system uses **row-level tenant isolation** with automatic query scoping. Every tenant-scoped table has a `tenant_id` column that's automatically managed.
+
+**Key Components:**
+- `TenantAwareModel` (app/models/tenant_aware_model.ts): Base class for all tenant-scoped models
+- `TenantContextService` (app/services/tenants/tenant_context_service.ts): Manages tenant context using AsyncLocalStorage
+- `TenantResolverMiddleware` (app/middleware/tenant_resolver_middleware.ts): Resolves tenant from headers/subdomain
+
+### Tenant Context Flow
+
+1. **HTTP Request arrives** → `TenantResolverMiddleware` resolves tenant via:
+   - `X-Tenant-ID` header (API clients)
+   - Subdomain extraction (e.g., acme.juridicai.com.br)
+   - User's default tenant (fallback)
+
+2. **Context established** → AsyncLocalStorage maintains tenant context across async operations
+
+3. **Database queries** → All models extending `TenantAwareModel` automatically filter by current tenant
+
+### Creating Tenant-Scoped Models
+
+```typescript
+// All tenant-scoped models MUST extend TenantAwareModel
+import TenantAwareModel from '#models/tenant_aware_model'
+
+export default class Client extends TenantAwareModel {
+  @column({ isPrimary: true })
+  declare id: number
+
+  @column()
+  declare tenant_id: string  // Automatically managed - don't set manually
+
+  @column()
+  declare full_name: string
+}
 ```
 
-#### Services
+### Working Within Tenant Context
 
-```bash
-node ace make:service users/CreateUser
-# Creates: app/services/users/create_user.ts
+```typescript
+// In controllers/services, tenant context is already set by middleware
+const clients = await Client.all()  // Automatically filtered by current tenant
 
-node ace make:service auth/VerifyEmail
-# Creates: app/services/auth/verify_email.ts
+// For background jobs or CLI commands, manually set context:
+await TenantContextService.run(
+  { tenant_id: 'uuid', tenant: null, user_id: null, tenant_user: null },
+  async () => {
+    // All queries here are tenant-scoped
+    const client = await Client.create({ full_name: 'John' })
+  }
+)
+
+// Bypass tenant scoping (admin operations only):
+const allClients = await Client.query()
+  .apply((scopes) => scopes.withoutTenantScope())
 ```
 
-#### Middleware
+### JSONB/Array Column Pattern
 
-```bash
-node ace make:middleware Auth
-# Creates: app/middleware/auth_middleware.ts
+PostgreSQL JSONB columns require special handling:
 
-node ace make:middleware RateLimit --stack=router
-# Creates middleware for router stack
-```
-
-#### Validators
-
-```bash
-node ace make:validator CreateUser
-# Creates: app/validators/create_user.ts
-
-node ace make:validator users/UpdateProfile
-# Creates: app/validators/users/update_profile.ts
-```
-
-#### Tests
-
-```bash
-node ace make:test UserController --suite=functional
-# Creates: tests/functional/user_controller.spec.ts
-
-node ace make:test UserService --suite=unit
-# Creates: tests/unit/user_service.spec.ts
-```
-
-#### Other Resources
-
-```bash
-node ace make:factory User
-# Creates: database/factories/user_factory.ts
-
-node ace make:seeder User
-# Creates: database/seeders/user_seeder.ts
-
-node ace make:event UserRegistered
-# Creates: app/events/user_registered.ts
-
-node ace make:listener SendWelcomeEmail
-# Creates: app/listeners/send_welcome_email.ts
-
-node ace make:mail VerifyEmail
-# Creates: app/mails/verify_email.ts
-
-node ace make:exception ValidationException
-# Creates: app/exceptions/validation_exception.ts
-
-node ace make:provider AppProvider
-# Creates: providers/app_provider.ts
-
-node ace make:command SendEmails
-# Creates: commands/send_emails.ts
-
-node ace make:job ProcessPayment
-# Creates: app/jobs/process_payment.ts
-
-node ace make:preload redis
-# Creates: start/redis.ts
-
-node ace make:view users/index
-# Creates: resources/views/users/index.edge
-```
-
-### Migration Commands
-
-```bash
-# Run pending migrations
-node ace migration:run
-
-# Rollback last batch
-node ace migration:rollback
-
-# Rollback all migrations
-node ace migration:reset
-
-# Drop all tables and re-migrate
-node ace migration:fresh
-
-# Rollback and re-run all migrations
-node ace migration:refresh
-
-# Check migration status
-node ace migration:status
-
-# Rollback to specific batch
-node ace migration:rollback --batch=2
-```
-
-### Package Management
-
-```bash
-# Install and configure a package
-node ace add @adonisjs/lucid
-
-# Configure already installed package
-node ace configure @adonisjs/lucid
-```
-
-## REPL (Read-Eval-Print Loop) Usage
-
-### Starting REPL
-
-```bash
-# Start interactive REPL session
-node ace repl
-```
-
-### Common REPL Operations
-
-#### Import Models and Services
-
-```javascript
-// Import default export
-const User = await importDefault('#models/user')
-
-// Alternative import syntax
-const { default: User } = await import('#models/user')
-
-// Import services
-const UserService = await importDefault('#services/users/create_user')
-```
-
-#### Working with Models
-
-```javascript
-// Query users
-const users = await User.all()
-const user = await User.find(1)
-
-// Create user
-const newUser = await User.create({
-  email: 'test@example.com',
-  password: 'secret',
+```typescript
+@column({
+  prepare: (value: Record<string, any> | null) =>
+    value ? JSON.stringify(value) : null,
+  consume: (value: string | Record<string, any> | null) =>
+    value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
 })
-
-// Update user
-user.email = 'newemail@example.com'
-await user.save()
+declare metadata: Record<string, any> | null
 ```
 
-#### Load Application Services
+## Testing Patterns
 
-```javascript
-// Load specific services
-await loadApp() // Access app service
-await loadRouter() // Access router service
-await loadConfig() // Access config service
-await loadHash() // Access hash service
-await loadHelpers() // Access helpers module
+### Setting Up Tenant Context in Tests
+
+```typescript
+import { TenantFactory } from '#database/factories/tenant_factory'
+import TenantContextService from '#services/tenants/tenant_context_service'
+
+test('creates client in correct tenant', async ({ assert }) => {
+  const tenant = await TenantFactory.create()
+
+  const client = await TenantContextService.run(
+    { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
+    async () => {
+      return await ClientFactory.create()
+    }
+  )
+
+  assert.equal(client.tenant_id, tenant.id)
+})
 ```
 
-### REPL Best Practices
+## API Structure
 
-1. **Use for debugging and data exploration**
+All API routes follow `/api/v1/{resource}` pattern with middleware chains:
 
-- Test queries before implementing
-- Inspect data relationships
-- Debug service methods
+```typescript
+// Tenant-scoped routes require tenant middleware
+router.get('/clients', [ClientsController, 'index'])
+  .use([middleware.auth(), middleware.tenant()])
 
-2. **Common Use Cases**
+// Non-tenant routes don't use tenant middleware
+router.get('/tenants', [TenantsController, 'index'])
+  .use([middleware.auth()])
+```
 
-- Testing model queries
-- Debugging service logic
-- Inspecting configuration
-- Running one-off data migrations
-- Testing email templates
-- Verifying queue jobs
+## Key Middleware Stack
 
-### REPL Tips
+1. **auth**: Validates JWT tokens and loads user
+2. **tenant**: Resolves tenant and establishes context (depends on auth)
+3. **permission**: Checks user permissions within tenant
+4. **ownership**: Validates resource ownership
 
-- Use `importDefault()` for cleaner imports
-- Access configs via `await loadConfig()`
-- Test services interactively before implementing
-- Use `.ls` to list all available methods
-- Press Tab for auto-completion
-- Use `.exit` or Ctrl+C twice to quit
+## Database Considerations
 
-## Important Instructions for AI Assistants
+- **Primary Keys**: Use `number` with auto-increment for most tables
+- **Tenant IDs**: Always UUID format
+- **Indexes**: All tenant-scoped tables have composite indexes starting with `tenant_id`
+- **Soft Deletes**: Use `is_active` boolean instead of deletion
+- **Timestamps**: All models use `created_at` and `updated_at`
 
-1. **ALWAYS USE COMMANDS** - Never create files manually
+## Brazilian Legal Domain
 
-- Use `node ace make:controller` not manual file creation
-- Use `node ace make:migration` not manual database files
-- Use `node ace make:service` not manual service files
+The system includes specialized support for Brazilian legal entities:
 
-2. **Follow the Architecture**
+- **CPF/CNPJ Validation**: Built-in validators for tax IDs
+- **CNJ Format**: Case numbers follow NNNNNNN-DD.AAAA.J.TR.OOOO pattern
+- **Document Types**: Specific enums for Brazilian legal documents
+- **Test Factories**: Generate valid CPF/CNPJ with proper checksums
 
-- Controller → Service → Repository → Model flow
-- Use dependency injection with `@inject()` decorator
-- Keep business logic in services, not controllers
+## Error Handling
 
-3. **Use Import Aliases**
+Custom exceptions extend base classes with proper HTTP status codes:
 
-- Always use `#controllers/*`, `#services/*`, etc.
-- Never use relative imports like `../../`
+```typescript
+// Use existing exceptions when possible
+import NotFoundException from '#exceptions/not_found_exception'
+import ConflictException from '#exceptions/conflict_exception'
+import ForbiddenException from '#exceptions/forbidden_exception'
 
-4. **Test Before Committing**
+// Exceptions automatically convert to proper HTTP responses
+throw new NotFoundException('Client not found')
+```
 
-- Run `pnpm lint` - Must pass
-- Run `pnpm typecheck` - Must pass
-- Run `pnpm test` - Must pass
+## Environment Variables
 
-5. **Suggest REPL for Debugging**
+Key configuration in `.env`:
 
-- When users need to explore data
-- When testing queries before implementation
-- When debugging service methods
+```env
+# Database (PostgreSQL required for production)
+DB_CONNECTION=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=juridicai_dev
 
-6. **Example Workflow**
+# Redis (for caching/queues)
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
 
-   ```bash
-   # User asks: "Create a new product feature"
-
-   # Execute in order:
-   node ace make:model Product -m
-   node ace make:controller Product --resource
-   node ace make:validator CreateProduct
-   node ace make:service products/CreateProduct
-   node ace make:service products/UpdateProduct
-   node ace make:service products/DeleteProduct
-   node ace make:factory Product
-   node ace make:test ProductController --suite=functional
-   node ace migration:run
-   ```
+# Application
+APP_KEY=generated_key  # Generate with: node ace generate:key
+NODE_ENV=development
+```
