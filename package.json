@@ -1,6 +1,7 @@
 {
-  "name": "adonis-kit",
-  "version": "0.0.0",
+  "name": "juridicai",
+  "version": "1.0.0",
+  "description": "Multi-tenant SaaS platform for law firm management",
   "private": true,
   "type": "module",
   "license": "UNLICENSED",

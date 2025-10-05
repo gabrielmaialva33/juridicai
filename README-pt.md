@@ -1,14 +1,12 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/gabrielmaialva33/adonis-kit/refs/heads/main/.github/assets/graphic-design.png" alt="Adonis Kit">
+  <img src="https://raw.githubusercontent.com/gabrielmaialva33/juridicai/refs/heads/main/.github/assets/law_2.png" alt="JuridicAI">
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/gabrielmaialva33/adonis-kit?color=00b8d3&style=flat-square" alt="Licença" />
-  <img src="https://img.shields.io/github/languages/top/gabrielmaialva33/adonis-kit?style=flat-square" alt="Linguagem principal do GitHub" >
-  <img src="https://img.shields.io/github/repo-size/gabrielmaialva33/adonis-kit?style=flat-square" alt="Tamanho do repositório" >
-  <a href="https://github.com/gabrielmaialva33/adonis-kit/commits/main">
-    <img src="https://img.shields.io/github/last-commit/gabrielmaialva33/adonis-kit?style=flat-square" alt="Último commit do GitHub" >
-  </a>
+  <img src="https://img.shields.io/badge/licença-Proprietária-00b8d3?style=flat-square" alt="Licença" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square" alt="TypeScript" >
+  <img src="https://img.shields.io/badge/AdonisJS-6.0-5A45FF?style=flat-square" alt="AdonisJS" >
+  <img src="https://img.shields.io/badge/Testes-33%20passando-00C853?style=flat-square" alt="Testes" >
 </p>
 
 <p align="center">
@@ -19,7 +17,7 @@
 
 <p align="center">
   <a href="#bookmark-sobre">Sobre</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#rocket-desenvolvimento-ai-first">Desenvolvimento AI-First</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#rocket-multi-tenant-primeiro">Multi-Tenant Primeiro</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#computer-tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#package-instalação">Instalação</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#memo-licença">Licença</a>
@@ -27,15 +25,9 @@
 
 ## :bookmark: Sobre
 
-O **Adonis Kit** é um _starter kit_ de API moderno, opinativo e focado em IA, projetado para acelerar o desenvolvimento
-de aplicações backend robustas. Construído com **AdonisJS v6**, ele fornece uma base poderosa para criar APIs REST
-escaláveis com recursos abrangentes de autenticação, autorização e gerenciamento de dados.
+O **JuridicAI** é uma plataforma SaaS multi-tenant moderna, projetada para gestão de escritórios de advocacia. Construída com **AdonisJS v6**, fornece completo isolamento de dados para cada tenant (escritório), possibilitando gerenciamento seguro de clientes, processos judiciais, prazos, documentos e colaboração em equipe.
 
-Este projeto não é apenas uma coleção de tecnologias; é uma fundação projetada para eficiência, escalabilidade e
-colaboração transparente com parceiros de desenvolvimento de IA. Ao fornecer uma arquitetura bem definida com recursos
-como autenticação multi-guard, controle de acesso baseado em papéis (RBAC) e gerenciamento de arquivos prontos para uso,
-ele permite que desenvolvedores (humanos e IAs) se concentrem na construção de lógicas de negócio únicas, em vez de
-código repetitivo.
+Esta plataforma foi projetada para escalabilidade e segurança de dados. Cada escritório opera em um ambiente completamente isolado com escopo automático de queries, prevenindo qualquer vazamento de dados entre tenants. A arquitetura segue os requisitos do domínio jurídico brasileiro com validação integrada de CPF/CNPJ, formatação de números CNJ e trilhas de auditoria prontas para compliance.
 
 ### 🏗️ Visão Geral da Arquitetura
 
@@ -43,73 +35,69 @@ código repetitivo.
 graph TD
     subgraph "Camada da API"
         API_ROUTES[Rotas]
-        API_MW["Middleware (Auth, ACL)"]
+        API_MW["Middleware (Auth, Tenant)"]
         API_CTRL[Controllers]
         API_VALIDATORS[Validadores]
     end
 
     subgraph "Camada de Negócio"
         BL_SERVICES[Serviços]
-        BL_REPOS[Repositórios]
+        BL_TENANT[Contexto de Tenant]
         BL_EVENTS[Eventos & Listeners]
     end
 
     subgraph "Camada de Dados"
-        DL_MODELS[Modelos Lucid]
+        DL_MODELS[Models Tenant-Aware]
         DL_DB[(PostgreSQL)]
-        DL_CACHE[(Redis)]
+        DL_STORAGE[Armazenamento de Arquivos]
     end
 
-    subgraph "Configuração"
-        CONF_AUTH[Guards de Autenticação]
-        CONF_DB[Configuração do Banco]
-        CONF_STORAGE[Armazenamento de Arquivos]
+    subgraph "Núcleo Multi-Tenant"
+        MT_CONTEXT[Contexto AsyncLocalStorage]
+        MT_SCOPES[Escopos Automáticos]
+        MT_ISOLATION[Isolamento por Linha]
     end
 
     API_ROUTES --> API_MW
     API_MW --> API_CTRL
     API_CTRL --> API_VALIDATORS
     API_CTRL --> BL_SERVICES
-    BL_SERVICES --> BL_REPOS
-    BL_SERVICES --> BL_EVENTS
-    BL_REPOS --> DL_MODELS
-    DL_MODELS --> DL_DB
-    BL_SERVICES --> DL_CACHE
+    BL_SERVICES --> BL_TENANT
+    BL_SERVICES --> DL_MODELS
+    DL_MODELS --> MT_SCOPES
+    MT_SCOPES --> MT_ISOLATION
+    MT_ISOLATION --> DL_DB
+    BL_TENANT --> MT_CONTEXT
 ```
 
-## :rocket: Desenvolvimento AI-First
+## :rocket: Multi-Tenant Primeiro
 
-Este _starter kit_ foi projetado de forma única para maximizar a eficácia da codificação assistida por IA.
+Esta plataforma foi projetada com multi-tenancy como princípio arquitetural central, não como uma reflexão tardia.
 
-- **Base de API Bem Estruturada**: A clara separação de responsabilidades (controllers, serviços, repositórios) facilita
-  para uma IA localizar, entender e modificar partes específicas do código com precisão.
-- **Base Fortemente Tipada**: O uso completo de TypeScript cria um contrato claro entre todas as camadas da API. Isso
-  reduz a ambiguidade e permite que a IA entenda estruturas de dados e assinaturas de funções, resultando em menos
-  erros.
-- **Arquitetura Modular e Opinativa**: Organização de serviços orientada a domínio e padrões consistentes tornam simples
-  para a IA estender funcionalidades seguindo convenções estabelecidas.
-- **Foco na Lógica de Negócio**: Com o boilerplate de autenticação, permissões e armazenamento de arquivos já resolvido,
-  a IA pode ser direcionada para resolver problemas de negócio de nível superior desde o primeiro dia.
+- **Zero Vazamento de Dados**: Escopo automático de tenant no nível do ORM garante que queries nunca cruzem fronteiras de tenants. Verificado por suite de testes abrangente.
+- **Domínio Jurídico Brasileiro**: Validação integrada para CPF/CNPJ, formato de número CNJ e padrões de integração com o sistema judiciário brasileiro.
+- **Isolamento de Contexto**: Usa AsyncLocalStorage para manter o contexto do tenant durante todo o ciclo de vida da requisição, incluindo jobs em background.
+- **Multi-Tenancy Type-Safe**: Cobertura completa de TypeScript garante que tenant_id está sempre presente e corretamente tipado em todas as operações com escopo de tenant.
 
 ## 🌟 Principais Funcionalidades
 
-- **🔐 Autenticação Multi-Guard**: Autenticação baseada em JWT pronta para uso.
-- **👥 Controle de Acesso Avançado (RBAC)**: Gerencie permissões de usuário com papéis e regras detalhadas.
-- **📁 Gerenciamento de Arquivos**: Serviço de upload de arquivos pré-configurado com suporte para drivers locais, S3 e
-  GCS.
-- **⚡️ API de Alta Performance**: Endpoints REST otimizados com cache inteligente e processamento de filas.
-- **🔄 Arquitetura Orientada a Eventos**: Sistema de eventos integrado para lógica de aplicação desacoplada e escalável.
-- **✅ API Type-Safe**: Cobertura completa de TypeScript com autocompletar e verificação de tipos.
-- **🏥 Health Checks**: Endpoint de verificação de saúde integrado para monitoramento.
+- **🏢 Arquitetura Multi-Tenant**: Isolamento por linha com escopo automático de queries via classe base TenantAwareModel.
+- **⚖️ Modelos do Domínio Jurídico**: Clientes, Processos, Prazos, Documentos, Eventos - todos seguindo padrões jurídicos brasileiros.
+- **🇧🇷 Especificidades Brasileiras**: Algoritmos de validação CPF/CNPJ, formato CNJ de processos, integrações com tribunais (PJe, e-SAJ).
+- **📊 Sistema de Factories**: Geradores de dados de teste com consciência brasileira, CPF/CNPJ válidos e dados realistas de processos jurídicos.
+- **🔒 Seguro por Padrão**: Isolamento de tenant verificado por 33 testes passando, cobrindo todos os cenários de isolamento.
+- **⚡️ Alta Performance**: Índices otimizados para queries multi-tenant, JSONB para metadados flexíveis.
+- **✅ Type-Safe**: Cobertura completa de TypeScript com estratégia de nomenclatura snake_case no ORM.
 
 ## :computer: Tecnologias
 
 - **[AdonisJS v6](https://adonisjs.com/)**: Um framework Node.js robusto para o backend.
-- **[TypeScript](https://www.typescriptlang.org/)**: Para segurança de tipos em toda a API.
-- **[PostgreSQL](https://www.postgresql.org/)**: Um banco de dados relacional confiável e poderoso.
-- **[Redis](https://redis.io/)**: Usado para cache, filas e gerenciamento de sessões.
+- **[TypeScript](https://www.typescriptlang.org/)**: Para segurança de tipos em toda a plataforma.
+- **[PostgreSQL](https://www.postgresql.org/)**: Banco de dados de produção com suporte JSONB para schemas flexíveis.
+- **[SQLite](https://www.sqlite.org/)**: Banco de dados leve para testes rápidos.
 - **[VineJS](https://vinejs.dev/)**: Biblioteca moderna de validação para dados de requisição.
-- **[Lucid ORM](https://lucid.adonisjs.com/)**: Implementação elegante do ActiveRecord para AdonisJS.
+- **[Lucid ORM](https://lucid.adonisjs.com/)**: ActiveRecord elegante com escopos de query multi-tenant.
+- **[Japa](https://japa.dev/)**: Framework de testes moderno (33 testes passando).
 
 ## :package: Instalação
 
@@ -117,15 +105,16 @@ Este _starter kit_ foi projetado de forma única para maximizar a eficácia da c
 
 - **Node.js** (v18 ou superior)
 - **pnpm** (ou npm/yarn)
-- **Docker** (para rodar PostgreSQL e Redis)
+- **PostgreSQL** (v14 ou superior)
+- **Docker** (opcional, para banco de dados containerizado)
 
 ### 🚀 Começando
 
 1. **Clone o repositório:**
 
    ```sh
-   git clone https://github.com/gabrielmaialva33/adonis-kit.git
-   cd adonis-kit
+   git clone https://github.com/seususuario/juridicai.git
+   cd juridicai
    ```
 
 2. **Instale as dependências:**
@@ -148,7 +137,13 @@ Este _starter kit_ foi projetado de forma única para maximizar a eficácia da c
    node ace migration:run
    ```
 
-5. **Inicie o servidor de desenvolvimento:**
+5. **Popule dados de desenvolvimento:**
+
+   ```sh
+   node ace db:seed
+   ```
+
+6. **Inicie o servidor de desenvolvimento:**
    ```sh
    pnpm dev
    ```
@@ -162,14 +157,40 @@ Este _starter kit_ foi projetado de forma única para maximizar a eficácia da c
 - `pnpm test`: Executa os testes unitários.
 - `pnpm test:e2e`: Executa os testes de ponta a ponta.
 - `pnpm lint`: Verifica o código com o linter.
+- `pnpm lint:fix`: Corrige problemas de linting automaticamente.
 - `pnpm format`: Formata o código com o Prettier.
+- `pnpm typecheck`: Executa verificação de tipos TypeScript.
+
+### 🧪 Fluxo de Desenvolvimento
+
+Sempre use comandos Ace do AdonisJS para manter a consistência:
+
+```bash
+# Criar models com migrations
+node ace make:model Client -m
+
+# Criar controllers
+node ace make:controller clients/clients_controller --resource
+
+# Criar services
+node ace make:service clients/create_client_service
+
+# Criar validators
+node ace make:validator CreateClientValidator
+
+# Criar testes
+node ace make:test clients/create_client --suite=functional
+
+# Criar factories
+node ace make:factory Client
+```
 
 ## :memo: Licença
 
-Este projeto está licenciado sob a **Licença MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está licenciado sob **Licença Proprietária**. Todos os direitos reservados.
 
 ---
 
 <p align="center">
-  Feito com ❤️ pela comunidade.
+  Feito com ❤️ usando AdonisJS v6
 </p>
