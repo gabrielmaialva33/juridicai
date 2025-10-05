@@ -1,6 +1,6 @@
 {
   "name": "juridicai",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Multi-tenant SaaS platform for law firm management",
   "private": true,
   "type": "module",
