@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { HttpContext } from '@adonisjs/core/http'
 import Tenant from '#models/tenant'
 import TenantUser from '#models/tenant_user'
 
@@ -36,10 +37,27 @@ class TenantContextService {
 
   /**
    * Get the current tenant ID
+   * First tries AsyncLocalStorage, then falls back to HttpContext header
    */
   getCurrentTenantId(): string | null {
+    // Priority 1: AsyncLocalStorage context
     const context = this.getContext()
-    return context?.tenant_id ?? null
+    if (context?.tenant_id) {
+      return context.tenant_id
+    }
+
+    // Priority 2: HttpContext header (for HTTP requests outside AsyncLocalStorage)
+    try {
+      const ctx = HttpContext.getOrFail()
+      const headerTenantId = ctx.request.header('x-tenant-id')
+      if (headerTenantId) {
+        return headerTenantId
+      }
+    } catch {
+      // HttpContext not available (jobs, CLI, etc)
+    }
+
+    return null
   }
 
   /**

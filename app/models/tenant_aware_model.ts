@@ -1,4 +1,4 @@
-import { BaseModel, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, SnakeCaseNamingStrategy, scope } from '@adonisjs/lucid/orm'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
@@ -54,6 +54,11 @@ export default class TenantAwareModel extends BaseModel {
      * Hook: Scope queries to current tenant (for findBy, find, etc.)
      */
     this.before('find', (query: ModelQueryBuilderContract<typeof TenantAwareModel>) => {
+      // Skip automatic scoping if explicitly disabled
+      if ((query as any)._skipTenantScope) {
+        return
+      }
+
       const tenantId = TenantContextService.getCurrentTenantId()
       if (tenantId) {
         query.where('tenant_id', tenantId)
@@ -64,6 +69,11 @@ export default class TenantAwareModel extends BaseModel {
      * Hook: Scope queries to current tenant (for all, paginate, etc.)
      */
     this.before('fetch', (query: ModelQueryBuilderContract<typeof TenantAwareModel>) => {
+      // Skip automatic scoping if explicitly disabled
+      if ((query as any)._skipTenantScope) {
+        return
+      }
+
       const tenantId = TenantContextService.getCurrentTenantId()
       if (tenantId) {
         query.where('tenant_id', tenantId)
@@ -72,11 +82,28 @@ export default class TenantAwareModel extends BaseModel {
   }
 
   /**
-   * Helper: Temporarily disable tenant scoping (USE WITH EXTREME CAUTION)
-   * Only use this for admin operations or cross-tenant queries
+   * Scope to filter by specific tenant
+   *
+   * Usage:
+   * ```ts
+   * const clients = await Client.query().apply((scopes) => scopes.forTenant(tenantId))
+   * ```
    */
-  static withoutTenantScope() {
-    // Create a query builder and use ignoreScopes (if needed in future)
-    return this.query()
-  }
+  static forTenant = scope((query: ModelQueryBuilderContract<any>, tenantId: string) => {
+    query.where('tenant_id', tenantId)
+  })
+
+  /**
+   * Scope to disable automatic tenant filtering
+   * USE WITH EXTREME CAUTION - only for admin operations or cross-tenant queries
+   *
+   * Usage:
+   * ```ts
+   * const allClients = await Client.query().apply((scopes) => scopes.withoutTenantScope())
+   * ```
+   */
+  static withoutTenantScope = scope((query: ModelQueryBuilderContract<any>) => {
+    // Mark query to skip automatic tenant scope in hooks
+    ;(query as any)._skipTenantScope = true
+  })
 }
