@@ -26,9 +26,14 @@
 
 ## :bookmark: About
 
-**JuridicAI** is a modern, multi-tenant SaaS platform designed for law firm management. Built with **AdonisJS v6**, it provides complete data isolation for each tenant (law firm), enabling secure management of clients, legal cases, deadlines, documents, and team collaboration.
+**JuridicAI** is a modern, multi-tenant SaaS platform designed for law firm management. Built with **AdonisJS v6**, it
+provides complete data isolation for each tenant (law firm), enabling secure management of clients, legal cases,
+deadlines, documents, and team collaboration.
 
-This platform is engineered for scalability and data security. Each law firm operates in a completely isolated environment with automatic query scoping, preventing any data leakage between tenants. The architecture follows Brazilian legal domain requirements with built-in CPF/CNPJ validation, CNJ case number formatting, and compliance-ready audit trails.
+This platform is engineered for scalability and data security. Each law firm operates in a completely isolated
+environment with automatic query scoping, preventing any data leakage between tenants. The architecture follows
+Brazilian legal domain requirements with built-in CPF/CNPJ validation, CNJ case number formatting, and compliance-ready
+audit trails.
 
 ### 🏗️ Architecture Overview
 
@@ -330,7 +335,9 @@ node ace make:factory Client
 **Implementation**:
 
 ```typescript
-static boot() {
+static
+boot()
+{
   if (this.booted) return
   super.boot()
 
@@ -442,11 +449,11 @@ test('prevents cross-tenant data access', async ({ assert }) => {
 
 ```typescript
 // ❌ Wrong
-const client = await Client.create({ full_name: 'John' })
+const client = await Client.create({full_name: 'John'})
 
 // ✅ Correct
-await TenantContextService.run({ tenant_id: 'uuid', ... }, async () => {
-  const client = await Client.create({ full_name: 'John' })
+await TenantContextService.run({tenant_id: 'uuid', ...}, async () => {
+  const client = await Client.create({full_name: 'John'})
 })
 ```
 
@@ -469,8 +476,8 @@ await TenantContextService.run({ tenant_id: 'uuid', ... }, async () => {
 All tenant-scoped tables use composite indexes:
 
 ```sql
-CREATE INDEX idx_clients_tenant ON clients(tenant_id);
-CREATE INDEX idx_clients_tenant_email ON clients(tenant_id, email);
+CREATE INDEX idx_clients_tenant ON clients (tenant_id);
+CREATE INDEX idx_clients_tenant_email ON clients (tenant_id, email);
 ```
 
 ### Security Checklist

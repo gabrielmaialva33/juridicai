@@ -26,9 +26,14 @@
 
 ## :bookmark: Sobre
 
-O **JuridicAI** é uma plataforma SaaS multi-tenant moderna, projetada para gestão de escritórios de advocacia. Construída com **AdonisJS v6**, fornece completo isolamento de dados para cada tenant (escritório), possibilitando gerenciamento seguro de clientes, processos judiciais, prazos, documentos e colaboração em equipe.
+O **JuridicAI** é uma plataforma SaaS multi-tenant moderna, projetada para gestão de escritórios de advocacia.
+Construída com **AdonisJS v6**, fornece completo isolamento de dados para cada tenant (escritório), possibilitando
+gerenciamento seguro de clientes, processos judiciais, prazos, documentos e colaboração em equipe.
 
-Esta plataforma foi projetada para escalabilidade e segurança de dados. Cada escritório opera em um ambiente completamente isolado com escopo automático de queries, prevenindo qualquer vazamento de dados entre tenants. A arquitetura segue os requisitos do domínio jurídico brasileiro com validação integrada de CPF/CNPJ, formatação de números CNJ e trilhas de auditoria prontas para compliance.
+Esta plataforma foi projetada para escalabilidade e segurança de dados. Cada escritório opera em um ambiente
+completamente isolado com escopo automático de queries, prevenindo qualquer vazamento de dados entre tenants. A
+arquitetura segue os requisitos do domínio jurídico brasileiro com validação integrada de CPF/CNPJ, formatação de
+números CNJ e trilhas de auditoria prontas para compliance.
 
 ### 🏗️ Visão Geral da Arquitetura
 
@@ -103,7 +108,8 @@ Multi-tenancy foi escolhido como princípio arquitetural central do JuridicAI po
 
 ### Por Que Isolamento por Linha?
 
-Escolhemos **isolamento por linha** (banco compartilhado, coluna tenant_id) em vez de schema-por-tenant ou banco-por-tenant por:
+Escolhemos **isolamento por linha** (banco compartilhado, coluna tenant_id) em vez de schema-por-tenant ou
+banco-por-tenant por:
 
 ✅ **Simplicidade**: Migration única, backups mais fáceis, deploy simplificado
 ✅ **Custo**: Sem overhead de banco por tenant
@@ -199,8 +205,10 @@ test('cliente pertence ao tenant correto', async ({ assert }) => {
 ## 🌟 Principais Funcionalidades
 
 - **🏢 Multi-Tenancy por Linha**: Isolamento completo de dados com escopo automático de queries via `TenantAwareModel`.
-- **⚖️ Domínio Jurídico Brasileiro**: Validação CPF/CNPJ, formato CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO), integrações com tribunais.
-- **🔐 Contexto AsyncLocalStorage**: Contexto de tenant preservado em operações assíncronas, incluindo jobs em background.
+- **⚖️ Domínio Jurídico Brasileiro**: Validação CPF/CNPJ, formato CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO), integrações com
+  tribunais.
+- **🔐 Contexto AsyncLocalStorage**: Contexto de tenant preservado em operações assíncronas, incluindo jobs em
+  background.
 - **📊 Factories Inteligentes**: Geram dados jurídicos brasileiros válidos (CPF com checksum, números CNJ realistas).
 - **🔒 Segurança em Primeiro Lugar**: Fallback HttpContext, isolamento de tenant verificado por 33 testes.
 - **⚡️ Performance Otimizada**: Índices compostos (tenant_id, ...), JSONB para metadados flexíveis.
@@ -330,7 +338,9 @@ node ace make:factory Client
 **Implementação**:
 
 ```typescript
-static boot() {
+static
+boot()
+{
   if (this.booted) return
   super.boot()
 
@@ -442,11 +452,11 @@ test('previne acesso cross-tenant de dados', async ({ assert }) => {
 
 ```typescript
 // ❌ Errado
-const client = await Client.create({ full_name: 'João' })
+const client = await Client.create({full_name: 'João'})
 
 // ✅ Correto
-await TenantContextService.run({ tenant_id: 'uuid', ... }, async () => {
-  const client = await Client.create({ full_name: 'João' })
+await TenantContextService.run({tenant_id: 'uuid', ...}, async () => {
+  const client = await Client.create({full_name: 'João'})
 })
 ```
 
@@ -460,7 +470,8 @@ await TenantContextService.run({ tenant_id: 'uuid', ... }, async () => {
 
 **Causa**: Usando `withoutTenantScope()` ou contexto de tenant ausente.
 
-**Solução**: Garanta que TenantContext está definido e evite `withoutTenantScope()` a menos que absolutamente necessário.
+**Solução**: Garanta que TenantContext está definido e evite `withoutTenantScope()` a menos que absolutamente
+necessário.
 
 ## ⚡ Performance & Segurança
 
@@ -469,8 +480,8 @@ await TenantContextService.run({ tenant_id: 'uuid', ... }, async () => {
 Todas as tabelas com escopo de tenant usam índices compostos:
 
 ```sql
-CREATE INDEX idx_clients_tenant ON clients(tenant_id);
-CREATE INDEX idx_clients_tenant_email ON clients(tenant_id, email);
+CREATE INDEX idx_clients_tenant ON clients (tenant_id);
+CREATE INDEX idx_clients_tenant_email ON clients (tenant_id, email);
 ```
 
 ### Checklist de Segurança
