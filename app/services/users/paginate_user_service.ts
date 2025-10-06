@@ -8,7 +8,7 @@ import { PaginateOptions } from '#shared/lucid/lucid_repository_interface'
 
 interface PaginateUsersOptions extends PaginateOptions<typeof User> {
   search?: string
-  tenant_id?: number
+  tenantId?: number
 }
 
 @inject()
@@ -16,13 +16,13 @@ export default class PaginateUserService {
   constructor(private userRepository: UsersRepository) {}
 
   async run(options: PaginateUsersOptions) {
-    const { search, tenant_id, ...paginateOptions } = options
+    const { search, tenantId, ...paginateOptions } = options
 
     const modifyQuery = (query: ModelQueryBuilderContract<typeof User>) => {
-      // Filter by tenant if tenant_id is provided
-      if (tenant_id) {
+      // Filter by tenant if tenantId is provided
+      if (tenantId) {
         query.whereHas('tenant_users', (tenantQuery) => {
-          tenantQuery.where('tenant_id', tenant_id)
+          tenantQuery.where('tenant_id', tenantId)
         })
       }
 
