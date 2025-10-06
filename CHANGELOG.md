@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-10-06
+
+### Changed
+
+- Expanded repository methods and introduced interfaces for `Client`, `Case`, and `Deadline` models ([3e48189](https://github.com/gabrielmaialva33/juridicai/commit/3e48189))
+- Improved model consume methods and enhanced tenant context handling ([21f7f08](https://github.com/gabrielmaialva33/juridicai/commit/21f7f08))
+- Updated project dependencies for better stability and security ([dbacd82](https://github.com/gabrielmaialva33/juridicai/commit/dbacd82))
+- Refactored test suite for improved consistency and better logging ([b137b95](https://github.com/gabrielmaialva33/juridicai/commit/b137b95))
+- Restructured and migrated unit tests for better organization ([679aeab](https://github.com/gabrielmaialva33/juridicai/commit/679aeab))
+- Cleaned up unused imports from functional user tests ([27c4317](https://github.com/gabrielmaialva33/juridicai/commit/27c4317))
+
 ## [0.2.1] - 2025-10-06
 
 ### Added
