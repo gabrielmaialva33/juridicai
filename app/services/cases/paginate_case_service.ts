@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import type { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
+import { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Case from '#models/case'
 import CasesRepository from '#repositories/cases_repository'
 import { PaginateOptions } from '#shared/lucid/lucid_repository_interface'
@@ -147,12 +147,12 @@ export default class PaginateCaseService {
    * Get cases that require immediate attention
    *
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated list of urgent cases
    */
   async getUrgentCases(
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Case>> {
     const query = Case.query()
 
@@ -167,7 +167,7 @@ export default class PaginateCaseService {
     query.preload('client')
     query.preload('responsible_lawyer')
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -175,13 +175,13 @@ export default class PaginateCaseService {
    *
    * @param days - Days to look ahead for deadlines
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated list of cases with upcoming deadlines
    */
   async getCasesWithUpcomingDeadlines(
     days: number = 7,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Case>> {
     const query = Case.query()
 
@@ -202,7 +202,7 @@ export default class PaginateCaseService {
         .limit(5)
     })
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -264,14 +264,14 @@ export default class PaginateCaseService {
    * @param userId - User ID
    * @param activeOnly - Only return active cases
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated list of assigned cases
    */
   async getUserCases(
     userId: number,
     activeOnly: boolean = true,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Case>> {
     const query = Case.query()
 
@@ -289,7 +289,7 @@ export default class PaginateCaseService {
 
     query.preload('client')
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -297,13 +297,13 @@ export default class PaginateCaseService {
    *
    * @param search - Search term
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated search results
    */
   async search(
     search: string,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Case>> {
     const query = Case.query()
 
@@ -317,6 +317,6 @@ export default class PaginateCaseService {
     query.preload('client')
     query.preload('responsible_lawyer')
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 }

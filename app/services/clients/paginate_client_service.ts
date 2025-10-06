@@ -118,13 +118,13 @@ export default class PaginateClientService {
    *
    * @param search - Search term
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated search results
    */
   async search(
     search: string,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Client>> {
     const query = Client.query()
 
@@ -135,7 +135,7 @@ export default class PaginateClientService {
       scopes.newest()
     })
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -143,13 +143,13 @@ export default class PaginateClientService {
    *
    * @param days - Number of days to look back
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated list of recent clients
    */
   async getRecentClients(
     days: number = 7,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Client>> {
     const query = Client.query()
 
@@ -160,7 +160,7 @@ export default class PaginateClientService {
       scopes.newest()
     })
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -176,10 +176,10 @@ export default class PaginateClientService {
       state?: string
       tags?: string[]
       withCases?: boolean
-      limit?: number
+      maxResults?: number
     } = {}
   ): Promise<Client[]> {
-    const { state, tags, withCases, limit = 50 } = options
+    const { state, tags, withCases, maxResults = 50 } = options
 
     const query = Client.query()
 
@@ -204,8 +204,8 @@ export default class PaginateClientService {
       scopes.alphabetical()
     })
 
-    if (limit) {
-      query.limit(limit)
+    if (maxResults) {
+      query.limit(maxResults)
     }
 
     return query.exec()

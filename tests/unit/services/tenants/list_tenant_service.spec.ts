@@ -13,7 +13,7 @@ test.group('ListTenantsService', (group) => {
     await TenantFactory.createMany(5)
 
     const service = await app.container.make(ListTenantService)
-    const result = await service.run(undefined, undefined, undefined, 1, 10)
+    const result = await service.run({ page: 1, perPage: 10 })
 
     assert.equal(result.all().length, 5)
     assert.equal(result.currentPage, 1)
@@ -28,14 +28,14 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Filter for active tenants
-    const activeResult = await service.run(true, undefined, undefined, 1, 20)
+    const activeResult = await service.run({ isActive: true, page: 1, perPage: 20 })
     assert.equal(activeResult.all().length, 3)
     activeResult.all().forEach((tenant) => {
       assert.isTrue(tenant.is_active)
     })
 
     // Filter for inactive tenants
-    const inactiveResult = await service.run(false, undefined, undefined, 1, 20)
+    const inactiveResult = await service.run({ isActive: false, page: 1, perPage: 20 })
     assert.equal(inactiveResult.all().length, 2)
     inactiveResult.all().forEach((tenant) => {
       assert.isFalse(tenant.is_active)
@@ -51,21 +51,21 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Filter for free plan
-    const freeResult = await service.run(undefined, 'free', undefined, 1, 20)
+    const freeResult = await service.run({ plan: 'free', page: 1, perPage: 20 })
     assert.equal(freeResult.all().length, 2)
     freeResult.all().forEach((tenant) => {
       assert.equal(tenant.plan, 'free')
     })
 
     // Filter for pro plan
-    const proResult = await service.run(undefined, 'pro', undefined, 1, 20)
+    const proResult = await service.run({ plan: 'pro', page: 1, perPage: 20 })
     assert.equal(proResult.all().length, 3)
     proResult.all().forEach((tenant) => {
       assert.equal(tenant.plan, 'pro')
     })
 
     // Filter for enterprise plan
-    const enterpriseResult = await service.run(undefined, 'enterprise', undefined, 1, 20)
+    const enterpriseResult = await service.run({ plan: 'enterprise', page: 1, perPage: 20 })
     assert.equal(enterpriseResult.all().length, 1)
     assert.equal(enterpriseResult.all()[0].plan, 'enterprise')
   })
@@ -77,7 +77,7 @@ test.group('ListTenantsService', (group) => {
 
     const service = await app.container.make(ListTenantService)
 
-    const result = await service.run(undefined, undefined, 'Acme', 1, 20)
+    const result = await service.run({ search: 'Acme', page: 1, perPage: 20 })
 
     assert.equal(result.all().length, 1)
     assert.equal(result.all()[0].name, 'Acme Corporation')
@@ -90,7 +90,7 @@ test.group('ListTenantsService', (group) => {
 
     const service = await app.container.make(ListTenantService)
 
-    const result = await service.run(undefined, undefined, 'company', 1, 20)
+    const result = await service.run({ search: 'company', page: 1, perPage: 20 })
 
     assert.equal(result.all().length, 2)
   })
@@ -104,7 +104,7 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Filter for active free plan tenants
-    const result = await service.run(true, 'free', undefined, 1, 20)
+    const result = await service.run({ isActive: true, plan: 'free', page: 1, perPage: 20 })
 
     assert.equal(result.all().length, 1)
     assert.equal(result.all()[0].name, 'Free Active')
@@ -119,7 +119,7 @@ test.group('ListTenantsService', (group) => {
     const tenant3 = await TenantFactory.merge({ name: 'Third' }).create()
 
     const service = await app.container.make(ListTenantService)
-    const result = await service.run(undefined, undefined, undefined, 1, 20)
+    const result = await service.run({ page: 1, perPage: 20 })
 
     const all = result.all()
     assert.equal(all.length, 3)
@@ -134,7 +134,7 @@ test.group('ListTenantsService', (group) => {
     await TenantFactory.merge({ name: 'Beta Company', subdomain: 'beta' }).create()
 
     const service = await app.container.make(ListTenantService)
-    const result = await service.run(undefined, undefined, undefined, 1, 20, 'name', 'asc')
+    const result = await service.run({ page: 1, perPage: 20, sortBy: 'name', sortOrder: 'asc' })
 
     const all = result.all()
     assert.equal(all[0].name, 'Alpha Company')
@@ -148,7 +148,12 @@ test.group('ListTenantsService', (group) => {
     await TenantFactory.merge({ name: 'Company M', subdomain: 'mmm-subdomain' }).create()
 
     const service = await app.container.make(ListTenantService)
-    const result = await service.run(undefined, undefined, undefined, 1, 20, 'subdomain', 'desc')
+    const result = await service.run({
+      page: 1,
+      perPage: 20,
+      sortBy: 'subdomain',
+      sortOrder: 'desc',
+    })
 
     const all = result.all()
     assert.equal(all[0].subdomain, 'zzz-subdomain')
@@ -163,18 +168,18 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Get first page (10 items)
-    const page1 = await service.run(undefined, undefined, undefined, 1, 10)
+    const page1 = await service.run({ page: 1, perPage: 10 })
     assert.equal(page1.all().length, 10)
     assert.equal(page1.currentPage, 1)
     assert.equal(page1.total, 25)
 
     // Get second page (10 items)
-    const page2 = await service.run(undefined, undefined, undefined, 2, 10)
+    const page2 = await service.run({ page: 2, perPage: 10 })
     assert.equal(page2.all().length, 10)
     assert.equal(page2.currentPage, 2)
 
     // Get third page (5 items)
-    const page3 = await service.run(undefined, undefined, undefined, 3, 10)
+    const page3 = await service.run({ page: 3, perPage: 10 })
     assert.equal(page3.all().length, 5)
     assert.equal(page3.currentPage, 3)
   })
@@ -185,7 +190,7 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Search for non-existent plan
-    const result = await service.run(undefined, 'pro', undefined, 1, 20)
+    const result = await service.run({ plan: 'pro', page: 1, perPage: 20 })
 
     assert.equal(result.all().length, 0)
   })
@@ -197,7 +202,7 @@ test.group('ListTenantsService', (group) => {
     const service = await app.container.make(ListTenantService)
 
     // Search with lowercase
-    const result = await service.run(undefined, undefined, 'company', 1, 20)
+    const result = await service.run({ search: 'company', page: 1, perPage: 20 })
 
     assert.equal(result.all().length, 2)
   })

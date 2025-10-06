@@ -8,7 +8,7 @@ interface ListTenantsOptions {
   plan?: 'free' | 'starter' | 'pro' | 'enterprise'
   search?: string
   page?: number
-  limit?: number
+  perPage?: number
   sortBy?: 'created_at' | 'name' | 'subdomain'
   sortOrder?: 'asc' | 'desc'
   withUserCount?: boolean
@@ -33,7 +33,7 @@ export default class ListTenantsService {
       plan,
       search,
       page = 1,
-      limit = 20,
+      perPage = 20,
       sortBy = 'created_at',
       sortOrder = 'desc',
       withUserCount = false,
@@ -46,7 +46,7 @@ export default class ListTenantsService {
       plan,
       search,
       page,
-      limit,
+      limit: perPage,
       sortBy,
       sortOrder,
       withUserCount,
@@ -60,15 +60,15 @@ export default class ListTenantsService {
    *
    * @param search - Search term
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated search results
    */
   async search(
     search: string,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Tenant>> {
-    return this.tenantsRepository.searchTenants(search, page, limit)
+    return this.tenantsRepository.searchTenants(search, page, perPage)
   }
 
   /**
@@ -87,7 +87,7 @@ export default class ListTenantsService {
    * @param userId - User ID
    * @param paginate - Whether to paginate results
    * @param page - Page number (if paginating)
-   * @param limit - Results per page (if paginating)
+   * @param perPage - Results per page (if paginating)
    * @param withUserCount - Include user count
    * @returns List or paginated list of user's tenants
    */
@@ -95,14 +95,14 @@ export default class ListTenantsService {
     userId: number,
     paginate: boolean = false,
     page: number = 1,
-    limit: number = 10,
+    perPage: number = 10,
     withUserCount: boolean = false
   ): Promise<Tenant[] | ModelPaginatorContract<Tenant>> {
     if (paginate) {
       return this.tenantsRepository.findByUserIdPaginated(
         userId,
         page,
-        limit,
+        perPage,
         'created_at',
         'desc',
         withUserCount

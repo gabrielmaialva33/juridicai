@@ -102,13 +102,13 @@ export default class DeadlineManagementService {
    *
    * @param filters - Deadline filters
    * @param page - Page number
-   * @param limit - Results per page
+   * @param perPage - Results per page
    * @returns Paginated deadlines
    */
   async paginate(
     filters: DeadlineFilters,
     page: number = 1,
-    limit: number = 20
+    perPage: number = 20
   ): Promise<ModelPaginatorContract<Deadline>> {
     const query = Deadline.query()
 
@@ -151,7 +151,7 @@ export default class DeadlineManagementService {
       scopes.byPriority()
     })
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
@@ -225,10 +225,10 @@ export default class DeadlineManagementService {
       status?: 'pending' | 'completed' | 'expired' | 'cancelled'
       upcoming?: number
       page?: number
-      limit?: number
+      perPage?: number
     } = {}
   ): Promise<ModelPaginatorContract<Deadline>> {
-    const { status, upcoming, page = 1, limit = 20 } = options
+    const { status, upcoming, page = 1, perPage = 20 } = options
 
     const query = Deadline.query()
 
@@ -245,7 +245,7 @@ export default class DeadlineManagementService {
       scopes.byPriority()
     })
 
-    return query.paginate(page, limit)
+    return query.paginate(page, perPage)
   }
 
   /**
