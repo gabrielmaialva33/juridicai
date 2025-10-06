@@ -17,7 +17,10 @@ export default class TenantsRepository
    * @returns The tenant if found, null otherwise
    */
   async findBySubdomain(subdomain: string): Promise<Tenant | null> {
-    return this.model.query().where('subdomain', subdomain).first()
+    return this.model
+      .query()
+      .withScopes((scopes) => scopes.bySubdomain(subdomain))
+      .first()
   }
 
   /**
@@ -26,7 +29,10 @@ export default class TenantsRepository
    * @returns The tenant if found, null otherwise
    */
   async findByCustomDomain(customDomain: string): Promise<Tenant | null> {
-    return this.model.query().where('custom_domain', customDomain).first()
+    return this.model
+      .query()
+      .withScopes((scopes) => scopes.byCustomDomain(customDomain))
+      .first()
   }
 
   /**
@@ -34,8 +40,14 @@ export default class TenantsRepository
    * @param plan - The plan type to filter by
    * @returns Array of active tenants with the specified plan
    */
-  async findActiveByPlan(plan: string): Promise<Tenant[]> {
-    return this.model.query().where('plan', plan).where('is_active', true).exec()
+  async findActiveByPlan(plan: 'free' | 'starter' | 'pro' | 'enterprise'): Promise<Tenant[]> {
+    return this.model
+      .query()
+      .withScopes((scopes) => {
+        scopes.active()
+        scopes.byPlan(plan)
+      })
+      .exec()
   }
 
   /**
@@ -50,16 +62,15 @@ export default class TenantsRepository
     page: number,
     limit: number
   ): Promise<ModelPaginatorContract<Tenant>> {
-    const query = this.model.query()
-
-    if (search && search.trim()) {
-      const searchTerm = `%${search}%`
-      query.where((builder) => {
-        builder.whereILike('name', searchTerm).orWhereILike('subdomain', searchTerm)
+    return this.model
+      .query()
+      .withScopes((scopes) => {
+        if (search && search.trim()) {
+          scopes.search(search)
+        }
+        scopes.newest()
       })
-    }
-
-    return query.orderBy('created_at', 'desc').paginate(page, limit)
+      .paginate(page, limit)
   }
 
   /**
@@ -75,6 +86,9 @@ export default class TenantsRepository
     limit?: number
     sortBy?: 'created_at' | 'name' | 'subdomain'
     sortOrder?: 'asc' | 'desc'
+    withUserCount?: boolean
+    inTrial?: boolean
+    suspended?: boolean
   }): Promise<ModelPaginatorContract<Tenant>> {
     const {
       isActive,
@@ -84,33 +98,60 @@ export default class TenantsRepository
       limit = 20,
       sortBy = 'created_at',
       sortOrder = 'desc',
+      withUserCount = false,
+      inTrial = false,
+      suspended = false,
     } = options
 
     const query = this.model.query()
 
-    // Apply filters
-    if (isActive !== undefined) {
-      query.where('is_active', isActive)
+    query.withScopes((scopes) => {
+      // Apply filters using tenant scopes
+      if (isActive === true) {
+        scopes.active()
+      }
+
+      if (plan) {
+        scopes.byPlan(plan)
+      }
+
+      if (search) {
+        scopes.search(search)
+      }
+
+      if (inTrial) {
+        scopes.inTrial()
+      }
+
+      if (suspended) {
+        scopes.suspended()
+      }
+
+      if (withUserCount) {
+        scopes.withUserCount()
+      }
+
+      // Apply sorting using scopes where available
+      if (sortBy === 'created_at' && sortOrder === 'desc') {
+        scopes.newest()
+      } else if (sortBy === 'name' && sortOrder === 'asc') {
+        scopes.alphabetical()
+      }
+    })
+
+    // Handle non-scope filters and sorting
+    if (isActive === false) {
+      query.where('is_active', false)
     }
 
-    if (plan) {
-      query.where('plan', plan)
+    // Apply custom sorting if not handled by scopes
+    if (
+      !(sortBy === 'created_at' && sortOrder === 'desc') &&
+      !(sortBy === 'name' && sortOrder === 'asc')
+    ) {
+      query.orderBy(sortBy, sortOrder)
     }
 
-    if (search) {
-      const searchTerm = `%${search}%`
-      query.where((subQuery) => {
-        subQuery
-          .whereILike('name', searchTerm)
-          .orWhereILike('subdomain', searchTerm)
-          .orWhereILike('custom_domain', searchTerm)
-      })
-    }
-
-    // Apply sorting
-    query.orderBy(sortBy, sortOrder)
-
-    // Paginate
     return query.paginate(page, limit)
   }
 
@@ -122,11 +163,13 @@ export default class TenantsRepository
   async findByUserId(userId: number): Promise<Tenant[]> {
     return this.model
       .query()
+      .withScopes((scopes) => {
+        scopes.active()
+        scopes.newest()
+      })
       .whereHas('tenant_users', (tenantUserQuery) => {
         tenantUserQuery.where('user_id', userId).where('is_active', true)
       })
-      .where('is_active', true)
-      .orderBy('created_at', 'desc')
       .exec()
   }
 
@@ -137,6 +180,7 @@ export default class TenantsRepository
    * @param perPage - Number of results per page
    * @param sortBy - Column to sort by
    * @param sortOrder - Sort direction
+   * @param withUserCount - Include users count
    * @returns Paginated results of active tenants where the user is an active member
    */
   async findByUserIdPaginated(
@@ -144,15 +188,39 @@ export default class TenantsRepository
     page: number = 1,
     perPage: number = 10,
     sortBy: 'created_at' | 'name' | 'subdomain' = 'created_at',
-    sortOrder: 'asc' | 'desc' = 'desc'
+    sortOrder: 'asc' | 'desc' = 'desc',
+    withUserCount: boolean = false
   ): Promise<ModelPaginatorContract<Tenant>> {
-    return this.model
-      .query()
-      .whereHas('tenant_users', (tenantUserQuery) => {
-        tenantUserQuery.where('user_id', userId).where('is_active', true)
-      })
-      .where('is_active', true)
-      .orderBy(sortBy, sortOrder)
-      .paginate(page, perPage)
+    const query = this.model.query()
+
+    query.withScopes((scopes) => {
+      scopes.active()
+
+      if (withUserCount) {
+        scopes.withUserCount()
+      }
+
+      // Apply sorting using scopes where available
+      if (sortBy === 'created_at' && sortOrder === 'desc') {
+        scopes.newest()
+      } else if (sortBy === 'name' && sortOrder === 'asc') {
+        scopes.alphabetical()
+      }
+    })
+
+    // Filter by user's active tenants
+    query.whereHas('tenant_users', (tenantUserQuery) => {
+      tenantUserQuery.where('user_id', userId).where('is_active', true)
+    })
+
+    // Apply custom sorting if not handled by scopes
+    if (
+      !(sortBy === 'created_at' && sortOrder === 'desc') &&
+      !(sortBy === 'name' && sortOrder === 'asc')
+    ) {
+      query.orderBy(sortBy, sortOrder)
+    }
+
+    return query.paginate(page, perPage)
   }
 }
