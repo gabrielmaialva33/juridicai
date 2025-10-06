@@ -2,6 +2,7 @@ import { BaseModel, scope } from '@adonisjs/lucid/orm'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import type { NormalizeConstructor } from '@adonisjs/core/types/helpers'
 import TenantContextService from '#services/tenants/tenant_context_service'
+import TenantContextException from '#exceptions/tenant_context_exception'
 
 /**
  * Configuration options for the tenant scope mixin
@@ -146,8 +147,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
                 config.tenantResolver?.() || TenantContextService.getCurrentTenantId()
 
               if (!tenantId && config.strictMode) {
-                // Keep backward compatibility with existing tests
-                throw new Error('No tenant ID in current context')
+                throw TenantContextException.missingForCreate(this.name)
               }
 
               if (tenantId) {
@@ -172,10 +172,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
               query.where(config.tenantColumn, tenantId)
             } else if (config.strictMode && !query._allowCrossTenant) {
               // In strict mode, queries without tenant context should fail
-              throw new Error(
-                `Cannot query ${this.name} without tenant context. ` +
-                  `Use .crossTenant() or .withoutTenantScope() to explicitly allow cross-tenant queries.`
-              )
+              throw TenantContextException.missingForQuery(this.name)
             }
           })
 
@@ -192,10 +189,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
             if (tenantId) {
               query.where(config.tenantColumn, tenantId)
             } else if (config.strictMode && !query._allowCrossTenant) {
-              throw new Error(
-                `Cannot query ${this.name} without tenant context. ` +
-                  `Use .crossTenant() or .withoutTenantScope() to explicitly allow cross-tenant queries.`
-              )
+              throw TenantContextException.missingForQuery(this.name)
             }
           })
 
@@ -209,9 +203,10 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
 
             if (currentTenant && model[columnName] && model[columnName] !== currentTenant) {
               if (config.strictMode) {
-                throw new Error(
-                  `Cannot update ${this.constructor.name} from different tenant. ` +
-                    `Current tenant: ${currentTenant}, Model tenant: ${model[columnName]}`
+                throw TenantContextException.crossTenantUpdate(
+                  this.constructor.name,
+                  currentTenant,
+                  model[columnName]
                 )
               }
             }
@@ -227,9 +222,10 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
 
             if (currentTenant && model[columnName] && model[columnName] !== currentTenant) {
               if (config.strictMode) {
-                throw new Error(
-                  `Cannot delete ${this.constructor.name} from different tenant. ` +
-                    `Current tenant: ${currentTenant}, Model tenant: ${model[columnName]}`
+                throw TenantContextException.crossTenantDelete(
+                  this.constructor.name,
+                  currentTenant,
+                  model[columnName]
                 )
               }
             }
@@ -243,7 +239,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
       ensureTenantContext(): void {
         const columnName = config.tenantColumn
         if (!this[columnName as keyof this]) {
-          throw new Error(`${this.constructor.name} instance is missing tenant context`)
+          throw TenantContextException.missingOnInstance(this.constructor.name)
         }
       }
 
@@ -294,7 +290,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
         const tenantId = config.tenantResolver?.() || TenantContextService.getCurrentTenantId()
 
         if (!tenantId) {
-          throw new Error('No tenant context available')
+          throw TenantContextException.noContextAvailable()
         }
 
         return this.query().where(config.tenantColumn, tenantId)
