@@ -194,24 +194,34 @@ test.group('Client-Case Workflow', (group) => {
     assert.equal(loadedCase.events.length, 2)
 
     // Step 7: Mark deadline as completed
-    deadline1.status = 'completed'
-    deadline1.completed_at = DateTime.now()
-    deadline1.completed_by = lawyer.id
-    deadline1.completion_notes = 'Contestação protocolada com sucesso'
-    await deadline1.save()
+    await TenantContextService.run(
+      { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
+      async () => {
+        deadline1.status = 'completed'
+        deadline1.completed_at = DateTime.now()
+        deadline1.completed_by = lawyer.id
+        deadline1.completion_notes = 'Contestação protocolada com sucesso'
+        await deadline1.save()
 
-    await deadline1.refresh()
-    assert.equal(deadline1.status, 'completed')
-    assert.isNotNull(deadline1.completed_at)
+        await deadline1.refresh()
+        assert.equal(deadline1.status, 'completed')
+        assert.isNotNull(deadline1.completed_at)
+      }
+    )
 
     // Step 8: Close case
-    caseModel.status = 'closed'
-    caseModel.closed_at = DateTime.now()
-    await caseModel.save()
+    await TenantContextService.run(
+      { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
+      async () => {
+        caseModel.status = 'closed'
+        caseModel.closed_at = DateTime.now()
+        await caseModel.save()
 
-    await caseModel.refresh()
-    assert.equal(caseModel.status, 'closed')
-    assert.isNotNull(caseModel.closed_at)
+        await caseModel.refresh()
+        assert.equal(caseModel.status, 'closed')
+        assert.isNotNull(caseModel.closed_at)
+      }
+    )
   })
 
   test('case can have multiple clients (joint representation)', async ({ assert }) => {

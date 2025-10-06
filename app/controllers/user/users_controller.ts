@@ -26,7 +26,7 @@ export default class UsersController {
       sortBy,
       direction,
       search,
-      tenantId: tenant ? +tenant.id : undefined,
+      tenantId: tenant?.id,
     })
 
     return response.json(users)

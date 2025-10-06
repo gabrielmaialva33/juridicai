@@ -60,7 +60,8 @@ export default class CaseEvent extends compose(BaseModel, TenantScoped) {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | Record<string, any> | null) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare metadata: Record<string, any> | null
 
