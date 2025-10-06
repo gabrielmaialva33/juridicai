@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import CasesRepository from '#repositories/cases_repository'
 import ICase from '#interfaces/case_interface'
 import Case from '#models/case'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for updating an existing case
@@ -22,13 +23,13 @@ export default class UpdateCaseService {
    * @param caseId - The case ID to update
    * @param payload - Case update payload from validator
    * @returns Updated case instance
-   * @throws Error if case not found
+   * @throws {NotFoundException} if case not found
    */
   async run(caseId: number, payload: ICase.EditPayload): Promise<Case> {
     const caseInstance = await this.casesRepository.findBy('id', caseId)
 
     if (!caseInstance) {
-      throw new Error('Case not found')
+      throw new NotFoundException('Case not found')
     }
 
     // Convert Date fields to DateTime if they exist

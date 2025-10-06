@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import CasesRepository from '#repositories/cases_repository'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for soft-deleting a case (archiving)
@@ -18,13 +19,13 @@ export default class DeleteCaseService {
    *
    * @param caseId - The case ID to delete (archive)
    * @returns void
-   * @throws Error if case not found
+   * @throws {NotFoundException} if case not found
    */
   async run(caseId: number): Promise<void> {
     const caseInstance = await this.casesRepository.findBy('id', caseId)
 
     if (!caseInstance) {
-      throw new Error('Case not found')
+      throw new NotFoundException('Case not found')
     }
 
     // Soft delete: set status to archived

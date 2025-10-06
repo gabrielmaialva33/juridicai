@@ -1,4 +1,5 @@
 import Document from '#models/document'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for deleting a document
@@ -14,13 +15,13 @@ export default class DeleteDocumentService {
    *
    * @param documentId - The ID of the document to delete
    * @returns Promise<void>
-   * @throws Error if document not found
+   * @throws {NotFoundException} if document not found
    */
   async run(documentId: number): Promise<void> {
     const document = await Document.find(documentId)
 
     if (!document) {
-      throw new Error('Document not found')
+      throw new NotFoundException('Document not found')
     }
 
     await document.delete()

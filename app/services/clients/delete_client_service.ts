@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import ClientsRepository from '#repositories/clients_repository'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service responsible for deleting clients (soft delete)
@@ -22,10 +23,16 @@ export default class DeleteClientService {
    * Soft delete a client by setting is_active to false
    *
    * @param clientId - The ID of the client to delete
-   * @throws {Error} If the client is not found
+   * @throws {NotFoundException} If the client is not found
    * @returns Promise<void>
    */
   async run(clientId: number): Promise<void> {
-    await this.clientRepository.softDelete('id', clientId)
+    const client = await this.clientRepository.findBy('id', clientId)
+    if (!client) {
+      throw new NotFoundException('Client not found')
+    }
+
+    client.is_active = false
+    await client.save()
   }
 }

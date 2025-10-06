@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import Deadline from '#models/deadline'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for completing deadlines
@@ -16,13 +17,13 @@ export default class CompleteDeadlineService {
    * @param completedBy - User ID who completed the deadline
    * @param completionNotes - Optional notes about the completion
    * @returns Completed deadline
-   * @throws Error if deadline not found
+   * @throws {NotFoundException} if deadline not found
    */
   async run(deadlineId: number, completedBy: number, completionNotes?: string): Promise<Deadline> {
     const deadline = await this.deadlinesRepository.findBy('id', deadlineId)
 
     if (!deadline) {
-      throw new Error('Deadline not found')
+      throw new NotFoundException('Deadline not found')
     }
 
     // Set completion data

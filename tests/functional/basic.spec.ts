@@ -7,7 +7,7 @@ test.group('Basic API', () => {
     response.assertStatus(200)
     response.assertBodyContains({
       name: 'juridicai',
-      version: '0.2.1',
+      version: '0.2.2',
     })
   })
 

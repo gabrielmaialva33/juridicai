@@ -1,4 +1,5 @@
 import CaseEvent from '#models/case_event'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for deleting a case event
@@ -14,13 +15,13 @@ export default class DeleteCaseEventService {
    *
    * @param eventId - The ID of the case event to delete
    * @returns Promise<void>
-   * @throws Error if case event not found
+   * @throws {NotFoundException} if case event not found
    */
   async run(eventId: number): Promise<void> {
     const event = await CaseEvent.find(eventId)
 
     if (!event) {
-      throw new Error('Case event not found')
+      throw new NotFoundException('Case event not found')
     }
 
     await event.delete()

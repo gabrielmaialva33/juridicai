@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import CaseEvent from '#models/case_event'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for updating an existing case event
@@ -17,7 +18,7 @@ export default class UpdateCaseEventService {
    * @param eventId - The ID of the case event to update
    * @param payload - The fields to update
    * @returns Promise<CaseEvent> - The updated case event
-   * @throws Error if case event not found
+   * @throws {NotFoundException} if case event not found
    */
   async run(
     eventId: number,
@@ -43,7 +44,7 @@ export default class UpdateCaseEventService {
     const event = await CaseEvent.find(eventId)
 
     if (!event) {
-      throw new Error('Case event not found')
+      throw new NotFoundException('Case event not found')
     }
 
     // Convert event_date if provided

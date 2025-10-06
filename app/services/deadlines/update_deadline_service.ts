@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import IDeadline from '#interfaces/deadline_interface'
 import Deadline from '#models/deadline'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for updating existing deadlines
@@ -16,13 +17,13 @@ export default class UpdateDeadlineService {
    * @param deadlineId - The deadline ID to update
    * @param payload - Updated deadline data
    * @returns Updated deadline
-   * @throws Error if deadline not found
+   * @throws {NotFoundException} if deadline not found
    */
   async run(deadlineId: number, payload: IDeadline.EditPayload): Promise<Deadline> {
     const deadline = await this.deadlinesRepository.findBy('id', deadlineId)
 
     if (!deadline) {
-      throw new Error('Deadline not found')
+      throw new NotFoundException('Deadline not found')
     }
 
     // Convert date strings to DateTime objects if they exist

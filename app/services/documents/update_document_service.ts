@@ -1,4 +1,5 @@
 import Document from '#models/document'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for updating an existing document
@@ -15,7 +16,7 @@ export default class UpdateDocumentService {
    * @param documentId - The ID of the document to update
    * @param payload - The fields to update
    * @returns Promise<Document> - The updated document
-   * @throws Error if document not found
+   * @throws {NotFoundException} if document not found
    */
   async run(
     documentId: number,
@@ -53,7 +54,7 @@ export default class UpdateDocumentService {
     const document = await Document.find(documentId)
 
     if (!document) {
-      throw new Error('Document not found')
+      throw new NotFoundException('Document not found')
     }
 
     document.merge(payload)
