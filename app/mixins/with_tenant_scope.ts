@@ -7,8 +7,8 @@ import TenantContextService from '#services/tenants/tenant_context_service'
  * Mixin that adds automatic tenant scoping to models.
  *
  * Features:
- * - Automatically sets tenant_id on create
- * - Automatically filters queries by current tenant
+ * - Automatically sets tenant_id on creation
+ * - Automatically filters queries by the current tenant
  * - Provides forTenant() and withoutTenantScope() methods
  *
  * Usage:
@@ -58,7 +58,7 @@ export function withTenantScope() {
         })
 
         /**
-         * Hook: Scope queries to current tenant (for find, findBy, etc.)
+         * Hook: Scope queries to the current tenant (for find, findBy, etc.)
          */
         this.before('find', (query: any) => {
           // Skip automatic scoping if explicitly disabled
@@ -89,7 +89,7 @@ export function withTenantScope() {
       }
 
       /**
-       * Scope to filter by specific tenant
+       * Scope to filter by a specific tenant
        *
        * Usage:
        * ```ts
