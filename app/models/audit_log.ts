@@ -1,6 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+
 import User from '#models/user'
 
 export default class AuditLog extends BaseModel {
@@ -15,7 +17,6 @@ export default class AuditLog extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
-  // User and session info
   @column()
   declare user_id: number | null
 
@@ -28,7 +29,6 @@ export default class AuditLog extends BaseModel {
   @column()
   declare user_agent: string | null
 
-  // Permission info
   @column()
   declare resource: string
 
@@ -41,7 +41,6 @@ export default class AuditLog extends BaseModel {
   @column()
   declare resource_id: number | null
 
-  // Request info
   @column()
   declare method: string | null
 
@@ -51,7 +50,6 @@ export default class AuditLog extends BaseModel {
   @column()
   declare request_data: Record<string, any> | null
 
-  // Result info
   @column()
   declare result: 'granted' | 'denied'
 
@@ -61,7 +59,6 @@ export default class AuditLog extends BaseModel {
   @column()
   declare response_code: number | null
 
-  // Additional metadata
   @column()
   declare metadata: Record<string, any> | null
 
@@ -76,9 +73,7 @@ export default class AuditLog extends BaseModel {
    * Relationships
    * ------------------------------------------------------
    */
-  @belongsTo(() => User, {
-    foreignKey: 'user_id',
-  })
+  @belongsTo(() => User, { foreignKey: 'user_id' })
   declare user: BelongsTo<typeof User>
 
   /**
@@ -86,31 +81,38 @@ export default class AuditLog extends BaseModel {
    * Query Scopes
    * ------------------------------------------------------
    */
-  static byUser = (query: any, userId: number) => {
+  static byUser = (query: ModelQueryBuilderContract<typeof AuditLog>, userId: number) => {
     return query.where('user_id', userId)
   }
 
-  static byResource = (query: any, resource: string) => {
+  static byResource = (query: ModelQueryBuilderContract<typeof AuditLog>, resource: string) => {
     return query.where('resource', resource)
   }
 
-  static byAction = (query: any, action: string) => {
+  static byAction = (query: ModelQueryBuilderContract<typeof AuditLog>, action: string) => {
     return query.where('action', action)
   }
 
-  static byResult = (query: any, result: 'granted' | 'denied') => {
+  static byResult = (
+    query: ModelQueryBuilderContract<typeof AuditLog>,
+    result: 'granted' | 'denied'
+  ) => {
     return query.where('result', result)
   }
 
-  static byDateRange = (query: any, startDate: DateTime, endDate: DateTime) => {
-    return query.whereBetween('created_at', [startDate.toSQL(), endDate.toSQL()])
+  static byDateRange = (
+    query: ModelQueryBuilderContract<typeof AuditLog>,
+    startDate: DateTime,
+    endDate: DateTime
+  ) => {
+    return query.whereBetween('created_at', [startDate.toSQL()!, endDate.toSQL()!])
   }
 
-  static byIpAddress = (query: any, ipAddress: string) => {
+  static byIpAddress = (query: ModelQueryBuilderContract<typeof AuditLog>, ipAddress: string) => {
     return query.where('ip_address', ipAddress)
   }
 
-  static recentFirst = (query: any) => {
+  static recentFirst = (query: ModelQueryBuilderContract<typeof AuditLog>) => {
     return query.orderBy('created_at', 'desc')
   }
 }
