@@ -20,6 +20,11 @@ import '#routes/users/index'
 import '#routes/users/session_routes'
 import '#routes/permissions/index'
 import '#routes/health/index'
+import '#routes/clients/index'
+import '#routes/cases/index'
+import '#routes/deadlines/index'
+import '#routes/documents/index'
+import '#routes/case_events/index'
 
 router
   .get('/version', async () => {
