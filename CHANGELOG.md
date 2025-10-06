@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-10-05
 
 ### Added
+
 - Multi-tenant architecture with tenant-aware models and context service ([631b99e](https://github.com/gabrielmaialva33/juridicai/commit/631b99e))
 - Case management system with models for cases, clients, events, documents, and deadlines ([1f3850d](https://github.com/gabrielmaialva33/juridicai/commit/1f3850d))
 - Database factories and seeders for multi-tenant setup ([ac80dbb](https://github.com/gabrielmaialva33/juridicai/commit/ac80dbb))
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive unit tests for tenant services ([05bc1bc](https://github.com/gabrielmaialva33/juridicai/commit/05bc1bc))
 
 ### Changed
+
 - Enhanced tenant and user handling with role and permission updates using enums ([55e5a5d](https://github.com/gabrielmaialva33/juridicai/commit/55e5a5d))
 - Introduced `ConflictException` for handling 409 errors ([a8b7492](https://github.com/gabrielmaialva33/juridicai/commit/a8b7492))
 - Implemented tenant-specific handling and pagination improvements ([705ef79](https://github.com/gabrielmaialva33/juridicai/commit/705ef79))
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced dynamic imports with static imports in test files ([5e107f5](https://github.com/gabrielmaialva33/juridicai/commit/5e107f5))
 
 ### Documentation
+
 - Added comprehensive project development guidelines covering setup, testing, and architecture ([f3979a0](https://github.com/gabrielmaialva33/juridicai/commit/f3979a0))
 - Expanded README with detailed multi-tenant principles and quick start guides ([359c4a8](https://github.com/gabrielmaialva33/juridicai/commit/359c4a8))
 - Rebranded project as JuridicAI with focus on legal multi-tenant SaaS ([94127dd](https://github.com/gabrielmaialva33/juridicai/commit/94127dd))
