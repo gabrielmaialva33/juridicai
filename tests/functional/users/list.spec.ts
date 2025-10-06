@@ -4,7 +4,6 @@ import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 
 import Role from '#models/role'
-import Permission from '#models/permission'
 import User from '#models/user'
 
 import IPermission from '#interfaces/permission_interface'

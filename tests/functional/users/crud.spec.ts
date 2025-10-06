@@ -2,7 +2,6 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
 
-import Permission from '#models/permission'
 import Role from '#models/role'
 import User from '#models/user'
 
