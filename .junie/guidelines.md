@@ -15,28 +15,32 @@ This document provides project-specific development guidelines for the JuridicAI
 ### Initial Setup
 
 1. **Install dependencies:**
+
    ```bash
    pnpm install
    ```
 
 2. **Environment configuration:**
+
    ```bash
    cp .env.example .env
    ```
-   
+
    **Important:** Generate APP_KEY before running the application:
+
    ```bash
    node ace generate:key
    ```
 
 3. **Database setup:**
+
    ```bash
    # Create database
    createdb juridicai_dev
-   
+
    # Run migrations
    node ace migration:run
-   
+
    # Seed development data
    node ace db:seed
    ```
@@ -99,6 +103,7 @@ Available aliases: `#controllers`, `#models`, `#services`, `#middleware`, `#vali
 ### Testing Framework
 
 The project uses **Japa** as the testing framework with the following plugins:
+
 - `@japa/assert` - Assertions
 - `@japa/api-client` - HTTP API testing
 - `@japa/plugin-adonisjs` - AdonisJS integration
@@ -128,10 +133,12 @@ node ace test functional
 ### Test Configuration
 
 Tests are configured in:
+
 - `adonisrc.ts` - Test suite definitions
 - `tests/bootstrap.ts` - Japa plugins and setup hooks
 
 Test setup automatically:
+
 - Runs database migrations before all tests
 - Seeds test data
 - Starts HTTP server for functional/e2e tests
@@ -151,7 +158,7 @@ test.group('Feature Name', () => {
     const result = 2 + 2
     assert.equal(result, 4)
   })
-  
+
   test('should handle async operations', async ({ assert }) => {
     const result = await someAsyncFunction()
     assert.isTrue(result)
@@ -160,6 +167,7 @@ test.group('Feature Name', () => {
 ```
 
 **Available assertions:**
+
 - `assert.equal(actual, expected)`
 - `assert.notEqual(actual, expected)`
 - `assert.isTrue(value)` / `assert.isFalse(value)`
@@ -176,7 +184,7 @@ import { test } from '@japa/runner'
 test.group('API Endpoint', () => {
   test('should return users list', async ({ client }) => {
     const response = await client.get('/api/users')
-    
+
     response.assertStatus(200)
     response.assertBodyContains({ data: [] })
   })
@@ -200,6 +208,7 @@ await testUtils.httpServer().start()
 ### Test Utilities
 
 Helper utilities are available in `tests/utils/`:
+
 - `tenant_test_helper.ts` - Multi-tenant testing helpers
 
 ## Code Style and Quality
@@ -207,6 +216,7 @@ Helper utilities are available in `tests/utils/`:
 ### TypeScript Configuration
 
 The project uses strict TypeScript settings via `@adonisjs/tsconfig/tsconfig.app.json`:
+
 - Strict mode enabled
 - Modern ES target
 - Output directory: `./build`
@@ -217,6 +227,7 @@ The project uses strict TypeScript settings via `@adonisjs/tsconfig/tsconfig.app
 Uses `@adonisjs/eslint-config` with the `configApp` preset.
 
 Run linting:
+
 ```bash
 pnpm lint          # Check for issues
 pnpm lint:fix      # Auto-fix issues
@@ -227,6 +238,7 @@ pnpm lint:fix      # Auto-fix issues
 Code formatting uses `@adonisjs/prettier-config`.
 
 Format code:
+
 ```bash
 pnpm format
 ```
@@ -234,6 +246,7 @@ pnpm format
 ### Pre-commit Checks
 
 Before committing, ensure:
+
 1. TypeScript compiles without errors: `pnpm typecheck`
 2. ESLint passes: `pnpm lint`
 3. Code is formatted: `pnpm format`
@@ -270,6 +283,7 @@ TenantContextService.clearTenant()
 ### Testing Multi-Tenant Features
 
 When writing tests for multi-tenant features:
+
 1. Use `tenant_test_helper.ts` utilities
 2. Always set tenant context before operations
 3. Verify data isolation between tenants
@@ -312,6 +326,7 @@ node ace db:seed --files=database/seeders/UserSeeder.ts
 ### Models
 
 Models should follow these conventions:
+
 - Use `TenantAwareModel` for tenant-scoped data
 - Define relationships using decorators (`@hasMany`, `@belongsTo`, etc.)
 - Use proper TypeScript typing for columns
@@ -324,6 +339,7 @@ Models should follow these conventions:
 Custom commands are in `./commands` directory and automatically registered.
 
 Create a new command:
+
 ```bash
 node ace make:command CommandName
 ```
@@ -331,6 +347,7 @@ node ace make:command CommandName
 ### Service Providers
 
 Custom providers in `./providers`:
+
 - `app_provider.ts` - Application-specific setup
 - `auth_events_provider.ts` - Authentication event listeners
 
@@ -343,7 +360,7 @@ import vine from '@vinejs/vine'
 
 const schema = vine.object({
   email: vine.string().email(),
-  password: vine.string().minLength(8)
+  password: vine.string().minLength(8),
 })
 
 const validator = vine.compile(schema)
@@ -353,6 +370,7 @@ const data = await validator.validate(request.all())
 ### Experimental Features
 
 The project has enabled these experimental AdonisJS features (configured in `adonisrc.ts`):
+
 - `mergeMultipartFieldsAndFiles: true`
 - `shutdownInReverseOrder: true`
 
@@ -361,6 +379,7 @@ The project has enabled these experimental AdonisJS features (configured in `ado
 ### Brazilian Legal Domain
 
 This project includes specific features for Brazilian legal practice:
+
 - **CPF/CNPJ validation** for person/company identification
 - **CNJ case number formatting** (format: NNNNNNN-DD.YYYY.J.TR.OOOO)
 - **Audit trails** for compliance requirements
@@ -369,6 +388,7 @@ This project includes specific features for Brazilian legal practice:
 ### Audit Logging
 
 All sensitive operations should be logged using the audit service:
+
 - User actions
 - Permission checks
 - Data modifications
@@ -388,25 +408,30 @@ All sensitive operations should be logged using the audit service:
 ### Common Issues
 
 **APP_KEY not set:**
+
 ```bash
 node ace generate:key
 ```
 
 **Database connection errors:**
+
 - Verify PostgreSQL is running
 - Check `.env` database credentials
 - Ensure database exists: `createdb juridicai_dev`
 
 **Migration errors:**
+
 - Reset database: `node ace migration:rollback --batch=0 && node ace migration:run`
 - Check migration order and dependencies
 
 **Test failures:**
+
 - Ensure `.env.test` is configured
 - Check test database exists
 - Run migrations in test environment
 
 **Redis connection errors:**
+
 - Verify Redis is running: `redis-cli ping`
 - Check `REDIS_HOST` and `REDIS_PORT` in `.env`
 
