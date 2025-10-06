@@ -33,7 +33,7 @@ export default class PaginateClientService {
     const {
       search,
       clientType,
-      isActive = true,
+      isActive, // No default - let it be undefined when not specified
       state,
       city,
       tags,
@@ -97,22 +97,56 @@ export default class PaginateClientService {
         if (withCasesCount) {
           scopes.withCasesCount()
         }
-
-        // Default ordering - newest first
-        scopes.newest()
       })
+
+      // Apply default ordering outside of withScopes to avoid COUNT issues
+      if (!options.sortBy) {
+        query.orderBy('created_at', 'desc')
+      }
     }
 
-    paginateOptions.modifyQuery = paginateOptions.modifyQuery
-      ? (query) => {
-          paginateOptions.modifyQuery!(query)
-          modifyQuery(query)
-        }
-      : modifyQuery
+    // Build query directly instead of using repository.paginate
+    // to avoid COUNT issues with complex scopes
+    const query = Client.query()
+    modifyQuery(query)
 
-    return this.clientsRepository.paginate(paginateOptions) as Promise<
-      ModelPaginatorContract<Client>
-    >
+    // Apply custom modifyQuery if provided
+    if (paginateOptions.modifyQuery) {
+      paginateOptions.modifyQuery(query)
+    }
+
+    // Apply sorting
+    if (paginateOptions.sortBy) {
+      query.orderBy(paginateOptions.sortBy, paginateOptions.direction || 'asc')
+    }
+
+    // Manual pagination to avoid Lucid's paginate() COUNT bug with scopes
+    const page = paginateOptions.page || 1
+    const perPage = paginateOptions.perPage || 20
+
+    // Get total count using cloned query with tenant scope applied
+    const countQuery = query.clone().clearSelect().clearOrder()
+    const totalResult = await countQuery.count('* as total').first()
+    const total = Number(totalResult?.$extras?.total || 0)
+
+    // Get paginated data
+    const data = await query.offset((page - 1) * perPage).limit(perPage)
+
+    // Build paginator response matching Lucid's format
+    return {
+      data,
+      meta: {
+        total,
+        per_page: perPage,
+        current_page: page,
+        last_page: Math.ceil(total / perPage),
+        first_page: 1,
+        first_page_url: '',
+        last_page_url: '',
+        next_page_url: page < Math.ceil(total / perPage) ? '' : null,
+        previous_page_url: page > 1 ? '' : null,
+      },
+    } as any
   }
 
   /**

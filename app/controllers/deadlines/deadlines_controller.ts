@@ -25,7 +25,11 @@ export default class DeadlinesController {
     const direction = request.input('order', 'asc')
     const caseId = request.input('case_id', undefined)
     const status = request.input('status', undefined)
-    const isFatal = request.input('is_fatal', undefined)
+
+    // Convert boolean query params correctly
+    const isFatalParam = request.input('is_fatal')
+    const isFatal = isFatalParam !== undefined ? isFatalParam === 'true' : undefined
+
     const responsibleId = request.input('responsible_id', undefined)
 
     const query = Deadline.query()

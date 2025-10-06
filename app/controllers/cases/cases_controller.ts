@@ -26,9 +26,18 @@ export default class CasesController {
     const priority = request.input('priority', undefined)
     const caseType = request.input('case_type', undefined)
     const responsibleLawyerId = request.input('responsible_lawyer_id', undefined)
-    const withRelationships = request.input('with_relationships', false)
-    const withDeadlinesCount = request.input('with_deadlines_count', false)
-    const withDocumentsCount = request.input('with_documents_count', false)
+
+    // Convert boolean query params correctly
+    const withRelationshipsParam = request.input('with_relationships')
+    const withRelationships = withRelationshipsParam === 'true' || withRelationshipsParam === true
+
+    const withDeadlinesCountParam = request.input('with_deadlines_count')
+    const withDeadlinesCount =
+      withDeadlinesCountParam === 'true' || withDeadlinesCountParam === true
+
+    const withDocumentsCountParam = request.input('with_documents_count')
+    const withDocumentsCount =
+      withDocumentsCountParam === 'true' || withDocumentsCountParam === true
 
     const service = await app.container.make(PaginateCaseService)
     const cases = await service.run({
@@ -55,9 +64,16 @@ export default class CasesController {
    */
   async get({ params, request, response }: HttpContext) {
     const caseId = +params.id
-    const withClient = request.input('with_client', false)
-    const withDeadlines = request.input('with_deadlines', false)
-    const withDocuments = request.input('with_documents', false)
+
+    // Convert boolean query params correctly
+    const withClientParam = request.input('with_client')
+    const withClient = withClientParam === 'true' || withClientParam === true
+
+    const withDeadlinesParam = request.input('with_deadlines')
+    const withDeadlines = withDeadlinesParam === 'true' || withDeadlinesParam === true
+
+    const withDocumentsParam = request.input('with_documents')
+    const withDocuments = withDocumentsParam === 'true' || withDocumentsParam === true
 
     const service = await app.container.make(GetCaseService)
 

@@ -23,12 +23,20 @@ export default class ClientsController {
     const direction = request.input('order', 'desc')
     const search = request.input('search', undefined)
     const clientType = request.input('client_type', undefined)
-    const isActive = request.input('is_active', undefined)
+
+    // Convert boolean query params correctly (query strings are always strings)
+    const isActiveParam = request.input('is_active')
+    const isActive = isActiveParam !== undefined ? isActiveParam === 'true' : undefined
+
     const state = request.input('state', undefined)
     const city = request.input('city', undefined)
     const tags = request.input('tags', undefined)
-    const withCases = request.input('with_cases', false)
-    const withCasesCount = request.input('with_cases_count', false)
+
+    const withCasesParam = request.input('with_cases')
+    const withCases = withCasesParam === 'true' || withCasesParam === true
+
+    const withCasesCountParam = request.input('with_cases_count')
+    const withCasesCount = withCasesCountParam === 'true' || withCasesCountParam === true
 
     const service = await app.container.make(PaginateClientService)
     const clients = await service.run({
@@ -55,8 +63,13 @@ export default class ClientsController {
    */
   async get({ params, request, response }: HttpContext) {
     const clientId = +params.id
-    const withCases = request.input('with_cases', false)
-    const withCasesCount = request.input('with_cases_count', false)
+
+    // Convert boolean query params correctly
+    const withCasesParam = request.input('with_cases')
+    const withCases = withCasesParam === 'true' || withCasesParam === true
+
+    const withCasesCountParam = request.input('with_cases_count')
+    const withCasesCount = withCasesCountParam === 'true' || withCasesCountParam === true
 
     const service = await app.container.make(GetClientService)
     const client = await service.run(clientId, {

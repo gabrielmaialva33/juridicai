@@ -870,10 +870,11 @@ test.group('Clients CRUD', (group) => {
     const user1 = await UserFactory.create()
     const tenant1 = await setupTenantForUser(user1)
 
-    await TenantContextService.run(
+    const tenant1ClientIds = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: user1.id, tenant_user: null },
       async () => {
-        await ClientFactory.createMany(3)
+        const clients = await ClientFactory.createMany(3)
+        return clients.map((c) => c.id)
       }
     )
 
@@ -881,29 +882,42 @@ test.group('Clients CRUD', (group) => {
     const user2 = await UserFactory.create()
     const tenant2 = await setupTenantForUser(user2)
 
-    await TenantContextService.run(
+    const tenant2ClientIds = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: user2.id, tenant_user: null },
       async () => {
-        await ClientFactory.createMany(2)
+        const clients = await ClientFactory.createMany(2)
+        return clients.map((c) => c.id)
       }
     )
 
-    // List clients for tenant1
+    // List clients for tenant1 - should only return tenant1's clients
     const response1 = await client
       .get('/api/v1/clients')
       .header('X-Tenant-ID', tenant1.id)
       .loginAs(user1)
 
     response1.assertStatus(200)
-    assert.equal(response1.body().meta.total, 3)
+    const body1 = response1.body()
 
-    // List clients for tenant2
+    // Verify ALL returned clients have correct tenant_id
+    body1.data.forEach((c: any) => {
+      assert.equal(c.tenant_id, tenant1.id, `Client ${c.id} should have tenant_id ${tenant1.id}`)
+    })
+    assert.equal(body1.meta.total, tenant1ClientIds.length)
+
+    // List clients for tenant2 - should only return tenant2's clients
     const response2 = await client
       .get('/api/v1/clients')
       .header('X-Tenant-ID', tenant2.id)
       .loginAs(user2)
 
     response2.assertStatus(200)
-    assert.equal(response2.body().meta.total, 2)
+    const body2 = response2.body()
+
+    // Verify ALL returned clients have correct tenant_id
+    body2.data.forEach((c: any) => {
+      assert.equal(c.tenant_id, tenant2.id, `Client ${c.id} should have tenant_id ${tenant2.id}`)
+    })
+    assert.equal(body2.meta.total, tenant2ClientIds.length)
   })
 })

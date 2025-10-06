@@ -31,13 +31,13 @@ export default class CreateCaseService {
    */
   async run(payload: ICase.CreatePayload): Promise<Case> {
     // Validate client exists
-    const client = await this.clientsRepository.find(payload.client_id)
+    const client = await this.clientsRepository.findBy('id', payload.client_id)
     if (!client) {
       throw new NotFoundException('Client not found')
     }
 
     // Validate responsible lawyer exists
-    const lawyer = await this.usersRepository.find(payload.responsible_lawyer_id)
+    const lawyer = await this.usersRepository.findBy('id', payload.responsible_lawyer_id)
     if (!lawyer) {
       throw new NotFoundException('Responsible lawyer not found')
     }
