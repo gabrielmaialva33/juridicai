@@ -1,8 +1,12 @@
 import { DateTime } from 'luxon'
-import { column, hasMany, scope } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import TenantAwareModel from '#models/tenant_aware_model'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+
+import TenantContextService from '#services/tenants/tenant_context_service'
 import Case from '#models/case'
+
+type Builder = ModelQueryBuilderContract<typeof Client>
 
 type ClientType = 'individual' | 'company'
 
@@ -17,7 +21,37 @@ interface ClientAddress {
   country?: string
 }
 
-export default class Client extends TenantAwareModel {
+export default class Client extends BaseModel {
+  static table = 'clients'
+  static namingStrategy = new SnakeCaseNamingStrategy()
+
+  static boot() {
+    if (this.booted) return
+    super.boot()
+
+    // Hook para auto-set tenant_id
+    this.before('create', (model: Client) => {
+      if (!model.tenant_id) {
+        model.tenant_id = TenantContextService.assertTenantId()
+      }
+    })
+
+    // Hook para auto-filter queries
+    this.before('find', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+
+    this.before('fetch', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+  }
+
   /**
    * ------------------------------------------------------
    * Columns
@@ -100,18 +134,9 @@ export default class Client extends TenantAwareModel {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Hooks
    * ------------------------------------------------------
    */
-  get display_name(): string {
-    return this.client_type === 'individual'
-      ? this.full_name || 'No name'
-      : this.company_name || 'No company name'
-  }
-
-  get tax_id(): string | null {
-    return this.client_type === 'individual' ? this.cpf : this.cnpj
-  }
 
   /**
    * ------------------------------------------------------
@@ -120,16 +145,34 @@ export default class Client extends TenantAwareModel {
    */
 
   /**
+   * Scope to filter by specific tenant
+   * @example Client.query().withScopes((scopes) => scopes.forTenant(tenantId))
+   */
+  static forTenant = scope((query, tenantId: string) => {
+    return query.where('tenant_id', tenantId)
+  })
+
+  /**
+   * Scope to disable automatic tenant filtering
+   * USE WITH CAUTION - only for admin operations
+   * @example Client.query().withScopes((scopes) => scopes.withoutTenantScope())
+   */
+  static withoutTenantScope = scope((query) => {
+    ;(query as any)._skipTenantScope = true
+    return query
+  })
+
+  /**
    * Search clients by name, CPF, CNPJ, email
-   * @example Client.query().withScopes(s => s.search('john'))
+   * @example Client.query().withScopes((scopes) => scopes.search('john'))
    */
   static search = scope((query, term: string) => {
-    if (!term || !term.trim()) return
+    if (!term || !term.trim()) return query
 
     const searchTerm = `%${term.trim()}%`
-    const cleanTerm = term.replace(/\D/g, '') // Remove non-digits for CPF/CNPJ search
+    const cleanTerm = term.replace(/\D/g, '')
 
-    query.where((builder) => {
+    return query.where((builder) => {
       builder
         .whereILike('full_name', searchTerm)
         .orWhereILike('company_name', searchTerm)
@@ -144,137 +187,137 @@ export default class Client extends TenantAwareModel {
 
   /**
    * Filter clients by type (individual or company)
-   * @example Client.query().withScopes(s => s.ofType('individual'))
+   * @example Client.query().withScopes((scopes) => scopes.ofType('individual'))
    */
   static ofType = scope((query, type: ClientType) => {
-    query.where('client_type', type)
+    return query.where('client_type', type)
   })
 
   /**
    * Filter active clients
-   * @example Client.query().withScopes(s => s.active())
+   * @example Client.query().withScopes((scopes) => scopes.active())
    */
-  static active = scope((query) => {
-    query.where('is_active', true)
+  static active = scope((query: Builder) => {
+    return query.where('is_active', true)
   })
 
   /**
    * Filter inactive clients
-   * @example Client.query().withScopes(s => s.inactive())
+   * @example Client.query().withScopes((scopes) => scopes.inactive())
    */
-  static inactive = scope((query) => {
-    query.where('is_active', false)
+  static inactive = scope((query: Builder) => {
+    return query.where('is_active', false)
   })
 
   /**
    * Filter clients with active cases
-   * @example Client.query().withScopes(s => s.withActiveCases())
+   * @example Client.query().withScopes((scopes) => scopes.withActiveCases())
    */
-  static withActiveCases = scope((query) => {
-    query.whereHas('cases', (caseQuery) => {
+  static withActiveCases = scope((query: Builder) => {
+    return query.whereHas('cases', (caseQuery) => {
       caseQuery.whereIn('status', ['active', 'in_progress'])
     })
   })
 
   /**
    * Filter clients without cases
-   * @example Client.query().withScopes(s => s.withoutCases())
+   * @example Client.query().withScopes((scopes) => scopes.withoutCases())
    */
-  static withoutCases = scope((query) => {
-    query.doesntHave('cases')
+  static withoutCases = scope((query: Builder) => {
+    return query.doesntHave('cases')
   })
 
   /**
    * Include cases relationship
-   * @example Client.query().withScopes(s => s.withCases())
+   * @example Client.query().withScopes((scopes) => scopes.withCases())
    */
-  static withCases = scope((query) => {
-    query.preload('cases', (casesQuery) => {
+  static withCases = scope((query: Builder) => {
+    return query.preload('cases', (casesQuery) => {
       casesQuery.orderBy('created_at', 'desc')
     })
   })
 
   /**
    * Include cases count
-   * @example Client.query().withScopes(s => s.withCasesCount())
+   * @example Client.query().withScopes((scopes) => scopes.withCasesCount())
    */
-  static withCasesCount = scope((query) => {
-    query.withCount('cases', (q) => {
+  static withCasesCount = scope((query: Builder) => {
+    return query.withCount('cases', (q) => {
       q.as('cases_count')
     })
   })
 
   /**
    * Filter by state
-   * @example Client.query().withScopes(s => s.byState('SP'))
+   * @example Client.query().withScopes((scopes) => scopes.byState('SP'))
    */
   static byState = scope((query, state: string) => {
-    query.whereRaw("address->>'state' = ?", [state])
+    return query.whereRaw("address->>'state' = ?", [state])
   })
 
   /**
    * Filter by city
-   * @example Client.query().withScopes(s => s.byCity('São Paulo'))
+   * @example Client.query().withScopes((scopes) => scopes.byCity('São Paulo'))
    */
   static byCity = scope((query, city: string) => {
-    query.whereRaw("address->>'city' = ?", [city])
+    return query.whereRaw("address->>'city' = ?", [city])
   })
 
   /**
    * Filter clients with tags
-   * @example Client.query().withScopes(s => s.hasTag('vip'))
+   * @example Client.query().withScopes((scopes) => scopes.hasTag('vip'))
    */
   static hasTag = scope((query, tag: string) => {
-    query.whereRaw('? = ANY(tags)', [tag])
+    return query.whereRaw('? = ANY(tags)', [tag])
   })
 
   /**
    * Filter clients with any of the tags
-   * @example Client.query().withScopes(s => s.hasAnyTag(['vip', 'priority']))
+   * @example Client.query().withScopes((scopes) => scopes.hasAnyTag(['vip', 'priority']))
    */
   static hasAnyTag = scope((query, tags: string[]) => {
-    query.whereRaw('tags && ?', [`{${tags.join(',')}}`])
+    return query.whereRaw('tags && ?', [`{${tags.join(',')}}`])
   })
 
   /**
    * Filter clients created between dates
-   * @example Client.query().withScopes(s => s.createdBetween(from, to))
+   * @example Client.query().withScopes((scopes) => scopes.createdBetween(from, to))
    */
   static createdBetween = scope((query, from: DateTime, to: DateTime) => {
-    query.whereBetween('created_at', [from.toSQL(), to.toSQL()])
+    return query.whereBetween('created_at', [from.toISO()!, to.toISO()!])
   })
 
   /**
    * Filter clients created after date
-   * @example Client.query().withScopes(s => s.createdAfter(date))
+   * @example Client.query().withScopes((scopes) => scopes.createdAfter(date))
    */
   static createdAfter = scope((query, date: DateTime) => {
-    query.where('created_at', '>', date.toSQL())
+    return query.where('created_at', '>', date.toISO()!)
   })
 
   /**
    * Filter clients created before date
-   * @example Client.query().withScopes(s => s.createdBefore(date))
+   * @example Client.query().withScopes((scopes) => scopes.createdBefore(date))
    */
   static createdBefore = scope((query, date: DateTime) => {
-    query.where('created_at', '<', date.toSQL())
+    return query.where('created_at', '<', date.toISO()!)
   })
 
   /**
    * Filter clients created recently
-   * @example Client.query().withScopes(s => s.recent(7))
+   * @example Client.query().withScopes((scopes) => scopes.recent(7))
    */
-  static recent = scope((query, days = 7) => {
+  static recent = scope((query: Builder, days = 7) => {
     const date = DateTime.now().minus({ days })
-    query.where('created_at', '>=', date.toSQL())
+    return query.where('created_at', '>=', date.toISO())
   })
 
   /**
    * Order by name (considering both individual and company)
-   * @example Client.query().withScopes(s => s.alphabetical())
+   * @example Client.query().withScopes((scopes) => scopes.alphabetical())
    */
-  static alphabetical = scope((query) => {
-    query.orderByRaw(`
+  static alphabetical = scope((query: Builder) => {
+    return query.orderByRaw(`
       CASE
         WHEN client_type = 'individual' THEN COALESCE(full_name, '')
         ELSE COALESCE(company_name, '')
@@ -284,17 +327,32 @@ export default class Client extends TenantAwareModel {
 
   /**
    * Order by creation date (newest first)
-   * @example Client.query().withScopes(s => s.newest())
+   * @example Client.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query) => {
-    query.orderBy('created_at', 'desc')
+  static newest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Order by creation date (oldest first)
-   * @example Client.query().withScopes(s => s.oldest())
+   * @example Client.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query) => {
-    query.orderBy('created_at', 'asc')
+  static oldest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'asc')
   })
+
+  /**
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
+   */
+  get display_name(): string {
+    return this.client_type === 'individual'
+      ? this.full_name || 'No name'
+      : this.company_name || 'No company name'
+  }
+
+  get tax_id(): string | null {
+    return this.client_type === 'individual' ? this.cpf : this.cnpj
+  }
 }

@@ -4,6 +4,7 @@ import {
   beforeCreate,
   column,
   manyToMany,
+  scope,
   SnakeCaseNamingStrategy,
 } from '@adonisjs/lucid/orm'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
@@ -80,24 +81,38 @@ export default class Permission extends BaseModel {
    * Query Scopes
    * ------------------------------------------------------
    */
-  static byResource = (query: any, resource: string) => {
+
+  /**
+   * Filter permissions by resource
+   * @example Permission.query().withScopes((scopes) => scopes.byResource('users'))
+   */
+  static byResource = scope((query, resource: string) => {
     return query.where('resource', resource)
-  }
+  })
 
-  static byAction = (query: any, action: string) => {
+  /**
+   * Filter permissions by action
+   * @example Permission.query().withScopes((scopes) => scopes.byAction('create'))
+   */
+  static byAction = scope((query, action: string) => {
     return query.where('action', action)
-  }
+  })
 
-  static byContext = (query: any, context: string) => {
+  /**
+   * Filter permissions by context
+   * @example Permission.query().withScopes((scopes) => scopes.byContext('tenant'))
+   */
+  static byContext = scope((query, context: string) => {
     return query.where('context', context)
-  }
+  })
 
-  static byResourceActionContext = (
-    query: any,
-    resource: string,
-    action: string,
-    context: string = 'any'
-  ) => {
-    return query.where('resource', resource).where('action', action).where('context', context)
-  }
+  /**
+   * Filter permissions by resource, action, and context
+   * @example Permission.query().withScopes((scopes) => scopes.byResourceActionContext('users', 'create', 'tenant'))
+   */
+  static byResourceActionContext = scope(
+    (query, resource: string, action: string, context: string = 'any') => {
+      return query.where('resource', resource).where('action', action).where('context', context)
+    }
+  )
 }

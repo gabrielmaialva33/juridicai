@@ -1,9 +1,11 @@
 import { DateTime } from 'luxon'
-import { BaseModel, belongsTo, column, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import User from '#models/user'
+
+type Builder = ModelQueryBuilderContract<typeof AuditLog>
 
 export default class AuditLog extends BaseModel {
   static table = 'audit_logs'
@@ -78,41 +80,69 @@ export default class AuditLog extends BaseModel {
 
   /**
    * ------------------------------------------------------
+   * Hooks
+   * ------------------------------------------------------
+   */
+
+  /**
+   * ------------------------------------------------------
    * Query Scopes
    * ------------------------------------------------------
    */
-  static byUser = (query: ModelQueryBuilderContract<typeof AuditLog>, userId: number) => {
+
+  /**
+   * Filter audit logs by user
+   * @example AuditLog.query().withScopes((scopes) => scopes.byUser(userId))
+   */
+  static byUser = scope((query, userId: number) => {
     return query.where('user_id', userId)
-  }
+  })
 
-  static byResource = (query: ModelQueryBuilderContract<typeof AuditLog>, resource: string) => {
+  /**
+   * Filter audit logs by resource
+   * @example AuditLog.query().withScopes((scopes) => scopes.byResource('users'))
+   */
+  static byResource = scope((query, resource: string) => {
     return query.where('resource', resource)
-  }
+  })
 
-  static byAction = (query: ModelQueryBuilderContract<typeof AuditLog>, action: string) => {
+  /**
+   * Filter audit logs by action
+   * @example AuditLog.query().withScopes((scopes) => scopes.byAction('create'))
+   */
+  static byAction = scope((query, action: string) => {
     return query.where('action', action)
-  }
+  })
 
-  static byResult = (
-    query: ModelQueryBuilderContract<typeof AuditLog>,
-    result: 'granted' | 'denied'
-  ) => {
+  /**
+   * Filter audit logs by result
+   * @example AuditLog.query().withScopes((scopes) => scopes.byResult('granted'))
+   */
+  static byResult = scope((query, result: 'granted' | 'denied') => {
     return query.where('result', result)
-  }
+  })
 
-  static byDateRange = (
-    query: ModelQueryBuilderContract<typeof AuditLog>,
-    startDate: DateTime,
-    endDate: DateTime
-  ) => {
+  /**
+   * Filter audit logs between dates
+   * @example AuditLog.query().withScopes((scopes) => scopes.byDateRange(startDate, endDate))
+   */
+  static byDateRange = scope((query, startDate: DateTime, endDate: DateTime) => {
     return query.whereBetween('created_at', [startDate.toSQL()!, endDate.toSQL()!])
-  }
+  })
 
-  static byIpAddress = (query: ModelQueryBuilderContract<typeof AuditLog>, ipAddress: string) => {
+  /**
+   * Filter audit logs by IP address
+   * @example AuditLog.query().withScopes((scopes) => scopes.byIpAddress('192.168.1.1'))
+   */
+  static byIpAddress = scope((query, ipAddress: string) => {
     return query.where('ip_address', ipAddress)
-  }
+  })
 
-  static recentFirst = (query: ModelQueryBuilderContract<typeof AuditLog>) => {
+  /**
+   * Order audit logs by creation date (newest first)
+   * @example AuditLog.query().withScopes((scopes) => scopes.recentFirst())
+   */
+  static recentFirst = scope((query: Builder) => {
     return query.orderBy('created_at', 'desc')
-  }
+  })
 }

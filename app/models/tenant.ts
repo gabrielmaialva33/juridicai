@@ -1,7 +1,10 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import TenantUser from '#models/tenant_user'
+
+type Builder = ModelQueryBuilderContract<typeof Tenant>
 
 type TenantPlan = 'free' | 'starter' | 'pro' | 'enterprise'
 
@@ -15,8 +18,14 @@ interface TenantLimits {
 }
 
 export default class Tenant extends BaseModel {
+  static table = 'tenants'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: string
 
@@ -57,11 +66,21 @@ export default class Tenant extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
   @hasMany(() => TenantUser, {
     foreignKey: 'tenant_id',
   })
   declare tenant_users: HasMany<typeof TenantUser>
+
+  /**
+   * ------------------------------------------------------
+   * Hooks
+   * ------------------------------------------------------
+   */
 
   /**
    * ------------------------------------------------------
@@ -71,53 +90,53 @@ export default class Tenant extends BaseModel {
 
   /**
    * Filter active tenants
-   * @example Tenant.query().withScopes(s => s.active())
+   * @example Tenant.query().withScopes((scopes) => scopes.active())
    */
-  static active = scope((query) => {
-    query.where('is_active', true)
+  static active = scope((query: Builder) => {
+    return query.where('is_active', true)
   })
 
   /**
    * Filter tenants by plan
-   * @example Tenant.query().withScopes(s => s.byPlan('pro'))
+   * @example Tenant.query().withScopes((scopes) => scopes.byPlan('pro'))
    */
   static byPlan = scope((query, plan: TenantPlan) => {
-    query.where('plan', plan)
+    return query.where('plan', plan)
   })
 
   /**
    * Filter tenants by multiple plans
-   * @example Tenant.query().withScopes(s => s.byPlans(['pro', 'enterprise']))
+   * @example Tenant.query().withScopes((scopes) => scopes.byPlans(['pro', 'enterprise']))
    */
   static byPlans = scope((query, plans: TenantPlan[]) => {
-    query.whereIn('plan', plans)
+    return query.whereIn('plan', plans)
   })
 
   /**
    * Find tenant by subdomain
-   * @example Tenant.query().withScopes(s => s.bySubdomain('acme'))
+   * @example Tenant.query().withScopes((scopes) => scopes.bySubdomain('acme'))
    */
   static bySubdomain = scope((query, subdomain: string) => {
-    query.where('subdomain', subdomain)
+    return query.where('subdomain', subdomain)
   })
 
   /**
    * Find tenant by custom domain
-   * @example Tenant.query().withScopes(s => s.byCustomDomain('acme.com'))
+   * @example Tenant.query().withScopes((scopes) => scopes.byCustomDomain('acme.com'))
    */
   static byCustomDomain = scope((query, domain: string) => {
-    query.where('custom_domain', domain)
+    return query.where('custom_domain', domain)
   })
 
   /**
    * Search tenants by name or subdomain
-   * @example Tenant.query().withScopes(s => s.search('acme'))
+   * @example Tenant.query().withScopes((scopes) => scopes.search('acme'))
    */
   static search = scope((query, term: string) => {
-    if (!term || !term.trim()) return
+    if (!term || !term.trim()) return query
 
     const searchTerm = `%${term.trim()}%`
-    query.where((builder) => {
+    return query.where((builder) => {
       builder
         .whereILike('name', searchTerm)
         .orWhereILike('subdomain', searchTerm)
@@ -127,120 +146,120 @@ export default class Tenant extends BaseModel {
 
   /**
    * Include tenant limits in response
-   * @example Tenant.query().withScopes(s => s.withLimits())
+   * @example Tenant.query().withScopes((scopes) => scopes.withLimits())
    */
-  static withLimits = scope((query) => {
-    query.select('*', 'limits')
+  static withLimits = scope((query: Builder) => {
+    return query.select('*', 'limits')
   })
 
   /**
    * Filter tenants near their limits
-   * @example Tenant.query().withScopes(s => s.nearLimits(0.8))
+   * @example Tenant.query().withScopes((scopes) => scopes.nearLimits(0.8))
    */
-  static nearLimits = scope((query, threshold = 0.8) => {
+  static nearLimits = scope((query: Builder, _threshold = 0.8) => {
     // This would require a more complex query based on actual usage
     // For now, just filter tenants with limits set
-    query.whereNotNull('limits')
+    return query.whereNotNull('limits')
   })
 
   /**
    * Filter suspended tenants
-   * @example Tenant.query().withScopes(s => s.suspended())
+   * @example Tenant.query().withScopes((scopes) => scopes.suspended())
    */
-  static suspended = scope((query) => {
-    query.whereNotNull('suspended_at')
+  static suspended = scope((query: Builder) => {
+    return query.whereNotNull('suspended_at')
   })
 
   /**
    * Filter non-suspended tenants
-   * @example Tenant.query().withScopes(s => s.notSuspended())
+   * @example Tenant.query().withScopes((scopes) => scopes.notSuspended())
    */
-  static notSuspended = scope((query) => {
-    query.whereNull('suspended_at')
+  static notSuspended = scope((query: Builder) => {
+    return query.whereNull('suspended_at')
   })
 
   /**
    * Filter tenants in trial
-   * @example Tenant.query().withScopes(s => s.inTrial())
+   * @example Tenant.query().withScopes((scopes) => scopes.inTrial())
    */
-  static inTrial = scope((query) => {
-    query.whereNotNull('trial_ends_at').where('trial_ends_at', '>', DateTime.now().toSQL())
+  static inTrial = scope((query: Builder) => {
+    return query.whereNotNull('trial_ends_at').where('trial_ends_at', '>', DateTime.now().toISO())
   })
 
   /**
    * Filter tenants with expired trial
-   * @example Tenant.query().withScopes(s => s.trialExpired())
+   * @example Tenant.query().withScopes((scopes) => scopes.trialExpired())
    */
-  static trialExpired = scope((query) => {
-    query.whereNotNull('trial_ends_at').where('trial_ends_at', '<=', DateTime.now().toSQL())
+  static trialExpired = scope((query: Builder) => {
+    return query.whereNotNull('trial_ends_at').where('trial_ends_at', '<=', DateTime.now().toISO())
   })
 
   /**
    * Include tenant users count
-   * @example Tenant.query().withScopes(s => s.withUserCount())
+   * @example Tenant.query().withScopes((scopes) => scopes.withUserCount())
    */
-  static withUserCount = scope((query) => {
-    query.withCount('tenant_users', (q) => {
+  static withUserCount = scope((query: Builder) => {
+    return query.withCount('tenant_users', (q) => {
       q.as('users_count').where('is_active', true)
     })
   })
 
   /**
    * Include tenant users relationship
-   * @example Tenant.query().withScopes(s => s.withUsers())
+   * @example Tenant.query().withScopes((scopes) => scopes.withUsers())
    */
-  static withUsers = scope((query) => {
-    query.preload('tenant_users', (tuQuery) => {
+  static withUsers = scope((query: Builder) => {
+    return query.preload('tenant_users', (tuQuery) => {
       tuQuery.where('is_active', true).preload('user').orderBy('created_at', 'desc')
     })
   })
 
   /**
    * Filter tenants created between dates
-   * @example Tenant.query().withScopes(s => s.createdBetween(from, to))
+   * @example Tenant.query().withScopes((scopes) => scopes.createdBetween(from, to))
    */
   static createdBetween = scope((query, from: DateTime, to: DateTime) => {
-    query.whereBetween('created_at', [from.toSQL(), to.toSQL()])
+    return query.whereBetween('created_at', [from.toISO()!, to.toISO()!])
   })
 
   /**
    * Filter tenants created after date
-   * @example Tenant.query().withScopes(s => s.createdAfter(date))
+   * @example Tenant.query().withScopes((scopes) => scopes.createdAfter(date))
    */
   static createdAfter = scope((query, date: DateTime) => {
-    query.where('created_at', '>', date.toSQL())
+    return query.where('created_at', '>', date.toISO()!)
   })
 
   /**
    * Filter tenants created before date
-   * @example Tenant.query().withScopes(s => s.createdBefore(date))
+   * @example Tenant.query().withScopes((scopes) => scopes.createdBefore(date))
    */
   static createdBefore = scope((query, date: DateTime) => {
-    query.where('created_at', '<', date.toSQL())
+    return query.where('created_at', '<'!, date.toISO()!)
   })
 
   /**
    * Filter tenants created recently
-   * @example Tenant.query().withScopes(s => s.recentlyCreated(7))
+   * @example Tenant.query().withScopes((scopes) => scopes.recentlyCreated(7))
    */
-  static recentlyCreated = scope((query, days = 7) => {
+  static recentlyCreated = scope((query: Builder, days = 7) => {
     const date = DateTime.now().minus({ days })
-    query.where('created_at', '>=', date.toSQL())
+    return query.where('created_at', '>=', date.toISO())
   })
 
   /**
    * Order by creation date
-   * @example Tenant.query().withScopes(s => s.newest())
+   * @example Tenant.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query) => {
-    query.orderBy('created_at', 'desc')
+  static newest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Order by name
-   * @example Tenant.query().withScopes(s => s.alphabetical())
+   * @example Tenant.query().withScopes((scopes) => scopes.alphabetical())
    */
-  static alphabetical = scope((query) => {
-    query.orderBy('name', 'asc')
+  static alphabetical = scope((query: Builder) => {
+    return query.orderBy('name', 'asc')
   })
 }

@@ -1,9 +1,13 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, manyToMany, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, column, manyToMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+
 import IRole from '#interfaces/role_interface'
 import User from '#models/user'
 import Permission from '#models/permission'
+
+type Builder = ModelQueryBuilderContract<typeof Role>
 
 export default class Role extends BaseModel {
   static table = 'roles'
@@ -59,4 +63,46 @@ export default class Role extends BaseModel {
    * Query Scopes
    * ------------------------------------------------------
    */
+
+  /**
+   * Find role by slug
+   * @example Role.query().withScopes((scopes) => scopes.bySlug('admin'))
+   */
+  static bySlug = scope((query, slug: IRole.Slugs) => {
+    return query.where('slug', slug)
+  })
+
+  /**
+   * Search roles by name
+   * @example Role.query().withScopes((scopes) => scopes.search('admin'))
+   */
+  static search = scope((query, term: string) => {
+    if (!term || !term.trim()) return query
+    const searchTerm = `%${term.trim()}%`
+    return query.whereILike('name', searchTerm)
+  })
+
+  /**
+   * Include permissions relationship
+   * @example Role.query().withScopes((scopes) => scopes.withPermissions())
+   */
+  static withPermissions = scope((query: Builder) => {
+    return query.preload('permissions')
+  })
+
+  /**
+   * Include users relationship
+   * @example Role.query().withScopes((scopes) => scopes.withUsers())
+   */
+  static withUsers = scope((query: Builder) => {
+    return query.preload('users')
+  })
+
+  /**
+   * Order roles alphabetically by name
+   * @example Role.query().withScopes((scopes) => scopes.alphabetical())
+   */
+  static alphabetical = scope((query: Builder) => {
+    return query.orderBy('name', 'asc')
+  })
 }

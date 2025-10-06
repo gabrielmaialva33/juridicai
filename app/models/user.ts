@@ -17,13 +17,15 @@ import {
 } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
-import * as model from '@adonisjs/lucid/types/model'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+
 import Role from '#models/role'
 import Permission from '#models/permission'
 import TenantUser from '#models/tenant_user'
 import IRole from '#interfaces/role_interface'
+
+type Builder = ModelQueryBuilderContract<typeof User>
 
 const AuthFinder = withAuthFinder(() => hash.use('argon'), {
   uids: ['email', 'username'],
@@ -114,15 +116,15 @@ export default class User extends compose(BaseModel, AuthFinder) {
    */
   @beforeFind()
   @beforeFetch()
-  static async softDeletes(query: model.ModelQueryBuilderContract<typeof User>) {
+  static async softDeletes(query: ModelQueryBuilderContract<typeof User>) {
     query.where('is_deleted', false)
   }
 
   @beforePaginate()
   static async softDeletesPaginate(
     queries: [
-      countQuery: model.ModelQueryBuilderContract<typeof User>,
-      fetchQuery: model.ModelQueryBuilderContract<typeof User>,
+      countQuery: ModelQueryBuilderContract<typeof User>,
+      fetchQuery: ModelQueryBuilderContract<typeof User>,
     ]
   ) {
     queries.forEach((query) => query.where('is_deleted', false))
@@ -158,13 +160,13 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   /**
    * Search users by name or email
-   * @example User.query().withScopes(s => s.searchByTerm('john'))
+   * @example User.query().withScopes((scopes) => scopes.searchByTerm('john'))
    */
-  static searchByTerm = scope((query: ModelQueryBuilderContract<typeof User>, term: string) => {
-    if (!term || !term.trim()) return
+  static searchByTerm = scope((query, term: string) => {
+    if (!term || !term.trim()) return query
 
     const searchTerm = `%${term.trim()}%`
-    query.where((builder) => {
+    return query.where((builder) => {
       builder
         .whereILike('full_name', searchTerm)
         .orWhereILike('email', searchTerm)
@@ -174,128 +176,122 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   /**
    * Filter users by tenant through TenantUser relationship
-   * @example User.query().withScopes(s => s.forTenant(tenantId))
+   * @example User.query().withScopes((scopes) => scopes.forTenant(tenantId))
    */
-  static forTenant = scope(
-    (query: ModelQueryBuilderContract<typeof User>, tenantId: string | number) => {
-      query.whereHas('tenant_users', (tenantQuery) => {
-        tenantQuery.where('tenant_id', tenantId).where('is_active', true)
-      })
-    }
-  )
+  static forTenant = scope((query, tenantId: string | number) => {
+    return (query as any).whereHas('tenant_users', (tenantQuery: any) => {
+      tenantQuery.where('tenant_id', tenantId).where('is_active', true)
+    })
+  })
 
   /**
    * Preload user roles
-   * @example User.query().withScopes(s => s.withRoles())
+   * @example User.query().withScopes((scopes) => scopes.withRoles())
    */
-  static withRoles = scope((query: ModelQueryBuilderContract<typeof User>) => {
-    query.preload('roles', (rolesQuery) => {
+  static withRoles = scope((query: Builder) => {
+    return query.preload('roles', (rolesQuery) => {
       rolesQuery.orderBy('slug', 'asc')
     })
   })
 
   /**
    * Preload user permissions (direct and from roles)
-   * @example User.query().withScopes(s => s.withPermissions())
+   * @example User.query().withScopes((scopes) => scopes.withPermissions())
    */
-  static withPermissions = scope((query: ModelQueryBuilderContract<typeof User>) => {
-    query.preload('permissions').preload('roles', (rolesQuery) => {
+  static withPermissions = scope((query: Builder) => {
+    return query.preload('permissions').preload('roles', (rolesQuery) => {
       rolesQuery.preload('permissions')
     })
   })
 
   /**
    * Filter active users (not deleted)
-   * @example User.query().withScopes(s => s.active())
+   * @example User.query().withScopes((scopes) => scopes.active())
    */
-  static active = scope((query: ModelQueryBuilderContract<typeof User>) => {
-    query.where('is_deleted', false)
+  static active = scope((query: Builder) => {
+    return query.where('is_deleted', false)
   })
 
   /**
    * Filter users with verified email
-   * @example User.query().withScopes(s => s.verified())
+   * @example User.query().withScopes((scopes) => scopes.verified())
    */
-  static verified = scope((query: ModelQueryBuilderContract<typeof User>) => {
-    query.whereRaw("metadata->>'email_verified' = 'true'")
+  static verified = scope((query: Builder) => {
+    return query.whereRaw("metadata->>'email_verified' = 'true'")
   })
 
   /**
    * Filter users by role
-   * @example User.query().withScopes(s => s.byRole('admin'))
+   * @example User.query().withScopes((scopes) => scopes.byRole('admin'))
    */
-  static byRole = scope((query: ModelQueryBuilderContract<typeof User>, roleSlug: string) => {
-    query.whereHas('roles', (roleQuery) => {
+  static byRole = scope((query, roleSlug: string) => {
+    return (query as any).whereHas('roles', (roleQuery: any) => {
       roleQuery.where('slug', roleSlug)
     })
   })
 
   /**
    * Filter users by multiple roles
-   * @example User.query().withScopes(s => s.byRoles(['admin', 'manager']))
+   * @example User.query().withScopes((scopes) => scopes.byRoles(['admin', 'manager']))
    */
-  static byRoles = scope((query: ModelQueryBuilderContract<typeof User>, roleSlugs: string[]) => {
-    query.whereHas('roles', (roleQuery) => {
+  static byRoles = scope((query, roleSlugs: string[]) => {
+    return (query as any).whereHas('roles', (roleQuery: any) => {
       roleQuery.whereIn('slug', roleSlugs)
     })
   })
 
   /**
    * Filter users with specific permission
-   * @example User.query().withScopes(s => s.withPermission('users.create'))
+   * @example User.query().withScopes((scopes) => scopes.withPermission('users.create'))
    */
-  static withPermission = scope(
-    (query: ModelQueryBuilderContract<typeof User>, permissionSlug: string) => {
-      query.where((builder) => {
-        // Direct permission
-        builder
-          .whereHas('permissions', (permQuery) => {
-            permQuery.where('slug', permissionSlug).where('granted', true)
+  static withPermission = scope((query, permissionSlug: string) => {
+    return (query as any).where((builder: any) => {
+      // Direct permission
+      builder
+        .whereHas('permissions', (permQuery: any) => {
+          permQuery.where('slug', permissionSlug).where('granted', true)
+        })
+        // Or permission through role
+        .orWhereHas('roles', (roleQuery: any) => {
+          roleQuery.whereHas('permissions', (permQuery: any) => {
+            permQuery.where('slug', permissionSlug)
           })
-          // Or permission through role
-          .orWhereHas('roles', (roleQuery) => {
-            roleQuery.whereHas('permissions', (permQuery) => {
-              permQuery.where('slug', permissionSlug)
-            })
-          })
-      })
-    }
-  )
+        })
+    })
+  })
 
   /**
    * Include tenant relationships for a user
-   * @example User.query().withScopes(s => s.withTenants())
+   * @example User.query().withScopes((scopes) => scopes.withTenants())
    */
-  static withTenants = scope((query: ModelQueryBuilderContract<typeof User>) => {
-    query.preload('tenant_users', (tuQuery) => {
+  static withTenants = scope((query: Builder) => {
+    return query.preload('tenant_users', (tuQuery) => {
       tuQuery.where('is_active', true).preload('tenant').orderBy('created_at', 'desc')
     })
   })
 
   /**
    * Order users by creation date
-   * @example User.query().withScopes(s => s.recent())
+   * @example User.query().withScopes((scopes) => scopes.recent())
    */
-  static recent = scope((query) => {
-    query.orderBy('created_at', 'desc')
+  static recent = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Filter users created in the last N days
-   * @example User.query().withScopes(s => s.createdInLastDays(7))
+   * @example User.query().withScopes((scopes) => scopes.createdInLastDays(7))
    */
-  static createdInLastDays = scope(
-    (query: ModelQueryBuilderContract<typeof User>, days: number) => {
-      const date = DateTime.now().minus({ days })
-      query.where('created_at', '>=', date.toSQL())
-    }
-  )
+  static createdInLastDays = scope((query, days: number) => {
+    const date = DateTime.now().minus({ days })
+    return query.where('created_at', '>=', date.toISO())
+  })
 
   /**
    * Legacy method for backward compatibility
    * @deprecated Use withScopes(s => s.withRoles()) instead
    */
-  static includeRoles(query: model.ModelQueryBuilderContract<typeof User>) {
+  static includeRoles(query: ModelQueryBuilderContract<typeof User>) {
     query.preload('roles')
   }
 }

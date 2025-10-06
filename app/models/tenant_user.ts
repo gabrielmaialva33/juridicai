@@ -5,6 +5,8 @@ import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Tenant from '#models/tenant'
 import User from '#models/user'
 
+type Builder = ModelQueryBuilderContract<typeof TenantUser>
+
 export enum TenantUserRole {
   OWNER = 'owner',
   ADMIN = 'admin',
@@ -15,8 +17,14 @@ export enum TenantUserRole {
 type TenantUserRoleType = 'owner' | 'admin' | 'lawyer' | 'assistant'
 
 export default class TenantUser extends BaseModel {
+  static table = 'tenant_users'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: number
 
@@ -31,8 +39,7 @@ export default class TenantUser extends BaseModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) =>
-      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
   })
   declare custom_permissions: Record<string, any> | null
 
@@ -51,7 +58,11 @@ export default class TenantUser extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
   @belongsTo(() => Tenant, {
     foreignKey: 'tenant_id',
   })
@@ -64,200 +75,194 @@ export default class TenantUser extends BaseModel {
 
   /**
    * ------------------------------------------------------
+   * Hooks
+   * ------------------------------------------------------
+   */
+
+  /**
+   * ------------------------------------------------------
    * Query Scopes
    * ------------------------------------------------------
    */
 
   /**
    * Filter tenant users by tenant
-   * @example TenantUser.query().withScopes(s => s.forTenant(tenantId))
+   * @example TenantUser.query().withScopes((scopes) => scopes.forTenant(tenantId))
    */
-  static forTenant = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, tenantId: string) => {
-      query.where('tenant_id', tenantId)
-    }
-  )
+  static forTenant = scope((query, tenantId: string) => {
+    return query.where('tenant_id', tenantId)
+  })
 
   /**
    * Filter tenant users by user
-   * @example TenantUser.query().withScopes(s => s.forUser(userId))
+   * @example TenantUser.query().withScopes((scopes) => scopes.forUser(userId))
    */
-  static forUser = scope((query: ModelQueryBuilderContract<typeof TenantUser>, userId: number) => {
-    query.where('user_id', userId)
+  static forUser = scope((query, userId: number) => {
+    return query.where('user_id', userId)
   })
 
   /**
    * Filter tenant users by role
-   * @example TenantUser.query().withScopes(s => s.byRole('admin'))
+   * @example TenantUser.query().withScopes((scopes) => scopes.byRole('admin'))
    */
-  static byRole = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, role: TenantUserRoleType) => {
-      query.where('role', role)
-    }
-  )
+  static byRole = scope((query, role: TenantUserRoleType) => {
+    return query.where('role', role)
+  })
 
   /**
    * Filter tenant users by multiple roles
-   * @example TenantUser.query().withScopes(s => s.byRoles(['admin', 'owner']))
+   * @example TenantUser.query().withScopes((scopes) => scopes.byRoles(['admin', 'owner']))
    */
-  static byRoles = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, roles: TenantUserRoleType[]) => {
-      query.whereIn('role', roles)
-    }
-  )
+  static byRoles = scope((query, roles: TenantUserRoleType[]) => {
+    return query.whereIn('role', roles)
+  })
 
   /**
    * Filter owners
-   * @example TenantUser.query().withScopes(s => s.owners())
+   * @example TenantUser.query().withScopes((scopes) => scopes.owners())
    */
-  static owners = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('role', TenantUserRole.OWNER)
+  static owners = scope((query: Builder) => {
+    return query.where('role', TenantUserRole.OWNER)
   })
 
   /**
    * Filter admins
-   * @example TenantUser.query().withScopes(s => s.admins())
+   * @example TenantUser.query().withScopes((scopes) => scopes.admins())
    */
-  static admins = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('role', TenantUserRole.ADMIN)
+  static admins = scope((query: Builder) => {
+    return query.where('role', TenantUserRole.ADMIN)
   })
 
   /**
    * Filter lawyers
-   * @example TenantUser.query().withScopes(s => s.lawyers())
+   * @example TenantUser.query().withScopes((scopes) => scopes.lawyers())
    */
-  static lawyers = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('role', TenantUserRole.LAWYER)
+  static lawyers = scope((query: Builder) => {
+    return query.where('role', TenantUserRole.LAWYER)
   })
 
   /**
    * Filter assistants
-   * @example TenantUser.query().withScopes(s => s.assistants())
+   * @example TenantUser.query().withScopes((scopes) => scopes.assistants())
    */
-  static assistants = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('role', TenantUserRole.ASSISTANT)
+  static assistants = scope((query: Builder) => {
+    return query.where('role', TenantUserRole.ASSISTANT)
   })
 
   /**
    * Filter active tenant users
-   * @example TenantUser.query().withScopes(s => s.active())
+   * @example TenantUser.query().withScopes((scopes) => scopes.active())
    */
-  static active = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('is_active', true)
+  static active = scope((query: Builder) => {
+    return query.where('is_active', true)
   })
 
   /**
    * Filter inactive tenant users
-   * @example TenantUser.query().withScopes(s => s.inactive())
+   * @example TenantUser.query().withScopes((scopes) => scopes.inactive())
    */
-  static inactive = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.where('is_active', false)
+  static inactive = scope((query: Builder) => {
+    return query.where('is_active', false)
   })
 
   /**
    * Filter tenant users who have joined
-   * @example TenantUser.query().withScopes(s => s.joined())
+   * @example TenantUser.query().withScopes((scopes) => scopes.joined())
    */
-  static joined = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.whereNotNull('joined_at')
+  static joined = scope((query: Builder) => {
+    return query.whereNotNull('joined_at')
   })
 
   /**
    * Filter pending tenant users (invited but not joined)
-   * @example TenantUser.query().withScopes(s => s.pending())
+   * @example TenantUser.query().withScopes((scopes) => scopes.pending())
    */
-  static pending = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.whereNotNull('invited_at').whereNull('joined_at')
+  static pending = scope((query: Builder) => {
+    return query.whereNotNull('invited_at').whereNull('joined_at')
   })
 
   /**
    * Filter tenant users with custom permissions
-   * @example TenantUser.query().withScopes(s => s.hasCustomPermissions())
+   * @example TenantUser.query().withScopes((scopes) => scopes.hasCustomPermissions())
    */
-  static hasCustomPermissions = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.whereNotNull('custom_permissions')
+  static hasCustomPermissions = scope((query: Builder) => {
+    return query.whereNotNull('custom_permissions')
   })
 
   /**
    * Filter tenant users invited between dates
-   * @example TenantUser.query().withScopes(s => s.invitedBetween(from, to))
+   * @example TenantUser.query().withScopes((scopes) => scopes.invitedBetween(from, to))
    */
-  static invitedBetween = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, from: DateTime, to: DateTime) => {
-      query.whereBetween('invited_at', [from.toSQL(), to.toSQL()])
-    }
-  )
+  static invitedBetween = scope((query, from: DateTime, to: DateTime) => {
+    return query.whereBetween('invited_at', [from.toISO()!, to.toISO()!])
+  })
 
   /**
    * Filter tenant users joined between dates
-   * @example TenantUser.query().withScopes(s => s.joinedBetween(from, to))
+   * @example TenantUser.query().withScopes((scopes) => scopes.joinedBetween(from, to))
    */
-  static joinedBetween = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, from: DateTime, to: DateTime) => {
-      query.whereBetween('joined_at', [from.toSQL(), to.toSQL()])
-    }
-  )
+  static joinedBetween = scope((query, from: DateTime, to: DateTime) => {
+    return query.whereBetween('joined_at', [from.toISO()!, to.toISO()!])
+  })
 
   /**
    * Filter recently joined tenant users
-   * @example TenantUser.query().withScopes(s => s.recentlyJoined(7))
+   * @example TenantUser.query().withScopes((scopes) => scopes.recentlyJoined(7))
    */
-  static recentlyJoined = scope((query: ModelQueryBuilderContract<typeof TenantUser>, days = 7) => {
+  static recentlyJoined = scope((query: Builder, days = 7) => {
     const date = DateTime.now().minus({ days })
-    query.whereNotNull('joined_at').where('joined_at', '>=', date.toSQL())
+    return query.whereNotNull('joined_at').where('joined_at', '>=', date.toISO())
   })
 
   /**
    * Filter recently invited tenant users
-   * @example TenantUser.query().withScopes(s => s.recentlyInvited(7))
+   * @example TenantUser.query().withScopes((scopes) => scopes.recentlyInvited(7))
    */
-  static recentlyInvited = scope(
-    (query: ModelQueryBuilderContract<typeof TenantUser>, days = 7) => {
-      const date = DateTime.now().minus({ days })
-      query.whereNotNull('invited_at').where('invited_at', '>=', date.toSQL())
-    }
-  )
+  static recentlyInvited = scope((query: Builder, days = 7) => {
+    const date = DateTime.now().minus({ days })
+    return query.whereNotNull('invited_at').where('invited_at', '>=', date.toISO())
+  })
 
   /**
    * Include tenant relationship
-   * @example TenantUser.query().withScopes(s => s.withTenant())
+   * @example TenantUser.query().withScopes((scopes) => scopes.withTenant())
    */
-  static withTenant = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.preload('tenant')
+  static withTenant = scope((query: Builder) => {
+    return query.preload('tenant')
   })
 
   /**
    * Include user relationship
-   * @example TenantUser.query().withScopes(s => s.withUser())
+   * @example TenantUser.query().withScopes((scopes) => scopes.withUser())
    */
-  static withUser = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.preload('user')
+  static withUser = scope((query: Builder) => {
+    return query.preload('user')
   })
 
   /**
    * Include all relationships
-   * @example TenantUser.query().withScopes(s => s.withRelationships())
+   * @example TenantUser.query().withScopes((scopes) => scopes.withRelationships())
    */
-  static withRelationships = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.preload('tenant').preload('user', (userQuery) => {
+  static withRelationships = scope((query: Builder) => {
+    return query.preload('tenant').preload('user', (userQuery) => {
       userQuery.preload('roles')
     })
   })
 
   /**
    * Order by join date (newest first)
-   * @example TenantUser.query().withScopes(s => s.byJoinDate())
+   * @example TenantUser.query().withScopes((scopes) => scopes.byJoinDate())
    */
-  static byJoinDate = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.orderBy('joined_at', 'desc')
+  static byJoinDate = scope((query: Builder) => {
+    return query.orderBy('joined_at', 'desc')
   })
 
   /**
    * Order by role hierarchy (owner first, then admin, lawyer, assistant)
-   * @example TenantUser.query().withScopes(s => s.byRoleHierarchy())
+   * @example TenantUser.query().withScopes((scopes) => scopes.byRoleHierarchy())
    */
-  static byRoleHierarchy = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.orderByRaw(`
+  static byRoleHierarchy = scope((query: Builder) => {
+    return query.orderByRaw(`
       CASE role
         WHEN 'owner' THEN 1
         WHEN 'admin' THEN 2
@@ -269,17 +274,17 @@ export default class TenantUser extends BaseModel {
 
   /**
    * Order by creation date (newest first)
-   * @example TenantUser.query().withScopes(s => s.newest())
+   * @example TenantUser.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.orderBy('created_at', 'desc')
+  static newest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Order by creation date (oldest first)
-   * @example TenantUser.query().withScopes(s => s.oldest())
+   * @example TenantUser.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: ModelQueryBuilderContract<typeof TenantUser>) => {
-    query.orderBy('created_at', 'asc')
+  static oldest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'asc')
   })
 }

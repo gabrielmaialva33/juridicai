@@ -1,10 +1,13 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column, scope } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
-import TenantAwareModel from '#models/tenant_aware_model'
+
+import TenantContextService from '#services/tenants/tenant_context_service'
 import Case from '#models/case'
 import User from '#models/user'
+
+type Builder = ModelQueryBuilderContract<typeof Deadline>
 
 type DeadlineStatus = 'pending' | 'completed' | 'expired' | 'cancelled'
 
@@ -16,7 +19,42 @@ interface AlertConfig {
   recipients?: number[]
 }
 
-export default class Deadline extends TenantAwareModel {
+export default class Deadline extends BaseModel {
+  static table = 'deadlines'
+  static namingStrategy = new SnakeCaseNamingStrategy()
+
+  static boot() {
+    if (this.booted) return
+    super.boot()
+
+    // Hook para auto-set tenant_id
+    this.before('create', (model: Deadline) => {
+      if (!model.tenant_id) {
+        model.tenant_id = TenantContextService.assertTenantId()
+      }
+    })
+
+    // Hook para auto-filter queries
+    this.before('find', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+
+    this.before('fetch', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+  }
+
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: number
 
@@ -72,7 +110,11 @@ export default class Deadline extends TenantAwareModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
   @belongsTo(() => Case, {
     foreignKey: 'case_id',
   })
@@ -89,27 +131,10 @@ export default class Deadline extends TenantAwareModel {
   declare completed_by_user: BelongsTo<typeof User>
 
   /**
-   * Helper: Check if deadline is overdue
+   * ------------------------------------------------------
+   * Hooks
+   * ------------------------------------------------------
    */
-  get is_overdue(): boolean {
-    if (this.status !== 'pending') return false
-    return this.deadline_date < DateTime.now()
-  }
-
-  /**
-   * Helper: Days until deadline
-   */
-  get days_until_deadline(): number {
-    return Math.ceil(this.deadline_date.diff(DateTime.now(), 'days').days)
-  }
-
-  /**
-   * Helper: Is approaching (within 7 days)
-   */
-  get is_approaching(): boolean {
-    const days = this.days_until_deadline
-    return days <= 7 && days > 0 && this.status === 'pending'
-  }
 
   /**
    * ------------------------------------------------------
@@ -118,243 +143,270 @@ export default class Deadline extends TenantAwareModel {
    */
 
   /**
-   * Search deadlines by title or description
-   * @example Deadline.query().withScopes(s => s.search('payment'))
+   * Scope to filter by specific tenant
+   * @example Deadline.query().withScopes((scopes) => scopes.forTenant(tenantId))
    */
-  static search = scope((query: ModelQueryBuilderContract<typeof Deadline>, term: string) => {
-    if (!term || !term.trim()) return
+  static forTenant = scope((query, tenantId: string) => {
+    return query.where('tenant_id', tenantId)
+  })
+
+  /**
+   * Scope to disable automatic tenant filtering
+   * USE WITH CAUTION - only for admin operations
+   * @example Deadline.query().withScopes((scopes) => scopes.withoutTenantScope())
+   */
+  static withoutTenantScope = scope((query) => {
+    ;(query as any)._skipTenantScope = true
+    return query
+  })
+
+  /**
+   * Search deadlines by title or description
+   * @example Deadline.query().withScopes((scopes) => scopes.search('payment'))
+   */
+  static search = scope((query, term: string) => {
+    if (!term || !term.trim()) return query
 
     const searchTerm = `%${term.trim()}%`
-    query.where((builder) => {
+    return query.where((builder) => {
       builder.whereILike('title', searchTerm).orWhereILike('description', searchTerm)
     })
   })
 
   /**
    * Filter deadlines by status
-   * @example Deadline.query().withScopes(s => s.byStatus('pending'))
+   * @example Deadline.query().withScopes((scopes) => scopes.byStatus('pending'))
    */
-  static byStatus = scope(
-    (query: ModelQueryBuilderContract<typeof Deadline>, status: DeadlineStatus) => {
-      query.where('status', status)
-    }
-  )
+  static byStatus = scope((query, status: DeadlineStatus) => {
+    return query.where('status', status)
+  })
 
   /**
    * Filter pending deadlines
-   * @example Deadline.query().withScopes(s => s.pending())
+   * @example Deadline.query().withScopes((scopes) => scopes.pending())
    */
-  static pending = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('status', 'pending')
+  static pending = scope((query: Builder) => {
+    return query.where('status', 'pending')
   })
 
   /**
    * Filter completed deadlines
-   * @example Deadline.query().withScopes(s => s.completed())
+   * @example Deadline.query().withScopes((scopes) => scopes.completed())
    */
-  static completed = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('status', 'completed')
+  static completed = scope((query: Builder) => {
+    return query.where('status', 'completed')
   })
 
   /**
    * Filter expired deadlines
-   * @example Deadline.query().withScopes(s => s.expired())
+   * @example Deadline.query().withScopes((scopes) => scopes.expired())
    */
-  static expired = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('status', 'expired')
+  static expired = scope((query: Builder) => {
+    return query.where('status', 'expired')
   })
 
   /**
    * Filter overdue deadlines
-   * @example Deadline.query().withScopes(s => s.overdue())
+   * @example Deadline.query().withScopes((scopes) => scopes.overdue())
    */
-  static overdue = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('status', 'pending').where('deadline_date', '<', DateTime.now().toSQL())
+  static overdue = scope((query: Builder) => {
+    return query.where('status', 'pending').where('deadline_date', '<', DateTime.now().toISO())
   })
 
   /**
    * Filter upcoming deadlines within N days
-   * @example Deadline.query().withScopes(s => s.upcoming(7))
+   * @example Deadline.query().withScopes((scopes) => scopes.upcoming(7))
    */
-  static upcoming = scope((query: ModelQueryBuilderContract<typeof Deadline>, days = 7) => {
+  static upcoming = scope((query: Builder, days = 7) => {
     const futureDate = DateTime.now().plus({ days })
-    query
+    return query
       .where('status', 'pending')
-      .where('deadline_date', '>=', DateTime.now().toSQL())
-      .where('deadline_date', '<=', futureDate.toSQL())
+      .where('deadline_date', '>=', DateTime.now().toISO())
+      .where('deadline_date', '<=', futureDate.toISO())
   })
 
   /**
    * Filter approaching deadlines (within 7 days)
-   * @example Deadline.query().withScopes(s => s.approaching())
+   * @example Deadline.query().withScopes((scopes) => scopes.approaching())
    */
-  static approaching = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
+  static approaching = scope((query: Builder) => {
     const futureDate = DateTime.now().plus({ days: 7 })
-    query
+    return query
       .where('status', 'pending')
-      .where('deadline_date', '>', DateTime.now().toSQL())
-      .where('deadline_date', '<=', futureDate.toSQL())
+      .where('deadline_date', '>', DateTime.now().toISO())
+      .where('deadline_date', '<=', futureDate.toISO())
   })
 
   /**
    * Filter today's deadlines
-   * @example Deadline.query().withScopes(s => s.dueToday())
+   * @example Deadline.query().withScopes((scopes) => scopes.dueToday())
    */
-  static dueToday = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
+  static dueToday = scope((query: Builder) => {
     const today = DateTime.now().startOf('day')
     const tomorrow = today.plus({ days: 1 })
-    query
+    return query
       .where('status', 'pending')
-      .where('deadline_date', '>=', today.toSQL())
-      .where('deadline_date', '<', tomorrow.toSQL())
+      .where('deadline_date', '>=', today.toISO())
+      .where('deadline_date', '<', tomorrow.toISO())
   })
 
   /**
    * Filter fatal deadlines
-   * @example Deadline.query().withScopes(s => s.fatal())
+   * @example Deadline.query().withScopes((scopes) => scopes.fatal())
    */
-  static fatal = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('is_fatal', true)
+  static fatal = scope((query: Builder) => {
+    return query.where('is_fatal', true)
   })
 
   /**
    * Filter non-fatal deadlines
-   * @example Deadline.query().withScopes(s => s.nonFatal())
+   * @example Deadline.query().withScopes((scopes) => scopes.nonFatal())
    */
-  static nonFatal = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.where('is_fatal', false)
+  static nonFatal = scope((query: Builder) => {
+    return query.where('is_fatal', false)
   })
 
   /**
    * Filter deadlines for a specific case
-   * @example Deadline.query().withScopes(s => s.forCase(caseId))
+   * @example Deadline.query().withScopes((scopes) => scopes.forCase(caseId))
    */
-  static forCase = scope((query: ModelQueryBuilderContract<typeof Deadline>, caseId: number) => {
-    query.where('case_id', caseId)
+  static forCase = scope((query, caseId: number) => {
+    return query.where('case_id', caseId)
   })
 
   /**
    * Filter deadlines assigned to a specific user
-   * @example Deadline.query().withScopes(s => s.assignedTo(userId))
+   * @example Deadline.query().withScopes((scopes) => scopes.assignedTo(userId))
    */
-  static assignedTo = scope((query: ModelQueryBuilderContract<typeof Deadline>, userId: number) => {
-    query.where('responsible_id', userId)
+  static assignedTo = scope((query, userId: number) => {
+    return query.where('responsible_id', userId)
   })
 
   /**
    * Filter deadlines completed by a specific user
-   * @example Deadline.query().withScopes(s => s.completedBy(userId))
+   * @example Deadline.query().withScopes((scopes) => scopes.completedBy(userId))
    */
-  static completedBy = scope(
-    (query: ModelQueryBuilderContract<typeof Deadline>, userId: number) => {
-      query.where('completed_by', userId)
-    }
-  )
+  static completedBy = scope((query, userId: number) => {
+    return query.where('completed_by', userId)
+  })
 
   /**
    * Filter deadlines that need alerts
-   * @example Deadline.query().withScopes(s => s.needsAlert())
+   * @example Deadline.query().withScopes((scopes) => scopes.needsAlert())
    */
-  static needsAlert = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query
+  static needsAlert = scope((query: Builder) => {
+    return query
       .where('status', 'pending')
       .whereNotNull('alert_config')
       .where((builder) => {
         builder
           .whereNull('last_alert_sent_at')
-          .orWhere('last_alert_sent_at', '<', DateTime.now().minus({ hours: 24 }).toSQL())
+          .orWhere('last_alert_sent_at', '<', DateTime.now().minus({ hours: 24 }).toISO())
       })
   })
 
   /**
    * Filter deadlines between dates
-   * @example Deadline.query().withScopes(s => s.dueBetween(from, to))
+   * @example Deadline.query().withScopes((scopes) => scopes.dueBetween(from, to))
    */
-  static dueBetween = scope(
-    (query: ModelQueryBuilderContract<typeof Deadline>, from: DateTime, to: DateTime) => {
-      query.whereBetween('deadline_date', [from.toSQL(), to.toSQL()])
-    }
-  )
+  static dueBetween = scope((query, from: DateTime, to: DateTime) => {
+    return query.whereBetween('deadline_date', [from.toISO()!, to.toISO()!])
+  })
 
   /**
    * Filter deadlines completed between dates
-   * @example Deadline.query().withScopes(s => s.completedBetween(from, to))
+   * @example Deadline.query().withScopes((scopes) => scopes.completedBetween(from, to))
    */
-  static completedBetween = scope(
-    (query: ModelQueryBuilderContract<typeof Deadline>, from: DateTime, to: DateTime) => {
-      query.whereBetween('completed_at', [from.toSQL(), to.toSQL()])
-    }
-  )
+  static completedBetween = scope((query, from: DateTime, to: DateTime) => {
+    return query.whereBetween('completed_at', [from.toISO()!, to.toISO()!])
+  })
 
   /**
    * Filter recently completed deadlines
-   * @example Deadline.query().withScopes(s => s.recentlyCompleted(7))
+   * @example Deadline.query().withScopes((scopes) => scopes.recentlyCompleted(7))
    */
-  static recentlyCompleted = scope(
-    (query: ModelQueryBuilderContract<typeof Deadline>, days = 7) => {
-      const date = DateTime.now().minus({ days })
-      query.where('status', 'completed').where('completed_at', '>=', date.toSQL())
-    }
-  )
+  static recentlyCompleted = scope((query: Builder, days = 7) => {
+    const date = DateTime.now().minus({ days })
+    return query.where('status', 'completed').where('completed_at', '>=', date.toISO())
+  })
 
   /**
    * Include case relationship
-   * @example Deadline.query().withScopes(s => s.withCase())
+   * @example Deadline.query().withScopes((scopes) => scopes.withCase())
    */
-  static withCase = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.preload('case', (caseQuery) => {
+  static withCase = scope((query) => {
+    return (query as any).preload('case', (caseQuery: any) => {
       caseQuery.preload('client')
     })
   })
 
   /**
    * Include responsible user relationship
-   * @example Deadline.query().withScopes(s => s.withResponsible())
+   * @example Deadline.query().withScopes((scopes) => scopes.withResponsible())
    */
-  static withResponsible = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.preload('responsible')
+  static withResponsible = scope((query) => {
+    return (query as any).preload('responsible')
   })
 
   /**
    * Include all relationships
-   * @example Deadline.query().withScopes(s => s.withRelationships())
+   * @example Deadline.query().withScopes((scopes) => scopes.withRelationships())
    */
-  static withRelationships = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query
-      .preload('case', (q) => q.preload('client'))
+  static withRelationships = scope((query) => {
+    return (query as any)
+      .preload('case', (q: any) => q.preload('client'))
       .preload('responsible')
       .preload('completed_by_user')
   })
 
   /**
    * Order by deadline date (earliest first)
-   * @example Deadline.query().withScopes(s => s.byDeadlineOrder())
+   * @example Deadline.query().withScopes((scopes) => scopes.byDeadlineOrder())
    */
-  static byDeadlineOrder = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.orderBy('deadline_date', 'asc')
+  static byDeadlineOrder = scope((query: Builder) => {
+    return query.orderBy('deadline_date', 'asc')
   })
 
   /**
    * Order by priority (fatal first, then by date)
-   * @example Deadline.query().withScopes(s => s.byPriority())
+   * @example Deadline.query().withScopes((scopes) => scopes.byPriority())
    */
-  static byPriority = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.orderBy('is_fatal', 'desc').orderBy('deadline_date', 'asc')
+  static byPriority = scope((query: Builder) => {
+    return query.orderBy('is_fatal', 'desc').orderBy('deadline_date', 'asc')
   })
 
   /**
    * Order by creation date (newest first)
-   * @example Deadline.query().withScopes(s => s.newest())
+   * @example Deadline.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.orderBy('created_at', 'desc')
+  static newest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Order by creation date (oldest first)
-   * @example Deadline.query().withScopes(s => s.oldest())
+   * @example Deadline.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: ModelQueryBuilderContract<typeof Deadline>) => {
-    query.orderBy('created_at', 'asc')
+  static oldest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'asc')
   })
+
+  /**
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
+   */
+  get is_overdue(): boolean {
+    if (this.status !== 'pending') return false
+    return this.deadline_date < DateTime.now()
+  }
+
+  get days_until_deadline(): number {
+    return Math.ceil(this.deadline_date.diff(DateTime.now(), 'days').days)
+  }
+
+  get is_approaching(): boolean {
+    const days = this.days_until_deadline
+    return days <= 7 && days > 0 && this.status === 'pending'
+  }
 }

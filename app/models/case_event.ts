@@ -1,10 +1,13 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column, scope } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
-import TenantAwareModel from '#models/tenant_aware_model'
+
+import TenantContextService from '#services/tenants/tenant_context_service'
 import Case from '#models/case'
 import User from '#models/user'
+
+type Builder = ModelQueryBuilderContract<typeof CaseEvent>
 
 type EventType =
   | 'filing'
@@ -18,7 +21,42 @@ type EventType =
   | 'other'
 type EventSource = 'manual' | 'court_api' | 'email' | 'import'
 
-export default class CaseEvent extends TenantAwareModel {
+export default class CaseEvent extends BaseModel {
+  static table = 'case_events'
+  static namingStrategy = new SnakeCaseNamingStrategy()
+
+  static boot() {
+    if (this.booted) return
+    super.boot()
+
+    // Hook para auto-set tenant_id
+    this.before('create', (model: CaseEvent) => {
+      if (!model.tenant_id) {
+        model.tenant_id = TenantContextService.assertTenantId()
+      }
+    })
+
+    // Hook para auto-filter queries
+    this.before('find', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+
+    this.before('fetch', (query) => {
+      const tenantId = TenantContextService.getCurrentTenantId()
+      if (tenantId && !(query as any)._skipTenantScope) {
+        query.where('tenant_id', tenantId)
+      }
+    })
+  }
+
+  /**
+   * ------------------------------------------------------
+   * Columns
+   * ------------------------------------------------------
+   */
   @column({ isPrimary: true })
   declare id: number
 
@@ -45,8 +83,7 @@ export default class CaseEvent extends TenantAwareModel {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) =>
-      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
   })
   declare metadata: Record<string, any> | null
 
@@ -59,30 +96,22 @@ export default class CaseEvent extends TenantAwareModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updated_at: DateTime
 
-  // Relationships
-  @belongsTo(() => Case, {
-    foreignKey: 'case_id',
-  })
+  /**
+   * ------------------------------------------------------
+   * Relationships
+   * ------------------------------------------------------
+   */
+  @belongsTo(() => Case, { foreignKey: 'case_id' })
   declare case: BelongsTo<typeof Case>
 
-  @belongsTo(() => User, {
-    foreignKey: 'created_by',
-  })
+  @belongsTo(() => User, { foreignKey: 'created_by' })
   declare creator: BelongsTo<typeof User>
 
   /**
-   * Helper: Check if event is from court API
+   * ------------------------------------------------------
+   * Hooks
+   * ------------------------------------------------------
    */
-  get is_from_court(): boolean {
-    return this.source === 'court_api'
-  }
-
-  /**
-   * Helper: Check if event is manual
-   */
-  get is_manual(): boolean {
-    return this.source === 'manual'
-  }
 
   /**
    * ------------------------------------------------------
@@ -91,246 +120,271 @@ export default class CaseEvent extends TenantAwareModel {
    */
 
   /**
-   * Search events by title or description
-   * @example CaseEvent.query().withScopes(s => s.search('hearing'))
+   * Scope to filter by specific tenant
+   * @example CaseEvent.query().withScopes((scopes) => scopes.forTenant(tenantId))
    */
-  static search = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, term: string) => {
-    if (!term || !term.trim()) return
+  static forTenant = scope((query, tenantId: string) => {
+    return query.where('tenant_id', tenantId)
+  })
+
+  /**
+   * Scope to disable automatic tenant filtering
+   * USE WITH CAUTION - only for admin operations
+   * @example CaseEvent.query().withScopes((scopes) => scopes.withoutTenantScope())
+   */
+  static withoutTenantScope = scope((query) => {
+    ;(query as any)._skipTenantScope = true
+    return query
+  })
+
+  /**
+   * Search events by title or description
+   * @example CaseEvent.query().withScopes((scopes) => scopes.search('hearing'))
+   */
+  static search = scope((query, term: string) => {
+    if (!term || !term.trim()) return query
 
     const searchTerm = `%${term.trim()}%`
-    query.where((builder) => {
+    return query.where((builder) => {
       builder.whereILike('title', searchTerm).orWhereILike('description', searchTerm)
     })
   })
 
   /**
    * Filter events by type
-   * @example CaseEvent.query().withScopes(s => s.byType('hearing'))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.byType('hearing'))
    */
-  static byType = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, type: EventType) => {
-    query.where('event_type', type)
+  static byType = scope((query, type: EventType) => {
+    return query.where('event_type', type)
   })
 
   /**
    * Filter events by multiple types
-   * @example CaseEvent.query().withScopes(s => s.byTypes(['hearing', 'decision']))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.byTypes(['hearing', 'decision']))
    */
-  static byTypes = scope(
-    (query: ModelQueryBuilderContract<typeof CaseEvent>, types: EventType[]) => {
-      query.whereIn('event_type', types)
-    }
-  )
+  static byTypes = scope((query, types: EventType[]) => {
+    return query.whereIn('event_type', types)
+  })
 
   /**
    * Filter events by source
-   * @example CaseEvent.query().withScopes(s => s.bySource('court_api'))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.bySource('court_api'))
    */
-  static bySource = scope(
-    (query: ModelQueryBuilderContract<typeof CaseEvent>, source: EventSource) => {
-      query.where('source', source)
-    }
-  )
+  static bySource = scope((query, source: EventSource) => {
+    return query.where('source', source)
+  })
 
   /**
    * Filter manual events
-   * @example CaseEvent.query().withScopes(s => s.manual())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.manual())
    */
-  static manual = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('source', 'manual')
+  static manual = scope((query: Builder) => {
+    return query.where('source', 'manual')
   })
 
   /**
    * Filter events from court API
-   * @example CaseEvent.query().withScopes(s => s.fromCourtApi())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.fromCourtApi())
    */
-  static fromCourtApi = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('source', 'court_api')
+  static fromCourtApi = scope((query: Builder) => {
+    return query.where('source', 'court_api')
   })
 
   /**
    * Filter events from import
-   * @example CaseEvent.query().withScopes(s => s.imported())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.imported())
    */
-  static imported = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('source', 'import')
+  static imported = scope((query: Builder) => {
+    return query.where('source', 'import')
   })
 
   /**
    * Filter events for a specific case
-   * @example CaseEvent.query().withScopes(s => s.forCase(caseId))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.forCase(caseId))
    */
-  static forCase = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, caseId: number) => {
-    query.where('case_id', caseId)
+  static forCase = scope((query, caseId: number) => {
+    return query.where('case_id', caseId)
   })
 
   /**
    * Filter events created by a specific user
-   * @example CaseEvent.query().withScopes(s => s.createdBy(userId))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.createdBy(userId))
    */
-  static createdBy = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, userId: number) => {
-    query.where('created_by', userId)
+  static createdBy = scope((query, userId: number) => {
+    return query.where('created_by', userId)
   })
 
   /**
    * Filter events without creator (system generated)
-   * @example CaseEvent.query().withScopes(s => s.systemGenerated())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.systemGenerated())
    */
-  static systemGenerated = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.whereNull('created_by')
+  static systemGenerated = scope((query: Builder) => {
+    return query.whereNull('created_by')
   })
 
   /**
    * Filter events on a specific date
-   * @example CaseEvent.query().withScopes(s => s.onDate(date))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.onDate(date))
    */
-  static onDate = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, date: DateTime) => {
+  static onDate = scope((query, date: DateTime) => {
     const startOfDay = date.startOf('day')
     const endOfDay = date.endOf('day')
-    query.whereBetween('event_date', [startOfDay.toSQL(), endOfDay.toSQL()])
+    return query.whereBetween('event_date', [startOfDay.toISO()!, endOfDay.toISO()!])
   })
 
   /**
    * Filter events between dates
-   * @example CaseEvent.query().withScopes(s => s.betweenDates(from, to))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.betweenDates(from, to))
    */
-  static betweenDates = scope(
-    (query: ModelQueryBuilderContract<typeof CaseEvent>, from: DateTime, to: DateTime) => {
-      query.whereBetween('event_date', [from.toSQL(), to.toSQL()])
-    }
-  )
+  static betweenDates = scope((query, from: DateTime, to: DateTime) => {
+    return query.whereBetween('event_date', [from.toISO()!, to.toISO()!])
+  })
 
   /**
    * Filter events after date
-   * @example CaseEvent.query().withScopes(s => s.afterDate(date))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.afterDate(date))
    */
-  static afterDate = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, date: DateTime) => {
-    query.where('event_date', '>', date.toSQL())
+  static afterDate = scope((query, date: DateTime) => {
+    return query.where('event_date', '>', date.toISO()!)
   })
 
   /**
    * Filter events before date
-   * @example CaseEvent.query().withScopes(s => s.beforeDate(date))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.beforeDate(date))
    */
-  static beforeDate = scope(
-    (query: ModelQueryBuilderContract<typeof CaseEvent>, date: DateTime) => {
-      query.where('event_date', '<', date.toSQL())
-    }
-  )
+  static beforeDate = scope((query, date: DateTime) => {
+    return query.where('event_date', '<', date.toISO()!)
+  })
 
   /**
    * Filter recent events
-   * @example CaseEvent.query().withScopes(s => s.recent(7))
+   * @example CaseEvent.query().withScopes((scopes) => scopes.recent(7))
    */
-  static recent = scope((query: ModelQueryBuilderContract<typeof CaseEvent>, days = 7) => {
+  static recent = scope((query: Builder, days = 7) => {
     const date = DateTime.now().minus({ days })
-    query.where('event_date', '>=', date.toSQL())
+    return query.where('event_date', '>=', date.toISO())
   })
 
   /**
    * Filter upcoming events
-   * @example CaseEvent.query().withScopes(s => s.upcoming())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.upcoming())
    */
-  static upcoming = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('event_date', '>', DateTime.now().toSQL())
+  static upcoming = scope((query: Builder) => {
+    return query.where('event_date', '>', DateTime.now().toISO())
   })
 
   /**
    * Filter past events
-   * @example CaseEvent.query().withScopes(s => s.past())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.past())
    */
-  static past = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('event_date', '<', DateTime.now().toSQL())
+  static past = scope((query: Builder) => {
+    return query.where('event_date', '<', DateTime.now().toISO())
   })
 
   /**
    * Filter today's events
-   * @example CaseEvent.query().withScopes(s => s.today())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.today())
    */
-  static today = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
+  static today = scope((query: Builder) => {
     const today = DateTime.now().startOf('day')
     const tomorrow = today.plus({ days: 1 })
-    query.whereBetween('event_date', [today.toSQL(), tomorrow.toSQL()])
+    return query.whereBetween('event_date', [today.toISO(), tomorrow.toISO()])
   })
 
   /**
    * Filter hearings
-   * @example CaseEvent.query().withScopes(s => s.hearings())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.hearings())
    */
-  static hearings = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('event_type', 'hearing')
+  static hearings = scope((query: Builder) => {
+    return query.where('event_type', 'hearing')
   })
 
   /**
    * Filter decisions
-   * @example CaseEvent.query().withScopes(s => s.decisions())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.decisions())
    */
-  static decisions = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('event_type', 'decision')
+  static decisions = scope((query: Builder) => {
+    return query.where('event_type', 'decision')
   })
 
   /**
    * Filter judgments
-   * @example CaseEvent.query().withScopes(s => s.judgments())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.judgments())
    */
-  static judgments = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.where('event_type', 'judgment')
+  static judgments = scope((query: Builder) => {
+    return query.where('event_type', 'judgment')
   })
 
   /**
    * Include case relationship
-   * @example CaseEvent.query().withScopes(s => s.withCase())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.withCase())
    */
-  static withCase = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.preload('case', (caseQuery) => {
+  static withCase = scope((query: Builder) => {
+    return query.preload('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
       caseQuery.preload('client')
     })
   })
 
   /**
    * Include creator relationship
-   * @example CaseEvent.query().withScopes(s => s.withCreator())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.withCreator())
    */
-  static withCreator = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.preload('creator')
+  static withCreator = scope((query: Builder) => {
+    return (query as any).preload('creator')
   })
 
   /**
    * Include all relationships
-   * @example CaseEvent.query().withScopes(s => s.withRelationships())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.withRelationships())
    */
   static withRelationships = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.preload('case', (q) => q.preload('client')).preload('creator')
+    return query
+      .preload('case' as any, (q: ModelQueryBuilderContract<typeof Case>) => q.preload('client'))
+      .preload('creator')
   })
 
   /**
    * Order by event date (chronological)
-   * @example CaseEvent.query().withScopes(s => s.chronological())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.chronological())
    */
-  static chronological = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.orderBy('event_date', 'asc')
+  static chronological = scope((query: Builder) => {
+    return query.orderBy('event_date', 'asc')
   })
 
   /**
    * Order by event date (reverse chronological)
-   * @example CaseEvent.query().withScopes(s => s.reverseChronological())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.reverseChronological())
    */
-  static reverseChronological = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.orderBy('event_date', 'desc')
+  static reverseChronological = scope((query: Builder) => {
+    return query.orderBy('event_date', 'desc')
   })
 
   /**
    * Order by creation date (newest first)
-   * @example CaseEvent.query().withScopes(s => s.newest())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.orderBy('created_at', 'desc')
+  static newest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'desc')
   })
 
   /**
    * Order by creation date (oldest first)
-   * @example CaseEvent.query().withScopes(s => s.oldest())
+   * @example CaseEvent.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
-    query.orderBy('created_at', 'asc')
+  static oldest = scope((query: Builder) => {
+    return query.orderBy('created_at', 'asc')
   })
+
+  /**
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
+   */
+  get is_from_court(): boolean {
+    return this.source === 'court_api'
+  }
+
+  get is_manual(): boolean {
+    return this.source === 'manual'
+  }
 }
