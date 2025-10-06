@@ -2,6 +2,7 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 import Tenant from '#models/tenant'
 import User from '#models/user'
+import { TenantUserRole } from '#models/tenant_user'
 
 /**
  * Setup a tenant and associate a user with it.
@@ -15,7 +16,7 @@ import User from '#models/user'
  */
 export async function setupTenantForUser(
   user: User,
-  role: 'owner' | 'admin' | 'lawyer' | 'assistant' = 'owner',
+  role: TenantUserRole = TenantUserRole.OWNER,
   existingTenant?: Tenant
 ): Promise<Tenant> {
   const tenant = existingTenant || (await TenantFactory.create())

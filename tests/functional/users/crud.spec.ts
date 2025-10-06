@@ -8,6 +8,7 @@ import User from '#models/user'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
+import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Users CRUD', (group) => {
@@ -67,7 +68,7 @@ test.group('Users CRUD', (group) => {
       username: 'targetuser',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .get(`/api/v1/users/${targetUser.id}`)
@@ -268,7 +269,7 @@ test.group('Users CRUD', (group) => {
       username: 'olduser',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const updateData = {
       full_name: 'Updated Name',
@@ -329,7 +330,7 @@ test.group('Users CRUD', (group) => {
       username: originalUsername,
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .put(`/api/v1/users/${targetUser.id}`)
@@ -383,7 +384,7 @@ test.group('Users CRUD', (group) => {
       username: 'deleteme',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .delete(`/api/v1/users/${targetUser.id}`)

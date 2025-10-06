@@ -87,7 +87,7 @@ test.group('TenantsRepository', (group) => {
     await TenantFactory.apply('inactive').createMany(2)
 
     const repository = await app.container.make(TenantsRepository)
-    const result = await repository.listWithFilters({ isActive: true }, 1, 10)
+    const result = await repository.listWithFilters({ isActive: true, page: 1, limit: 10 })
 
     assert.lengthOf(result.all(), 3)
     result.all().forEach((tenant) => assert.isTrue(tenant.is_active))
@@ -98,7 +98,7 @@ test.group('TenantsRepository', (group) => {
     await TenantFactory.apply('free').createMany(3)
 
     const repository = await app.container.make(TenantsRepository)
-    const result = await repository.listWithFilters({ plan: 'pro' }, 1, 10)
+    const result = await repository.listWithFilters({ plan: 'pro', page: 1, limit: 10 })
 
     assert.lengthOf(result.all(), 2)
     result.all().forEach((tenant) => assert.equal(tenant.plan, 'pro'))
@@ -110,7 +110,7 @@ test.group('TenantsRepository', (group) => {
     await TenantFactory.merge({ name: 'Other Firm' }).create()
 
     const repository = await app.container.make(TenantsRepository)
-    const result = await repository.listWithFilters({ search: 'test' }, 1, 10)
+    const result = await repository.listWithFilters({ search: 'test', page: 1, limit: 10 })
 
     assert.isAtLeast(result.all().length, 2)
   })

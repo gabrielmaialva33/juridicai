@@ -14,12 +14,12 @@ test.group('GetSecurityAlertsService', (group) => {
     const user = await UserFactory.create()
 
     // Create granted logs
-    const grantedLogs = await AuditLogFactory.merge({
+    await AuditLogFactory.merge({
       user_id: user.id,
       result: 'granted',
     }).createMany(3)
     // Create denied logs
-    const deniedLogs = await AuditLogFactory.merge({
+    await AuditLogFactory.merge({
       user_id: user.id,
       result: 'denied',
     }).createMany(2)

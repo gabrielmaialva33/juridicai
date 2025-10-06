@@ -8,6 +8,7 @@ import User from '#models/user'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
+import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Users list', (group) => {
@@ -120,7 +121,7 @@ test.group('Users list', (group) => {
         username: `user${i}`,
         password: 'password123',
       })
-      await setupTenantForUser(newUser, 'lawyer', tenant)
+      await setupTenantForUser(newUser, TenantUserRole.LAWYER, tenant)
     }
 
     const response = await client
@@ -177,7 +178,7 @@ test.group('Users list', (group) => {
       username: 'janesmith',
       password: 'password123',
     })
-    await setupTenantForUser(janeUser, 'lawyer', tenant)
+    await setupTenantForUser(janeUser, TenantUserRole.LAWYER, tenant)
 
     const bobUser = await User.create({
       full_name: 'Bob Johnson',
@@ -185,7 +186,7 @@ test.group('Users list', (group) => {
       username: 'bobjohnson',
       password: 'password123',
     })
-    await setupTenantForUser(bobUser, 'lawyer', tenant)
+    await setupTenantForUser(bobUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .get('/api/v1/users')
@@ -240,7 +241,7 @@ test.group('Users list', (group) => {
       username: 'charliebrown',
       password: 'password123',
     })
-    await setupTenantForUser(charlieUser, 'lawyer', tenant)
+    await setupTenantForUser(charlieUser, TenantUserRole.LAWYER, tenant)
 
     const aliceUser = await User.create({
       full_name: 'Alice Wonder',
@@ -248,7 +249,7 @@ test.group('Users list', (group) => {
       username: 'alicewonder',
       password: 'password123',
     })
-    await setupTenantForUser(aliceUser, 'lawyer', tenant)
+    await setupTenantForUser(aliceUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .get('/api/v1/users')

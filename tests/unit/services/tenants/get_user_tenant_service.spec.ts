@@ -15,8 +15,8 @@ test.group('GetUserTenantsService', (group) => {
     const user = await UserFactory.create()
 
     // Create 2 active tenants with the user
-    const tenant1 = await TenantFactory.create({ name: 'Tenant 1', is_active: true })
-    const tenant2 = await TenantFactory.create({ name: 'Tenant 2', is_active: true })
+    const tenant1 = await TenantFactory.merge({ name: 'Tenant 1', is_active: true }).create()
+    const tenant2 = await TenantFactory.merge({ name: 'Tenant 2', is_active: true }).create()
 
     await TenantUserFactory.merge({ tenant_id: tenant1.id, user_id: user.id, is_active: true })
       .apply('owner')
@@ -49,10 +49,15 @@ test.group('GetUserTenantsService', (group) => {
     const user = await UserFactory.create()
 
     // Create 1 active and 1 inactive tenant
-    const activeTenant = await TenantFactory.create({ name: 'Active Tenant', is_active: true })
-    const inactiveTenant = await TenantFactory.apply('inactive').create({
-      name: 'Inactive Tenant',
-    })
+    const activeTenant = await TenantFactory.merge({
+      name: 'Active Tenant',
+      is_active: true,
+    }).create()
+    const inactiveTenant = await TenantFactory.apply('inactive')
+      .merge({
+        name: 'Inactive Tenant',
+      })
+      .create()
 
     await TenantUserFactory.merge({
       tenant_id: activeTenant.id,
@@ -82,8 +87,14 @@ test.group('GetUserTenantsService', (group) => {
     const user = await UserFactory.create()
 
     // Create 2 tenants
-    const tenant1 = await TenantFactory.create({ name: 'Active Membership', is_active: true })
-    const tenant2 = await TenantFactory.create({ name: 'Inactive Membership', is_active: true })
+    const tenant1 = await TenantFactory.merge({
+      name: 'Active Membership',
+      is_active: true,
+    }).create()
+    const tenant2 = await TenantFactory.merge({
+      name: 'Inactive Membership',
+      is_active: true,
+    }).create()
 
     // User is active member in tenant1
     await TenantUserFactory.merge({
@@ -157,8 +168,8 @@ test.group('GetUserTenantsService', (group) => {
     const user1 = await UserFactory.create()
     const user2 = await UserFactory.create()
 
-    const tenant1 = await TenantFactory.create({ name: 'User 1 Tenant', is_active: true })
-    const tenant2 = await TenantFactory.create({ name: 'User 2 Tenant', is_active: true })
+    const tenant1 = await TenantFactory.merge({ name: 'User 1 Tenant', is_active: true }).create()
+    const tenant2 = await TenantFactory.merge({ name: 'User 2 Tenant', is_active: true }).create()
 
     await TenantUserFactory.merge({ tenant_id: tenant1.id, user_id: user1.id, is_active: true })
       .apply('owner')
@@ -177,9 +188,12 @@ test.group('GetUserTenantsService', (group) => {
   test('should handle user with multiple roles across tenants', async ({ assert }) => {
     const user = await UserFactory.create()
 
-    const tenant1 = await TenantFactory.create({ name: 'Owner Tenant', is_active: true })
-    const tenant2 = await TenantFactory.create({ name: 'Lawyer Tenant', is_active: true })
-    const tenant3 = await TenantFactory.create({ name: 'Assistant Tenant', is_active: true })
+    const tenant1 = await TenantFactory.merge({ name: 'Owner Tenant', is_active: true }).create()
+    const tenant2 = await TenantFactory.merge({ name: 'Lawyer Tenant', is_active: true }).create()
+    const tenant3 = await TenantFactory.merge({
+      name: 'Assistant Tenant',
+      is_active: true,
+    }).create()
 
     await TenantUserFactory.merge({ tenant_id: tenant1.id, user_id: user.id, is_active: true })
       .apply('owner')
@@ -209,30 +223,32 @@ test.group('GetUserTenantsService', (group) => {
     const user = await UserFactory.create()
 
     // Scenario 1: Active tenant, active user
-    const tenant1 = await TenantFactory.create({ name: 'Both Active', is_active: true })
+    const tenant1 = await TenantFactory.merge({ name: 'Both Active', is_active: true }).create()
     await TenantUserFactory.merge({ tenant_id: tenant1.id, user_id: user.id, is_active: true })
       .apply('owner')
       .create()
 
     // Scenario 2: Active tenant, inactive user
-    const tenant2 = await TenantFactory.create({
+    const tenant2 = await TenantFactory.merge({
       name: 'Tenant Active, User Inactive',
       is_active: true,
-    })
+    }).create()
     await TenantUserFactory.merge({ tenant_id: tenant2.id, user_id: user.id, is_active: false })
       .apply('owner')
       .create()
 
     // Scenario 3: Inactive tenant, active user
-    const tenant3 = await TenantFactory.apply('inactive').create({
-      name: 'Tenant Inactive, User Active',
-    })
+    const tenant3 = await TenantFactory.apply('inactive')
+      .merge({
+        name: 'Tenant Inactive, User Active',
+      })
+      .create()
     await TenantUserFactory.merge({ tenant_id: tenant3.id, user_id: user.id, is_active: true })
       .apply('owner')
       .create()
 
     // Scenario 4: Inactive tenant, inactive user
-    const tenant4 = await TenantFactory.apply('inactive').create({ name: 'Both Inactive' })
+    const tenant4 = await TenantFactory.apply('inactive').merge({ name: 'Both Inactive' }).create()
     await TenantUserFactory.merge({ tenant_id: tenant4.id, user_id: user.id, is_active: false })
       .apply('owner')
       .create()

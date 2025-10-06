@@ -114,9 +114,9 @@ test.group('ListTenantsService', (group) => {
 
   test('should sort by created_at desc by default', async ({ assert }) => {
     // Create tenants with delays to ensure different timestamps
-    const tenant1 = await TenantFactory.merge({ name: 'First' }).create()
-    const tenant2 = await TenantFactory.merge({ name: 'Second' }).create()
-    const tenant3 = await TenantFactory.merge({ name: 'Third' }).create()
+    await TenantFactory.merge({ name: 'First' }).create()
+    await TenantFactory.merge({ name: 'Second' }).create()
+    await TenantFactory.merge({ name: 'Third' }).create()
 
     const service = await app.container.make(ListTenantService)
     const result = await service.run({ page: 1, perPage: 20 })

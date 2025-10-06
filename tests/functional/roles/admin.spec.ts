@@ -7,6 +7,7 @@ import Role from '#models/role'
 import User from '#models/user'
 
 import IRole from '#interfaces/role_interface'
+import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
 test.group('Roles admin', (group) => {
@@ -166,7 +167,7 @@ test.group('Roles admin', (group) => {
       username: 'targetuser',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .put('/api/v1/admin/roles/attach')
@@ -308,7 +309,7 @@ test.group('Roles admin', (group) => {
       username: 'targetuser',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .put('/api/v1/admin/roles/attach')
@@ -362,7 +363,7 @@ test.group('Roles admin', (group) => {
       username: 'targetuser',
       password: 'password123',
     })
-    await setupTenantForUser(targetUser, 'lawyer', tenant)
+    await setupTenantForUser(targetUser, TenantUserRole.LAWYER, tenant)
 
     // First attachment
     await targetUser.related('roles').sync([userRole.id])

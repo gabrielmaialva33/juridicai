@@ -56,9 +56,9 @@ test.group('CleanupOldAuditLogsService', (group) => {
     const user = await UserFactory.create()
 
     // Create recent logs
-    const log1 = await AuditLogFactory.merge({ user_id: user.id }).create()
-    const log2 = await AuditLogFactory.merge({ user_id: user.id }).create()
-    const log3 = await AuditLogFactory.merge({ user_id: user.id }).create()
+    await AuditLogFactory.merge({ user_id: user.id }).create()
+    await AuditLogFactory.merge({ user_id: user.id }).create()
+    await AuditLogFactory.merge({ user_id: user.id }).create()
 
     const service = await app.container.make(CleanupOldAuditLogsService)
     const deletedCount = await service.run(30)
