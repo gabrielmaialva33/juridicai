@@ -1,440 +1,182 @@
 openapi: 3.1.0
 info:
-  title: Base ACL API
+  title: JuridicAI API
   version: 1.0.0
   description: |
-    ## Welcome to Base ACL API
+    ## ⚖️ Bem-vindo à API JuridicAI
 
-    A robust authentication and access control API built with AdonisJS v6. This API provides comprehensive user management, role-based access control, and file management capabilities.
+    JuridicAI é uma plataforma multi-tenant projetada para gestão de escritórios de advocacia, oferecendo controle completo sobre clientes, processos, prazos, documentos e eventos processuais. Construída com AdonisJS v6, PostgreSQL e arquitetura moderna de isolamento por tenant.
 
-    ### Key Features
+    ### 🎯 Principais Recursos
 
-    - **JWT Authentication**: Secure token-based authentication with refresh tokens
-    - **Role-Based Access Control**: Fine-grained permissions with multiple user roles
-    - **User Management**: Complete CRUD operations for user accounts
-    - **File Management**: Secure file upload with automatic categorization
-    - **Health Monitoring**: Built-in health check endpoints
+    - **Arquitetura Multi-tenant**: Isolamento completo de dados por escritório
+    - **Domínio Jurídico Brasileiro**: Suporte a CPF, CNPJ, CNJ e tribunais brasileiros
+    - **Gestão de Processos**: Controle completo do ciclo de vida processual
+    - **Prazos Inteligentes**: Alertas configuráveis e prazos fatais
+    - **Documentos Avançados**: OCR, assinatura digital e versionamento
+    - **Controle de Acesso**: RBAC baseado em roles e permissões
 
-    ## Authentication
+    ## 🔐 Autenticação
 
-    The API uses JWT Bearer authentication. To access protected endpoints:
+    Todos os endpoints da API (exceto `/health`) requerem autenticação JWT. Siga estes passos:
 
-    1. **Login**: POST to `/api/v1/sessions/sign-in` with your credentials
-    2. **Get Token**: Extract the `access_token` from the response
-    3. **Use Token**: Include `Authorization: Bearer <token>` in all requests
+    1. **Login**: POST para `/api/v1/sessions/sign-in` com credenciais
+    2. **Obter Token**: Extraia o `access_token` da resposta
+    3. **Usar Token**: Inclua `Authorization: Bearer <token>` em todas as requisições
 
-    ### Token Management
+    ### Multi-tenant Context
 
-    - **Access Token Lifetime**: 1 hour
-    - **Refresh Token Lifetime**: 3 days
-    - **Token Format**: JWT Bearer token
+    Recursos jurídicos (clientes, casos, prazos, documentos) requerem contexto de tenant:
 
-    ## API Conventions
+    - **Header**: `X-Tenant-ID: <uuid>`
+    - **Resolução**: Via header, subdomínio ou tenant padrão do usuário
+    - **Isolamento**: Queries automáticas filtradas por tenant_id
 
-    ### Request Format
-    - **Content-Type**: `application/json` for all requests (except file uploads)
-    - **Pagination**: Use `?page=1&perPage=10` query parameters
-    - **Sorting**: Use `?sortBy=field&order=asc` or `?sortBy=field&order=desc`
-    - **Searching**: Use `?search=term` for text search
+    ## 📋 Convenções da API
 
-    ### Response Format
-    - **Success**: HTTP 2xx with JSON body
-    - **Errors**: HTTP 4xx/5xx with standardized error format
-    - **Timestamps**: ISO 8601 format
-    - **Database Fields**: snake_case naming convention
+    ### Formato de Requisição
+    - **Content-Type**: `application/json`
+    - **Paginação**: `?page=1&per_page=20`
+    - **Busca**: `?search=termo`
+    - **Filtros**: Query params específicos por recurso
 
-    ### Common Headers
+    ### Formato de Resposta
+    - **Sucesso**: HTTP 2xx com JSON
+    - **Erros**: HTTP 4xx/5xx com detalhes
+    - **Timestamps**: ISO 8601 (UTC)
+    - **IDs**: Números auto-incrementais (exceto tenant_id que é UUID)
+
+    ### Headers Comuns
     ```
     Authorization: Bearer <token>
+    X-Tenant-ID: <uuid>
     Content-Type: application/json
-    Accept: application/json
+    Accept-Language: pt-BR
     ```
 
+  x-logo:
+    url: https://raw.githubusercontent.com/adonisjs/art/master/adonisjs.svg
+    altText: JuridicAI Logo
+
   contact:
-    name: API Support
-    email: support@example.com
+    name: Gabriel Maia
+    email: gabriel.maia@juridicai.com.br
+    url: https://github.com/gabrielmaia
+
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://127.0.0.1:3333
-    description: Local development server
-  - url: https://api.yourdomain.com
-    description: Production server
+  - url: http://localhost:3333
+    description: Servidor de desenvolvimento local
+  - url: https://staging-api.juridicai.com.br
+    description: Ambiente de staging/testes
+  - url: https://api.juridicai.com.br
+    description: Servidor de produção
 
-security:
-  - bearerAuth: []
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT authentication token
-
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        full_name:
-          type: string
-          example: 'John Doe'
-        email:
-          type: string
-          format: email
-          example: 'john@example.com'
-        username:
-          type: string
-          example: 'johndoe'
-        created_at:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00.000Z'
-        updated_at:
-          type: string
-          format: date-time
-          example: '2024-01-01T00:00:00.000Z'
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/Role'
-
-    Role:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: 'User'
-        description:
-          type: string
-          example: 'Regular user role'
-        slug:
-          type: string
-          enum: [root, admin, user, guest]
-          example: 'user'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    AuthResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-        full_name:
-          type: string
-        email:
-          type: string
-          format: email
-        username:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/Role'
-        auth:
-          type: object
-          properties:
-            access_token:
-              type: string
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-            refresh_token:
-              type: string
-              example: 'refresh_token_string'
-
-    Error:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              message:
-                type: string
-                example: 'Validation error'
-              field:
-                type: string
-                example: 'email'
-              rule:
-                type: string
-                example: 'email'
-
-    Pagination:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            total:
-              type: integer
-              example: 100
-            per_page:
-              type: integer
-              example: 10
-            current_page:
-              type: integer
-              example: 1
-            last_page:
-              type: integer
-              example: 10
-            first_page:
-              type: integer
-              example: 1
-            first_page_url:
-              type: string
-              example: '/?page=1'
-            last_page_url:
-              type: string
-              example: '/?page=10'
-            next_page_url:
-              type: string
-              example: '/?page=2'
-            previous_page_url:
-              type: string
-              example: null
-
-    FileUploadResponse:
-      type: object
-      properties:
-        url:
-          type: string
-          example: 'https://storage.example.com/files/abc123.pdf'
-        clientName:
-          type: string
-          example: 'document.pdf'
-        fileCategory:
-          type: string
-          enum: [image, document, video, audio, file]
-          example: 'document'
-        fileType:
-          type: string
-          example: 'application/pdf'
-        size:
-          type: integer
-          example: 12345
-        extname:
-          type: string
-          example: 'pdf'
-
-  parameters:
-    pathId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: Resource ID
-
-    pageParam:
-      name: page
-      in: query
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
-      description: Page number for pagination
-
-    perPageParam:
-      name: perPage
-      in: query
-      schema:
-        type: integer
-        default: 10
-        minimum: 1
-        maximum: 100
-      description: Number of items per page
-
-    sortByParam:
-      name: sortBy
-      in: query
-      schema:
-        type: string
-        default: id
-      description: Field to sort by
-
-    orderParam:
-      name: order
-      in: query
-      schema:
-        type: string
-        enum: [asc, desc]
-        default: asc
-      description: Sort order
-
-    searchParam:
-      name: search
-      in: query
-      schema:
-        type: string
-      description: Search term for filtering results
-
-  responses:
-    UnauthorizedError:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            errors:
-              - message: 'Unauthorized'
-
-    ForbiddenError:
-      description: Insufficient permissions
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            errors:
-              - message: 'Forbidden'
-
-    NotFoundError:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            errors:
-              - message: 'Resource not found'
-
-    ValidationError:
-      description: Validation failed
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+x-tagGroups:
+  - name: 🏥 Saúde do Sistema
+    tags:
+      - Health
+  - name: 🔐 Autenticação & Acesso
+    tags:
+      - Authentication
+      - Profile
+  - name: 👥 Gestão de Usuários
+    tags:
+      - Tenants
+      - Users
+  - name: ⚖️ Gestão Jurídica - Clientes
+    tags:
+      - Clients
+  - name: ⚖️ Gestão Jurídica - Processos
+    tags:
+      - Cases
+  - name: ⚖️ Gestão Jurídica - Prazos
+    tags:
+      - Deadlines
+  - name: ⚖️ Gestão Jurídica - Documentos
+    tags:
+      - Documents
+  - name: ⚖️ Gestão Jurídica - Eventos
+    tags:
+      - Case Events
 
 tags:
   - name: Health
-    description: System health monitoring endpoints
+    description: Verificação de saúde do sistema
   - name: Authentication
-    description: User authentication and session management
-  - name: Users
-    description: User management operations
-  - name: Roles
-    description: Role management operations (admin only)
-  - name: Files
-    description: File upload and management
+    description: Autenticação e gerenciamento de sessões
   - name: Profile
-    description: Current user profile operations
-  - name: Permissions
-    description: Permission management operations (admin only)
+    description: Perfil e informações do usuário autenticado
+  - name: Tenants
+    description: Gerenciamento de tenants (escritórios/organizações)
+  - name: Users
+    description: Gerenciamento de usuários do sistema
+  - name: Clients
+    description: Gerenciamento de clientes (pessoas físicas e jurídicas)
+  - name: Cases
+    description: Gerenciamento de processos judiciais
+  - name: Deadlines
+    description: Gerenciamento de prazos processuais
+  - name: Documents
+    description: Gerenciamento de documentos e arquivos processuais
+  - name: Case Events
+    description: Gerenciamento de eventos e movimentações processuais
 
 paths:
-  /:
-    get:
-      operationId: getApiInfo
-      summary: Get API information
-      description: Returns basic information about the API
-      tags:
-        - Health
-      security: []
-      responses:
-        '200':
-          description: API information
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    example: 'adonis-kit'
-                  description:
-                    type: string
-                    example: 'Base ACL API built with AdonisJS'
-                  version:
-                    type: string
-                    example: '0.0.0'
-                  author:
-                    type: string
-                    example: 'Gabriel Maia'
-                  contributors:
-                    type: array
-                    items:
-                      type: string
-        '429':
-          description: Too Many Requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   /api/v1/health:
     get:
       operationId: healthCheck
-      summary: Health check
-      description: Check the health status of the API and its services
       tags:
         - Health
-      security: []
+      summary: Verificação de saúde
+      description: |
+        Endpoint simples para verificar se a API está funcionando.
+
+        **Sem autenticação requerida**
+
+        Útil para:
+        - Health checks de load balancers
+        - Monitoramento de uptime
+        - Testes de conectividade
       responses:
         '200':
-          description: Service is healthy
+          description: API está saudável
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  healthy:
-                    type: boolean
-                    example: true
-                  services:
-                    type: object
-                    properties:
-                      database:
-                        type: object
-                        properties:
-                          healthy:
-                            type: boolean
-                            example: true
-        '429':
-          description: Too Many Requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '503':
-          description: Service unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  healthy:
-                    type: boolean
-                    example: false
-                  services:
-                    type: object
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-01-20T10:00:00Z'
+              example:
+                status: ok
+                timestamp: '2025-01-20T10:00:00Z'
 
   /api/v1/sessions/sign-in:
     post:
       operationId: signIn
-      summary: User login
-      description: Authenticate a user and receive JWT tokens
       tags:
         - Authentication
-      security: []
+      summary: Fazer login
+      description: |
+        Autentica um usuário e retorna um token JWT de acesso.
+
+        **Credenciais aceitas:**
+        - Email ou username no campo `uid`
+        - Senha no campo `password`
+
+        **Resposta inclui:**
+        - Token de acesso (válido por 24h)
+        - Informações do usuário
+        - Tenants disponíveis
       requestBody:
         required: true
         content:
@@ -447,102 +189,70 @@ paths:
               properties:
                 uid:
                   type: string
-                  description: Email or username
-                  example: 'john@example.com'
+                  description: Email ou username
+                  example: advogado@escritorio.com.br
                 password:
                   type: string
                   format: password
-                  minLength: 6
-                  example: 'password123'
+                  description: Senha do usuário
+                  example: senha123
+            example:
+              uid: advogado@escritorio.com.br
+              password: senha123
       responses:
         '200':
-          description: Login successful
+          description: Login realizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: Token JWT de acesso
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    description: Tempo de expiração em segundos
+                    example: 86400
+                  user:
+                    $ref: '#/components/schemas/User'
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                token_type: Bearer
+                expires_in: 86400
+                user:
+                  id: 1
+                  full_name: Dr. João Silva
+                  email: advogado@escritorio.com.br
+                  username: joao.silva
+                  created_at: '2025-01-01T00:00:00Z'
         '401':
-          description: Invalid credentials
+          description: Credenciais inválidas
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-              example:
-                errors:
-                  - message: 'Invalid credentials'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/me:
-    get:
-      operationId: getProfile
-      summary: Get current user profile
-      description: Retrieve the profile of the currently authenticated user
-      tags:
-        - Profile
-      responses:
-        '200':
-          description: Profile retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-
-  /api/v1/me/permissions:
-    get:
-      operationId: getMyPermissions
-      summary: Get current user permissions
-      description: Retrieve the permissions of the currently authenticated user
-      tags:
-        - Profile
-      responses:
-        '200':
-          description: Permissions retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permissions:
-                    type: array
-                    items:
-                      type: string
-                      example: 'users.create'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-
-  /api/v1/me/roles:
-    get:
-      operationId: getMyRoles
-      summary: Get current user roles
-      description: Retrieve the roles of the currently authenticated user
-      tags:
-        - Profile
-      responses:
-        '200':
-          description: Roles retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  roles:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Role'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
 
   /api/v1/sessions/sign-up:
     post:
       operationId: signUp
-      summary: User registration
-      description: Create a new user account
       tags:
         - Authentication
-      security: []
+      summary: Criar nova conta
+      description: |
+        Cria uma nova conta de usuário no sistema.
+
+        **Campos obrigatórios:**
+        - Nome completo
+        - Email (único)
+        - Senha (mínimo 6 caracteres)
+        - Confirmação de senha
+
+        **Campos opcionais:**
+        - Username (único)
       requestBody:
         required: true
         content:
@@ -557,551 +267,857 @@ paths:
               properties:
                 full_name:
                   type: string
-                  example: 'John Doe'
+                  minLength: 3
+                  example: Dr. João Silva
                 email:
                   type: string
                   format: email
-                  example: 'john@example.com'
+                  example: advogado@escritorio.com.br
                 username:
                   type: string
-                  example: 'johndoe'
-                  description: Optional username
+                  minLength: 3
+                  example: joao.silva
                 password:
                   type: string
                   format: password
                   minLength: 6
-                  example: 'password123'
+                  example: senha123
                 password_confirmation:
                   type: string
                   format: password
-                  example: 'password123'
+                  example: senha123
       responses:
         '201':
-          description: Registration successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/verify-email:
-    get:
-      operationId: verifyEmail
-      summary: Verify user email
-      description: Verify a user's email address using a token from the verification link.
-      tags:
-        - Authentication
-      security: []
-      parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-          description: The email verification token
-      responses:
-        '200':
-          description: Email verified successfully
-        '400':
-          description: Invalid or expired token
-
-  /api/v1/resend-verification-email:
-    post:
-      operationId: resendVerificationEmail
-      summary: Resend verification email
-      description: Resends the email verification link to the authenticated user.
-      tags:
-        - Authentication
-      responses:
-        '200':
-          description: Verification email sent successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-
-  /api/v1/users:
-    get:
-      operationId: listUsers
-      summary: List users
-      description: Get a paginated list of users with optional search and sorting
-      tags:
-        - Users
-      parameters:
-        - $ref: '#/components/parameters/pageParam'
-        - $ref: '#/components/parameters/perPageParam'
-        - $ref: '#/components/parameters/sortByParam'
-        - $ref: '#/components/parameters/orderParam'
-        - $ref: '#/components/parameters/searchParam'
-      responses:
-        '200':
-          description: User list retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Pagination'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-
-    post:
-      operationId: createUser
-      summary: Create user
-      description: Create a new user account (requires USER role)
-      tags:
-        - Users
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - full_name
-                - email
-                - password
-                - password_confirmation
-              properties:
-                full_name:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                username:
-                  type: string
-                password:
-                  type: string
-                  format: password
-                  minLength: 6
-                password_confirmation:
-                  type: string
-                  format: password
-      responses:
-        '201':
-          description: User created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/users/{id}:
-    get:
-      operationId: getUserById
-      summary: Get user by ID
-      description: Retrieve a specific user's details
-      tags:
-        - Users
-      parameters:
-        - $ref: '#/components/parameters/pathId'
-      responses:
-        '200':
-          description: User details retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-
-    put:
-      operationId: updateUser
-      summary: Update user
-      description: Update user details (email and username cannot be changed)
-      tags:
-        - Users
-      parameters:
-        - $ref: '#/components/parameters/pathId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                full_name:
-                  type: string
-                password:
-                  type: string
-                  format: password
-                  minLength: 6
-                password_confirmation:
-                  type: string
-                  format: password
-                  description: Required if password is provided
-      responses:
-        '200':
-          description: User updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-    delete:
-      operationId: deleteUser
-      summary: Delete user
-      description: Soft delete a user (marks as deleted)
-      tags:
-        - Users
-      parameters:
-        - $ref: '#/components/parameters/pathId'
-      responses:
-        '204':
-          description: User deleted successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-
-  /api/v1/admin/roles:
-    get:
-      operationId: listRoles
-      summary: List roles
-      description: Get a paginated list of roles (requires ADMIN or ROOT role)
-      tags:
-        - Roles
-      parameters:
-        - $ref: '#/components/parameters/pageParam'
-        - $ref: '#/components/parameters/perPageParam'
-      responses:
-        '200':
-          description: Role list retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Pagination'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Role'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-
-  /api/v1/admin/roles/attach:
-    put:
-      operationId: attachRoles
-      summary: Attach roles to user
-      description: Assign roles to a user (requires ADMIN or ROOT role)
-      tags:
-        - Roles
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - user_id
-                - role_ids
-              properties:
-                user_id:
-                  type: integer
-                  example: 1
-                role_ids:
-                  type: array
-                  items:
-                    type: integer
-                  example: [1, 2, 3]
-      responses:
-        '200':
-          description: Roles attached successfully
+          description: Conta criada com sucesso
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: 'Role attached successfully'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
+                  user:
+                    $ref: '#/components/schemas/User'
         '422':
-          $ref: '#/components/responses/ValidationError'
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-  /api/v1/admin/permissions:
+  /api/v1/me:
     get:
-      operationId: listPermissions
-      summary: List permissions
-      description: Get a paginated list of permissions
+      operationId: getProfile
       tags:
-        - Permissions
-      parameters:
-        - $ref: '#/components/parameters/pageParam'
-        - $ref: '#/components/parameters/perPageParam'
+        - Profile
+      summary: Obter perfil do usuário autenticado
+      description: Retorna informações do perfil do usuário autenticado
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Permission list retrieved successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-    post:
-      operationId: createPermission
-      summary: Create permission
-      description: Create a new permission
+          description: Perfil do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/v1/me/permissions:
+    get:
+      operationId: getMyPermissions
       tags:
-        - Permissions
+        - Profile
+      summary: Obter permissões do usuário
+      description: Lista todas as permissões do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de permissões
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - clients.create
+                - clients.read
+                - cases.create
+                - cases.read
+
+  /api/v1/me/roles:
+    get:
+      operationId: getMyRoles
+      tags:
+        - Profile
+      summary: Obter roles do usuário
+      description: Lista todos os roles do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - lawyer
+                - admin
+
+  /api/v1/tenants:
+    get:
+      operationId: listTenants
+      tags:
+        - Tenants
+      summary: Listar tenants
+      description: |
+        Lista todos os tenants aos quais o usuário tem acesso.
+
+        **Sem tenant scope** - Este endpoint lista os próprios tenants.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: search
+          in: query
+          description: Buscar por nome ou subdomínio
+          schema:
+            type: string
+        - name: plan
+          in: query
+          description: Filtrar por plano
+          schema:
+            type: string
+            enum: [free, starter, pro, enterprise]
+        - name: is_active
+          in: query
+          description: Filtrar por status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de tenants
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tenant'
+
+    post:
+      operationId: createTenant
+      tags:
+        - Tenants
+      summary: Criar tenant
+      description: Cria um novo tenant (escritório/organização)
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - resource
-                - action
-              properties:
-                resource:
-                  type: string
-                  example: 'posts'
-                action:
-                  type: string
-                  example: 'create'
-                description:
-                  type: string
-                  example: 'Allow creating posts'
+              $ref: '#/components/schemas/CreateTenantRequest'
       responses:
         '201':
-          description: Permission created successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
+          description: Tenant criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
 
-  /api/v1/admin/roles/permissions/sync:
-    put:
-      operationId: syncRolePermissions
-      summary: Sync role permissions
-      description: Sync all permissions for a specific role
-      tags:
-        - Permissions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - role_id
-                - permission_ids
-              properties:
-                role_id:
-                  type: integer
-                  example: 2
-                permission_ids:
-                  type: array
-                  items:
-                    type: integer
-                  example: [1, 2, 3]
-      responses:
-        '200':
-          description: Permissions synced successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/admin/roles/permissions/attach:
-    put:
-      operationId: attachRolePermissions
-      summary: Attach permissions to role
-      description: Attach one or more permissions to a role
-      tags:
-        - Permissions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - role_id
-                - permission_ids
-              properties:
-                role_id:
-                  type: integer
-                  example: 2
-                permission_ids:
-                  type: array
-                  items:
-                    type: integer
-                  example: [4, 5]
-      responses:
-        '200':
-          description: Permissions attached successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/admin/roles/permissions/detach:
-    put:
-      operationId: detachRolePermissions
-      summary: Detach permissions from role
-      description: Detach one or more permissions from a role
-      tags:
-        - Permissions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - role_id
-                - permission_ids
-              properties:
-                role_id:
-                  type: integer
-                  example: 2
-                permission_ids:
-                  type: array
-                  items:
-                    type: integer
-                  example: [1]
-      responses:
-        '200':
-          description: Permissions detached successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/admin/users/permissions/sync:
-    put:
-      operationId: syncUserPermissions
-      summary: Sync user permissions
-      description: Sync all direct permissions for a specific user
-      tags:
-        - Permissions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - user_id
-                - permission_ids
-              properties:
-                user_id:
-                  type: integer
-                  example: 3
-                permission_ids:
-                  type: array
-                  items:
-                    type: integer
-                  example: [10, 11]
-      responses:
-        '200':
-          description: User permissions synced successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/admin/users/{id}/permissions:
+  /api/v1/tenants/me:
     get:
-      operationId: getUserPermissions
-      summary: Get user's direct permissions
-      description: Get a list of direct permissions for a specific user
+      operationId: getCurrentTenant
       tags:
-        - Permissions
-      parameters:
-        - $ref: '#/components/parameters/pathId'
+        - Tenants
+      summary: Obter tenant atual
+      description: |
+        Retorna informações do tenant atual baseado no contexto.
+
+        **Requer header X-Tenant-ID**
+      security:
+        - bearerAuth: []
+        - tenantContext: []
       responses:
         '200':
-          description: User permissions retrieved successfully
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
+          description: Tenant atual
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
 
-  /api/v1/admin/users/{id}/permissions/check:
-    post:
-      operationId: checkUserPermissions
-      summary: Check user permissions
-      description: Check if a user has specific permissions
+  /api/v1/tenants/{id}:
+    get:
+      operationId: getTenant
       tags:
-        - Permissions
+        - Tenants
+      summary: Obter tenant por ID
+      description: Retorna detalhes de um tenant específico
+      security:
+        - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/pathId'
+        - name: id
+          in: path
+          required: true
+          description: UUID do tenant
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalhes do tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateTenant
+      tags:
+        - Tenants
+      summary: Atualizar tenant
+      description: Atualiza informações de um tenant
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - permissions
-              properties:
-                permissions:
-                  type: array
-                  items:
-                    type: string
-                  example: ['users.create', 'files.delete']
+              $ref: '#/components/schemas/UpdateTenantRequest'
       responses:
         '200':
-          description: Check result
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
+          description: Tenant atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+
+    delete:
+      operationId: deleteTenant
+      tags:
+        - Tenants
+      summary: Deletar tenant
+      description: Remove um tenant do sistema
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tenant deletado com sucesso
+
+  /api/v1/clients:
+    get:
+      operationId: listClients
+      tags:
+        - Clients
+      summary: Listar clientes
+      description: |
+        Lista clientes do tenant atual com suporte a paginação e filtros.
+
+        **Tenant-scoped**: Retorna apenas clientes do tenant especificado.
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: search
+          in: query
+          description: Buscar por nome, email ou documento (CPF/CNPJ)
+          schema:
+            type: string
+        - name: client_type
+          in: query
+          description: Filtrar por tipo de cliente
+          schema:
+            type: string
+            enum: [individual, company]
+        - name: is_active
+          in: query
+          description: Filtrar por status
+          schema:
+            type: boolean
+        - name: state
+          in: query
+          description: Filtrar por estado (UF)
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: SP
+        - name: city
+          in: query
+          description: Filtrar por cidade
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de clientes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Client'
+
+    post:
+      operationId: createClient
+      tags:
+        - Clients
+      summary: Criar cliente
+      description: |
+        Cria um novo cliente (pessoa física ou jurídica).
+
+        **Validações brasileiras:**
+        - CPF: formato XXX.XXX.XXX-XX
+        - CNPJ: formato XX.XXX.XXX/XXXX-XX
+        - CEP: formato XXXXX-XXX
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+            examples:
+              individual:
+                summary: Pessoa Física
+                value:
+                  client_type: individual
+                  full_name: João da Silva
+                  cpf: '123.456.789-09'
+                  email: joao@email.com
+                  phone: (11) 98765-4321
+                  address:
+                    street: Av. Paulista
+                    number: '1000'
+                    city: São Paulo
+                    state: SP
+                    zip_code: 01310-100
+              company:
+                summary: Pessoa Jurídica
+                value:
+                  client_type: company
+                  company_name: Empresa LTDA
+                  cnpj: '12.345.678/0001-90'
+                  email: contato@empresa.com.br
+                  phone: (11) 3000-0000
+                  address:
+                    street: Rua Augusta
+                    number: '500'
+                    city: São Paulo
+                    state: SP
+                    zip_code: 01305-000
+      responses:
+        '201':
+          description: Cliente criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
         '422':
           $ref: '#/components/responses/ValidationError'
 
-  /api/v1/files/upload:
-    post:
-      operationId: uploadFile
-      summary: Upload file
-      description: |
-        Upload a file to the server. Files are automatically categorized based on their type.
-
-        **File constraints:**
-        - Maximum size: 5MB
-        - Allowed extensions: jpeg, jpg, png, pdf, doc, docx, txt, csv, xls, xlsx, mp3, mp4, zip
-
-        **Categories:**
-        - `image`: jpeg, jpg, png
-        - `document`: pdf, doc, docx, txt
-        - `video`: mp4
-        - `audio`: mp3
-        - `file`: csv, xls, xlsx, zip, and others
+  /api/v1/clients/{id}:
+    get:
+      operationId: getClient
       tags:
-        - Files
+        - Clients
+      summary: Obter cliente por ID
+      description: Retorna detalhes de um cliente específico
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: Detalhes do cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateClient
+      tags:
+        - Clients
+      summary: Atualizar cliente
+      description: Atualiza informações de um cliente
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+
+    delete:
+      operationId: deleteClient
+      tags:
+        - Clients
+      summary: Desativar cliente
+      description: |
+        Desativa um cliente (soft delete via is_active=false).
+
+        **Nota**: Clientes não são deletados fisicamente.
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '204':
+          description: Cliente desativado com sucesso
+
+  /api/v1/cases:
+    get:
+      operationId: listCases
+      tags:
+        - Cases
+      summary: Listar processos
+      description: |
+        Lista processos do tenant atual.
+
+        **Tenant-scoped**: Retorna apenas processos do tenant.
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: search
+          in: query
+          description: Buscar por número CNJ ou descrição
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          description: Filtrar por cliente
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: Filtrar por status
+          schema:
+            type: string
+            enum: [active, closed, archived, suspended]
+        - name: priority
+          in: query
+          description: Filtrar por prioridade
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: case_type
+          in: query
+          description: Filtrar por tipo de processo
+          schema:
+            type: string
+            enum: [civil, criminal, labor, family, tax, administrative, other]
+        - name: responsible_lawyer_id
+          in: query
+          description: Filtrar por advogado responsável
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de processos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Case'
+
+    post:
+      operationId: createCase
+      tags:
+        - Cases
+      summary: Criar processo
+      description: |
+        Cria um novo processo judicial.
+
+        **Número CNJ** (opcional):
+        - Formato: NNNNNNN-DD.AAAA.J.TR.OOOO
+        - Exemplo: 0000001-23.2024.8.26.0100
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCaseRequest'
+            example:
+              client_id: 1
+              case_number: 0000001-23.2024.8.26.0100
+              case_type: civil
+              court: TJ-SP
+              status: active
+              priority: high
+              responsible_lawyer_id: 1
+              parties:
+                autor:
+                  name: João Silva
+                  cpf: '123.456.789-09'
+                reu:
+                  name: Empresa XYZ LTDA
+                  cnpj: '12.345.678/0001-90'
+              description: Ação de cobrança
+      responses:
+        '201':
+          description: Processo criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+
+  /api/v1/cases/{id}:
+    get:
+      operationId: getCase
+      tags:
+        - Cases
+      summary: Obter processo por ID
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '200':
+          description: Detalhes do processo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+
+    patch:
+      operationId: updateCase
+      tags:
+        - Cases
+      summary: Atualizar processo
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCaseRequest'
+      responses:
+        '200':
+          description: Processo atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+
+    delete:
+      operationId: deleteCase
+      tags:
+        - Cases
+      summary: Arquivar processo
+      description: Arquiva um processo (muda status para 'archived')
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '204':
+          description: Processo arquivado
+
+  /api/v1/deadlines:
+    get:
+      operationId: listDeadlines
+      tags:
+        - Deadlines
+      summary: Listar prazos
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, expired, cancelled]
+        - name: is_fatal
+          in: query
+          schema:
+            type: boolean
+        - name: case_id
+          in: query
+          schema:
+            type: integer
+        - name: responsible_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de prazos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Deadline'
+
+    post:
+      operationId: createDeadline
+      tags:
+        - Deadlines
+      summary: Criar prazo
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeadlineRequest'
+      responses:
+        '201':
+          description: Prazo criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deadline'
+
+  /api/v1/deadlines/upcoming:
+    get:
+      operationId: getUpcomingDeadlines
+      tags:
+        - Deadlines
+      summary: Listar prazos próximos
+      description: Retorna prazos pendentes dentro dos próximos N dias (padrão 7)
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - name: days
+          in: query
+          description: Número de dias à frente
+          schema:
+            type: integer
+            default: 7
+            minimum: 1
+            maximum: 90
+      responses:
+        '200':
+          description: Prazos próximos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deadline'
+
+  /api/v1/deadlines/{id}:
+    get:
+      operationId: getDeadline
+      tags:
+        - Deadlines
+      summary: Obter prazo por ID
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DeadlineId'
+      responses:
+        '200':
+          description: Detalhes do prazo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deadline'
+
+    patch:
+      operationId: updateDeadline
+      tags:
+        - Deadlines
+      summary: Atualizar prazo
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DeadlineId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeadlineRequest'
+      responses:
+        '200':
+          description: Prazo atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deadline'
+
+    delete:
+      operationId: deleteDeadline
+      tags:
+        - Deadlines
+      summary: Cancelar prazo
+      description: Cancela um prazo (status='cancelled')
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DeadlineId'
+      responses:
+        '204':
+          description: Prazo cancelado
+
+  /api/v1/deadlines/{id}/complete:
+    patch:
+      operationId: completeDeadline
+      tags:
+        - Deadlines
+      summary: Marcar prazo como cumprido
+      description: Marca um prazo como completo e registra informações de conclusão
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DeadlineId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                completion_notes:
+                  type: string
+                  description: Observações sobre o cumprimento
+                  maxLength: 1000
+              example:
+                completion_notes: Prazo cumprido via petição protocolada
+      responses:
+        '200':
+          description: Prazo marcado como completo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deadline'
+
+  /api/v1/documents:
+    get:
+      operationId: listDocuments
+      tags:
+        - Documents
+      summary: Listar documentos
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: case_id
+          in: query
+          schema:
+            type: integer
+        - name: client_id
+          in: query
+          schema:
+            type: integer
+        - name: document_type
+          in: query
+          schema:
+            type: string
+            enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+        - name: is_signed
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de documentos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Document'
+
+    post:
+      operationId: createDocument
+      tags:
+        - Documents
+      summary: Upload de documento
+      description: Faz upload de um novo documento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
       requestBody:
         required: true
         content:
@@ -1110,28 +1126,1201 @@ paths:
               type: object
               required:
                 - file
+                - title
+                - document_type
               properties:
                 file:
                   type: string
                   format: binary
-                  description: File to upload
+                title:
+                  type: string
+                description:
+                  type: string
+                document_type:
+                  type: string
+                  enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+                case_id:
+                  type: integer
+                client_id:
+                  type: integer
+                access_level:
+                  type: string
+                  enum: [tenant, case_team, owner_only]
+                  default: tenant
+                tags:
+                  type: array
+                  items:
+                    type: string
       responses:
         '201':
-          description: File uploaded successfully
+          description: Document uploaded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileUploadResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '422':
-          description: File validation failed
+                $ref: '#/components/schemas/Document'
+
+  /api/v1/documents/{id}:
+    get:
+      operationId: getDocument
+      tags:
+        - Documents
+      summary: Obter documento por ID
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Detalhes do documento
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                errors:
-                  - message: 'File size should be less than 5MB'
-                    field: 'file'
-                    rule: 'size'
+                $ref: '#/components/schemas/Document'
+
+    patch:
+      operationId: updateDocument
+      tags:
+        - Documents
+      summary: Atualizar metadados do documento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: Documento atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+
+    delete:
+      operationId: deleteDocument
+      tags:
+        - Documents
+      summary: Deletar documento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '204':
+          description: Documento deletado
+
+  /api/v1/documents/{id}/download:
+    get:
+      operationId: downloadDocument
+      tags:
+        - Documents
+      summary: Download de documento
+      description: Faz download do arquivo do documento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Arquivo do documento
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/case-events:
+    get:
+      operationId: listCaseEvents
+      tags:
+        - Case Events
+      summary: Listar eventos processuais
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: case_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [manual, court_api, email, import]
+      responses:
+        '200':
+          description: Lista de eventos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CaseEvent'
+
+    post:
+      operationId: createCaseEvent
+      tags:
+        - Case Events
+      summary: Criar evento processual
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCaseEventRequest'
+      responses:
+        '201':
+          description: Evento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEvent'
+
+  /api/v1/case-events/{id}:
+    get:
+      operationId: getCaseEvent
+      tags:
+        - Case Events
+      summary: Obter evento por ID
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalhes do evento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEvent'
+
+    patch:
+      operationId: updateCaseEvent
+      tags:
+        - Case Events
+      summary: Atualizar evento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCaseEventRequest'
+      responses:
+        '200':
+          description: Evento atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEvent'
+
+    delete:
+      operationId: deleteCaseEvent
+      tags:
+        - Case Events
+      summary: Deletar evento
+      security:
+        - bearerAuth: []
+        - tenantContext: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Evento deletado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido via `/api/v1/sessions/sign-in`
+
+    tenantContext:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+      description: |
+        UUID do tenant para contexto multi-tenant.
+
+        Obrigatório para recursos tenant-scoped (clientes, casos, prazos, documentos, eventos).
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Número da página (começa em 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PerPage:
+      name: per_page
+      in: query
+      description: Itens por página
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    ClientId:
+      name: id
+      in: path
+      required: true
+      description: ID do cliente
+      schema:
+        type: integer
+
+    CaseId:
+      name: id
+      in: path
+      required: true
+      description: ID do processo
+      schema:
+        type: integer
+
+    DeadlineId:
+      name: id
+      in: path
+      required: true
+      description: ID do prazo
+      schema:
+        type: integer
+
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      description: ID do documento
+      schema:
+        type: integer
+
+  responses:
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Recurso não encontrado
+
+    ValidationError:
+      description: Erro de validação
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Erro de validação
+              details:
+                - field: email
+                  message: Email inválido
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        full_name:
+          type: string
+          example: Dr. João Silva
+        email:
+          type: string
+          format: email
+          example: advogado@escritorio.com.br
+        username:
+          type: string
+          nullable: true
+          example: joao.silva
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          example: Escritório Silva & Associados
+        subdomain:
+          type: string
+          example: silva-associados
+        custom_domain:
+          type: string
+          nullable: true
+          example: advocacia.silva.com.br
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          example: pro
+        is_active:
+          type: boolean
+          example: true
+        limits:
+          type: object
+          nullable: true
+          properties:
+            max_users:
+              type: integer
+            max_cases:
+              type: integer
+            max_storage_gb:
+              type: integer
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        tenant_id:
+          type: string
+          format: uuid
+        client_type:
+          type: string
+          enum: [individual, company]
+          example: individual
+        full_name:
+          type: string
+          nullable: true
+          example: João da Silva
+        cpf:
+          type: string
+          nullable: true
+          example: 123.456.789-09
+        company_name:
+          type: string
+          nullable: true
+        cnpj:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: joao@email.com
+        phone:
+          type: string
+          nullable: true
+          example: (11) 98765-4321
+        address:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        is_active:
+          type: boolean
+          example: true
+        custom_fields:
+          type: object
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        tenant_id:
+          type: string
+          format: uuid
+        client_id:
+          type: integer
+          example: 1
+        case_number:
+          type: string
+          nullable: true
+          description: Número CNJ
+          example: 0000001-23.2024.8.26.0100
+        internal_number:
+          type: string
+          nullable: true
+        case_type:
+          type: string
+          enum: [civil, criminal, labor, family, tax, administrative, other]
+          example: civil
+        court:
+          type: string
+          nullable: true
+          example: TJ-SP
+        court_instance:
+          type: string
+          nullable: true
+          example: 1ª Instância
+        status:
+          type: string
+          enum: [active, closed, archived, suspended]
+          example: active
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: high
+        responsible_lawyer_id:
+          type: integer
+          example: 1
+        team_members:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        filed_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        parties:
+          $ref: '#/components/schemas/Parties'
+        description:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        case_value:
+          type: number
+          format: decimal
+          nullable: true
+          example: 50000.00
+        custom_fields:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Deadline:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        tenant_id:
+          type: string
+          format: uuid
+        case_id:
+          type: integer
+          example: 1
+        responsible_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Apresentar contestação
+        description:
+          type: string
+          nullable: true
+        deadline_date:
+          type: string
+          format: date-time
+          example: '2025-02-15T23:59:59Z'
+        internal_deadline_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_fatal:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [pending, completed, expired, cancelled]
+          example: pending
+        alert_config:
+          type: object
+          nullable: true
+          properties:
+            days_before:
+              type: array
+              items:
+                type: integer
+              example: [7, 3, 1]
+            email_enabled:
+              type: boolean
+            sms_enabled:
+              type: boolean
+            recipients:
+              type: array
+              items:
+                type: integer
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_by:
+          type: integer
+          nullable: true
+        completion_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        tenant_id:
+          type: string
+          format: uuid
+        case_id:
+          type: integer
+          nullable: true
+        client_id:
+          type: integer
+          nullable: true
+        uploaded_by:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Petição Inicial
+        description:
+          type: string
+          nullable: true
+        document_type:
+          type: string
+          enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+          example: petition
+        file_path:
+          type: string
+          example: documents/2025/01/petition_123.pdf
+        file_size:
+          type: integer
+          example: 1024567
+        mime_type:
+          type: string
+          example: application/pdf
+        original_filename:
+          type: string
+          example: peticao_inicial.pdf
+        storage_provider:
+          type: string
+          enum: [local, s3, gcs]
+          example: local
+        ocr_text:
+          type: string
+          nullable: true
+        is_ocr_processed:
+          type: boolean
+          example: false
+        is_signed:
+          type: boolean
+          example: false
+        signature_data:
+          type: object
+          nullable: true
+        access_level:
+          type: string
+          enum: [tenant, case_team, owner_only]
+          example: tenant
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        version:
+          type: integer
+          example: 1
+        parent_document_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CaseEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        tenant_id:
+          type: string
+          format: uuid
+        case_id:
+          type: integer
+          example: 1
+        event_type:
+          type: string
+          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+          example: hearing
+        title:
+          type: string
+          example: Audiência de Conciliação
+        description:
+          type: string
+          nullable: true
+        event_date:
+          type: string
+          format: date-time
+          example: '2025-03-10T14:00:00Z'
+        source:
+          type: string
+          enum: [manual, court_api, email, import]
+          example: manual
+        metadata:
+          type: object
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Address:
+      type: object
+      nullable: true
+      properties:
+        street:
+          type: string
+          example: Av. Paulista
+        number:
+          type: string
+          example: '1000'
+        complement:
+          type: string
+          nullable: true
+          example: Sala 101
+        neighborhood:
+          type: string
+          example: Bela Vista
+        city:
+          type: string
+          example: São Paulo
+        state:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          example: SP
+        zip_code:
+          type: string
+          pattern: '^\d{5}-\d{3}$'
+          example: 01310-100
+        country:
+          type: string
+          example: Brasil
+
+    Parties:
+      type: object
+      nullable: true
+      properties:
+        autor:
+          type: object
+          properties:
+            name:
+              type: string
+            cpf:
+              type: string
+              nullable: true
+            cnpj:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+        reu:
+          type: object
+          properties:
+            name:
+              type: string
+            cpf:
+              type: string
+              nullable: true
+            cnpj:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+        outros:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo:
+                type: string
+              name:
+                type: string
+              cpf:
+                type: string
+                nullable: true
+              cnpj:
+                type: string
+                nullable: true
+
+    PaginationMeta:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 100
+            per_page:
+              type: integer
+              example: 20
+            current_page:
+              type: integer
+              example: 1
+            last_page:
+              type: integer
+              example: 5
+            first_page:
+              type: integer
+              example: 1
+            first_page_url:
+              type: string
+              example: '/?page=1'
+            last_page_url:
+              type: string
+              example: '/?page=5'
+            next_page_url:
+              type: string
+              nullable: true
+              example: '/?page=2'
+            previous_page_url:
+              type: string
+              nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Erro de validação
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    CreateTenantRequest:
+      type: object
+      required:
+        - name
+        - subdomain
+      properties:
+        name:
+          type: string
+          example: Escritório Silva & Associados
+        subdomain:
+          type: string
+          example: silva-associados
+        custom_domain:
+          type: string
+          nullable: true
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          default: free
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        custom_domain:
+          type: string
+          nullable: true
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+        is_active:
+          type: boolean
+        limits:
+          type: object
+
+    CreateClientRequest:
+      type: object
+      required:
+        - client_type
+      properties:
+        client_type:
+          type: string
+          enum: [individual, company]
+        full_name:
+          type: string
+        cpf:
+          type: string
+          pattern: '^\d{3}\.\d{3}\.\d{3}-\d{2}$'
+        company_name:
+          type: string
+        cnpj:
+          type: string
+          pattern: '^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$'
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            type: string
+        custom_fields:
+          type: object
+        notes:
+          type: string
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        client_type:
+          type: string
+          enum: [individual, company]
+        full_name:
+          type: string
+        cpf:
+          type: string
+        company_name:
+          type: string
+        cnpj:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        custom_fields:
+          type: object
+        notes:
+          type: string
+
+    CreateCaseRequest:
+      type: object
+      required:
+        - client_id
+        - responsible_lawyer_id
+      properties:
+        client_id:
+          type: integer
+        case_number:
+          type: string
+          pattern: '^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$'
+        internal_number:
+          type: string
+        case_type:
+          type: string
+          enum: [civil, criminal, labor, family, tax, administrative, other]
+        court:
+          type: string
+        court_instance:
+          type: string
+        status:
+          type: string
+          enum: [active, closed, archived, suspended]
+          default: active
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        responsible_lawyer_id:
+          type: integer
+        team_members:
+          type: array
+          items:
+            type: integer
+        filed_at:
+          type: string
+          format: date-time
+        parties:
+          $ref: '#/components/schemas/Parties'
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        case_value:
+          type: number
+          format: decimal
+        custom_fields:
+          type: object
+
+    UpdateCaseRequest:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        case_number:
+          type: string
+        internal_number:
+          type: string
+        case_type:
+          type: string
+          enum: [civil, criminal, labor, family, tax, administrative, other]
+        court:
+          type: string
+        court_instance:
+          type: string
+        status:
+          type: string
+          enum: [active, closed, archived, suspended]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        responsible_lawyer_id:
+          type: integer
+        team_members:
+          type: array
+          items:
+            type: integer
+        filed_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+        parties:
+          $ref: '#/components/schemas/Parties'
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        case_value:
+          type: number
+        custom_fields:
+          type: object
+
+    CreateDeadlineRequest:
+      type: object
+      required:
+        - case_id
+        - responsible_id
+        - title
+        - deadline_date
+      properties:
+        case_id:
+          type: integer
+        responsible_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        deadline_date:
+          type: string
+          format: date-time
+        internal_deadline_date:
+          type: string
+          format: date-time
+        is_fatal:
+          type: boolean
+          default: false
+        alert_config:
+          type: object
+
+    UpdateDeadlineRequest:
+      type: object
+      properties:
+        responsible_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        deadline_date:
+          type: string
+          format: date-time
+        internal_deadline_date:
+          type: string
+          format: date-time
+        is_fatal:
+          type: boolean
+        status:
+          type: string
+          enum: [pending, completed, expired, cancelled]
+        alert_config:
+          type: object
+
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        document_type:
+          type: string
+          enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+        access_level:
+          type: string
+          enum: [tenant, case_team, owner_only]
+        tags:
+          type: array
+          items:
+            type: string
+
+    CreateCaseEventRequest:
+      type: object
+      required:
+        - case_id
+        - event_type
+        - title
+        - event_date
+      properties:
+        case_id:
+          type: integer
+        event_type:
+          type: string
+          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+        title:
+          type: string
+        description:
+          type: string
+        event_date:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum: [manual, court_api, email, import]
+          default: manual
+        metadata:
+          type: object
+
+    UpdateCaseEventRequest:
+      type: object
+      properties:
+        event_type:
+          type: string
+          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+        title:
+          type: string
+        description:
+          type: string
+        event_date:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+security:
+  - bearerAuth: []

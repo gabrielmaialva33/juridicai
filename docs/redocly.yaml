@@ -1,0 +1,227 @@
+apis:
+  main:
+    root: ./openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # Operation rules
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-operationId-url-safe: error
+  operation-summary: error
+  operation-description: warn
+  operation-tag-defined: error
+  operation-2xx-response: error
+  operation-4xx-response: warn
+  operation-security-defined: error
+
+  # Schema rules
+  no-invalid-schema-examples: error
+  scalar-property-missing-example: warn
+  no-example-value-and-externalValue: error
+  no-undefined-server-variable: error
+
+  # Tag rules
+  tag-description: warn
+  tags-alphabetical: off
+
+  # Path rules
+  path-declaration-must-exist: error
+  path-not-include-query: error
+  path-parameters-defined: error
+  paths-kebab-case: warn
+
+  # Info rules
+  info-contact: error
+  info-license: warn
+  license-url: warn
+
+  # Component rules
+  no-unused-components: warn
+  component-name-unique: error
+
+  # Security rules
+  security-defined: error
+
+  # Response rules
+  response-contains-header: off
+
+  # Parameter rules
+  parameter-description: warn
+
+  # Additional quality rules
+  no-invalid-media-type-examples: error
+  no-ambiguous-paths: error
+  no-path-trailing-slash: error
+  boolean-parameter-prefixes: warn
+  no-http-verbs-in-paths: warn
+
+theme:
+  openapi:
+    schemaExpansionLevel: 2
+    generateCodeSamples:
+      languages:
+        - lang: curl
+          label: cURL
+        - lang: javascript
+          label: JavaScript
+        - lang: python
+          label: Python
+        - lang: php
+          label: PHP
+    disableSearch: false
+    jsonSampleExpandLevel: 2
+    sortPropsAlphabetically: false
+    sortEnumValuesAlphabetically: false
+    showConsole: true
+    hideDownloadButton: false
+    theme:
+      colors:
+        primary:
+          main: '#667eea'
+        success:
+          main: '#00c853'
+        warning:
+          main: '#ffc107'
+        error:
+          main: '#f44336'
+        text:
+          primary: '#333333'
+      typography:
+        fontSize: '16px'
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+        headings:
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+          fontWeight: '700'
+      sidebar:
+        backgroundColor: '#fafafa'
+        textColor: '#333333'
+        activeTextColor: '#667eea'
+      rightPanel:
+        backgroundColor: '#263238'
+
+navbar:
+  items:
+    - label: '🏠 Getting Started'
+      href: './index.md'
+    - label: '📖 API Reference'
+      href: './openapi.yaml'
+    - label: '💻 Examples'
+      href: './api.http'
+    - separator: true
+    - label: 'GitHub'
+      href: 'https://github.com/juridicai/api'
+      external: true
+    - label: 'Status'
+      href: 'https://status.juridicai.com.br'
+      external: true
+    - label: 'Support'
+      href: 'mailto:suporte@juridicai.com.br'
+      external: true
+
+seo:
+  title: 'JuridicAI API Documentation'
+  description: 'Documentação completa da API JuridicAI - Plataforma multi-tenant para gestão de escritórios de advocacia no Brasil. Gerencie clientes, processos, prazos e documentos com APIs RESTful modernas.'
+  keywords:
+    - API Documentation
+    - REST API
+    - JuridicAI
+    - Legal Management
+    - Law Firm Software
+    - Multi-tenant API
+    - Brazilian Legal System
+    - Gestão Jurídica
+    - API Advocacia
+    - OpenAPI
+    - Swagger
+  author: 'JuridicAI Team'
+  lang: 'pt-BR'
+  og:
+    title: 'JuridicAI API Documentation'
+    description: 'API completa para gestão de escritórios de advocacia com suporte multi-tenant'
+    type: 'website'
+    image: 'https://juridicai.com.br/og-image.png'
+    url: 'https://docs.juridicai.com.br'
+  twitter:
+    card: 'summary_large_image'
+    site: '@juridicai'
+
+footer:
+  copyrightText: '© 2024 JuridicAI. Todos os direitos reservados.'
+  items:
+    - label: 'Termos de Uso'
+      href: 'https://juridicai.com.br/terms'
+    - label: 'Política de Privacidade'
+      href: 'https://juridicai.com.br/privacy'
+    - label: 'SLA'
+      href: 'https://juridicai.com.br/sla'
+    - label: 'Changelog'
+      href: 'https://docs.juridicai.com.br/changelog'
+
+lint:
+  # Lint configuration
+  skipRules:
+    - operation-tag-defined
+
+  # Decorators
+  decorators:
+    remove-internal-operations:
+      property: x-internal
+      value: true
+
+# Feature toggles
+features:
+  openapi:
+    showExtensions: true
+    jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema'
+    generateCodeSamples: true
+  mockServer:
+    enabled: false
+
+# Markdown options
+markdown:
+  sanitize:
+    allowedTags:
+      - div
+      - span
+      - h1
+      - h2
+      - h3
+      - h4
+      - h5
+      - h6
+      - p
+      - a
+      - ul
+      - ol
+      - li
+      - code
+      - pre
+      - strong
+      - em
+      - br
+      - hr
+      - table
+      - thead
+      - tbody
+      - tr
+      - th
+      - td
+      - img
+      - blockquote
+    allowedAttributes:
+      '*':
+        - style
+        - class
+        - id
+      a:
+        - href
+        - target
+        - rel
+      img:
+        - src
+        - alt
+        - width
+        - height

@@ -1,432 +1,753 @@
-### Base ACL API HTTP Requests
+### JuridicAI API - HTTP Requests
+### Plataforma multi-tenant para gestão de escritórios de advocacia
+###
 ### Base URL: http://localhost:3333
+### Documentação: https://docs.juridicai.com.br
 ###
-### Authentication: Most endpoints require JWT Bearer token
-### Include header: Authorization: Bearer <token>
+### Arquitetura Multi-Tenant:
+### - Endpoints tenant-scoped requerem header X-Tenant-ID
+### - Todos os endpoints (exceto health e auth) requerem autenticação JWT
 ###
-### API Conventions:
-### - Content-Type: application/json (except file uploads)
-### - Timestamps: ISO 8601 format
-### - Database fields: snake_case naming
-### - Pagination: ?page=1&perPage=10
-### - Sorting: ?sortBy=field&order=asc|desc
-### - Search: ?search=term
+### Convenções:
+### - Content-Type: application/json
+### - Timestamps: ISO 8601 format (UTC)
+### - Database fields: snake_case
+### - Paginação: ?page=1&per_page=20
+### - Busca: ?search=termo
+### - Filtros: query parameters específicos por recurso
 
-### Variables (replace with actual values)
+### Variables (substituir com valores reais)
 @baseUrl = http://localhost:3333
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc1MjE5MDY4NywiZXhwIjoxNzUyMTkxNTg3fQ.mN5_LyaxP1nZ46wWjRFVVB26E-0FD9vXJ7J5JlkE8AE
-@userId = 3
-@roleId = 3
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@tenantId = 550e8400-e29b-41d4-a716-446655440000
+@clientId = 1
+@caseId = 1
+@deadlineId = 1
+@documentId = 1
+@eventId = 1
 
 ###############################################################################
-### HEALTH ENDPOINTS
+### 🏥 HEALTH ENDPOINTS (Não requer autenticação)
 ###############################################################################
-
-### Get API Information
-GET {{baseUrl}}/
-Accept: application/json
 
 ### Health Check
-GET {{baseUrl}}/api/v1/health
+GET {{baseUrl}}/health
 Accept: application/json
 
 ###############################################################################
-### AUTHENTICATION ENDPOINTS
+### 🔐 AUTHENTICATION ENDPOINTS
 ###############################################################################
 
-### Sign In (Login)
-# Returns access_token and refresh_token
-POST {{baseUrl}}/api/v1/sessions/sign-in
+### Login (Sign In)
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "uid": "john@example.com",
-  "password": "password123"
+  "email": "advogado@escritorio.com.br",
+  "password": "senha_segura_123"
 }
 
-### Sign In with Username
-POST {{baseUrl}}/api/v1/sessions/sign-in
-Content-Type: application/json
-
-{
-  "uid": "johndoe",
-  "password": "password123"
-}
-
-### Sign Up (Register)
-# Creates new user account and returns tokens
-POST {{baseUrl}}/api/v1/sessions/sign-up
-Content-Type: application/json
-
-{
-  "full_name": "John Doe",
-  "email": "john@example.com",
-  "username": "johndoe",
-  "password": "password123",
-  "password_confirmation": "password123"
-}
-
-### Sign Up (Minimal - without username)
-POST {{baseUrl}}/api/v1/sessions/sign-up
-Content-Type: application/json
-
-{
-  "full_name": "Jane Smith",
-  "email": "jane@example.com",
-  "password": "password123",
-  "password_confirmation": "password123"
-}
-
-###############################################################################
-### PROFILE ENDPOINTS (Requires Authentication)
-###############################################################################
-
-### Get Current User Profile
-GET {{baseUrl}}/api/v1/me
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Get Current User Permissions
-GET {{baseUrl}}/api/v1/me/permissions
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Get Current User Roles
-GET {{baseUrl}}/api/v1/me/roles
-Authorization: Bearer {{token}}
-Accept: application/json
-
-###############################################################################
-### EMAIL VERIFICATION ENDPOINTS
-###############################################################################
-
-### Verify Email
-# This endpoint is typically opened from a link in an email
-GET {{baseUrl}}/api/v1/verify-email?token=VERIFICATION_TOKEN
-Accept: application/json
-
-### Resend Verification Email (Requires Authentication)
-POST {{baseUrl}}/api/v1/resend-verification-email
-Authorization: Bearer {{token}}
-Accept: application/json
-
-###############################################################################
-### USER MANAGEMENT ENDPOINTS (Requires Authentication)
-###############################################################################
-
-### List Users
-# Paginated list with search and sorting
-GET {{baseUrl}}/api/v1/users
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### List Users with Pagination
-GET {{baseUrl}}/api/v1/users?page=1&perPage=20
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### List Users with Sorting
-GET {{baseUrl}}/api/v1/users?sortBy=created_at&order=desc
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Search Users
-GET {{baseUrl}}/api/v1/users?search=john
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Get User by ID
-GET {{baseUrl}}/api/v1/users/{{userId}}
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Create User (Requires USER role)
-POST {{baseUrl}}/api/v1/users
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "full_name": "New User",
-  "email": "newuser@example.com",
-  "username": "newuser",
-  "password": "password123",
-  "password_confirmation": "password123"
-}
-
-### Update User
-# Note: email and username cannot be changed
-PUT {{baseUrl}}/api/v1/users/{{userId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "full_name": "John Updated Doe"
-}
-
-### Update User Password
-PUT {{baseUrl}}/api/v1/users/{{userId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "password": "newpassword123",
-  "password_confirmation": "newpassword123"
-}
-
-### Delete User (Soft Delete)
-DELETE {{baseUrl}}/api/v1/users/{{userId}}
-Authorization: Bearer {{token}}
-
-###############################################################################
-### ROLE MANAGEMENT ENDPOINTS (Requires ADMIN or ROOT role)
-###############################################################################
-
-### List Roles
-GET {{baseUrl}}/api/v1/admin/roles
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### List Roles with Pagination
-GET {{baseUrl}}/api/v1/admin/roles?page=1&perPage=10
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Attach Roles to User
-PUT {{baseUrl}}/api/v1/admin/roles/attach
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "user_id": 1,
-  "role_ids": [
-    1,
-    2,
-    3
-  ]
-}
-
-### Attach Single Role to User
-PUT {{baseUrl}}/api/v1/admin/roles/attach
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "user_id": 2,
-  "role_ids": [
-    2
-  ]
-}
-
-###############################################################################
-### PERMISSION MANAGEMENT ENDPOINTS (Requires ADMIN or ROOT role)
-###############################################################################
-
-### List Permissions
-GET {{baseUrl}}/api/v1/admin/permissions
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Create Permission
-POST {{baseUrl}}/api/v1/admin/permissions
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "resource": "posts",
-  "action": "create",
-  "description": "Allow creating posts"
-}
-
-### Sync Role Permissions
-PUT {{baseUrl}}/api/v1/admin/roles/permissions/sync
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "role_id": 2,
-  "permission_ids": [
-    1,
-    2,
-    3
-  ]
-}
-
-### Attach Permissions to Role
-PUT {{baseUrl}}/api/v1/admin/roles/permissions/attach
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "role_id": 2,
-  "permission_ids": [
-    4,
-    5
-  ]
-}
-
-### Detach Permissions from Role
-PUT {{baseUrl}}/api/v1/admin/roles/permissions/detach
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "role_id": 2,
-  "permission_ids": [
-    1
-  ]
-}
-
-### Sync User Direct Permissions
-PUT {{baseUrl}}/api/v1/admin/users/permissions/sync
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "user_id": 3,
-  "permission_ids": [
-    10,
-    11
-  ]
-}
-
-### Get User's Direct Permissions
-GET {{baseUrl}}/api/v1/admin/users/{{userId}}/permissions
-Authorization: Bearer {{token}}
-Accept: application/json
-
-### Check User Permissions
-POST {{baseUrl}}/api/v1/admin/users/{{userId}}/permissions/check
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "permissions": [
-    "users.create",
-    "files.delete"
-  ]
-}
-
-###############################################################################
-### FILE MANAGEMENT ENDPOINTS (Requires Authentication)
-###############################################################################
-
-### Upload File
-# Maximum size: 5MB
-# Allowed extensions: jpeg, jpg, png, pdf, doc, docx, txt, csv, xls, xlsx, mp3, mp4, zip
-# File is automatically categorized: image, document, video, audio, file
-POST {{baseUrl}}/api/v1/files/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="document.pdf"
-Content-Type: application/pdf
-
-< ./document.pdf
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
-
-### Upload Image
-POST {{baseUrl}}/api/v1/files/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="photo.jpg"
-Content-Type: image/jpeg
-
-< ./photo.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
-
-###############################################################################
-### EXAMPLE RESPONSES
-###############################################################################
-
-### Success Response - User Object
+### Response:
 # {
-#   "id": 1,
-#   "full_name": "John Doe",
-#   "email": "john@example.com",
-#   "username": "johndoe",
-#   "created_at": "2024-01-01T00:00:00.000Z",
-#   "updated_at": "2024-01-01T00:00:00.000Z",
-#   "roles": [
-#     {
-#       "id": 1,
-#       "name": "User",
-#       "description": "Regular user role",
-#       "slug": "user",
-#       "created_at": "2024-01-01T00:00:00.000Z",
-#       "updated_at": "2024-01-01T00:00:00.000Z"
-#     }
-#   ]
-# }
-
-### Success Response - Auth Response
-# {
-#   "id": 1,
-#   "full_name": "John Doe",
-#   "email": "john@example.com",
-#   "username": "johndoe",
-#   "created_at": "2024-01-01T00:00:00.000Z",
-#   "updated_at": "2024-01-01T00:00:00.000Z",
-#   "roles": [...],
-#   "auth": {
-#     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-#     "refresh_token": "refresh_token_string"
+#   "user": {
+#     "id": 1,
+#     "email": "advogado@escritorio.com.br",
+#     "full_name": "Dr. João Silva",
+#     "role": "lawyer",
+#     "is_active": true
+#   },
+#   "token": {
+#     "type": "bearer",
+#     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#     "expires_at": "2024-12-31T23:59:59.000Z"
 #   }
 # }
 
-### Success Response - Paginated List
+### Logout (Sign Out)
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###############################################################################
+### 👤 PROFILE ENDPOINTS (Requer autenticação)
+###############################################################################
+
+### Get Current User Profile
+GET {{baseUrl}}/api/v1/profile
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Update Current User Profile
+PATCH {{baseUrl}}/api/v1/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "full_name": "Dr. João Silva Advogado",
+  "phone": "(11) 98765-4321"
+}
+
+### Update Password
+PATCH {{baseUrl}}/api/v1/profile/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "current_password": "senha_antiga",
+  "new_password": "nova_senha_segura_123",
+  "new_password_confirmation": "nova_senha_segura_123"
+}
+
+###############################################################################
+### 🏢 TENANT MANAGEMENT (Requer autenticação)
+###############################################################################
+
+### List All Tenants (Admin)
+GET {{baseUrl}}/api/v1/tenants
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Get Current Tenant Info
+GET {{baseUrl}}/api/v1/tenants/me
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Response:
 # {
-#   "meta": {
-#     "total": 100,
-#     "per_page": 10,
-#     "current_page": 1,
-#     "last_page": 10,
-#     "first_page": 1,
-#     "first_page_url": "/?page=1",
-#     "last_page_url": "/?page=10",
-#     "next_page_url": "/?page=2",
-#     "previous_page_url": null
+#   "id": "550e8400-e29b-41d4-a716-446655440000",
+#   "name": "Silva & Advogados Associados",
+#   "subdomain": "silva-advogados",
+#   "plan": "professional",
+#   "limits": {
+#     "max_users": 50,
+#     "max_cases": 1000,
+#     "storage_gb": 100
 #   },
-#   "data": [...]
+#   "is_active": true,
+#   "created_at": "2024-01-01T10:00:00.000Z"
 # }
 
-### Success Response - File Upload
+### Create Tenant (Admin)
+POST {{baseUrl}}/api/v1/tenants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Advocacia Santos & Associados",
+  "subdomain": "santos-advogados",
+  "plan": "professional",
+  "admin_email": "admin@santos.com.br",
+  "admin_name": "Dr. Carlos Santos"
+}
+
+### Update Tenant
+PATCH {{baseUrl}}/api/v1/tenants/{{tenantId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Advocacia Santos & Parceiros Ltda",
+  "plan": "enterprise"
+}
+
+### Delete Tenant (Soft Delete)
+DELETE {{baseUrl}}/api/v1/tenants/{{tenantId}}
+Authorization: Bearer {{token}}
+
+###############################################################################
+### 👥 CLIENTS MANAGEMENT (Tenant-scoped)
+###############################################################################
+
+### List Clients (with pagination)
+GET {{baseUrl}}/api/v1/clients?page=1&per_page=20
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Clients (with filters)
+GET {{baseUrl}}/api/v1/clients?search=Silva&is_active=true&state=SP&client_type=individual
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Get Client by ID
+GET {{baseUrl}}/api/v1/clients/{{clientId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Create Individual Client (Pessoa Física)
+POST {{baseUrl}}/api/v1/clients
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "client_type": "individual",
+  "full_name": "Maria Santos",
+  "cpf": "123.456.789-09",
+  "email": "maria@email.com",
+  "phone": "(11) 98765-4321",
+  "address": {
+    "street": "Avenida Paulista",
+    "number": "1578",
+    "complement": "Apto 101",
+    "neighborhood": "Bela Vista",
+    "city": "São Paulo",
+    "state": "SP",
+    "zip_code": "01310-200",
+    "country": "Brasil"
+  },
+  "tags": ["vip", "pessoa-fisica"],
+  "is_active": true
+}
+
+### Create Company Client (Pessoa Jurídica)
+POST {{baseUrl}}/api/v1/clients
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "client_type": "company",
+  "company_name": "Tech Solutions Ltda",
+  "cnpj": "12.345.678/0001-90",
+  "email": "contato@techsolutions.com.br",
+  "phone": "(11) 3456-7890",
+  "address": {
+    "street": "Avenida Faria Lima",
+    "number": "3500",
+    "complement": "12º andar",
+    "neighborhood": "Itaim Bibi",
+    "city": "São Paulo",
+    "state": "SP",
+    "zip_code": "04538-132",
+    "country": "Brasil"
+  },
+  "tags": ["empresa", "tecnologia"],
+  "custom_fields": {
+    "setor": "Tecnologia",
+    "funcionarios": 150
+  },
+  "notes": "Cliente desde 2020. Contrato de consultoria mensal.",
+  "is_active": true
+}
+
+### Update Client
+PATCH {{baseUrl}}/api/v1/clients/{{clientId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "email": "novoemail@email.com",
+  "phone": "(11) 99999-8888",
+  "address": {
+    "street": "Rua Nova",
+    "number": "456",
+    "city": "São Paulo",
+    "state": "SP",
+    "zip_code": "01234-567",
+    "country": "Brasil"
+  }
+}
+
+### Delete Client (Soft Delete)
+DELETE {{baseUrl}}/api/v1/clients/{{clientId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+
+###############################################################################
+### ⚖️ CASES MANAGEMENT (Tenant-scoped)
+###############################################################################
+
+### List Cases
+GET {{baseUrl}}/api/v1/cases?page=1&per_page=20
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Cases (with filters)
+GET {{baseUrl}}/api/v1/cases?status=active&case_type=civil&priority=high&client_id={{clientId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Get Case by ID
+GET {{baseUrl}}/api/v1/cases/{{caseId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Create Case (Processo)
+POST {{baseUrl}}/api/v1/cases
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "client_id": 1,
+  "case_number": "0000123-45.2024.8.26.0100",
+  "internal_number": "CASE-2024-001",
+  "case_type": "civil",
+  "court": "TJ-SP",
+  "court_instance": "1ª Vara Cível",
+  "status": "active",
+  "priority": "high",
+  "responsible_lawyer_id": 1,
+  "team_members": [1, 2, 3],
+  "description": "Ação de indenização por danos morais e materiais",
+  "parties": {
+    "autor": {
+      "name": "Maria Santos",
+      "cpf": "123.456.789-09",
+      "email": "maria@email.com",
+      "phone": "(11) 98765-4321"
+    },
+    "reu": {
+      "name": "Empresa XYZ Ltda",
+      "cnpj": "12.345.678/0001-90",
+      "email": "contato@empresaxyz.com.br"
+    },
+    "outros": [
+      {
+        "tipo": "Testemunha",
+        "name": "João da Silva",
+        "cpf": "987.654.321-00"
+      }
+    ]
+  },
+  "case_value": 50000.00,
+  "filed_at": "2024-01-15",
+  "tags": ["indenizacao", "danos-morais"]
+}
+
+### Create Case (Without CNJ Number)
+POST {{baseUrl}}/api/v1/cases
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "client_id": 1,
+  "internal_number": "CASE-2024-002",
+  "case_type": "labor",
+  "court": "TRT-2",
+  "status": "active",
+  "priority": "medium",
+  "responsible_lawyer_id": 1,
+  "description": "Reclamação trabalhista - horas extras"
+}
+
+### Update Case
+PATCH {{baseUrl}}/api/v1/cases/{{caseId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "status": "closed",
+  "closed_at": "2024-12-31",
+  "description": "Processo finalizado com acordo entre as partes"
+}
+
+### Delete Case (Soft Delete)
+DELETE {{baseUrl}}/api/v1/cases/{{caseId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+
+###############################################################################
+### 📅 DEADLINES MANAGEMENT (Tenant-scoped)
+###############################################################################
+
+### List Deadlines
+GET {{baseUrl}}/api/v1/deadlines?page=1&per_page=20
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Upcoming Deadlines (Next 7 days)
+GET {{baseUrl}}/api/v1/deadlines/upcoming?days=7
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Deadlines (with filters)
+GET {{baseUrl}}/api/v1/deadlines?case_id={{caseId}}&is_completed=false&priority=urgent
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Get Deadline by ID
+GET {{baseUrl}}/api/v1/deadlines/{{deadlineId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Create Deadline
+POST {{baseUrl}}/api/v1/deadlines
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "title": "Apresentar contestação",
+  "description": "Prazo de 15 dias para apresentar contestação na ação de indenização",
+  "due_date": "2024-02-15",
+  "responsible_user_id": 1,
+  "priority": "high",
+  "is_fatal": true,
+  "alert_config": {
+    "alerts": [
+      {
+        "days_before": 7,
+        "sent": false
+      },
+      {
+        "days_before": 3,
+        "sent": false
+      },
+      {
+        "days_before": 1,
+        "sent": false
+      }
+    ]
+  },
+  "tags": ["contestacao", "prazo-fatal"]
+}
+
+### Create Simple Deadline
+POST {{baseUrl}}/api/v1/deadlines
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "title": "Reunião com cliente",
+  "due_date": "2024-02-01",
+  "responsible_user_id": 1,
+  "priority": "medium",
+  "is_fatal": false
+}
+
+### Update Deadline
+PATCH {{baseUrl}}/api/v1/deadlines/{{deadlineId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "due_date": "2024-02-20",
+  "priority": "urgent",
+  "description": "Prazo prorrogado por 5 dias"
+}
+
+### Complete Deadline
+POST {{baseUrl}}/api/v1/deadlines/{{deadlineId}}/complete
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "completion_notes": "Contestação protocolada com sucesso em 14/02/2024"
+}
+
+### Delete Deadline
+DELETE {{baseUrl}}/api/v1/deadlines/{{deadlineId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+
+###############################################################################
+### 📄 DOCUMENTS MANAGEMENT (Tenant-scoped)
+###############################################################################
+
+### List Documents
+GET {{baseUrl}}/api/v1/documents?page=1&per_page=20
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Documents (with filters)
+GET {{baseUrl}}/api/v1/documents?case_id={{caseId}}&document_type=petition&status=final
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Get Document by ID
+GET {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Create Document
+POST {{baseUrl}}/api/v1/documents
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "title": "Petição Inicial",
+  "document_type": "petition",
+  "file_path": "/storage/documents/peticao-inicial-2024-001.pdf",
+  "file_size": 1048576,
+  "mime_type": "application/pdf",
+  "status": "final",
+  "description": "Petição inicial da ação de indenização",
+  "uploaded_by": 1,
+  "tags": ["peticao", "inicial"],
+  "metadata": {
+    "paginas": 15,
+    "assinado": true
+  }
+}
+
+### Update Document
+PATCH {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "title": "Petição Inicial - Revisada",
+  "status": "final",
+  "description": "Petição inicial revisada após análise do cliente"
+}
+
+### Download Document
+GET {{baseUrl}}/api/v1/documents/{{documentId}}/download
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/octet-stream
+
+### Delete Document (Soft Delete)
+DELETE {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+
+###############################################################################
+### 📋 CASE EVENTS MANAGEMENT (Tenant-scoped)
+###############################################################################
+
+### List Case Events
+GET {{baseUrl}}/api/v1/case-events?page=1&per_page=20
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### List Case Events (with filters)
+GET {{baseUrl}}/api/v1/case-events?case_id={{caseId}}&event_type=hearing&source=manual
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Get Case Event by ID
+GET {{baseUrl}}/api/v1/case-events/{{eventId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Accept: application/json
+
+### Create Case Event - Hearing
+POST {{baseUrl}}/api/v1/case-events
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "event_type": "hearing",
+  "title": "Audiência de Conciliação",
+  "description": "Audiência de tentativa de conciliação entre as partes",
+  "event_date": "2024-03-15T14:30:00.000Z",
+  "source": "manual",
+  "created_by": 1,
+  "metadata": {
+    "local": "Sala 3 - 2º andar",
+    "juiz": "Dr. Carlos Mendes",
+    "duracao_estimada": "2 horas"
+  }
+}
+
+### Create Case Event - Decision
+POST {{baseUrl}}/api/v1/case-events
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "event_type": "decision",
+  "title": "Decisão Interlocutória",
+  "description": "Juiz deferiu produção de prova pericial",
+  "event_date": "2024-02-20T10:00:00.000Z",
+  "source": "court_api",
+  "metadata": {
+    "numero_decisao": "DEC-2024-456",
+    "tipo_decisao": "Deferimento"
+  }
+}
+
+### Create Case Event - Publication
+POST {{baseUrl}}/api/v1/case-events
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "case_id": 1,
+  "event_type": "publication",
+  "title": "Publicação de Sentença",
+  "description": "Sentença publicada no DJE",
+  "event_date": "2024-04-10T00:00:00.000Z",
+  "source": "email",
+  "metadata": {
+    "dje": "DJE-2024-123",
+    "pagina": 45
+  }
+}
+
+### Update Case Event
+PATCH {{baseUrl}}/api/v1/case-events/{{eventId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+Content-Type: application/json
+
+{
+  "title": "Audiência de Conciliação - Remarcada",
+  "event_date": "2024-03-20T14:30:00.000Z",
+  "description": "Audiência remarcada a pedido da parte autora"
+}
+
+### Delete Case Event
+DELETE {{baseUrl}}/api/v1/case-events/{{eventId}}
+Authorization: Bearer {{token}}
+X-Tenant-ID: {{tenantId}}
+
+###############################################################################
+### 📊 EXAMPLE RESPONSES
+###############################################################################
+
+### Success - Client Created
 # {
-#   "url": "https://storage.example.com/files/abc123.pdf",
-#   "clientName": "document.pdf",
-#   "fileCategory": "document",
-#   "fileType": "application/pdf",
-#   "size": 12345,
-#   "extname": "pdf"
+#   "id": 1,
+#   "tenant_id": "550e8400-e29b-41d4-a716-446655440000",
+#   "client_type": "individual",
+#   "full_name": "Maria Santos",
+#   "cpf": "123.456.789-09",
+#   "email": "maria@email.com",
+#   "phone": "(11) 98765-4321",
+#   "address": {
+#     "street": "Avenida Paulista",
+#     "number": "1578",
+#     "complement": "Apto 101",
+#     "neighborhood": "Bela Vista",
+#     "city": "São Paulo",
+#     "state": "SP",
+#     "zip_code": "01310-200",
+#     "country": "Brasil"
+#   },
+#   "tags": ["vip", "pessoa-fisica"],
+#   "is_active": true,
+#   "created_at": "2024-01-15T10:30:00.000Z",
+#   "updated_at": "2024-01-15T10:30:00.000Z"
 # }
 
-### Error Response - Validation Error
+### Success - Paginated List
+# {
+#   "data": [...],
+#   "meta": {
+#     "total": 150,
+#     "per_page": 20,
+#     "current_page": 1,
+#     "last_page": 8,
+#     "first_page_url": "http://localhost:3333/api/v1/clients?page=1",
+#     "last_page_url": "http://localhost:3333/api/v1/clients?page=8",
+#     "next_page_url": "http://localhost:3333/api/v1/clients?page=2",
+#     "prev_page_url": null
+#   }
+# }
+
+### Error - Validation Error (422)
 # {
 #   "errors": [
 #     {
-#       "message": "The email field must be a valid email",
-#       "field": "email",
-#       "rule": "email"
+#       "message": "Validation failed",
+#       "rule": "regex",
+#       "field": "cpf",
+#       "meta": {
+#         "pattern": "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$"
+#       }
 #     }
 #   ]
 # }
 
-### Error Response - Unauthorized
+### Error - Unauthorized (401)
 # {
 #   "errors": [
 #     {
-#       "message": "Unauthorized"
+#       "message": "Unauthorized - Token is missing or invalid",
+#       "code": "UNAUTHORIZED"
 #     }
 #   ]
 # }
 
-### Error Response - Not Found
+### Error - Forbidden (403)
 # {
 #   "errors": [
 #     {
-#       "message": "Resource not found"
+#       "message": "You don't have permission to access this resource",
+#       "code": "FORBIDDEN"
 #     }
 #   ]
 # }
+
+### Error - Not Found (404)
+# {
+#   "errors": [
+#     {
+#       "message": "Client not found",
+#       "code": "NOT_FOUND"
+#     }
+#   ]
+# }
+
+### Error - Rate Limit Exceeded (429)
+# {
+#   "errors": [
+#     {
+#       "message": "Too many requests. Please try again later.",
+#       "code": "RATE_LIMIT_EXCEEDED"
+#     }
+#   ]
+# }
+
+###############################################################################
+### 📝 NOTES
+###############################################################################
+
+# Multi-Tenant Headers:
+# - X-Tenant-ID: Obrigatório para todos os endpoints tenant-scoped
+# - Authorization: Bearer {token} - Obrigatório para endpoints autenticados
+#
+# Formatos Brasileiros:
+# - CPF: XXX.XXX.XXX-XX (ex: 123.456.789-09)
+# - CNPJ: XX.XXX.XXX/XXXX-XX (ex: 12.345.678/0001-90)
+# - CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO (ex: 0000123-45.2024.8.26.0100)
+# - CEP: XXXXX-XXX (ex: 01310-200)
+#
+# Tipos de Casos:
+# - civil, criminal, labor, family, tax, administrative, other
+#
+# Tipos de Eventos:
+# - filing, hearing, decision, publication, appeal, motion, settlement, judgment, other
+#
+# Tipos de Documentos:
+# - petition, contract, power_of_attorney, evidence, decision, sentence, protocol, other
+#
+# Status de Casos:
+# - active, closed, archived, suspended
+#
+# Prioridades:
+# - low, medium, high, urgent

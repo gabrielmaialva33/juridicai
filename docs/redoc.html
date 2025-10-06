@@ -1,22 +1,339 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>Base ACL API Documentation</title>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1" name="viewport" />
-    <link
-      href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700"
-      rel="stylesheet"
-    />
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Documentação completa da API JuridicAI - Plataforma multi-tenant para gestão de escritórios de advocacia no Brasil">
+    <meta name="keywords" content="API Documentation, JuridicAI, Legal Management, REST API, OpenAPI, Brazilian Legal System">
+    <meta name="author" content="JuridicAI Team">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://docs.juridicai.com.br">
+    <meta property="og:title" content="JuridicAI API Documentation">
+    <meta property="og:description" content="API completa para gestão de escritórios de advocacia com suporte multi-tenant">
+    <meta property="og:image" content="https://juridicai.com.br/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://docs.juridicai.com.br">
+    <meta property="twitter:title" content="JuridicAI API Documentation">
+    <meta property="twitter:description" content="API completa para gestão de escritórios de advocacia com suporte multi-tenant">
+    <meta property="twitter:image" content="https://juridicai.com.br/og-image.png">
+
+    <title>JuridicAI API Documentation</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+
+    <!-- Redoc -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+        }
+
+        /* Loading animation */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .loading-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Hide loading when Redoc is ready */
+        redoc {
+            display: none;
+        }
     </style>
-  </head>
-  <body>
-    <redoc spec-url="openapi.yaml"></redoc>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-container" id="loading">
+        <div class="loading-logo">⚖️</div>
+        <div class="loading-title">JuridicAI API</div>
+        <div class="loading-subtitle">Carregando documentação...</div>
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Redoc Container -->
+    <redoc spec-url='./openapi.yaml'
+           hide-hostname="false"
+           native-scrollbars="false"
+           hide-loading="true"
+           theme='{
+               "colors": {
+                   "primary": {
+                       "main": "#667eea"
+                   },
+                   "success": {
+                       "main": "#00c853"
+                   },
+                   "warning": {
+                       "main": "#ffc107"
+                   },
+                   "error": {
+                       "main": "#f44336"
+                   },
+                   "text": {
+                       "primary": "#333333",
+                       "secondary": "#666666"
+                   },
+                   "border": {
+                       "dark": "#e0e0e0",
+                       "light": "#f0f0f0"
+                   },
+                   "responses": {
+                       "success": {
+                           "color": "#00c853",
+                           "backgroundColor": "#e8f5e9"
+                       },
+                       "error": {
+                           "color": "#f44336",
+                           "backgroundColor": "#ffebee"
+                       },
+                       "redirect": {
+                           "color": "#2196f3",
+                           "backgroundColor": "#e3f2fd"
+                       },
+                       "info": {
+                           "color": "#667eea",
+                           "backgroundColor": "#ede7f6"
+                       }
+                   },
+                   "http": {
+                       "get": "#6fbf73",
+                       "post": "#248fb2",
+                       "put": "#9b708b",
+                       "options": "#d3ca12",
+                       "patch": "#e09d43",
+                       "delete": "#e27a7a",
+                       "basic": "#707070",
+                       "link": "#07818f",
+                       "head": "#A23DAD"
+                   }
+               },
+               "typography": {
+                   "fontSize": "16px",
+                   "lineHeight": "1.6em",
+                   "fontFamily": "Roboto, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Oxygen-Sans, Ubuntu, Cantarell, \"Helvetica Neue\", sans-serif",
+                   "headings": {
+                       "fontFamily": "Montserrat, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Oxygen-Sans, Ubuntu, Cantarell, \"Helvetica Neue\", sans-serif",
+                       "fontWeight": "700",
+                       "lineHeight": "1.4em"
+                   },
+                   "code": {
+                       "fontSize": "14px",
+                       "fontFamily": "Consolas, Monaco, \"Andale Mono\", \"Ubuntu Mono\", monospace",
+                       "lineHeight": "1.5em",
+                       "fontWeight": "400",
+                       "color": "#e53935",
+                       "backgroundColor": "rgba(38, 50, 56, 0.05)",
+                       "wrap": false
+                   },
+                   "links": {
+                       "color": "#667eea",
+                       "visited": "#764ba2",
+                       "hover": "#5568d3"
+                   }
+               },
+               "sidebar": {
+                   "backgroundColor": "#fafafa",
+                   "textColor": "#333333",
+                   "activeTextColor": "#667eea",
+                   "groupItems": {
+                       "textTransform": "uppercase"
+                   },
+                   "level1Items": {
+                       "textTransform": "none"
+                   },
+                   "arrow": {
+                       "size": "1.2em",
+                       "color": "#667eea"
+                   }
+               },
+               "rightPanel": {
+                   "backgroundColor": "#263238",
+                   "textColor": "#ffffff"
+               },
+               "codeBlock": {
+                   "backgroundColor": "#263238"
+               }
+           }'
+           expand-responses="200,201"
+           json-sample-expand-level="2"
+           sort-props-alphabetically="false"
+           menu-toggle="true"
+           disable-search="false"
+           path-in-middle-panel="false"
+           scroll-y-offset="0"
+           hide-single-request-sample-tab="true"
+           expand-single-schema-field="true"
+           show-extensions="true"
+           sort-enum-values-alphabetically="false"
+           payload-sample-idx="0">
+    </redoc>
+
+    <!-- Redoc Standalone Bundle -->
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-  </body>
+
+    <!-- Hide loading screen when Redoc is ready -->
+    <script>
+        // Hide loading screen when Redoc is initialized
+        window.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for Redoc to initialize
+            setTimeout(function() {
+                const loading = document.getElementById('loading');
+                const redoc = document.querySelector('redoc');
+
+                if (loading && redoc) {
+                    loading.style.display = 'none';
+                    redoc.style.display = 'block';
+                }
+            }, 1000);
+        });
+
+        // Fallback: hide loading after 5 seconds regardless
+        setTimeout(function() {
+            const loading = document.getElementById('loading');
+            const redoc = document.querySelector('redoc');
+
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            if (redoc) {
+                redoc.style.display = 'block';
+            }
+        }, 5000);
+
+        // Error handling
+        window.addEventListener('error', function(e) {
+            console.error('Error loading documentation:', e);
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.innerHTML = `
+                    <div class="loading-logo">⚠️</div>
+                    <div class="loading-title">Erro ao Carregar</div>
+                    <div class="loading-subtitle">Não foi possível carregar a documentação da API.</div>
+                    <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+                        Verifique se o arquivo openapi.yaml está acessível.
+                    </div>
+                `;
+            }
+        });
+
+        // Analytics (optional - uncomment and add your tracking ID)
+        /*
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'YOUR-GA-TRACKING-ID');
+        */
+    </script>
+
+    <!-- Google Analytics (optional - uncomment and add your tracking ID) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-TRACKING-ID"></script>
+    -->
+
+    <!-- Additional custom scripts -->
+    <script>
+        // Custom behaviors can be added here
+        // Example: Track API endpoint views
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('JuridicAI API Documentation loaded successfully');
+            console.log('Version: 1.0.0');
+            console.log('Environment: %cProduction', 'color: #00c853; font-weight: bold');
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+K or Cmd+K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('[role="search"] input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+
+            // ? to show keyboard shortcuts help (optional)
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                console.log(`
+                    Keyboard Shortcuts:
+                    - Ctrl/Cmd + K: Focus search
+                    - ?: Show this help
+                `);
+            }
+        });
+
+        // Detect preferred color scheme (optional - for future dark mode support)
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+            console.log('User prefers dark mode - consider implementing dark theme');
+        }
+    </script>
+
+    <!-- Metadata for crawlers -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebAPI",
+        "name": "JuridicAI API",
+        "description": "API completa para gestão de escritórios de advocacia com suporte multi-tenant",
+        "url": "https://api.juridicai.com.br",
+        "documentation": "https://docs.juridicai.com.br",
+        "provider": {
+            "@type": "Organization",
+            "name": "JuridicAI",
+            "url": "https://juridicai.com.br"
+        },
+        "termsOfService": "https://juridicai.com.br/terms",
+        "inLanguage": "pt-BR"
+    }
+    </script>
+</body>
 </html>
