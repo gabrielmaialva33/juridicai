@@ -3,6 +3,7 @@ import Case from '#models/case'
 import ICase from '#interfaces/case_interface'
 import LucidRepository from '#shared/lucid/lucid_repository'
 import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
+import { PaginateOptions, PaginateResult } from '#shared/lucid/lucid_repository_interface'
 
 @inject()
 export default class CasesRepository
@@ -11,6 +12,44 @@ export default class CasesRepository
 {
   constructor() {
     super(Case)
+  }
+
+  /**
+   * Override paginate to fix Lucid ORM bug where COUNT query doesn't respect withScopes()
+   * This ensures accurate total counts when using model scopes for filtering
+   */
+  async paginate(options: PaginateOptions<typeof Case>): Promise<PaginateResult<typeof Case>> {
+    const query = this.buildQuery({ opts: options })
+
+    query.orderBy(options.sortBy || this.DEFAULT_SORT, options.direction || this.DEFAULT_DIRECTION)
+
+    // Manual pagination to avoid Lucid's paginate() COUNT bug with scopes
+    const page = options.page || this.DEFAULT_PAGE
+    const perPage = options.perPage || this.DEFAULT_PER_PAGE
+
+    // Get total count using a cloned query with all scopes applied
+    const countQuery = query.clone().clearSelect().clearOrder()
+    const totalResult = await countQuery.count('* as total').first()
+    const total = Number(totalResult?.$extras?.total || 0)
+
+    // Get paginated data
+    const data = await query.offset((page - 1) * perPage).limit(perPage)
+
+    // Build paginator response matching Lucid's ModelPaginatorContract format
+    return {
+      data,
+      meta: {
+        total,
+        per_page: perPage,
+        current_page: page,
+        last_page: Math.ceil(total / perPage),
+        first_page: 1,
+        first_page_url: '',
+        last_page_url: '',
+        next_page_url: page < Math.ceil(total / perPage) ? '' : null,
+        previous_page_url: page > 1 ? '' : null,
+      },
+    } as any
   }
 
   /**

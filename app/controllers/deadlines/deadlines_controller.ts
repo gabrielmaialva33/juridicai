@@ -35,7 +35,7 @@ export default class DeadlinesController {
     const query = Deadline.query()
       .if(caseId, (q) => q.where('case_id', caseId))
       .if(status, (q) => q.where('status', status))
-      .if(isFatal !== undefined, (q) => q.where('is_fatal', isFatal))
+      .if(isFatal !== undefined, (q) => q.where('is_fatal', isFatal!))
       .if(responsibleId, (q) => q.where('responsible_id', responsibleId))
       .orderBy(sortBy, direction)
 

@@ -236,7 +236,7 @@ test.group('Cases CRUD', (group) => {
     assert.property(body.client, 'full_name')
   })
 
-  test('should create case with valid data', async ({ client }) => {
+  test('should create case with valid data', async ({ client, assert }) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
