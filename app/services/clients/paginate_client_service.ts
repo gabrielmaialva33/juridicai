@@ -110,7 +110,9 @@ export default class PaginateClientService {
         }
       : modifyQuery
 
-    return this.clientsRepository.paginate(paginateOptions)
+    return this.clientsRepository.paginate(paginateOptions) as Promise<
+      ModelPaginatorContract<Client>
+    >
   }
 
   /**

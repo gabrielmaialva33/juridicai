@@ -140,7 +140,7 @@ export default class PaginateCaseService {
         }
       : modifyQuery
 
-    return this.casesRepository.paginate(paginateOptions)
+    return this.casesRepository.paginate(paginateOptions) as Promise<ModelPaginatorContract<Case>>
   }
 
   /**

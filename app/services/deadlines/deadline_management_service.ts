@@ -1,8 +1,6 @@
-import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import type { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import Deadline from '#models/deadline'
-import DeadlinesRepository from '#repositories/deadlines_repository'
 
 interface DeadlineFilters {
   status?: 'pending' | 'completed' | 'expired' | 'cancelled'
@@ -14,10 +12,7 @@ interface DeadlineFilters {
   toDate?: DateTime
 }
 
-@inject()
 export default class DeadlineManagementService {
-  constructor(private deadlinesRepository: DeadlinesRepository) {}
-
   /**
    * Get deadlines dashboard with categorized deadlines
    * Returns overdue, today, upcoming, and completed deadlines
