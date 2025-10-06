@@ -7,7 +7,7 @@ import { UserFactory } from '#database/factories/user_factory'
 import TenantsRepository from '#repositories/tenants_repository'
 
 test.group('TenantsRepository', (group) => {
-  group.each.setup(() => testUtils.db().withGlobalTransaction())
+  group.each.setup(() => testUtils.db().truncate())
 
   test('findBySubdomain returns tenant by subdomain', async ({ assert }) => {
     const tenant = await TenantFactory.merge({ subdomain: 'test-firm' }).create()

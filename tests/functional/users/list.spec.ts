@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
+import logger from '@adonisjs/core/services/logger'
 
 import Role from '#models/role'
 import Permission from '#models/permission'
@@ -307,14 +308,14 @@ test.group('Users List', (group) => {
     const createdUser = responseData.find((u: any) => u.id === user.id)
 
     // Debug logging
-    console.log('Created user ID:', user.id)
-    console.log('Response users count:', responseData.length)
+    logger.info('Created user ID: %s', user.id)
+    logger.info('Response users count: %s', responseData.length)
     if (createdUser) {
-      console.log('Found user roles:', createdUser.roles)
+      logger.info('Found user roles: %o', createdUser.roles)
     } else {
-      console.log('User not found in response')
-      console.log(
-        'Available user IDs:',
+      logger.info('User not found in response')
+      logger.info(
+        'Available user IDs: %o',
         responseData.map((u: any) => u.id)
       )
     }

@@ -32,10 +32,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('should return all tenants for authenticated user', async ({
-    client,
-    assert,
-  }) => {
+  test('should return all tenants for authenticated user', async ({ client, assert }) => {
     const user = await UserFactory.create()
 
     // User belongs to 2 tenants
