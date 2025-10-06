@@ -5,8 +5,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/license-Proprietary-00b8d3?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square" alt="TypeScript" >
-  <img src="https://img.shields.io/badge/AdonisJS-6.0-5A45FF?style=flat-square" alt="AdonisJS" >
-  <img src="https://img.shields.io/badge/Tests-33%20passing-00C853?style=flat-square" alt="Tests" >
+  <img src="https://img.shields.io/badge/AdonisJS-6.19-5A45FF?style=flat-square" alt="AdonisJS" >
+  <img src="https://img.shields.io/badge/Node.js-18+-339933?style=flat-square" alt="Node.js" >
+  <img src="https://img.shields.io/badge/pnpm-preferred-F69220?style=flat-square" alt="pnpm" >
 </p>
 
 <p align="center">
@@ -21,6 +22,8 @@
   <a href="#rocket-quick-start-guide">Quick Start Guide</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#computer-technologies">Technologies</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#package-installation">Installation</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#wrench-configuration">Configuration</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#file_folder-project-structure">Project Structure</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#memo-license">License</a>
 </p>
 
@@ -50,11 +53,13 @@ graph TD
         BL_SERVICES[Services]
         BL_TENANT[Tenant Context]
         BL_EVENTS[Events & Listeners]
+        BL_JOBS[Background Jobs]
     end
 
     subgraph "Data Layer"
         DL_MODELS[Tenant-Aware Models]
         DL_DB[(PostgreSQL)]
+        DL_CACHE[(Redis)]
         DL_STORAGE[File Storage]
     end
 
@@ -69,11 +74,13 @@ graph TD
     API_CTRL --> API_VALIDATORS
     API_CTRL --> BL_SERVICES
     BL_SERVICES --> BL_TENANT
+    BL_SERVICES --> BL_JOBS
     BL_SERVICES --> DL_MODELS
     DL_MODELS --> MT_SCOPES
     MT_SCOPES --> MT_ISOLATION
     MT_ISOLATION --> DL_DB
     BL_TENANT --> MT_CONTEXT
+    BL_JOBS --> DL_CACHE
 ```
 
 ## :bulb: Why Multi-Tenant?
@@ -207,19 +214,65 @@ test('client belongs to correct tenant', async ({ assert }) => {
 - **⚖️ Brazilian Legal Domain**: CPF/CNPJ validation, CNJ case format (NNNNNNN-DD.AAAA.J.TR.OOOO), court integrations.
 - **🔐 AsyncLocalStorage Context**: Tenant context preserved across async operations, including background jobs.
 - **📊 Smart Factories**: Generate valid Brazilian legal data (CPF with checksum, realistic CNJ numbers).
-- **🔒 Security First**: HttpContext fallback, tenant isolation verified by 33 passing tests.
+- **🔒 Security First**: HttpContext fallback, tenant isolation verified by comprehensive tests.
 - **⚡️ Optimized Performance**: Composite indexes (tenant_id, ...), JSONB for flexible metadata.
 - **✅ Type-Safe**: Complete TypeScript coverage with snake_case ORM strategy.
+- **🌐 Internationalization**: Multi-language support via AdonisJS i18n.
+- **📦 Background Jobs**: Bull Queue integration for async task processing.
+- **☁️ Flexible Storage**: Support for local filesystem, AWS S3, and Google Cloud Storage.
 
 ## :computer: Technologies
 
-- **[AdonisJS v6](https://adonisjs.com/)**: Modern Node.js framework with first-class TypeScript support.
-- **[TypeScript](https://www.typescriptlang.org/)**: Type safety and excellent developer experience.
-- **[PostgreSQL](https://www.postgresql.org/)**: Production database with JSONB and advanced indexing.
+### Core Stack
+
+- **[AdonisJS v6](https://adonisjs.com/)** (v6.19.0): Modern Node.js framework with first-class TypeScript support.
+- **[TypeScript](https://www.typescriptlang.org/)** (v5.9): Type safety and excellent developer experience.
+- **[Node.js](https://nodejs.org/)** (v18+): JavaScript runtime.
+- **[pnpm](https://pnpm.io/)**: Fast, disk space efficient package manager.
+
+### Database & Caching
+
+- **[PostgreSQL](https://www.postgresql.org/)** (v14+): Production database with JSONB and advanced indexing.
 - **[SQLite](https://www.sqlite.org/)**: Fast in-memory testing database.
-- **[VineJS](https://vinejs.dev/)**: Modern, type-safe validation library.
-- **[Lucid ORM](https://lucid.adonisjs.com/)**: Elegant ActiveRecord with query scopes.
-- **[Japa](https://japa.dev/)**: Delightful testing framework (33 tests passing).
+- **[Lucid ORM](https://lucid.adonisjs.com/)** (v21.8): Elegant ActiveRecord with query scopes.
+- **[Redis](https://redis.io/)**: Caching and session storage.
+
+### Authentication & Security
+
+- **[Argon2](https://github.com/ranisalt/node-argon2)**: Password hashing.
+- **[@adonisjs/auth](https://docs.adonisjs.com/guides/auth)**: Authentication system.
+- **[@adonisjs/shield](https://docs.adonisjs.com/guides/security/shield)**: Security middleware (CSRF, CSP, etc.).
+- **[@adonisjs/cors](https://docs.adonisjs.com/guides/security/cors)**: CORS configuration.
+- **[@adonisjs/limiter](https://docs.adonisjs.com/guides/security/rate-limiting)**: Rate limiting.
+
+### Background Processing & Queue
+
+- **[@rlanz/bull-queue](https://github.com/Rlanz/bull-queue)**: Background job processing with Bull.
+
+### File Storage
+
+- **[@adonisjs/drive](https://docs.adonisjs.com/guides/drive)**: Unified file storage API.
+- **[@aws-sdk/client-s3](https://www.npmjs.com/package/@aws-sdk/client-s3)**: AWS S3 integration.
+- **[@google-cloud/storage](https://www.npmjs.com/package/@google-cloud/storage)**: Google Cloud Storage integration.
+
+### Validation & Templating
+
+- **[VineJS](https://vinejs.dev/)** (v3.0): Modern, type-safe validation library.
+- **[Edge.js](https://edgejs.dev/)**: Template engine for server-side rendering.
+
+### Testing
+
+- **[Japa](https://japa.dev/)** (v4.4): Delightful testing framework.
+- **[@japa/api-client](https://japa.dev/plugins/api-client)**: HTTP API testing.
+- **[@japa/assert](https://japa.dev/plugins/assert)**: Assertions library.
+- **[@japa/openapi-assertions](https://www.npmjs.com/package/@japa/openapi-assertions)**: OpenAPI/Swagger validation.
+
+### Development Tools
+
+- **[ESLint](https://eslint.org/)**: Code linting with AdonisJS config.
+- **[Prettier](https://prettier.io/)**: Code formatting.
+- **[@swc/core](https://swc.rs/)**: Fast TypeScript/JavaScript compiler.
+- **[hot-hook](https://www.npmjs.com/package/hot-hook)**: Hot module reloading.
 
 ## :package: Installation
 
@@ -228,6 +281,7 @@ test('client belongs to correct tenant', async ({ assert }) => {
 - **Node.js** (v18 or higher)
 - **pnpm** (recommended) or npm/yarn
 - **PostgreSQL** (v14 or higher)
+- **Redis** (for caching and queue management)
 - **Docker** (optional, for containerized development)
 
 ### 🚀 Getting Started
@@ -235,7 +289,7 @@ test('client belongs to correct tenant', async ({ assert }) => {
 1. **Clone and install:**
 
    ```bash
-   git clone https://github.com/yourusername/juridicai.git
+   git clone https://github.com/gabrielmaialva33/juridicai.git
    cd juridicai
    pnpm install
    ```
@@ -246,16 +300,13 @@ test('client belongs to correct tenant', async ({ assert }) => {
    cp .env.example .env
    ```
 
-   Configure your `.env`:
+   **⚠️ IMPORTANT**: Generate APP_KEY before running:
 
-   ```env
-   DB_CONNECTION=postgres
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=postgres
-   DB_PASSWORD=your_password
-   DB_DATABASE=juridicai_dev
+   ```bash
+   node ace generate:key
    ```
+
+   This command will generate a secure encryption key and update your `.env` file.
 
 3. **Database setup:**
 
@@ -266,11 +317,21 @@ test('client belongs to correct tenant', async ({ assert }) => {
    # Run migrations
    node ace migration:run
 
-   # Seed development data
+   # Seed development data (optional)
    node ace db:seed
    ```
 
-4. **Start development:**
+4. **Start Redis:**
+
+   ```bash
+   # Using Docker
+   docker run -d -p 6379:6379 redis:alpine
+
+   # Or install and start Redis locally
+   redis-server
+   ```
+
+5. **Start development:**
    ```bash
    pnpm dev
    ```
@@ -280,24 +341,28 @@ test('client belongs to correct tenant', async ({ assert }) => {
 
 ```bash
 # Development
-pnpm dev              # Start with HMR
-pnpm build            # Production build
-pnpm start            # Run production server
+pnpm dev              # Start with HMR (Hot Module Reload)
+pnpm start            # Run production server (requires build)
+pnpm build            # Build for production (output: ./build)
 
 # Testing
-pnpm test             # Unit tests (fast)
-pnpm test:e2e         # All tests (slower)
+pnpm test             # Run unit tests only (fast)
+pnpm test:e2e         # Run all tests (unit + functional)
 
 # Code Quality
-pnpm lint             # ESLint
-pnpm lint:fix         # Auto-fix issues
-pnpm typecheck        # TypeScript check
-pnpm format           # Prettier
+pnpm lint             # Run ESLint
+pnpm lint:fix         # Auto-fix ESLint issues
+pnpm format           # Format code with Prettier
+pnpm typecheck        # TypeScript type checking
 
 # Database
-node ace migration:run      # Run migrations
-node ace migration:rollback # Rollback
-node ace db:seed            # Seed data
+node ace migration:run        # Run pending migrations
+node ace migration:rollback   # Rollback last batch
+node ace migration:status     # Check migration status
+node ace db:seed              # Run database seeders
+
+# Docker
+pnpm docker           # Run migrations, seed, and start server
 ```
 
 ### 🧪 Development Workflow
@@ -322,7 +387,203 @@ node ace make:test clients/create_client --suite=functional
 
 # Factories
 node ace make:factory Client
+
+# Background Jobs
+node ace make:job SendEmailJob
 ```
+
+## :wrench: Configuration
+
+### Environment Variables
+
+Configure your `.env` file with the following variables:
+
+#### Application
+
+```env
+TZ=UTC                          # Timezone
+PORT=3333                       # Server port
+HOST=localhost                  # Server host
+LOG_LEVEL=info                  # Log level (trace, debug, info, warn, error, fatal)
+APP_KEY=                        # Encryption key (generate with: node ace generate:key)
+NODE_ENV=development            # Environment (development, production, test)
+```
+
+#### Session & Storage
+
+```env
+SESSION_DRIVER=cookie           # Session driver (cookie, redis, file)
+LIMITER_STORE=database          # Rate limiter store (database, redis)
+DRIVE_DISK=fs                   # Default storage disk (fs, s3, gcs)
+```
+
+#### Database
+
+```env
+DB_CONNECTION=postgres          # Database driver (postgres, sqlite)
+DB_HOST=localhost               # Database host
+DB_PORT=5432                    # Database port
+DB_USER=postgres                # Database username
+DB_PASSWORD=your_password       # Database password
+DB_DATABASE=juridicai_dev       # Database name
+```
+
+#### Redis
+
+```env
+REDIS_HOST=127.0.0.1            # Redis host
+REDIS_PORT=6379                 # Redis port
+REDIS_PASSWORD=                 # Redis password (if required)
+```
+
+#### Mail Configuration
+
+```env
+MAIL_MAILER=mailgun             # Mail provider (mailgun, smtp)
+MAIL_FROM_ADDRESS=noreply@example.com
+MAIL_FROM_NAME="JuridicAI"
+```
+
+**Option 1: Mailgun**
+
+```env
+MAILGUN_API_KEY=your-mailgun-api-key
+MAILGUN_DOMAIN=your-mailgun-domain
+MAILGUN_BASE_URL=https://api.mailgun.net/v3
+```
+
+**Option 2: SMTP**
+
+```env
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+```
+
+#### Cloud Storage (Optional)
+
+**AWS S3:**
+
+```env
+S3_KEY=your-aws-access-key
+S3_SECRET=your-aws-secret-key
+S3_BUCKET=your-bucket-name
+S3_REGION=us-east-1
+S3_ENDPOINT=                    # Optional: Custom S3-compatible endpoint
+```
+
+**Google Cloud Storage:**
+
+```env
+GCS_KEY_FILENAME=path/to/service-account.json
+GCS_BUCKET=your-bucket-name
+```
+
+### Configuration Files
+
+Configuration files are located in the `config/` directory:
+
+- `app.ts` - Application settings
+- `auth.ts` - Authentication configuration
+- `bodyparser.ts` - Request body parsing
+- `cache.ts` - Cache configuration
+- `cors.ts` - CORS settings
+- `database.ts` - Database connections
+- `drive.ts` - File storage
+- `hash.ts` - Password hashing
+- `limiter.ts` - Rate limiting
+- `logger.ts` - Logging configuration
+- `mail.ts` - Email configuration
+- `redis.ts` - Redis configuration
+- `session.ts` - Session management
+- `shield.ts` - Security middleware
+- `static.ts` - Static file serving
+
+## :file_folder: Project Structure
+
+```
+juridicai/
+├── app/                        # Application code
+│   ├── controllers/           # HTTP controllers (organized by domain)
+│   ├── events/                # Event definitions
+│   ├── exceptions/            # Custom exceptions
+│   ├── extensions/            # Framework extensions
+│   ├── interfaces/            # TypeScript interfaces
+│   ├── middleware/            # HTTP middleware
+│   ├── models/                # Database models (Lucid ORM)
+│   ├── repositories/          # Data access layer
+│   ├── routes/                # Route definitions
+│   ├── services/              # Business logic services
+│   ├── shared/                # Shared utilities
+│   └── validators/            # Request validators (VineJS)
+├── bin/                       # Entry point scripts
+│   └── server.js             # HTTP server entry point
+├── commands/                  # Custom Ace commands
+├── config/                    # Configuration files
+├── database/                  # Database related files
+│   ├── factories/            # Model factories for testing
+│   ├── migrations/           # Database migrations
+│   └── seeders/              # Database seeders
+├── docs/                      # Project documentation
+├── providers/                 # Service providers
+├── resources/                 # Frontend resources
+│   ├── lang/                 # i18n translation files
+│   └── views/                # Edge.js templates
+├── start/                     # Application bootstrap
+│   ├── kernel.ts             # Middleware registration
+│   └── routes.ts             # Route registration
+├── storage/                   # File storage (local)
+│   └── uploads/              # Uploaded files
+├── tests/                     # Test files
+│   ├── functional/           # Functional/E2E tests
+│   ├── unit/                 # Unit tests
+│   ├── utils/                # Test utilities
+│   └── bootstrap.ts          # Test configuration
+├── tmp/                       # Temporary files
+├── types/                     # TypeScript type definitions
+├── .env.example              # Environment variables template
+├── .env.test                 # Test environment variables
+├── ace.js                    # Ace CLI entry point
+├── adonisrc.ts               # AdonisJS configuration
+├── package.json              # Dependencies and scripts
+├── tsconfig.json             # TypeScript configuration
+└── README.md                 # This file
+```
+
+### Import Aliases
+
+The project uses `#` prefix for clean imports:
+
+```typescript
+import User from '#models/user'
+import TenantContextService from '#services/tenants/tenant_context_service'
+import { HttpContext } from '@adonisjs/core/http'
+```
+
+Available aliases:
+
+- `#controllers/*` → `./app/controllers/*.js`
+- `#models/*` → `./app/models/*.js`
+- `#services/*` → `./app/services/*.js`
+- `#middleware/*` → `./app/middleware/*.js`
+- `#validators/*` → `./app/validators/*.js`
+- `#repositories/*` → `./app/repositories/*.js`
+- `#policies/*` → `./app/policies/*.js`
+- `#abilities/*` → `./app/abilities/*.js`
+- `#providers/*` → `./providers/*.js`
+- `#routes/*` → `./app/routes/*.js`
+- `#database/*` → `./database/*.js`
+- `#tests/*` → `./tests/*.js`
+- `#start/*` → `./start/*.js`
+- `#config/*` → `./config/*.js`
+- `#shared/*` → `./app/shared/*.js`
+- `#events/*` → `./app/events/*.js`
+- `#exceptions/*` → `./app/exceptions/*.js`
+- `#extensions/*` → `./app/extensions/*.js`
+- `#interfaces/*` → `./app/interfaces/*.js`
+- `#listeners/*` → `./app/listeners/*.js`
+- `#mails/*` → `./app/mails/*.js`
 
 ## 🏗️ Architecture Decisions
 
@@ -335,9 +596,7 @@ node ace make:factory Client
 **Implementation**:
 
 ```typescript
-static
-boot()
-{
+static boot() {
   if (this.booted) return
   super.boot()
 
@@ -405,16 +664,29 @@ getCurrentTenantId(): string | null {
 ### Run Tests
 
 ```bash
-pnpm test       # Unit tests only
-pnpm test:e2e   # All tests
+pnpm test       # Unit tests only (fast, ~2s timeout)
+pnpm test:e2e   # All tests (unit + functional, ~30s timeout)
 ```
 
-### Test Coverage (33 passing)
+### Test Organization
 
-- **TenantContextService** (10 tests): Context isolation, fallback, assertions
-- **TenantAwareModel** (7 tests): Auto-scoping, auto-assignment, bypass
-- **Multi-tenant isolation** (14 tests): Data leak prevention, cross-tenant queries
-- **Legal domain** (2 tests): Client-Case workflow
+Tests are organized into two suites:
+
+- **Unit tests**: `tests/unit/**/*.spec.ts` (timeout: 2s)
+- **Functional tests**: `tests/functional/**/*.spec.ts` (timeout: 30s)
+
+### Test Coverage
+
+> **TODO**: Run `pnpm test:e2e` to get the exact test count and update this section.
+
+The test suite includes:
+
+- **TenantContextService**: Context isolation, fallback mechanisms, assertions
+- **TenantAwareModel**: Auto-scoping, auto-assignment, bypass operations
+- **Multi-tenant isolation**: Data leak prevention, cross-tenant query validation
+- **Legal domain**: Client-Case workflow, Brazilian legal validations
+- **API endpoints**: CRUD operations, authentication, authorization
+- **Background jobs**: Queue processing, tenant context preservation
 
 ### Example Test
 
@@ -436,6 +708,28 @@ test('prevents cross-tenant data access', async ({ assert }) => {
   )
 
   assert.isNull(result) // ✅ Tenant 2 cannot see tenant 1's data
+})
+```
+
+### Writing Tests
+
+**Test file naming convention:** `*.spec.ts`
+
+**Basic test structure:**
+
+```typescript
+import { test } from '@japa/runner'
+
+test.group('Feature Name', () => {
+  test('should perform expected behavior', ({ assert }) => {
+    const result = 2 + 2
+    assert.equal(result, 4)
+  })
+
+  test('should handle async operations', async ({ assert }) => {
+    const result = await someAsyncFunction()
+    assert.isTrue(result)
+  })
 })
 ```
 
@@ -469,6 +763,60 @@ await TenantContextService.run({tenant_id: 'uuid', ...}, async () => {
 
 **Solution**: Ensure TenantContext is set and avoid `withoutTenantScope()` unless absolutely necessary.
 
+### APP_KEY not set error
+
+**Cause**: Missing or empty APP_KEY in `.env`.
+
+**Solution**:
+
+```bash
+node ace generate:key
+```
+
+### Database connection errors
+
+**Symptoms**: Cannot connect to database, migrations fail.
+
+**Solutions**:
+
+1. Verify PostgreSQL is running: `pg_isready`
+2. Check `.env` database credentials
+3. Ensure database exists: `createdb juridicai_dev`
+4. Test connection: `psql -U postgres -d juridicai_dev`
+
+### Redis connection errors
+
+**Symptoms**: Cache or session errors, queue jobs not processing.
+
+**Solutions**:
+
+1. Verify Redis is running: `redis-cli ping`
+2. Check `REDIS_HOST` and `REDIS_PORT` in `.env`
+3. Start Redis: `redis-server` or `docker run -d -p 6379:6379 redis:alpine`
+
+### Migration errors
+
+**Symptoms**: Migration fails or creates inconsistent state.
+
+**Solutions**:
+
+1. Check migration order and dependencies
+2. Reset database: `node ace migration:rollback --batch=0 && node ace migration:run`
+3. Review migration file for SQL errors
+4. Ensure database user has CREATE/ALTER permissions
+
+### Test failures
+
+**Symptoms**: Tests fail unexpectedly or timeout.
+
+**Solutions**:
+
+1. Ensure `.env.test` is configured
+2. Check test database exists and is accessible
+3. Run migrations in test environment: `NODE_ENV=test node ace migration:run`
+4. Clear test database: `NODE_ENV=test node ace migration:rollback --batch=0`
+5. Increase timeout for slow tests in `adonisrc.ts`
+
 ## ⚡ Performance & Security
 
 ### Indexing Strategy
@@ -478,6 +826,7 @@ All tenant-scoped tables use composite indexes:
 ```sql
 CREATE INDEX idx_clients_tenant ON clients (tenant_id);
 CREATE INDEX idx_clients_tenant_email ON clients (tenant_id, email);
+CREATE INDEX idx_cases_tenant_status ON cases (tenant_id, status);
 ```
 
 ### Security Checklist
@@ -488,13 +837,75 @@ CREATE INDEX idx_clients_tenant_email ON clients (tenant_id, email);
 - ✅ No raw SQL without tenant_id filter
 - ✅ HttpContext fallback for requests
 - ✅ Admin operations use explicit `withoutTenantScope()`
+- ✅ CSRF protection enabled (Shield)
+- ✅ Rate limiting configured (Limiter)
+- ✅ CORS properly configured
+- ✅ Passwords hashed with Argon2
+- ✅ SQL injection prevention via Lucid ORM
+- ✅ XSS protection in Edge templates
+
+### Performance Tips
+
+1. **Use query scopes efficiently**:
+
+   ```typescript
+   // Good: Use specific queries
+   const activeClients = await Client.query().where('status', 'active')
+
+   // Avoid: Loading all data and filtering in memory
+   const allClients = await Client.all()
+   const activeClients = allClients.filter((c) => c.status === 'active')
+   ```
+
+2. **Leverage Redis caching**:
+
+   ```typescript
+   import cache from '@adonisjs/cache/services/main'
+
+   const cachedData = await cache.remember('key', 3600, async () => {
+     return await expensiveOperation()
+   })
+   ```
+
+3. **Use background jobs for heavy tasks**:
+
+   ```typescript
+   import { Queue } from '@rlanz/bull-queue'
+
+   await Queue.dispatch('SendEmailJob', { userId: 123 })
+   ```
+
+4. **Preload relationships to avoid N+1 queries**:
+
+   ```typescript
+   // Good: Eager loading
+   const cases = await Case.query().preload('client').preload('documents')
+
+   // Avoid: N+1 queries
+   const cases = await Case.all()
+   for (const case of cases) {
+     await case.load('client') // Separate query for each case!
+   }
+   ```
+
+## 🤝 Contributing
+
+> **TODO**: Add CONTRIBUTING.md with guidelines for code contributions, PR process, and coding standards.
+
+## 📝 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
 ## :memo: License
 
 This project is licensed under **Proprietary License**. All rights reserved.
 
+Copyright (c) 2025 Gabriel Maia <gabrielmaialva33@gmail.com>
+
+See [LICENSE](LICENSE) file for full license text.
+
 ---
 
 <p align="center">
-  Made with ❤️ using AdonisJS v6 | <a href="https://github.com/yourusername/juridicai/issues">Report Bug</a> | <a href="https://github.com/yourusername/juridicai/pulls">Request Feature</a>
+  Made with ❤️ using AdonisJS v6 | <a href="https://github.com/gabrielmaialva33/juridicai/issues">Report Bug</a> | <a href="https://github.com/gabrielmaialva33/juridicai/pulls">Request Feature</a>
 </p>
