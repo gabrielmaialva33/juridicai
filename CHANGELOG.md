@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-10-06
+
+### Added
+
+- `TenantContextException` for centralized tenant context error handling ([cb303fb](https://github.com/gabrielmaialva33/juridicai/commit/cb303fb))
+- Advanced options and TypeScript support to `withTenantScope` mixin with better configurability ([3f9a94f](https://github.com/gabrielmaialva33/juridicai/commit/3f9a94f))
+- Repository pattern implementation for `Client`, `Case`, and `Deadline` models ([8ec9318](https://github.com/gabrielmaialva33/juridicai/commit/8ec9318))
+
+### Changed
+
+- Refactored tenant scoping by introducing reusable `withTenantScope` mixin ([d1d4543](https://github.com/gabrielmaialva33/juridicai/commit/d1d4543))
+- Improved type safety in query scopes across multiple models:
+  - `User` and `Document` models with improved types and consistency ([0aa1544](https://github.com/gabrielmaialva33/juridicai/commit/0aa1544))
+  - `AuditLog` model replacing `any` with `ModelQueryBuilderContract` ([bb5b983](https://github.com/gabrielmaialva33/juridicai/commit/bb5b983))
+- Enhanced pagination services with better typings ([8ec9318](https://github.com/gabrielmaialva33/juridicai/commit/8ec9318))
+- Refactored factory calls and tests for improved consistency and readability ([001586d](https://github.com/gabrielmaialva33/juridicai/commit/001586d))
+
+### Documentation
+
+- Updated all references from `TenantAwareModel` to `withTenantScope` mixin ([1d4bd26](https://github.com/gabrielmaialva33/juridicai/commit/1d4bd26))
+- Enhanced tenant scope mixin documentation for clarity and consistency ([9603bd0](https://github.com/gabrielmaialva33/juridicai/commit/9603bd0))
+
+### Removed
+
+- Outdated design assets from `.github` directory ([7655826](https://github.com/gabrielmaialva33/juridicai/commit/7655826))
+
 ## [0.2.0] - 2025-10-05
 
 ### Added
