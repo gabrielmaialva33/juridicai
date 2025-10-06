@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
-import TenantContextService from '#services/tenants/tenant_context_service'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 import Case from '#models/case'
 import User from '#models/user'
 
@@ -19,36 +20,12 @@ interface AlertConfig {
   recipients?: number[]
 }
 
-export default class Deadline extends BaseModel {
+// Create the tenant-scoped mixin
+const TenantScoped = withTenantScope()
+
+export default class Deadline extends compose(BaseModel, TenantScoped) {
   static table = 'deadlines'
   static namingStrategy = new SnakeCaseNamingStrategy()
-
-  static boot() {
-    if (this.booted) return
-    super.boot()
-
-    // Hook para auto-set tenant_id
-    this.before('create', (model: Deadline) => {
-      if (!model.tenant_id) {
-        model.tenant_id = TenantContextService.assertTenantId()
-      }
-    })
-
-    // Hook para auto-filter queries
-    this.before('find', (query) => {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId && !(query as any)._skipTenantScope) {
-        query.where('tenant_id', tenantId)
-      }
-    })
-
-    this.before('fetch', (query) => {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId && !(query as any)._skipTenantScope) {
-        query.where('tenant_id', tenantId)
-      }
-    })
-  }
 
   /**
    * ------------------------------------------------------
@@ -141,24 +118,6 @@ export default class Deadline extends BaseModel {
    * Query Scopes
    * ------------------------------------------------------
    */
-
-  /**
-   * Scope to filter by specific tenant
-   * @example Deadline.query().withScopes((scopes) => scopes.forTenant(tenantId))
-   */
-  static forTenant = scope((query, tenantId: string) => {
-    return query.where('tenant_id', tenantId)
-  })
-
-  /**
-   * Scope to disable automatic tenant filtering
-   * USE WITH CAUTION - only for admin operations
-   * @example Deadline.query().withScopes((scopes) => scopes.withoutTenantScope())
-   */
-  static withoutTenantScope = scope((query) => {
-    ;(query as any)._skipTenantScope = true
-    return query
-  })
 
   /**
    * Search deadlines by title or description

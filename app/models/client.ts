@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
-import TenantContextService from '#services/tenants/tenant_context_service'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 import Case from '#models/case'
 
 type Builder = ModelQueryBuilderContract<typeof Client>
@@ -21,36 +22,12 @@ interface ClientAddress {
   country?: string
 }
 
-export default class Client extends BaseModel {
+// Create the tenant-scoped mixin
+const TenantScoped = withTenantScope()
+
+export default class Client extends compose(BaseModel, TenantScoped) {
   static table = 'clients'
   static namingStrategy = new SnakeCaseNamingStrategy()
-
-  static boot() {
-    if (this.booted) return
-    super.boot()
-
-    // Hook para auto-set tenant_id
-    this.before('create', (model: Client) => {
-      if (!model.tenant_id) {
-        model.tenant_id = TenantContextService.assertTenantId()
-      }
-    })
-
-    // Hook para auto-filter queries
-    this.before('find', (query) => {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId && !(query as any)._skipTenantScope) {
-        query.where('tenant_id', tenantId)
-      }
-    })
-
-    this.before('fetch', (query) => {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId && !(query as any)._skipTenantScope) {
-        query.where('tenant_id', tenantId)
-      }
-    })
-  }
 
   /**
    * ------------------------------------------------------
@@ -143,24 +120,6 @@ export default class Client extends BaseModel {
    * Query Scopes
    * ------------------------------------------------------
    */
-
-  /**
-   * Scope to filter by specific tenant
-   * @example Client.query().withScopes((scopes) => scopes.forTenant(tenantId))
-   */
-  static forTenant = scope((query, tenantId: string) => {
-    return query.where('tenant_id', tenantId)
-  })
-
-  /**
-   * Scope to disable automatic tenant filtering
-   * USE WITH CAUTION - only for admin operations
-   * @example Client.query().withScopes((scopes) => scopes.withoutTenantScope())
-   */
-  static withoutTenantScope = scope((query) => {
-    ;(query as any)._skipTenantScope = true
-    return query
-  })
 
   /**
    * Search clients by name, CPF, CNPJ, email
