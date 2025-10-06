@@ -10,29 +10,10 @@ import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
 import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
+import { assignPermissions } from '#tests/utils/permission_test_helper'
 
-test.group('Users list', (group) => {
+test.group('Users List', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
-
-  // Helper function to create and assign permissions to a role
-  async function assignPermissions(role: Role, actions: string[]) {
-    const permissions = await Promise.all(
-      actions.map((action) =>
-        Permission.firstOrCreate(
-          {
-            resource: IPermission.Resources.USERS,
-            action: action,
-          },
-          {
-            name: `users.${action}`,
-            resource: IPermission.Resources.USERS,
-            action: action,
-          }
-        )
-      )
-    )
-    await role.related('permissions').sync(permissions.map((p) => p.id))
-  }
 
   test('should list users with authentication', async ({ client }) => {
     const userRole = await Role.firstOrCreate(

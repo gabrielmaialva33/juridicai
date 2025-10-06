@@ -10,7 +10,7 @@ import Role from '#models/role'
 
 import IRole from '#interfaces/role_interface'
 
-test.group('Sessions sign up', (group) => {
+test.group('Sessions Sign Up', (group) => {
   group.each.setup(() => {
     mail.restore()
     mail.fake()

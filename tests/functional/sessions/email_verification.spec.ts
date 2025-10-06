@@ -6,7 +6,7 @@ import { DateTime } from 'luxon'
 import User from '#models/user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
-test.group('Email verification', () => {
+test.group('Email Verification', () => {
   test('should send verification email on sign up', async ({ client, assert, cleanup }) => {
     // Reset mail service before test
     mail.restore()

@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-test.group('Health check', () => {
+test.group('Health Check', () => {
   test('should return ok status', async ({ client, assert }) => {
     const response = await client.get('/api/v1/health')
 

@@ -10,7 +10,7 @@ import IRole from '#interfaces/role_interface'
 import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
-test.group('Roles admin', (group) => {
+test.group('Roles Admin', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should list roles with admin permission', async ({ client }) => {

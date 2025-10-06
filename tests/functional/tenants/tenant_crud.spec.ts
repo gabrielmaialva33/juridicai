@@ -10,7 +10,7 @@ import { DateTime } from 'luxon'
 test.group('Tenants CRUD', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  test('GET /api/v1/tenants/me returns current tenant', async ({ client }) => {
+  test('should return current tenant', async ({ client }) => {
     // Create user, tenant, and relationship
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
@@ -32,7 +32,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('GET /api/v1/tenants returns all tenants for authenticated user', async ({
+  test('should return all tenants for authenticated user', async ({
     client,
     assert,
   }) => {
@@ -59,7 +59,7 @@ test.group('Tenants CRUD', (group) => {
     assert.equal(body.data.length, 2)
   })
 
-  test('POST /api/v1/tenants creates new tenant', async ({ client }) => {
+  test('should create new tenant', async ({ client }) => {
     const user = await UserFactory.create()
 
     // Setup tenant for user
@@ -83,7 +83,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('POST /api/v1/tenants validates subdomain format', async ({ client }) => {
+  test('should validate subdomain format', async ({ client }) => {
     const user = await UserFactory.create()
 
     const response = await client.post('/api/v1/tenants').loginAs(user).json({
@@ -101,7 +101,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('POST /api/v1/tenants rejects duplicate subdomain', async ({ client }) => {
+  test('should reject duplicate subdomain', async ({ client }) => {
     const user = await UserFactory.create()
 
     await TenantFactory.merge({ subdomain: 'existing-firm' }).create()
@@ -114,7 +114,7 @@ test.group('Tenants CRUD', (group) => {
     response.assertStatus(409)
   })
 
-  test('GET /api/v1/tenants/:id returns specific tenant', async ({ client }) => {
+  test('should return specific tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUserFactory.apply('owner')
@@ -133,7 +133,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('GET /api/v1/tenants/:id returns 404 for non-member tenant', async ({ client }) => {
+  test('should return 404 for non-member tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const otherTenant = await TenantFactory.create()
     const userTenant = await TenantFactory.create()
@@ -147,7 +147,7 @@ test.group('Tenants CRUD', (group) => {
     response.assertStatus(404)
   })
 
-  test('PATCH /api/v1/tenants/:id updates tenant', async ({ client }) => {
+  test('should update tenant', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUser.create({
@@ -179,7 +179,7 @@ test.group('Tenants CRUD', (group) => {
     })
   })
 
-  test('PATCH /api/v1/tenants/:id requires owner or admin role', async ({ client }) => {
+  test('should require owner or admin role', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUserFactory.apply('lawyer') // Not owner or admin
@@ -193,7 +193,7 @@ test.group('Tenants CRUD', (group) => {
     response.assertStatus(403)
   })
 
-  test('DELETE /api/v1/tenants/:id deactivates tenant', async ({ client, assert }) => {
+  test('should deactivate tenant', async ({ client, assert }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUserFactory.apply('owner')
@@ -212,13 +212,13 @@ test.group('Tenants CRUD', (group) => {
     assert.isFalse(tenant.is_active)
   })
 
-  test('unauthenticated requests return 401', async ({ client }) => {
+  test('should return 401 for unauthenticated requests', async ({ client }) => {
     const response = await client.get('/api/v1/tenants')
 
     response.assertStatus(401)
   })
 
-  test('requests without X-Tenant-ID header use default tenant', async ({ client }) => {
+  test('should use default tenant when X-Tenant-ID header is missing', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await TenantFactory.create()
     await TenantUserFactory.apply('owner')

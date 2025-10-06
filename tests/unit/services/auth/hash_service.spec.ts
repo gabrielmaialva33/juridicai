@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import hash from '@adonisjs/core/services/hash'
 
-test.group('Hash service', () => {
+test.group('Hash Service', () => {
   test('should hash a password', async ({ assert }) => {
     const password = 'password123'
     const hashedPassword = await hash.make(password)

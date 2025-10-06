@@ -6,7 +6,7 @@ import Role from '#models/role'
 
 import IRole from '#interfaces/role_interface'
 
-test.group('Sessions sign in', (group) => {
+test.group('Sessions Sign In', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should sign in with valid credentials', async ({ client, assert }) => {

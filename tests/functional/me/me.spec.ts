@@ -13,7 +13,7 @@ import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 test.group('Me endpoints', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  test('GET /me should return current user profile', async ({ client, assert }) => {
+  test('should return current user profile', async ({ client, assert }) => {
     // Create user with a role
     const user = await User.create({
       full_name: 'Test User',
@@ -44,7 +44,7 @@ test.group('Me endpoints', (group) => {
     assert.equal(response.body().roles[0].name, 'User')
   })
 
-  test('GET /me/permissions should return user permissions', async ({ client, assert }) => {
+  test('should return user permissions', async ({ client, assert }) => {
     // Create user with role
     const user = await User.create({
       full_name: 'Test User',
@@ -100,7 +100,7 @@ test.group('Me endpoints', (group) => {
     assert.isTrue(hasUsersRead)
   })
 
-  test('GET /me/roles should return user roles', async ({ client, assert }) => {
+  test('should return user roles', async ({ client, assert }) => {
     // Create user with multiple roles
     const user = await User.create({
       full_name: 'Test User',

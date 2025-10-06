@@ -16,7 +16,7 @@ import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 
-test.group('Files upload', (group) => {
+test.group('Files Upload', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   group.each.setup(() => {
