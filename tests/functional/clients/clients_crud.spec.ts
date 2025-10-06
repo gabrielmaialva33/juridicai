@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
-import User from '#models/user'
 import Client from '#models/client'
 import { UserFactory } from '#database/factories/user_factory'
 import { ClientFactory } from '#database/factories/client_factory'
@@ -22,7 +21,7 @@ test.group('Clients CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     // Create multiple clients in tenant context
-    const clients = await TenantContextService.run(
+    await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: user.id, tenant_user: null },
       async () => {
         return await ClientFactory.createMany(5)

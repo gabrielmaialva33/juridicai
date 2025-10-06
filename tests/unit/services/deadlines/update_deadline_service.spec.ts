@@ -20,12 +20,12 @@ test.group('UpdateDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
           title: 'Original Title',
         }).create()
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -54,13 +54,13 @@ test.group('UpdateDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
           title: 'Original Title',
           description: 'Original description',
         }).create()
-        return { deadline, originalDescription: deadline.description }
+        return { deadline: createdDeadline, originalDescription: createdDeadline.description }
       }
     )
 
@@ -88,11 +88,11 @@ test.group('UpdateDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
         }).create()
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -109,7 +109,7 @@ test.group('UpdateDeadlineService', (group) => {
       }
     )
 
-    assert.instanceOf(updated.deadline_date, DateTime)
+    assert.ok(updated.deadline_date instanceof DateTime)
     assert.equal(updated.deadline_date.year, 2026)
     assert.equal(updated.deadline_date.month, 6)
     assert.equal(updated.deadline_date.day, 15)
@@ -122,12 +122,12 @@ test.group('UpdateDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
           status: 'pending',
         }).create()
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 

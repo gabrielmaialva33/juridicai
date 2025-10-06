@@ -59,15 +59,15 @@ test.group('GetDocumentService', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const client = await ClientFactory.create()
-        const caseRecord = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
         }).create()
-        const document = await DocumentFactory.merge({
-          case_id: caseRecord.id,
+        const createdDocument = await DocumentFactory.merge({
+          case_id: createdCase.id,
           uploaded_by: user.id,
         }).create()
-        return { caseRecord, document }
+        return { caseRecord: createdCase, document: createdDocument }
       }
     )
 
@@ -90,12 +90,12 @@ test.group('GetDocumentService', (group) => {
     const { client, document } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
-        const document = await DocumentFactory.merge({
-          client_id: client.id,
+        const createdClient = await ClientFactory.create()
+        const createdDocument = await DocumentFactory.merge({
+          client_id: createdClient.id,
           uploaded_by: user.id,
         }).create()
-        return { client, document }
+        return { client: createdClient, document: createdDocument }
       }
     )
 

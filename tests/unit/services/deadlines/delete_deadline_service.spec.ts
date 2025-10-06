@@ -20,12 +20,12 @@ test.group('DeleteDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
           status: 'pending',
         }).create()
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 

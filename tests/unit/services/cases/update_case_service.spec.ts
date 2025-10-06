@@ -199,12 +199,9 @@ test.group('UpdateCaseService', (group) => {
         const updateData = {
           tags: ['novo', 'atualizado'],
           parties: {
-            plaintiffs: [
-              {
-                name: 'Updated Author',
-                role: 'Autor',
-              },
-            ],
+            autor: {
+              name: 'Updated Author',
+            },
           },
         }
 
@@ -213,6 +210,6 @@ test.group('UpdateCaseService', (group) => {
     )
 
     assert.deepEqual(result.tags, ['novo', 'atualizado'])
-    assert.equal(result.parties!.plaintiffs?.[0]?.name, 'Updated Author')
+    assert.equal((result.parties as any).autor?.name, 'Updated Author')
   })
 })

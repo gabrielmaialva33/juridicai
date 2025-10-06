@@ -5,6 +5,7 @@ import { ClientFactory } from '#database/factories/client_factory'
 import { CaseFactory } from '#database/factories/case_factory'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 import TenantContextService from '#services/tenants/tenant_context_service'
+import { TenantUserRole } from '#models/tenant_user'
 
 test.group('Cases CRUD', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -14,7 +15,7 @@ test.group('Cases CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
 
     // Create some cases
     await TenantContextService.run(
@@ -47,7 +48,7 @@ test.group('Cases CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -97,9 +98,9 @@ test.group('Cases CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
 
-    let targetClientId: number
+    let targetClientId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -138,7 +139,7 @@ test.group('Cases CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -180,7 +181,7 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let caseId: number
+    let caseId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -213,7 +214,7 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let caseId: number
+    let caseId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -240,8 +241,8 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let clientId: number
-    let lawyerId: number
+    let clientId!: number
+    let lawyerId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -252,7 +253,7 @@ test.group('Cases CRUD', (group) => {
     )
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
     lawyerId = lawyer.id
 
     const response = await client
@@ -311,7 +312,7 @@ test.group('Cases CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
 
     const response = await client
       .post('/api/v1/cases')
@@ -330,11 +331,11 @@ test.group('Cases CRUD', (group) => {
     response.assertStatus(404)
   })
 
-  test('should update case', async ({ client, assert }) => {
+  test('should update case', async ({ client }) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let caseId: number
+    let caseId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -386,7 +387,7 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let caseId: number
+    let caseId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -449,8 +450,8 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let clientId: number
-    let lawyerId: number
+    let clientId!: number
+    let lawyerId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -461,7 +462,7 @@ test.group('Cases CRUD', (group) => {
     )
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
     lawyerId = lawyer.id
 
     const response = await client
@@ -488,8 +489,8 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let clientId: number
-    let lawyerId: number
+    let clientId!: number
+    let lawyerId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -500,7 +501,7 @@ test.group('Cases CRUD', (group) => {
     )
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
     lawyerId = lawyer.id
 
     const response = await client
@@ -563,8 +564,8 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let clientId: number
-    let lawyerId: number
+    let clientId!: number
+    let lawyerId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
@@ -575,7 +576,7 @@ test.group('Cases CRUD', (group) => {
     )
 
     const lawyer = await UserFactory.create()
-    await setupTenantForUser(lawyer, 'lawyer', tenant)
+    await setupTenantForUser(lawyer, TenantUserRole.LAWYER, tenant)
     lawyerId = lawyer.id
 
     const response = await client
@@ -613,7 +614,7 @@ test.group('Cases CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    let caseId: number
+    let caseId!: number
 
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },

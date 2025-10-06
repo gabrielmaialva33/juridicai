@@ -18,7 +18,7 @@ test.group('Case Events CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
 
     // Create test data within tenant context
-    const { caseModel } = await TenantContextService.run(
+    await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
@@ -29,8 +29,6 @@ test.group('Case Events CRUD', (group) => {
 
         // Create multiple events
         await CaseEventFactory.merge({ case_id: caseModel.id }).createMany(5)
-
-        return { caseModel }
       }
     )
 
@@ -50,11 +48,11 @@ test.group('Case Events CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    const { case1, case2 } = await TenantContextService.run(
+    const { case1 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const case1 = await CaseFactory.merge({
+        const createdCase1 = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
@@ -64,10 +62,10 @@ test.group('Case Events CRUD', (group) => {
         }).create()
 
         // Create events for both cases
-        await CaseEventFactory.merge({ case_id: case1.id }).createMany(3)
+        await CaseEventFactory.merge({ case_id: createdCase1.id }).createMany(3)
         await CaseEventFactory.merge({ case_id: case2.id }).createMany(2)
 
-        return { case1, case2 }
+        return { case1: createdCase1 }
       }
     )
 
@@ -172,14 +170,14 @@ test.group('Case Events CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const event = await CaseEventFactory.merge({
+        const createdEvent = await CaseEventFactory.merge({
           case_id: caseModel.id,
           event_type: 'filing',
           title: 'Processo Distribuído',
           source: 'manual',
         }).create()
 
-        return { event }
+        return { event: createdEvent }
       }
     )
 
@@ -205,18 +203,18 @@ test.group('Case Events CRUD', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        const event = await CaseEventFactory.merge({
-          case_id: caseModel.id,
+        const createdEvent = await CaseEventFactory.merge({
+          case_id: createdCase.id,
           event_type: 'hearing',
           title: 'Audiência de Conciliação',
         }).create()
 
-        return { event, caseModel }
+        return { event: createdEvent, caseModel: createdCase }
       }
     )
 
@@ -259,12 +257,12 @@ test.group('Case Events CRUD', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        return { caseModel }
+        return { caseModel: createdCase }
       }
     )
 
@@ -334,12 +332,12 @@ test.group('Case Events CRUD', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        return { caseModel }
+        return { caseModel: createdCase }
       }
     )
 
@@ -379,7 +377,7 @@ test.group('Case Events CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const event = await CaseEventFactory.merge({
+        const createdEvent = await CaseEventFactory.merge({
           case_id: caseModel.id,
           event_type: 'hearing',
           title: 'Audiência de Conciliação',
@@ -387,7 +385,7 @@ test.group('Case Events CRUD', (group) => {
           source: 'manual',
         }).create()
 
-        return { event }
+        return { event: createdEvent }
       }
     )
 
@@ -431,14 +429,14 @@ test.group('Case Events CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const event = await CaseEventFactory.merge({
+        const createdEvent = await CaseEventFactory.merge({
           case_id: caseModel.id,
           event_type: 'hearing',
           title: 'Audiência',
           metadata: null,
         }).create()
 
-        return { event }
+        return { event: createdEvent }
       }
     )
 
@@ -473,13 +471,13 @@ test.group('Case Events CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const event = await CaseEventFactory.merge({
+        const createdEvent = await CaseEventFactory.merge({
           case_id: caseModel.id,
           event_type: 'other',
           title: 'Evento para Deletar',
         }).create()
 
-        return { event }
+        return { event: createdEvent }
       }
     )
 
@@ -495,10 +493,7 @@ test.group('Case Events CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const deletedEvent = await CaseEvent.query()
-          .where('id', event.id)
-          .withScopes((scopes) => scopes.withoutTenantScope())
-          .first()
+        const deletedEvent = await CaseEvent.withoutTenantScope().where('id', event.id).first()
 
         assert.isNull(deletedEvent)
       }
@@ -543,18 +538,18 @@ test.group('Case Events CRUD', (group) => {
     const { event1 } = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const clientModel = await ClientFactory.create()
         const caseModel = await CaseFactory.merge({
-          client_id: client.id,
+          client_id: clientModel.id,
           responsible_lawyer_id: user1.id,
         }).create()
 
-        const event1 = await CaseEventFactory.merge({
+        const createdEvent1 = await CaseEventFactory.merge({
           case_id: caseModel.id,
           title: 'Evento Tenant 1',
         }).create()
 
-        return { event1 }
+        return { event1: createdEvent1 }
       }
     )
 
@@ -562,9 +557,9 @@ test.group('Case Events CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const clientModel = await ClientFactory.create()
         const caseModel = await CaseFactory.merge({
-          client_id: client.id,
+          client_id: clientModel.id,
           responsible_lawyer_id: user2.id,
         }).create()
 

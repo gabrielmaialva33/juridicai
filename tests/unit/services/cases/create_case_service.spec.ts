@@ -64,7 +64,7 @@ test.group('CreateCaseService', (group) => {
     )
 
     assert.exists(result.filed_at)
-    assert.instanceOf(result.filed_at, DateTime)
+    assert.isTrue(DateTime.isDateTime(result.filed_at))
     assert.equal(result.filed_at!.toISODate(), '2024-01-15')
   })
 
@@ -85,18 +85,12 @@ test.group('CreateCaseService', (group) => {
           court: 'Tribunal de Justiça de São Paulo - TJ-SP',
           tags: ['urgente', 'trabalhista'],
           parties: {
-            plaintiffs: [
-              {
-                name: 'John Doe',
-                role: 'Autor',
-              },
-            ],
-            defendants: [
-              {
-                name: 'Company Inc.',
-                role: 'Réu',
-              },
-            ],
+            autor: {
+              name: 'João Silva',
+            },
+            reu: {
+              name: 'Empresa LTDA',
+            },
           },
         }
 
@@ -107,7 +101,7 @@ test.group('CreateCaseService', (group) => {
     assert.equal(result.court, 'Tribunal de Justiça de São Paulo - TJ-SP')
     assert.deepEqual(result.tags, ['urgente', 'trabalhista'])
     assert.exists(result.parties)
-    assert.equal(result.parties!.plaintiffs?.[0]?.name, 'John Doe')
+    assert.equal((result.parties as any).autor?.name, 'João Silva')
   })
 
   test('should set default status as active', async ({ assert }) => {

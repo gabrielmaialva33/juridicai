@@ -20,21 +20,21 @@ test.group('Deadlines CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    const { caseModel, deadlines } = await TenantContextService.run(
+    const { caseModel } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadlines = await DeadlineFactory.merge({
-          case_id: caseModel.id,
+        await DeadlineFactory.merge({
+          case_id: createdCase.id,
           responsible_id: user.id,
         }).createMany(3)
 
-        return { caseModel, deadlines }
+        return { caseModel: createdCase }
       }
     )
 
@@ -64,12 +64,12 @@ test.group('Deadlines CRUD', (group) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user)
 
-    const { case1, case2 } = await TenantContextService.run(
+    const { case1 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
 
-        const case1 = await CaseFactory.merge({
+        const createdCase1 = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
@@ -81,7 +81,7 @@ test.group('Deadlines CRUD', (group) => {
 
         // Create deadlines for case1
         await DeadlineFactory.merge({
-          case_id: case1.id,
+          case_id: createdCase1.id,
           responsible_id: user.id,
         }).createMany(2)
 
@@ -91,7 +91,7 @@ test.group('Deadlines CRUD', (group) => {
           responsible_id: user.id,
         }).create()
 
-        return { case1, case2 }
+        return { case1: createdCase1 }
       }
     )
 
@@ -320,12 +320,12 @@ test.group('Deadlines CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseModel.id,
           responsible_id: user.id,
         }).create()
 
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -370,12 +370,12 @@ test.group('Deadlines CRUD', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        return { caseModel }
+        return { caseModel: createdCase }
       }
     )
 
@@ -463,14 +463,14 @@ test.group('Deadlines CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseModel.id,
           responsible_id: user.id,
           title: 'Old Title',
           is_fatal: false,
         }).create()
 
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -517,13 +517,13 @@ test.group('Deadlines CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseModel.id,
           responsible_id: user.id,
           status: 'pending',
         }).create()
 
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -558,13 +558,13 @@ test.group('Deadlines CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseModel.id,
           responsible_id: user.id,
           status: 'pending',
         }).create()
 
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -611,12 +611,12 @@ test.group('Deadlines CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseModel.id,
           responsible_id: user.id,
         }).create()
 
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 

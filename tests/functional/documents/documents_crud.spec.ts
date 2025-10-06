@@ -2,12 +2,10 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
 import Role from '#models/role'
-import User from '#models/user'
 import Document from '#models/document'
 
 import IPermission from '#interfaces/permission_interface'
 import IRole from '#interfaces/role_interface'
-import { TenantUserRole } from '#models/tenant_user'
 import { setupTenantForUser } from '#tests/utils/tenant_test_helper'
 import { assignPermissions } from '#tests/utils/permission_test_helper'
 import { UserFactory } from '#database/factories/user_factory'
@@ -40,7 +38,7 @@ test.group('Documents CRUD', (group) => {
     await assignPermissions(userRole, [IPermission.Actions.READ])
 
     // Create test data within tenant context
-    const { clientModel, caseModel, documents } = await TenantContextService.run(
+    const { documents } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
@@ -49,13 +47,13 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const documents = await DocumentFactory.merge({
+        const createdDocuments = await DocumentFactory.merge({
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
         }).createMany(3)
 
-        return { clientModel, caseModel, documents }
+        return { documents: createdDocuments }
       }
     )
 
@@ -93,11 +91,11 @@ test.group('Documents CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
     await assignPermissions(userRole, [IPermission.Actions.READ])
 
-    const { case1, case2, docsForCase1 } = await TenantContextService.run(
+    const { case1 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const case1 = await CaseFactory.merge({
+        const createdCase1 = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
@@ -106,9 +104,9 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const docsForCase1 = await DocumentFactory.merge({
+        await DocumentFactory.merge({
           uploaded_by: user.id,
-          case_id: case1.id,
+          case_id: createdCase1.id,
           client_id: clientModel.id,
         }).createMany(2)
 
@@ -118,7 +116,7 @@ test.group('Documents CRUD', (group) => {
           client_id: clientModel.id,
         }).createMany(2)
 
-        return { case1, case2, docsForCase1 }
+        return { case1: createdCase1 }
       }
     )
 
@@ -151,15 +149,15 @@ test.group('Documents CRUD', (group) => {
     const tenant = await setupTenantForUser(user)
     await assignPermissions(userRole, [IPermission.Actions.READ])
 
-    const { client1, docsForClient1 } = await TenantContextService.run(
+    const { client1 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client1 = await ClientFactory.create()
+        const createdClient1 = await ClientFactory.create()
         const client2 = await ClientFactory.create()
 
-        const docsForClient1 = await DocumentFactory.merge({
+        await DocumentFactory.merge({
           uploaded_by: user.id,
-          client_id: client1.id,
+          client_id: createdClient1.id,
           case_id: null,
         }).createMany(2)
 
@@ -169,7 +167,7 @@ test.group('Documents CRUD', (group) => {
           case_id: null,
         }).createMany(2)
 
-        return { client1, docsForClient1 }
+        return { client1: createdClient1 }
       }
     )
 
@@ -326,13 +324,13 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const document = await DocumentFactory.merge({
+        const createdDocument = await DocumentFactory.merge({
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
         }).create()
 
-        return { document }
+        return { document: createdDocument }
       }
     )
 
@@ -373,18 +371,18 @@ test.group('Documents CRUD', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        const document = await DocumentFactory.merge({
+        const createdDocument = await DocumentFactory.merge({
           uploaded_by: user.id,
-          case_id: caseModel.id,
+          case_id: createdCase.id,
           client_id: clientModel.id,
         }).create()
 
-        return { document, caseModel }
+        return { document: createdDocument, caseModel: createdCase }
       }
     )
 
@@ -453,13 +451,13 @@ test.group('Documents CRUD', (group) => {
     const { clientModel, caseModel } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
-        const caseModel = await CaseFactory.merge({
-          client_id: clientModel.id,
+        const createdClient = await ClientFactory.create()
+        const createdCase = await CaseFactory.merge({
+          client_id: createdClient.id,
           responsible_lawyer_id: user.id,
         }).create()
 
-        return { clientModel, caseModel }
+        return { clientModel: createdClient, caseModel: createdCase }
       }
     )
 
@@ -573,7 +571,7 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const document = await DocumentFactory.merge({
+        const createdDocument = await DocumentFactory.merge({
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
@@ -581,7 +579,7 @@ test.group('Documents CRUD', (group) => {
           description: 'Original description',
         }).create()
 
-        return { document }
+        return { document: createdDocument }
       }
     )
 
@@ -643,13 +641,13 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const document = await DocumentFactory.merge({
+        const createdDocument = await DocumentFactory.merge({
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
         }).create()
 
-        return { document }
+        return { document: createdDocument }
       }
     )
 
@@ -668,9 +666,8 @@ test.group('Documents CRUD', (group) => {
         assert.isNull(deletedDocument)
 
         // Verify not found with model query (bypass tenant scope for verification)
-        const notFoundDocument = await Document.query()
+        const notFoundDocument = await Document.withoutTenantScope()
           .where('id', document.id)
-          .withScopes((scopes) => scopes.withoutTenantScope())
           .first()
         assert.isNull(notFoundDocument)
       }
@@ -705,13 +702,13 @@ test.group('Documents CRUD', (group) => {
           responsible_lawyer_id: user.id,
         }).create()
 
-        const document = await DocumentFactory.merge({
+        const createdDocument = await DocumentFactory.merge({
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
         }).create()
 
-        return { document }
+        return { document: createdDocument }
       }
     )
 

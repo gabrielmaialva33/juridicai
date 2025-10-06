@@ -80,7 +80,7 @@ test.group('UpdateCaseEventService', (group) => {
     )
 
     assert.exists(updated)
-    assert.instanceOf(updated.event_date, DateTime)
+    assert.isTrue(DateTime.isDateTime(updated.event_date))
     assert.equal(updated.event_date.toISODate(), '2025-12-25')
   })
 

@@ -31,12 +31,13 @@ test.group('CreateDeadlineService', (group) => {
       deadline_date: '2025-12-31',
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
     assert.exists(deadline)
     assert.equal(deadline.case_id, caseRecord.id)
@@ -64,14 +65,15 @@ test.group('CreateDeadlineService', (group) => {
       deadline_date: '2025-12-31',
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
-    assert.instanceOf(deadline.deadline_date, DateTime)
+    assert.isTrue(DateTime.isDateTime(deadline.deadline_date))
     assert.equal(deadline.deadline_date.year, 2025)
     assert.equal(deadline.deadline_date.month, 12)
     assert.equal(deadline.deadline_date.day, 31)
@@ -95,12 +97,13 @@ test.group('CreateDeadlineService', (group) => {
       deadline_date: '2025-12-31',
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
     assert.equal(deadline.status, 'pending')
   })
@@ -123,12 +126,13 @@ test.group('CreateDeadlineService', (group) => {
       deadline_date: '2025-12-31',
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
     assert.isFalse(deadline.is_fatal)
   })
@@ -152,18 +156,19 @@ test.group('CreateDeadlineService', (group) => {
       internal_deadline_date: '2025-12-25',
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
     assert.exists(deadline.internal_deadline_date)
-    assert.instanceOf(deadline.internal_deadline_date, DateTime)
-    assert.equal(deadline.internal_deadline_date.year, 2025)
-    assert.equal(deadline.internal_deadline_date.month, 12)
-    assert.equal(deadline.internal_deadline_date.day, 25)
+    assert.isTrue(DateTime.isDateTime(deadline.internal_deadline_date))
+    assert.equal(deadline.internal_deadline_date!.year, 2025)
+    assert.equal(deadline.internal_deadline_date!.month, 12)
+    assert.equal(deadline.internal_deadline_date!.day, 25)
   })
 
   test('should create deadline with alert_config', async ({ assert }) => {
@@ -193,12 +198,13 @@ test.group('CreateDeadlineService', (group) => {
       alert_config: alertConfig,
     }
 
-    const deadline = await TenantContextService.run(
+    const createdDeadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(deadlineData)
       }
     )
+    const deadline = createdDeadline
 
     assert.exists(deadline.alert_config)
     assert.deepEqual(deadline.alert_config, alertConfig)

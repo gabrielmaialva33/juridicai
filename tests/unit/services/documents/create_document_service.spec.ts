@@ -19,17 +19,17 @@ test.group('CreateDocumentService', (group) => {
     const { client, caseRecord, document } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
-        const caseRecord = await CaseFactory.merge({
-          client_id: client.id,
+        const createdClient = await ClientFactory.create()
+        const createdCase = await CaseFactory.merge({
+          client_id: createdClient.id,
           responsible_lawyer_id: user.id,
         }).create()
 
         const service = await app.container.make(CreateDocumentService)
-        const document = await service.run(
+        const createdDocument = await service.run(
           {
-            case_id: caseRecord.id,
-            client_id: client.id,
+            case_id: createdCase.id,
+            client_id: createdClient.id,
             title: 'Test Document',
             document_type: 'petition',
             file_path: '/uploads/test.pdf',
@@ -41,7 +41,7 @@ test.group('CreateDocumentService', (group) => {
           user.id
         )
 
-        return { client, caseRecord, document }
+        return { client: createdClient, caseRecord: createdCase, document: createdDocument }
       }
     )
 

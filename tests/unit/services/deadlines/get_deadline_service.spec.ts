@@ -19,11 +19,11 @@ test.group('GetDeadlineService', (group) => {
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
           responsible_id: user.id,
         }).create()
-        return { deadline }
+        return { deadline: createdDeadline }
       }
     )
 
@@ -60,13 +60,13 @@ test.group('GetDeadlineService', (group) => {
     const { deadline, caseRecord } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
+        const createdCase = await CaseFactory.with('client').with('responsible_lawyer').create()
         const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
-          case_id: caseRecord.id,
+        const createdDeadline = await DeadlineFactory.merge({
+          case_id: createdCase.id,
           responsible_id: user.id,
         }).create()
-        return { deadline, caseRecord }
+        return { deadline: createdDeadline, caseRecord: createdCase }
       }
     )
 
@@ -90,12 +90,12 @@ test.group('GetDeadlineService', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
-        const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
+        const createdUser = await UserFactory.create()
+        const createdDeadline = await DeadlineFactory.merge({
           case_id: caseRecord.id,
-          responsible_id: user.id,
+          responsible_id: createdUser.id,
         }).create()
-        return { deadline, user }
+        return { deadline: createdDeadline, user: createdUser }
       }
     )
 
@@ -118,13 +118,13 @@ test.group('GetDeadlineService', (group) => {
     const { deadline, caseRecord, user } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const caseRecord = await CaseFactory.with('client').with('responsible_lawyer').create()
-        const user = await UserFactory.create()
-        const deadline = await DeadlineFactory.merge({
-          case_id: caseRecord.id,
-          responsible_id: user.id,
+        const createdCase = await CaseFactory.with('client').with('responsible_lawyer').create()
+        const createdUser = await UserFactory.create()
+        const createdDeadline = await DeadlineFactory.merge({
+          case_id: createdCase.id,
+          responsible_id: createdUser.id,
         }).create()
-        return { deadline, caseRecord, user }
+        return { deadline: createdDeadline, caseRecord: createdCase, user: createdUser }
       }
     )
 

@@ -67,15 +67,15 @@ test.group('GetCaseEventService', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         const client = await ClientFactory.create()
-        const caseRecord = await CaseFactory.merge({
+        const createdCase = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
         }).create()
-        const event = await CaseEventFactory.merge({
-          case_id: caseRecord.id,
+        const createdEvent = await CaseEventFactory.merge({
+          case_id: createdCase.id,
           created_by: user.id,
         }).create()
-        return { caseRecord, event }
+        return { caseRecord: createdCase, event: createdEvent }
       }
     )
 
