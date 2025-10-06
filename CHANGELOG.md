@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-10-05
+
+### Added
+
+- Comprehensive query scopes for Case model: search, status filters (active, archived, closed), priority filters (urgent, byPriority), type and court filters, assignment filters (assignedTo, unassigned), client filtering (forClient), deadline-related scopes (withUpcomingDeadlines, requiresAttention), relationship preloading (withRelationships), aggregate counts (withDeadlinesCount, withDocumentsCount), date and value range filters (createdBetween, valueBetween), and ordering scopes (byPriorityOrder, newest, oldest)
+- Comprehensive query scopes for Client model: search by name/CPF/CNPJ/email, type filters (ofType), status filters (active, inactive), case-related filters (withActiveCases, withoutCases, withCases, withCasesCount), location filters (byState, byCity), tag filters (hasTag, hasAnyTag), date filters (createdBetween, createdAfter, createdBefore, recent), and ordering scopes (alphabetical, newest, oldest)
+- Comprehensive query scopes for Tenant model: active status filter, plan filters (byPlan, byPlans), domain search (bySubdomain, byCustomDomain), general search, limits monitoring (withLimits, nearLimits), suspension and trial filters (suspended, notSuspended, inTrial, trialExpired), user-related scopes (withUserCount, withUsers), date filters (createdBetween, createdAfter, createdBefore, recentlyCreated), and ordering scopes (newest, alphabetical)
+- Comprehensive query scopes for User model: search functionality (searchByTerm), tenant scoping (forTenant), relationship preloading (withRoles, withPermissions, withTenants), status filters (active, verified), role filters (byRole, byRoles), permission filter (withPermission), and date filters (recent, createdInLastDays)
+
+### Changed
+
+- Updated documentation formatting in CHANGELOG.md for better readability ([8c679f9](https://github.com/gabrielmaialva33/juridicai/commit/8c679f9))
+- Enhanced guidelines.md formatting for improved readability ([0118822](https://github.com/gabrielmaialva33/juridicai/commit/0118822))
+- Updated README.md with refreshed badges, configuration details, and technology stack ([ac1b5e8](https://github.com/gabrielmaialva33/juridicai/commit/ac1b5e8))
+- Upgraded xlsx dependency to latest version ([a3296cd](https://github.com/gabrielmaialva33/juridicai/commit/a3296cd))
+- Updated license to proprietary ([a3296cd](https://github.com/gabrielmaialva33/juridicai/commit/a3296cd))
+
+### Deprecated
+
+- User model's `includeRoles` method (use `withScopes(s => s.withRoles())` instead)
+
 ## [0.1.0] - 2025-10-05
 
 ### Added
