@@ -6,6 +6,7 @@ import PaginateClientService from '#services/clients/paginate_client_service'
 import GetClientService from '#services/clients/get_client_service'
 import CreateClientService from '#services/clients/create_client_service'
 import UpdateClientService from '#services/clients/update_client_service'
+import DeleteClientService from '#services/clients/delete_client_service'
 
 import { createClientValidator, updateClientValidator } from '#validators/client'
 
@@ -106,8 +107,8 @@ export default class ClientsController {
   async delete({ params, response }: HttpContext) {
     const clientId = +params.id
 
-    const service = await app.container.make(UpdateClientService)
-    await service.run(clientId, { is_active: false })
+    const service = await app.container.make(DeleteClientService)
+    await service.run(clientId)
 
     return response.noContent()
   }

@@ -1,7 +1,12 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
 
 import Document from '#models/document'
+import GetDocumentService from '#services/documents/get_document_service'
+import CreateDocumentService from '#services/documents/create_document_service'
+import UpdateDocumentService from '#services/documents/update_document_service'
+import DeleteDocumentService from '#services/documents/delete_document_service'
 import { createDocumentValidator, updateDocumentValidator } from '#validators/document'
 
 @inject()
@@ -41,7 +46,11 @@ export default class DocumentsController {
    */
   async get({ params, response }: HttpContext) {
     const documentId = +params.id
-    const document = await Document.find(documentId)
+    const service = await app.container.make(GetDocumentService)
+    const document = await service.run(documentId, {
+      withCase: true,
+      withClient: true,
+    })
 
     if (!document) {
       return response.status(404).json({
@@ -49,8 +58,6 @@ export default class DocumentsController {
       })
     }
 
-    await (document as any).load('case')
-    await (document as any).load('client')
     return response.json(document)
   }
 
@@ -59,15 +66,8 @@ export default class DocumentsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createDocumentValidator.validate(request.all())
-
-    const document = await Document.create({
-      ...payload,
-      uploaded_by: auth.user!.id,
-      access_level: payload.access_level || 'tenant',
-      is_ocr_processed: false,
-      is_signed: false,
-      version: 1,
-    })
+    const service = await app.container.make(CreateDocumentService)
+    const document = await service.run(payload, auth.user!.id)
 
     return response.created(document)
   }
@@ -81,16 +81,8 @@ export default class DocumentsController {
       meta: { documentId },
     })
 
-    const document = await Document.find(documentId)
-
-    if (!document) {
-      return response.status(404).json({
-        message: 'Document not found',
-      })
-    }
-
-    document.merge(payload)
-    await document.save()
+    const service = await app.container.make(UpdateDocumentService)
+    const document = await service.run(documentId, payload)
     return response.json(document)
   }
 
@@ -99,16 +91,8 @@ export default class DocumentsController {
    */
   async delete({ params, response }: HttpContext) {
     const documentId = +params.id
-    const document = await Document.find(documentId)
-
-    if (!document) {
-      return response.status(404).json({
-        message: 'Document not found',
-      })
-    }
-
-    // TODO: Implement file deletion from storage provider
-    await document.delete()
+    const service = await app.container.make(DeleteDocumentService)
+    await service.run(documentId)
     return response.noContent()
   }
 

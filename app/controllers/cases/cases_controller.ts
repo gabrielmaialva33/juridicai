@@ -1,11 +1,12 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
-import { DateTime } from 'luxon'
 
 import PaginateCaseService from '#services/cases/paginate_case_service'
-import CasesRepository from '#repositories/cases_repository'
-import Case from '#models/case'
+import GetCaseService from '#services/cases/get_case_service'
+import CreateCaseService from '#services/cases/create_case_service'
+import UpdateCaseService from '#services/cases/update_case_service'
+import DeleteCaseService from '#services/cases/delete_case_service'
 
 import { createCaseValidator, updateCaseValidator } from '#validators/case'
 
@@ -52,10 +53,19 @@ export default class CasesController {
   /**
    * GET /api/v1/cases/:id
    */
-  async get({ params, response }: HttpContext) {
+  async get({ params, request, response }: HttpContext) {
     const caseId = +params.id
-    const casesRepo = await app.container.make(CasesRepository)
-    const caseRecord = await casesRepo.findBy('id', caseId)
+    const withClient = request.input('with_client', false)
+    const withDeadlines = request.input('with_deadlines', false)
+    const withDocuments = request.input('with_documents', false)
+
+    const service = await app.container.make(GetCaseService)
+
+    const caseRecord = await service.run(caseId, {
+      withClient,
+      withDeadlines,
+      withDocuments,
+    })
 
     if (!caseRecord) {
       return response.status(404).json({
@@ -63,7 +73,6 @@ export default class CasesController {
       })
     }
 
-    await (caseRecord as any).load('client')
     return response.json(caseRecord)
   }
 
@@ -73,11 +82,20 @@ export default class CasesController {
   async create({ request, response }: HttpContext) {
     const payload = await createCaseValidator.validate(request.all())
 
-    const caseRecord = await Case.create({
+    const service = await app.container.make(CreateCaseService)
+
+    const caseRecord = await service.run({
       ...payload,
-      filed_at: payload.filed_at ? DateTime.fromJSDate(payload.filed_at) : undefined,
-      closed_at: payload.closed_at ? DateTime.fromJSDate(payload.closed_at) : undefined,
-      parties: payload.parties as any,
+      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
+      case_number: payload.case_number ?? undefined,
+      internal_number: payload.internal_number ?? undefined,
+      court: payload.court ?? undefined,
+      court_instance: payload.court_instance ?? undefined,
+      team_members: payload.team_members ?? undefined,
+      tags: payload.tags ?? undefined,
+      description: payload.description ?? undefined,
+      custom_fields: payload.custom_fields ?? undefined,
+      parties: payload.parties ?? undefined,
     })
     return response.created(caseRecord)
   }
@@ -89,24 +107,22 @@ export default class CasesController {
     const caseId = +params.id
     const payload = await updateCaseValidator.validate(request.all(), { meta: { caseId } })
 
-    const casesRepo = await app.container.make(CasesRepository)
-    const caseRecord = await casesRepo.findBy('id', caseId)
+    const service = await app.container.make(UpdateCaseService)
 
-    if (!caseRecord) {
-      return response.status(404).json({
-        message: 'Case not found',
-      })
-    }
-
-    const updateData = {
+    const caseRecord = await service.run(caseId, {
       ...payload,
-      filed_at: payload.filed_at ? DateTime.fromJSDate(payload.filed_at) : undefined,
-      closed_at: payload.closed_at ? DateTime.fromJSDate(payload.closed_at) : undefined,
-      parties: payload.parties as any,
-    }
-
-    caseRecord.merge(updateData)
-    await caseRecord.save()
+      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
+      closed_at: payload.closed_at ? payload.closed_at.toISOString() : undefined,
+      case_number: payload.case_number ?? undefined,
+      internal_number: payload.internal_number ?? undefined,
+      court: payload.court ?? undefined,
+      court_instance: payload.court_instance ?? undefined,
+      team_members: payload.team_members ?? undefined,
+      tags: payload.tags ?? undefined,
+      description: payload.description ?? undefined,
+      custom_fields: payload.custom_fields ?? undefined,
+      parties: payload.parties ?? undefined,
+    })
     return response.json(caseRecord)
   }
 
@@ -116,17 +132,10 @@ export default class CasesController {
    */
   async delete({ params, response }: HttpContext) {
     const caseId = +params.id
-    const casesRepo = await app.container.make(CasesRepository)
-    const caseRecord = await casesRepo.findBy('id', caseId)
 
-    if (!caseRecord) {
-      return response.status(404).json({
-        message: 'Case not found',
-      })
-    }
+    const service = await app.container.make(DeleteCaseService)
+    await service.run(caseId)
 
-    caseRecord.status = 'archived'
-    await caseRecord.save()
     return response.noContent()
   }
 }

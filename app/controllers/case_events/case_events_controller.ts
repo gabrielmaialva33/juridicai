@@ -1,8 +1,12 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
+import app from '@adonisjs/core/services/app'
 
 import CaseEvent from '#models/case_event'
+import GetCaseEventService from '#services/case_events/get_case_event_service'
+import CreateCaseEventService from '#services/case_events/create_case_event_service'
+import UpdateCaseEventService from '#services/case_events/update_case_event_service'
+import DeleteCaseEventService from '#services/case_events/delete_case_event_service'
 import { createCaseEventValidator, updateCaseEventValidator } from '#validators/case_event'
 
 @inject()
@@ -35,7 +39,8 @@ export default class CaseEventsController {
    */
   async get({ params, response }: HttpContext) {
     const eventId = +params.id
-    const event = await CaseEvent.find(eventId)
+    const service = await app.container.make(GetCaseEventService)
+    const event = await service.run(eventId, { withCase: true })
 
     if (!event) {
       return response.status(404).json({
@@ -43,7 +48,6 @@ export default class CaseEventsController {
       })
     }
 
-    await (event as any).load('case')
     return response.json(event)
   }
 
@@ -52,13 +56,8 @@ export default class CaseEventsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createCaseEventValidator.validate(request.all())
-
-    const event = await CaseEvent.create({
-      ...payload,
-      event_date: DateTime.fromJSDate(payload.event_date),
-      created_by: payload.created_by || auth.user!.id,
-      source: payload.source || 'manual',
-    })
+    const service = await app.container.make(CreateCaseEventService)
+    const event = await service.run(payload, auth.user!.id)
 
     return response.created(event)
   }
@@ -72,21 +71,8 @@ export default class CaseEventsController {
       meta: { eventId },
     })
 
-    const event = await CaseEvent.find(eventId)
-
-    if (!event) {
-      return response.status(404).json({
-        message: 'Case event not found',
-      })
-    }
-
-    const updateData = {
-      ...payload,
-      event_date: payload.event_date ? DateTime.fromJSDate(payload.event_date) : undefined,
-    }
-
-    event.merge(updateData)
-    await event.save()
+    const service = await app.container.make(UpdateCaseEventService)
+    const event = await service.run(eventId, payload)
     return response.json(event)
   }
 
@@ -95,15 +81,8 @@ export default class CaseEventsController {
    */
   async delete({ params, response }: HttpContext) {
     const eventId = +params.id
-    const event = await CaseEvent.find(eventId)
-
-    if (!event) {
-      return response.status(404).json({
-        message: 'Case event not found',
-      })
-    }
-
-    await event.delete()
+    const service = await app.container.make(DeleteCaseEventService)
+    await service.run(eventId)
     return response.noContent()
   }
 }

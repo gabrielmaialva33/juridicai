@@ -1,9 +1,12 @@
-import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 
 import Deadline from '#models/deadline'
-import DeadlinesRepository from '#repositories/deadlines_repository'
+import GetDeadlineService from '#services/deadlines/get_deadline_service'
+import CreateDeadlineService from '#services/deadlines/create_deadline_service'
+import UpdateDeadlineService from '#services/deadlines/update_deadline_service'
+import CompleteDeadlineService from '#services/deadlines/complete_deadline_service'
+import DeleteDeadlineService from '#services/deadlines/delete_deadline_service'
 import {
   createDeadlineValidator,
   updateDeadlineValidator,
@@ -11,7 +14,6 @@ import {
 } from '#validators/deadline'
 import { DateTime } from 'luxon'
 
-@inject()
 export default class DeadlinesController {
   /**
    * GET /api/v1/deadlines
@@ -59,8 +61,8 @@ export default class DeadlinesController {
    */
   async get({ params, response }: HttpContext) {
     const deadlineId = +params.id
-    const deadlinesRepo = await app.container.make(DeadlinesRepository)
-    const deadline = await deadlinesRepo.findBy('id', deadlineId)
+    const service = await app.container.make(GetDeadlineService)
+    const deadline = await service.run(deadlineId, { withCase: true })
 
     if (!deadline) {
       return response.status(404).json({
@@ -68,7 +70,6 @@ export default class DeadlinesController {
       })
     }
 
-    await (deadline as any).load('case')
     return response.json(deadline)
   }
 
@@ -78,14 +79,15 @@ export default class DeadlinesController {
   async create({ request, response }: HttpContext) {
     const payload = await createDeadlineValidator.validate(request.all())
 
-    const deadline = await Deadline.create({
+    const service = await app.container.make(CreateDeadlineService)
+    const deadline = await service.run({
       ...payload,
-      deadline_date: DateTime.fromJSDate(payload.deadline_date),
+      deadline_date: payload.deadline_date.toISOString(),
+      description: payload.description ?? undefined,
       internal_deadline_date: payload.internal_deadline_date
-        ? DateTime.fromJSDate(payload.internal_deadline_date)
+        ? payload.internal_deadline_date.toISOString()
         : undefined,
-      status: payload.status || 'pending',
-      is_fatal: payload.is_fatal ?? false,
+      alert_config: payload.alert_config ?? undefined,
     })
 
     return response.created(deadline)
@@ -100,25 +102,17 @@ export default class DeadlinesController {
       meta: { deadlineId },
     })
 
-    const deadlinesRepo = await app.container.make(DeadlinesRepository)
-    const deadline = await deadlinesRepo.findBy('id', deadlineId)
-
-    if (!deadline) {
-      return response.status(404).json({
-        message: 'Deadline not found',
-      })
-    }
-
-    const updateData = {
+    const service = await app.container.make(UpdateDeadlineService)
+    const deadline = await service.run(deadlineId, {
       ...payload,
-      deadline_date: payload.deadline_date ? DateTime.fromJSDate(payload.deadline_date) : undefined,
+      deadline_date: payload.deadline_date ? payload.deadline_date.toISOString() : undefined,
+      description: payload.description ?? undefined,
       internal_deadline_date: payload.internal_deadline_date
-        ? DateTime.fromJSDate(payload.internal_deadline_date)
+        ? payload.internal_deadline_date.toISOString()
         : undefined,
-    }
+      alert_config: payload.alert_config ?? undefined,
+    })
 
-    deadline.merge(updateData)
-    await deadline.save()
     return response.json(deadline)
   }
 
@@ -129,21 +123,12 @@ export default class DeadlinesController {
     const deadlineId = +params.id
     const payload = await completeDeadlineValidator.validate(request.all())
 
-    const deadlinesRepo = await app.container.make(DeadlinesRepository)
-    const deadline = await deadlinesRepo.findBy('id', deadlineId)
+    const completedBy = payload.completed_by || auth.user!.id
+    const completionNotes = payload.completion_notes ?? undefined
 
-    if (!deadline) {
-      return response.status(404).json({
-        message: 'Deadline not found',
-      })
-    }
+    const service = await app.container.make(CompleteDeadlineService)
+    const deadline = await service.run(deadlineId, completedBy, completionNotes)
 
-    deadline.status = 'completed'
-    deadline.completed_at = DateTime.now()
-    deadline.completed_by = payload.completed_by || auth.user!.id
-    deadline.completion_notes = payload.completion_notes || null
-
-    await deadline.save()
     return response.json(deadline)
   }
 
@@ -152,17 +137,10 @@ export default class DeadlinesController {
    */
   async delete({ params, response }: HttpContext) {
     const deadlineId = +params.id
-    const deadlinesRepo = await app.container.make(DeadlinesRepository)
-    const deadline = await deadlinesRepo.findBy('id', deadlineId)
 
-    if (!deadline) {
-      return response.status(404).json({
-        message: 'Deadline not found',
-      })
-    }
+    const service = await app.container.make(DeleteDeadlineService)
+    await service.run(deadlineId)
 
-    deadline.status = 'cancelled'
-    await deadline.save()
     return response.noContent()
   }
 }

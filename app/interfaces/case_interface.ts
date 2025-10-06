@@ -59,11 +59,11 @@ namespace ICase {
 
   export interface CreatePayload {
     client_id: number
-    case_number?: string
-    internal_number?: string
-    case_type: 'civil' | 'criminal' | 'labor' | 'family' | 'tax' | 'administrative' | 'other'
-    court?: string
-    court_instance?: string
+    case_number?: string | null
+    internal_number?: string | null
+    case_type?: 'civil' | 'criminal' | 'labor' | 'family' | 'tax' | 'administrative' | 'other'
+    court?: string | null
+    court_instance?: string | null
     status?: 'active' | 'closed' | 'archived' | 'suspended'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     responsible_lawyer_id: number
@@ -73,20 +73,20 @@ namespace ICase {
     description?: string
     custom_fields?: Record<string, any> | null
     parties?: {
-      plaintiffs?: Array<{ name: string; role?: string }>
-      defendants?: Array<{ name: string; role?: string }>
-      others?: Array<{ name: string; role?: string }>
+      autor?: { name?: string; cpf?: string; cnpj?: string; email?: string; phone?: string }
+      reu?: { name?: string; cpf?: string; cnpj?: string; email?: string; phone?: string }
+      outros?: Array<{ tipo?: string; name?: string; cpf?: string; cnpj?: string }>
     } | null
-    case_value?: number
+    case_value?: number | null
   }
 
   export interface EditPayload {
     client_id?: number
-    case_number?: string
-    internal_number?: string
+    case_number?: string | null
+    internal_number?: string | null
     case_type?: 'civil' | 'criminal' | 'labor' | 'family' | 'tax' | 'administrative' | 'other'
-    court?: string
-    court_instance?: string
+    court?: string | null
+    court_instance?: string | null
     status?: 'active' | 'closed' | 'archived' | 'suspended'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     responsible_lawyer_id?: number
@@ -97,11 +97,11 @@ namespace ICase {
     description?: string
     custom_fields?: Record<string, any> | null
     parties?: {
-      plaintiffs?: Array<{ name: string; role?: string }>
-      defendants?: Array<{ name: string; role?: string }>
-      others?: Array<{ name: string; role?: string }>
+      autor?: { name?: string; cpf?: string; cnpj?: string; email?: string; phone?: string }
+      reu?: { name?: string; cpf?: string; cnpj?: string; email?: string; phone?: string }
+      outros?: Array<{ tipo?: string; name?: string; cpf?: string; cnpj?: string }>
     } | null
-    case_value?: number
+    case_value?: number | null
   }
 
   export interface FilterPayload {
