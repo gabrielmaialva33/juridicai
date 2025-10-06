@@ -127,14 +127,17 @@ We chose **row-level isolation** (shared database, tenant_id column) over schema
 
 ### Creating Tenant-Scoped Resources
 
-All models extend `TenantAwareModel` for automatic isolation:
+All models use the `withTenantScope` mixin for automatic isolation:
 
 ```typescript
 // app/models/client.ts
-import TenantAwareModel from '#models/tenant_aware_model'
-import { column } from '@adonisjs/lucid/orm'
+import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
-export default class Client extends TenantAwareModel {
+const TenantScoped = withTenantScope()
+
+export default class Client extends compose(BaseModel, TenantScoped) {
   @column({ isPrimary: true })
   declare id: number
 
@@ -210,7 +213,7 @@ test('client belongs to correct tenant', async ({ assert }) => {
 
 ## 🌟 Key Features
 
-- **🏢 Row-Level Multi-Tenancy**: Complete data isolation with automatic query scoping via `TenantAwareModel`.
+- **🏢 Row-Level Multi-Tenancy**: Complete data isolation with automatic query scoping via `withTenantScope` mixin.
 - **⚖️ Brazilian Legal Domain**: CPF/CNPJ validation, CNJ case format (NNNNNNN-DD.AAAA.J.TR.OOOO), court integrations.
 - **🔐 AsyncLocalStorage Context**: Tenant context preserved across async operations, including background jobs.
 - **📊 Smart Factories**: Generate valid Brazilian legal data (CPF with checksum, realistic CNJ numbers).
@@ -587,33 +590,29 @@ Available aliases:
 
 ## 🏗️ Architecture Decisions
 
-### TenantAwareModel Pattern
+### withTenantScope Mixin Pattern
 
-**Decision**: Use `boot()` method with programmatic hooks instead of decorators.
+**Decision**: Use mixin with `compose()` instead of base class inheritance.
 
-**Reason**: Abstract class decorators don't work reliably in TypeScript/AdonisJS.
+**Reason**: Mixins are more flexible, composable, and follow AdonisJS v6 (2025) best practices.
 
 **Implementation**:
 
 ```typescript
-static boot() {
-  if (this.booted) return
-  super.boot()
+import { compose } from '@adonisjs/core/helpers'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
-  // Auto-set tenant_id on create
-  this.before('create', (model) => {
-    if (!model.tenant_id) {
-      model.tenant_id = TenantContextService.assertTenantId()
-    }
-  })
+const TenantScoped = withTenantScope({
+  tenantColumn: 'tenant_id', // Column name (default)
+  strictMode: true, // Throw errors without tenant context
+  autoSetOnCreate: true, // Auto-set tenant_id
+  autoFilter: true, // Auto-filter queries
+})
 
-  // Auto-scope queries
-  this.before('find', (query) => {
-    if (!query._skipTenantScope) {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId) query.where('tenant_id', tenantId)
-    }
-  })
+export default class Client extends compose(BaseModel, TenantScoped) {
+  // Automatic hooks: create, find, fetch, update, delete
+  // Static methods: forTenant(), withoutTenantScope(), currentTenant(), crossTenant()
+  // Scopes: forTenantScope, withoutTenantScopeScope, forTenants, excludeTenants
 }
 ```
 
@@ -682,7 +681,7 @@ Tests are organized into two suites:
 The test suite includes:
 
 - **TenantContextService**: Context isolation, fallback mechanisms, assertions
-- **TenantAwareModel**: Auto-scoping, auto-assignment, bypass operations
+- **withTenantScope mixin**: Auto-scoping, auto-assignment, bypass operations
 - **Multi-tenant isolation**: Data leak prevention, cross-tenant query validation
 - **Legal domain**: Client-Case workflow, Brazilian legal validations
 - **API endpoints**: CRUD operations, authentication, authorization
@@ -831,7 +830,7 @@ CREATE INDEX idx_cases_tenant_status ON cases (tenant_id, status);
 
 ### Security Checklist
 
-- ✅ All models extend `TenantAwareModel`
+- ✅ All models use the `withTenantScope` mixin
 - ✅ All queries automatically scoped
 - ✅ Tenant isolation verified by tests
 - ✅ No raw SQL without tenant_id filter

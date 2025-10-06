@@ -5,7 +5,7 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 import { ClientFactory } from '#database/factories/client_factory'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
-test.group('TenantAwareModel', (group) => {
+test.group('withTenantScope mixin', (group) => {
   group.each.setup(async () => {
     await testUtils.db().truncate()
   })
@@ -13,18 +13,18 @@ test.group('TenantAwareModel', (group) => {
   test('automatically assigns tenant_id on create when context is set', async ({ assert }) => {
     const tenant = await TenantFactory.create()
 
-    const client = await TenantContextService.run(
+    await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({
+        const client = await ClientFactory.merge({
           // Don't set tenant_id manually - should be auto-assigned
           full_name: 'John Doe',
         }).create()
+
+        await client.refresh()
+        assert.equal(client.tenant_id, tenant.id)
       }
     )
-
-    await client.refresh()
-    assert.equal(client.tenant_id, tenant.id)
   })
 
   test('throws error when creating without tenant context', async ({ assert }) => {

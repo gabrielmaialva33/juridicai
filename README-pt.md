@@ -130,14 +130,17 @@ banco-por-tenant por:
 
 ### Criando Recursos com Escopo de Tenant
 
-Todos os models estendem `TenantAwareModel` para isolamento automático:
+Todos os models usam o mixin `withTenantScope` para isolamento automático:
 
 ```typescript
 // app/models/client.ts
-import TenantAwareModel from '#models/tenant_aware_model'
-import { column } from '@adonisjs/lucid/orm'
+import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
-export default class Client extends TenantAwareModel {
+const TenantScoped = withTenantScope()
+
+export default class Client extends compose(BaseModel, TenantScoped) {
   @column({ isPrimary: true })
   declare id: number
 
@@ -213,7 +216,7 @@ test('cliente pertence ao tenant correto', async ({ assert }) => {
 
 ## 🌟 Principais Funcionalidades
 
-- **🏢 Multi-Tenancy por Linha**: Isolamento completo de dados com escopo automático de queries via `TenantAwareModel`.
+- **🏢 Multi-Tenancy por Linha**: Isolamento completo de dados com escopo automático de queries via mixin `withTenantScope`.
 - **⚖️ Domínio Jurídico Brasileiro**: Validação CPF/CNPJ, formato CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO), integrações com
   tribunais.
 - **🔐 Contexto AsyncLocalStorage**: Contexto de tenant preservado em operações assíncronas, incluindo jobs em
@@ -557,7 +560,7 @@ Cada ambiente pode ter seu próprio arquivo `.env`:
 juridicai/
 ├── app/
 │   ├── controllers/        # Controladores HTTP (rotas de API)
-│   ├── models/            # Models do Lucid ORM (todos estendem TenantAwareModel)
+│   ├── models/            # Models do Lucid ORM (todos usam mixin withTenantScope)
 │   ├── services/          # Lógica de negócio e casos de uso
 │   ├── middleware/        # Middleware customizado (auth, tenant, etc.)
 │   ├── validators/        # Schemas de validação VineJS
@@ -642,35 +645,29 @@ sem necessidade de bundler).
 
 ## 🏗️ Decisões Arquiteturais
 
-### Pattern TenantAwareModel
+### Pattern withTenantScope Mixin
 
-**Decisão**: Usar método `boot()` com hooks programáticos em vez de decorators.
+**Decisão**: Usar mixin com `compose()` em vez de herança de classe base.
 
-**Razão**: Decorators de classes abstratas não funcionam de forma confiável no TypeScript/AdonisJS.
+**Razão**: Mixins são mais flexíveis, composable e seguem as melhores práticas do AdonisJS v6 (2025).
 
 **Implementação**:
 
 ```typescript
-static
-boot()
-{
-  if (this.booted) return
-  super.boot()
+import { compose } from '@adonisjs/core/helpers'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
-  // Definir tenant_id automaticamente na criação
-  this.before('create', (model) => {
-    if (!model.tenant_id) {
-      model.tenant_id = TenantContextService.assertTenantId()
-    }
-  })
+const TenantScoped = withTenantScope({
+  tenantColumn: 'tenant_id', // Nome da coluna (default)
+  strictMode: true, // Erros sem contexto de tenant
+  autoSetOnCreate: true, // Auto-definir tenant_id
+  autoFilter: true, // Auto-filtrar queries
+})
 
-  // Escopo automático de queries
-  this.before('find', (query) => {
-    if (!query._skipTenantScope) {
-      const tenantId = TenantContextService.getCurrentTenantId()
-      if (tenantId) query.where('tenant_id', tenantId)
-    }
-  })
+export default class Client extends compose(BaseModel, TenantScoped) {
+  // Hooks automáticos: create, find, fetch, update, delete
+  // Métodos estáticos: forTenant(), withoutTenantScope(), currentTenant(), crossTenant()
+  // Scopes: forTenantScope, withoutTenantScopeScope, forTenants, excludeTenants
 }
 ```
 
@@ -734,7 +731,7 @@ pnpm test:e2e   # Todos os testes
 ### Cobertura de Testes (33 passando)
 
 - **TenantContextService** (10 testes): Isolamento de contexto, fallback, assertions
-- **TenantAwareModel** (7 testes): Auto-escopo, auto-atribuição, bypass
+- **withTenantScope mixin** (7 testes): Auto-escopo, auto-atribuição, bypass
 - **Isolamento multi-tenant** (14 testes): Prevenção de vazamento de dados, queries cross-tenant
 - **Domínio jurídico** (2 testes): Workflow Cliente-Processo
 
@@ -787,7 +784,7 @@ CREATE INDEX idx_cases_tenant_created ON cases (tenant_id, created_at DESC);
 
 Antes de fazer deploy em produção:
 
-- ✅ Todos os models estendem `TenantAwareModel`
+- ✅ Todos os models usam o mixin `withTenantScope`
 - ✅ Todas as queries automaticamente com escopo
 - ✅ Isolamento de tenant verificado por testes
 - ✅ Sem SQL raw sem filtro `tenant_id`

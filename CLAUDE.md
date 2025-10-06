@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-JuridicAI is a multi-tenant SaaS platform for law firm management built with AdonisJS v6. The architecture implements row-level tenant isolation using UUID-based `tenant_id` columns throughout the database, with automatic query scoping via `TenantAwareModel`.
+JuridicAI is a multi-tenant SaaS platform for law firm management built with AdonisJS v6. The architecture implements row-level tenant isolation using UUID-based `tenant_id` columns throughout the database, with automatic query scoping via the `withTenantScope` mixin.
 
 ## Development Commands
 
@@ -66,9 +66,10 @@ The system uses **row-level tenant isolation** with automatic query scoping. Eve
 
 **Key Components:**
 
-- `TenantAwareModel` (app/models/tenant_aware_model.ts): Base class for all tenant-scoped models
+- `withTenantScope` (app/mixins/with_tenant_scope.ts): Mixin that adds tenant isolation to models using compose()
 - `TenantContextService` (app/services/tenants/tenant_context_service.ts): Manages tenant context using AsyncLocalStorage
 - `TenantResolverMiddleware` (app/middleware/tenant_resolver_middleware.ts): Resolves tenant from headers/subdomain
+- `TenantContextException` (app/exceptions/tenant_context_exception.ts): Custom exceptions for tenant-related errors
 
 ### Tenant Context Flow
 
@@ -79,15 +80,20 @@ The system uses **row-level tenant isolation** with automatic query scoping. Eve
 
 2. **Context established** → AsyncLocalStorage maintains tenant context across async operations
 
-3. **Database queries** → All models extending `TenantAwareModel` automatically filter by current tenant
+3. **Database queries** → All models using `withTenantScope` mixin automatically filter by current tenant
 
 ### Creating Tenant-Scoped Models
 
 ```typescript
-// All tenant-scoped models MUST extend TenantAwareModel
-import TenantAwareModel from '#models/tenant_aware_model'
+// All tenant-scoped models MUST use the withTenantScope mixin with compose()
+import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
-export default class Client extends TenantAwareModel {
+// Create the tenant-scoped mixin
+const TenantScoped = withTenantScope()
+
+export default class Client extends compose(BaseModel, TenantScoped) {
   @column({ isPrimary: true })
   declare id: number
 
@@ -97,6 +103,14 @@ export default class Client extends TenantAwareModel {
   @column()
   declare full_name: string
 }
+
+// Advanced usage with custom options:
+const TenantScoped = withTenantScope({
+  tenantColumn: 'organization_id', // Custom column name
+  strictMode: true, // Throw errors without tenant context
+  autoSetOnCreate: true, // Auto-set tenant_id on create
+  autoFilter: true, // Auto-filter queries by tenant
+})
 ```
 
 ### Working Within Tenant Context

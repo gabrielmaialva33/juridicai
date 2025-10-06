@@ -258,7 +258,7 @@ Before committing, ensure:
 
 This project implements a **multi-tenant SaaS architecture** where each tenant (law firm) has complete data isolation:
 
-- **Tenant-aware models**: Extend `TenantAwareModel` for automatic tenant scoping
+- **Tenant-aware models**: Use `withTenantScope` mixin for automatic tenant scoping
 - **Tenant context**: Automatically set via middleware based on authenticated user
 - **Query scoping**: All database queries automatically filtered by tenant
 - **Data isolation**: Prevents data leakage between tenants
@@ -327,7 +327,7 @@ node ace db:seed --files=database/seeders/UserSeeder.ts
 
 Models should follow these conventions:
 
-- Use `TenantAwareModel` for tenant-scoped data
+- Use `withTenantScope` mixin for tenant-scoped data
 - Define relationships using decorators (`@hasMany`, `@belongsTo`, etc.)
 - Use proper TypeScript typing for columns
 - Implement serialization rules for API responses
