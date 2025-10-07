@@ -6,28 +6,17 @@ const CaseEventsController = () => import('#controllers/case_events/case_events_
 
 router
   .group(() => {
-    router
-      .get('/', [CaseEventsController, 'paginate'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('case_events.index')
-    router
-      .post('/', [CaseEventsController, 'create'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('case_events.store')
-    router
-      .get('/:id', [CaseEventsController, 'get'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('case_events.show')
+    router.get('/', [CaseEventsController, 'paginate']).as('case_events.index')
+    router.post('/', [CaseEventsController, 'create']).as('case_events.store')
+    router.get('/:id', [CaseEventsController, 'get']).where('id', /^\d+$/).as('case_events.show')
     router
       .patch('/:id', [CaseEventsController, 'update'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('case_events.update')
     router
       .delete('/:id', [CaseEventsController, 'delete'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('case_events.destroy')
   })
+  .use([middleware.auth(), middleware.tenant(), apiThrottle])
   .prefix('/api/v1/case-events')

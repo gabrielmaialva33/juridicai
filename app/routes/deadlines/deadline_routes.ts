@@ -6,37 +6,22 @@ const DeadlinesController = () => import('#controllers/deadlines/deadlines_contr
 
 router
   .group(() => {
-    router
-      .get('/upcoming', [DeadlinesController, 'upcoming'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('deadlines.upcoming')
-    router
-      .get('/', [DeadlinesController, 'paginate'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('deadlines.index')
-    router
-      .post('/', [DeadlinesController, 'create'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('deadlines.store')
-    router
-      .get('/:id', [DeadlinesController, 'get'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('deadlines.show')
+    router.get('/upcoming', [DeadlinesController, 'upcoming']).as('deadlines.upcoming')
+    router.get('/', [DeadlinesController, 'paginate']).as('deadlines.index')
+    router.post('/', [DeadlinesController, 'create']).as('deadlines.store')
+    router.get('/:id', [DeadlinesController, 'get']).where('id', /^\d+$/).as('deadlines.show')
     router
       .patch('/:id/complete', [DeadlinesController, 'complete'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('deadlines.complete')
     router
       .patch('/:id', [DeadlinesController, 'update'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('deadlines.update')
     router
       .delete('/:id', [DeadlinesController, 'delete'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('deadlines.destroy')
   })
+  .use([middleware.auth(), middleware.tenant(), apiThrottle])
   .prefix('/api/v1/deadlines')

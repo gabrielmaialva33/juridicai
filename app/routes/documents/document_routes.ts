@@ -6,33 +6,21 @@ const DocumentsController = () => import('#controllers/documents/documents_contr
 
 router
   .group(() => {
-    router
-      .get('/', [DocumentsController, 'paginate'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('documents.index')
-    router
-      .post('/', [DocumentsController, 'create'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('documents.store')
+    router.get('/', [DocumentsController, 'paginate']).as('documents.index')
+    router.post('/', [DocumentsController, 'create']).as('documents.store')
     router
       .get('/:id/download', [DocumentsController, 'download'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('documents.download')
-    router
-      .get('/:id', [DocumentsController, 'get'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('documents.show')
+    router.get('/:id', [DocumentsController, 'get']).where('id', /^\d+$/).as('documents.show')
     router
       .patch('/:id', [DocumentsController, 'update'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('documents.update')
     router
       .delete('/:id', [DocumentsController, 'delete'])
       .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
       .as('documents.destroy')
   })
+  .use([middleware.auth(), middleware.tenant(), apiThrottle])
   .prefix('/api/v1/documents')

@@ -6,28 +6,11 @@ const CasesController = () => import('#controllers/cases/cases_controller')
 
 router
   .group(() => {
-    router
-      .get('/', [CasesController, 'paginate'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('cases.index')
-    router
-      .post('/', [CasesController, 'create'])
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('cases.store')
-    router
-      .get('/:id', [CasesController, 'get'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('cases.show')
-    router
-      .patch('/:id', [CasesController, 'update'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('cases.update')
-    router
-      .delete('/:id', [CasesController, 'delete'])
-      .where('id', /^\d+$/)
-      .use([middleware.auth(), middleware.tenant(), apiThrottle])
-      .as('cases.destroy')
+    router.get('/', [CasesController, 'paginate']).as('cases.index')
+    router.post('/', [CasesController, 'create']).as('cases.store')
+    router.get('/:id', [CasesController, 'get']).where('id', /^\d+$/).as('cases.show')
+    router.patch('/:id', [CasesController, 'update']).where('id', /^\d+$/).as('cases.update')
+    router.delete('/:id', [CasesController, 'delete']).where('id', /^\d+$/).as('cases.destroy')
   })
+  .use([middleware.auth(), middleware.tenant(), apiThrottle])
   .prefix('/api/v1/cases')
