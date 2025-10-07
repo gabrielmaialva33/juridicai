@@ -1,72 +1,76 @@
 import vine from '@vinejs/vine'
 
 /**
- * Validator for creating a new client
+ * Conditional schema for individual clients
  */
-export const createClientValidator = vine.compile(
-  vine.object({
-    client_type: vine.enum(['individual', 'company']),
-
-    // Individual person fields (required if client_type === 'individual')
-    full_name: vine.string().trim().minLength(3).maxLength(255).optional(),
+const individualClientSchema = vine.group([
+  vine.group.if((data) => data.client_type === 'individual', {
+    client_type: vine.literal('individual'),
+    full_name: vine.string().trim().minLength(3).maxLength(255),
     cpf: vine
       .string()
       .trim()
-      .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)
-      .optional()
-      .requiredIfExists('full_name'),
-
-    // Company fields (required if client_type === 'company')
-    company_name: vine.string().trim().minLength(3).maxLength(255).optional(),
+      .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/),
+  }),
+  vine.group.else({
+    client_type: vine.literal('company'),
+    company_name: vine.string().trim().minLength(3).maxLength(255),
     cnpj: vine
       .string()
       .trim()
-      .regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)
-      .optional()
-      .requiredIfExists('company_name'),
+      .regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/),
+  }),
+])
 
-    // Common fields
-    email: vine.string().trim().email().maxLength(255).nullable().optional(),
-    phone: vine
-      .string()
-      .trim()
-      .regex(/^[\d\s()+-]+$/)
-      .minLength(8)
-      .maxLength(20)
-      .nullable()
-      .optional(),
+/**
+ * Validator for creating a new client
+ */
+export const createClientValidator = vine.compile(
+  vine
+    .object({
+      // Common fields
+      email: vine.string().trim().email().maxLength(255).nullable().optional(),
+      phone: vine
+        .string()
+        .trim()
+        .regex(/^[\d\s()+-]+$/)
+        .minLength(8)
+        .maxLength(20)
+        .nullable()
+        .optional(),
 
-    // Address (JSONB)
-    address: vine
-      .object({
-        street: vine.string().trim().maxLength(255).optional(),
-        number: vine.string().trim().maxLength(20).optional(),
-        complement: vine.string().trim().maxLength(100).optional(),
-        neighborhood: vine.string().trim().maxLength(100).optional(),
-        city: vine.string().trim().maxLength(100).optional(),
-        state: vine.string().trim().minLength(2).maxLength(2).optional(), // SP, RJ, etc
-        zip_code: vine
-          .string()
-          .trim()
-          .regex(/^\d{5}-\d{3}$/)
-          .optional(), // 00000-000
-        country: vine.string().trim().maxLength(100).optional(),
-      })
-      .nullable()
-      .optional(),
+      // Address (JSONB)
+      address: vine
+        .object({
+          street: vine.string().trim().maxLength(255).optional(),
+          number: vine.string().trim().maxLength(20).optional(),
+          complement: vine.string().trim().maxLength(100).optional(),
+          neighborhood: vine.string().trim().maxLength(100).optional(),
+          city: vine.string().trim().maxLength(100).optional(),
+          state: vine.string().trim().minLength(2).maxLength(2).optional(), // SP, RJ, etc
+          zip_code: vine
+            .string()
+            .trim()
+            .regex(/^\d{5}-\d{3}$/)
+            .optional(), // 00000-000
+          country: vine.string().trim().maxLength(100).optional(),
+        })
+        .nullable()
+        .optional(),
 
-    // Tags (array)
-    tags: vine.array(vine.string().trim().maxLength(50)).nullable().optional(),
+      // Tags (array)
+      tags: vine.array(vine.string().trim().maxLength(50)).nullable().optional(),
 
-    // Status
-    is_active: vine.boolean().optional(),
+      // Status
+      is_active: vine.boolean().optional(),
 
-    // Custom fields (JSONB)
-    custom_fields: vine.record(vine.any()).nullable().optional(),
+      // Custom fields (JSONB)
+      custom_fields: vine.record(vine.any()).nullable().optional(),
 
-    // Internal notes
-    notes: vine.string().trim().maxLength(5000).nullable().optional(),
-  })
+      // Internal notes
+      notes: vine.string().trim().maxLength(5000).nullable().optional(),
+    })
+    .merge(individualClientSchema)
 )
 
 /**

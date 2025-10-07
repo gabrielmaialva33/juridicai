@@ -3,13 +3,17 @@ import { DateTime } from 'luxon'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import IDeadline from '#interfaces/deadline_interface'
 import Deadline from '#models/deadline'
+import DeadlineCacheService from '#services/deadlines/deadline_cache_service'
 
 /**
  * Service for creating new deadlines
  */
 @inject()
 export default class CreateDeadlineService {
-  constructor(private deadlinesRepository: DeadlinesRepository) {}
+  constructor(
+    private deadlinesRepository: DeadlinesRepository,
+    private deadlineCacheService: DeadlineCacheService
+  ) {}
 
   /**
    * Create a new deadline
@@ -32,6 +36,11 @@ export default class CreateDeadlineService {
       is_fatal: payload.is_fatal ?? false,
     }
 
-    return this.deadlinesRepository.create(deadlineData)
+    const deadline = await this.deadlinesRepository.create(deadlineData)
+
+    // Invalidate cache for current tenant
+    await this.deadlineCacheService.invalidateCurrentTenantCache()
+
+    return deadline
   }
 }

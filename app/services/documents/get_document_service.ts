@@ -3,6 +3,7 @@ import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Document from '#models/document'
 import Case from '#models/case'
 import DocumentsRepository from '#repositories/documents_repository'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for retrieving a document by ID with optional relationships
@@ -25,7 +26,8 @@ export default class GetDocumentService {
    * @param options - Options for loading relationships
    * @param options.withCase - Load the case relationship
    * @param options.withClient - Load the client relationship
-   * @returns Promise<Document | null> - The document or null if not found
+   * @returns Promise<Document> - The document instance
+   * @throws {NotFoundException} if document not found
    */
   async run(
     documentId: number,
@@ -33,11 +35,11 @@ export default class GetDocumentService {
       withCase?: boolean
       withClient?: boolean
     } = {}
-  ): Promise<Document | null> {
+  ): Promise<Document> {
     const document = await this.documentsRepository.findBy('id', documentId)
 
     if (!document) {
-      return null
+      throw new NotFoundException('Document not found')
     }
 
     // Load relationships if requested

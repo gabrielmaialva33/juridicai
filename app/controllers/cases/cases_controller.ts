@@ -70,12 +70,6 @@ export default class CasesController {
       withDocuments,
     })
 
-    if (!caseRecord) {
-      return response.status(404).json({
-        message: 'Case not found',
-      })
-    }
-
     return response.json(caseRecord)
   }
 

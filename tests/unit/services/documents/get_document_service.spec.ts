@@ -37,18 +37,18 @@ test.group('GetDocumentService', (group) => {
     assert.equal(result!.title, document.title)
   })
 
-  test('should return null if document not found', async ({ assert }) => {
+  test('should throw NotFoundException if document not found', async ({ assert }) => {
     const tenant = await TenantFactory.create()
-
     const service = await app.container.make(GetDocumentService)
-    const result = await TenantContextService.run(
-      { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
-      async () => {
-        return await service.run(99999)
-      }
-    )
 
-    assert.isNull(result)
+    await assert.rejects(async () => {
+      await TenantContextService.run(
+        { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
+        async () => {
+          return await service.run(99999)
+        }
+      )
+    }, 'Document not found')
   })
 
   test('should load case relationship when withCase=true', async ({ assert }) => {

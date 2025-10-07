@@ -3,6 +3,7 @@ import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import CaseEvent from '#models/case_event'
 import Case from '#models/case'
 import CaseEventsRepository from '#repositories/case_events_repository'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for retrieving a case event by ID with optional relationships
@@ -23,18 +24,19 @@ export default class GetCaseEventService {
    * @param eventId - The ID of the case event to retrieve
    * @param options - Options for loading relationships
    * @param options.withCase - Load the case relationship
-   * @returns Promise<CaseEvent | null> - The case event or null if not found
+   * @returns Promise<CaseEvent> - The case event instance
+   * @throws {NotFoundException} if case event not found
    */
   async run(
     eventId: number,
     options: {
       withCase?: boolean
     } = {}
-  ): Promise<CaseEvent | null> {
+  ): Promise<CaseEvent> {
     const event = await this.caseEventsRepository.findBy('id', eventId)
 
     if (!event) {
-      return null
+      throw new NotFoundException('Case event not found')
     }
 
     // Load relationships if requested

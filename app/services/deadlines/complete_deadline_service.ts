@@ -3,13 +3,17 @@ import { DateTime } from 'luxon'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import Deadline from '#models/deadline'
 import NotFoundException from '#exceptions/not_found_exception'
+import DeadlineCacheService from '#services/deadlines/deadline_cache_service'
 
 /**
  * Service for completing deadlines
  */
 @inject()
 export default class CompleteDeadlineService {
-  constructor(private deadlinesRepository: DeadlinesRepository) {}
+  constructor(
+    private deadlinesRepository: DeadlinesRepository,
+    private deadlineCacheService: DeadlineCacheService
+  ) {}
 
   /**
    * Mark a deadline as completed
@@ -33,6 +37,9 @@ export default class CompleteDeadlineService {
     deadline.completion_notes = completionNotes || null
 
     await deadline.save()
+
+    // Invalidate cache for current tenant
+    await this.deadlineCacheService.invalidateCurrentTenantCache()
 
     return deadline
   }

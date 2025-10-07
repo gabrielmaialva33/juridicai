@@ -30,18 +30,18 @@ test.group('GetCaseService', (group) => {
     assert.equal(result?.tenant_id, tenant.id)
   })
 
-  test('should return null if case not found', async ({ assert }) => {
+  test('should throw NotFoundException if case not found', async ({ assert }) => {
     const tenant = await TenantFactory.create()
 
-    const result = await TenantContextService.run(
-      { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
-      async () => {
-        const service = await app.container.make(GetCaseService)
-        return await service.run(99999)
-      }
-    )
-
-    assert.isNull(result)
+    await assert.rejects(async () => {
+      await TenantContextService.run(
+        { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
+        async () => {
+          const service = await app.container.make(GetCaseService)
+          return await service.run(99999)
+        }
+      )
+    }, 'Case not found')
   })
 
   test('should load client relationship when withClient=true', async ({ assert }) => {

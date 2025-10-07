@@ -45,18 +45,18 @@ test.group('GetCaseEventService', (group) => {
     assert.equal(result!.title, event.title)
   })
 
-  test('should return null if event not found', async ({ assert }) => {
+  test('should throw NotFoundException if event not found', async ({ assert }) => {
     const tenant = await TenantFactory.create()
-
     const service = await app.container.make(GetCaseEventService)
-    const result = await TenantContextService.run(
-      { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
-      async () => {
-        return await service.run(99999)
-      }
-    )
 
-    assert.isNull(result)
+    await assert.rejects(async () => {
+      await TenantContextService.run(
+        { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
+        async () => {
+          return await service.run(99999)
+        }
+      )
+    }, 'Case event not found')
   })
 
   test('should load case relationship when withCase=true', async ({ assert }) => {

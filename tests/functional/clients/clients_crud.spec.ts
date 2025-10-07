@@ -474,8 +474,8 @@ test.group('Clients CRUD', (group) => {
         // Missing full_name and cpf
       })
 
-    // Returns 400 BadRequest because validation happens in service layer
-    response.assertStatus(400)
+    // Returns 422 Unprocessable Entity because validation happens in validator layer
+    response.assertStatus(422)
   })
 
   test('should validate required fields for company client', async ({ client }) => {
@@ -492,8 +492,8 @@ test.group('Clients CRUD', (group) => {
         // Missing company_name and cnpj
       })
 
-    // Returns 400 BadRequest because validation happens in service layer
-    response.assertStatus(400)
+    // Returns 422 Unprocessable Entity because validation happens in validator layer
+    response.assertStatus(422)
   })
 
   test('should validate CPF format', async ({ client }) => {

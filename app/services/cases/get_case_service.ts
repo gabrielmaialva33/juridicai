@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import CasesRepository from '#repositories/cases_repository'
 import Case from '#models/case'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Options for loading case relationships
@@ -28,13 +29,14 @@ export default class GetCaseService {
    *
    * @param caseId - The case ID to retrieve
    * @param options - Options for loading relationships
-   * @returns Case instance or null if not found
+   * @returns Case instance
+   * @throws {NotFoundException} if case not found
    */
-  async run(caseId: number, options: GetCaseOptions = {}): Promise<Case | null> {
+  async run(caseId: number, options: GetCaseOptions = {}): Promise<Case> {
     const caseInstance = await this.casesRepository.findBy('id', caseId)
 
     if (!caseInstance) {
-      return null
+      throw new NotFoundException('Case not found')
     }
 
     // Load relationships if requested

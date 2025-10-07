@@ -15,4 +15,14 @@ export default class RolesRepository
 
     return roles.some((role) => [ROOT, ADMIN].includes(role.slug))
   }
+
+  /**
+   * Verify if all provided role IDs exist
+   * @param roleIds - Array of role IDs to check
+   * @returns true if all roles exist, false otherwise
+   */
+  async allExist(roleIds: number[]): Promise<boolean> {
+    const count = await this.model.query().whereIn('id', roleIds).count('* as total')
+    return Number(count[0].$extras.total) === roleIds.length
+  }
 }

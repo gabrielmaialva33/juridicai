@@ -3,6 +3,7 @@ import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import Deadline from '#models/deadline'
 import Case from '#models/case'
+import NotFoundException from '#exceptions/not_found_exception'
 
 /**
  * Service for retrieving a single deadline
@@ -15,7 +16,8 @@ export default class GetDeadlineService {
    * Get a deadline by ID with optional relationships
    * @param deadlineId - The deadline ID to retrieve
    * @param options - Options for loading relationships
-   * @returns Deadline or null if not found
+   * @returns Deadline instance
+   * @throws {NotFoundException} if deadline not found
    */
   async run(
     deadlineId: number,
@@ -23,11 +25,11 @@ export default class GetDeadlineService {
       withCase?: boolean
       withResponsible?: boolean
     } = {}
-  ): Promise<Deadline | null> {
+  ): Promise<Deadline> {
     const deadline = await this.deadlinesRepository.findBy('id', deadlineId)
 
     if (!deadline) {
-      return null
+      throw new NotFoundException('Deadline not found')
     }
 
     // Load requested relationships

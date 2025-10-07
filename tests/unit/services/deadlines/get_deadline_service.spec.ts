@@ -41,18 +41,18 @@ test.group('GetDeadlineService', (group) => {
     assert.equal(result!.title, deadline.title)
   })
 
-  test('should return null if deadline not found', async ({ assert }) => {
+  test('should throw NotFoundException if deadline not found', async ({ assert }) => {
     const tenant = await TenantFactory.create()
     const service = await app.container.make(GetDeadlineService)
 
-    const result = await TenantContextService.run(
-      { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
-      async () => {
-        return await service.run(99999)
-      }
-    )
-
-    assert.isNull(result)
+    await assert.rejects(async () => {
+      await TenantContextService.run(
+        { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
+        async () => {
+          return await service.run(99999)
+        }
+      )
+    }, 'Deadline not found')
   })
 
   test('should load case relationship when withCase=true', async ({ assert }) => {

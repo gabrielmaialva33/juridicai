@@ -4,13 +4,17 @@ import DeadlinesRepository from '#repositories/deadlines_repository'
 import IDeadline from '#interfaces/deadline_interface'
 import Deadline from '#models/deadline'
 import NotFoundException from '#exceptions/not_found_exception'
+import DeadlineCacheService from '#services/deadlines/deadline_cache_service'
 
 /**
  * Service for updating existing deadlines
  */
 @inject()
 export default class UpdateDeadlineService {
-  constructor(private deadlinesRepository: DeadlinesRepository) {}
+  constructor(
+    private deadlinesRepository: DeadlinesRepository,
+    private deadlineCacheService: DeadlineCacheService
+  ) {}
 
   /**
    * Update a deadline
@@ -45,6 +49,9 @@ export default class UpdateDeadlineService {
 
     deadline.merge(updateData)
     await deadline.save()
+
+    // Invalidate cache for current tenant
+    await this.deadlineCacheService.invalidateCurrentTenantCache()
 
     return deadline
   }

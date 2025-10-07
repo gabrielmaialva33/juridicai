@@ -3,6 +3,7 @@ import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Client from '#models/client'
 import Case from '#models/case'
 import ClientsRepository from '#repositories/clients_repository'
+import NotFoundException from '#exceptions/not_found_exception'
 
 interface GetClientOptions {
   withCases?: boolean
@@ -15,12 +16,13 @@ export default class GetClientService {
 
   /**
    * Get a single client by ID with optional relationships
+   * @throws {NotFoundException} if client not found
    */
-  async run(clientId: number, options: GetClientOptions = {}): Promise<Client | null> {
+  async run(clientId: number, options: GetClientOptions = {}): Promise<Client> {
     const client = await this.clientsRepository.findBy('id', clientId)
 
     if (!client) {
-      return null
+      throw new NotFoundException('Client not found')
     }
 
     // Load relationships if requested

@@ -1,13 +1,17 @@
 import { inject } from '@adonisjs/core'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import NotFoundException from '#exceptions/not_found_exception'
+import DeadlineCacheService from '#services/deadlines/deadline_cache_service'
 
 /**
  * Service for deleting (cancelling) deadlines
  */
 @inject()
 export default class DeleteDeadlineService {
-  constructor(private deadlinesRepository: DeadlinesRepository) {}
+  constructor(
+    private deadlinesRepository: DeadlinesRepository,
+    private deadlineCacheService: DeadlineCacheService
+  ) {}
 
   /**
    * Soft delete a deadline by marking it as cancelled
@@ -24,5 +28,8 @@ export default class DeleteDeadlineService {
     // Soft delete by setting status to cancelled
     deadline.status = 'cancelled'
     await deadline.save()
+
+    // Invalidate cache for current tenant
+    await this.deadlineCacheService.invalidateCurrentTenantCache()
   }
 }

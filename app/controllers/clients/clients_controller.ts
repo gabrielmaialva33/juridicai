@@ -61,12 +61,6 @@ export default class ClientsController {
       withCasesCount: filters.with_cases_count || false,
     })
 
-    if (!client) {
-      return response.status(404).json({
-        message: 'Client not found',
-      })
-    }
-
     return response.json(client)
   }
 
