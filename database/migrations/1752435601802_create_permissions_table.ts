@@ -5,7 +5,7 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
+      table.bigIncrements('id')
 
       table.string('name', 255).notNullable().unique()
       table.string('description', 500).nullable()
@@ -16,8 +16,8 @@ export default class extends BaseSchema {
       table.unique(['resource', 'action'])
       table.index(['resource', 'action', 'context'], 'idx_permissions_resource_action_context')
 
-      table.timestamp('created_at').notNullable().defaultTo(this.now())
-      table.timestamp('updated_at').notNullable().defaultTo(this.now())
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
     })
   }
 

@@ -5,10 +5,10 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
+      table.bigIncrements('id')
 
       table
-        .integer('role_id')
+        .bigInteger('role_id')
         .notNullable()
         .unsigned()
         .references('id')
@@ -16,7 +16,7 @@ export default class extends BaseSchema {
         .onDelete('CASCADE')
 
       table
-        .integer('permission_id')
+        .bigInteger('permission_id')
         .notNullable()
         .unsigned()
         .references('id')
@@ -25,8 +25,8 @@ export default class extends BaseSchema {
 
       table.unique(['role_id', 'permission_id'])
 
-      table.timestamp('created_at').notNullable().defaultTo(this.now())
-      table.timestamp('updated_at').notNullable().defaultTo(this.now())
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
     })
   }
 

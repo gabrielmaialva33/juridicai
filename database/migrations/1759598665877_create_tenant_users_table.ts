@@ -23,8 +23,8 @@ export default class extends BaseSchema {
       table.jsonb('custom_permissions').nullable()
       table.boolean('is_active').notNullable().defaultTo(true)
 
-      table.timestamp('invited_at').nullable()
-      table.timestamp('joined_at').nullable()
+      table.timestamp('invited_at', { useTz: true }).nullable()
+      table.timestamp('joined_at', { useTz: true }).nullable()
 
       table.timestamp('created_at', { useTz: true }).notNullable()
       table.timestamp('updated_at', { useTz: true }).notNullable()

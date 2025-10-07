@@ -1,14 +1,6 @@
-import { Exception } from '@adonisjs/core/exceptions'
-import { HttpContext } from '@adonisjs/core/http'
+import BaseException from '#exceptions/base_exception'
 
-export default class ConflictException extends Exception {
+export default class ConflictException extends BaseException {
   static status = 409
   static code = 'E_CONFLICT'
-
-  async handle(error: this, ctx: HttpContext) {
-    ctx.response.status(error.status).json({
-      message: error.message,
-      code: error.code,
-    })
-  }
 }

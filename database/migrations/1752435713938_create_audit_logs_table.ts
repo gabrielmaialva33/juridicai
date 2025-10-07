@@ -5,10 +5,10 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
+      table.bigIncrements('id')
 
       // User and session info
-      table.integer('user_id').unsigned().nullable()
+      table.bigInteger('user_id').unsigned().nullable()
       table.string('session_id', 100).nullable()
       table.string('ip_address', 45).nullable()
       table.string('user_agent', 500).nullable()
@@ -17,7 +17,7 @@ export default class extends BaseSchema {
       table.string('resource', 100).notNullable()
       table.string('action', 50).notNullable()
       table.string('context', 50).nullable()
-      table.integer('resource_id').unsigned().nullable()
+      table.bigInteger('resource_id').unsigned().nullable()
 
       // Request info
       table.string('method', 10).nullable()
@@ -32,8 +32,8 @@ export default class extends BaseSchema {
       // Additional metadata
       table.json('metadata').nullable()
 
-      table.timestamp('created_at').notNullable().defaultTo(this.now())
-      table.timestamp('updated_at').nullable()
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).nullable()
 
       // Indexes for performance
       table.index(['user_id', 'created_at'], 'idx_audit_logs_user_date')
