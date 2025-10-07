@@ -1,5 +1,5 @@
+import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 import GetDeadlineService from '#services/deadlines/get_deadline_service'
 import PaginateDeadlineService from '#services/deadlines/paginate_deadline_service'
@@ -13,26 +13,32 @@ import {
   completeDeadlineValidator,
 } from '#validators/deadline'
 
+@inject()
 export default class DeadlinesController {
+  constructor(
+    private getDeadlineService: GetDeadlineService,
+    private paginateDeadlineService: PaginateDeadlineService,
+    private createDeadlineService: CreateDeadlineService,
+    private updateDeadlineService: UpdateDeadlineService,
+    private completeDeadlineService: CompleteDeadlineService,
+    private deleteDeadlineService: DeleteDeadlineService
+  ) {}
   /**
    * GET /api/v1/deadlines
    */
   async paginate({ request, response }: HttpContext) {
-    const service = await app.container.make(PaginateDeadlineService)
-
-    // Convert boolean query params correctly
     const isFatalParam = request.input('is_fatal')
     const isFatal = isFatalParam !== undefined ? isFatalParam === 'true' : undefined
 
-    const deadlines = await service.run({
+    const deadlines = await this.paginateDeadlineService.run({
       page: request.input('page', 1),
       perPage: request.input('per_page', 20),
       sortBy: request.input('sort_by', 'deadline_date'),
       direction: request.input('order', 'asc'),
-      caseId: request.input('case_id', undefined),
-      status: request.input('status', undefined),
+      caseId: request.input('case_id'),
+      status: request.input('status'),
       isFatal,
-      responsibleId: request.input('responsible_id', undefined),
+      responsibleId: request.input('responsible_id'),
     })
 
     return response.json(deadlines)
@@ -42,10 +48,8 @@ export default class DeadlinesController {
    * GET /api/v1/deadlines/upcoming
    */
   async upcoming({ request, response }: HttpContext) {
-    const service = await app.container.make(PaginateDeadlineService)
-
     const days = request.input('days', 7)
-    const deadlines = await service.getUpcoming(days)
+    const deadlines = await this.paginateDeadlineService.getUpcoming(days)
 
     return response.json(deadlines)
   }
@@ -55,8 +59,7 @@ export default class DeadlinesController {
    */
   async get({ params, response }: HttpContext) {
     const deadlineId = +params.id
-    const service = await app.container.make(GetDeadlineService)
-    const deadline = await service.run(deadlineId, { withCase: true })
+    const deadline = await this.getDeadlineService.run(deadlineId, { withCase: true })
 
     if (!deadline) {
       return response.status(404).json({
@@ -73,15 +76,14 @@ export default class DeadlinesController {
   async create({ request, response }: HttpContext) {
     const payload = await createDeadlineValidator.validate(request.all())
 
-    const service = await app.container.make(CreateDeadlineService)
-    const deadline = await service.run({
+    const deadline = await this.createDeadlineService.run({
       ...payload,
-      deadline_date: payload.deadline_date.toISOString(),
       description: payload.description ?? undefined,
+      alert_config: payload.alert_config ?? undefined,
+      deadline_date: payload.deadline_date.toISOString(),
       internal_deadline_date: payload.internal_deadline_date
         ? payload.internal_deadline_date.toISOString()
         : undefined,
-      alert_config: payload.alert_config ?? undefined,
     })
 
     return response.created(deadline)
@@ -96,15 +98,14 @@ export default class DeadlinesController {
       meta: { deadlineId },
     })
 
-    const service = await app.container.make(UpdateDeadlineService)
-    const deadline = await service.run(deadlineId, {
+    const deadline = await this.updateDeadlineService.run(deadlineId, {
       ...payload,
-      deadline_date: payload.deadline_date ? payload.deadline_date.toISOString() : undefined,
       description: payload.description ?? undefined,
+      alert_config: payload.alert_config ?? undefined,
+      deadline_date: payload.deadline_date ? payload.deadline_date.toISOString() : undefined,
       internal_deadline_date: payload.internal_deadline_date
         ? payload.internal_deadline_date.toISOString()
         : undefined,
-      alert_config: payload.alert_config ?? undefined,
     })
 
     return response.json(deadline)
@@ -120,8 +121,11 @@ export default class DeadlinesController {
     const completedBy = payload.completed_by || auth.user!.id
     const completionNotes = payload.completion_notes ?? undefined
 
-    const service = await app.container.make(CompleteDeadlineService)
-    const deadline = await service.run(deadlineId, completedBy, completionNotes)
+    const deadline = await this.completeDeadlineService.run(
+      deadlineId,
+      completedBy,
+      completionNotes
+    )
 
     return response.json(deadline)
   }
@@ -131,9 +135,7 @@ export default class DeadlinesController {
    */
   async delete({ params, response }: HttpContext) {
     const deadlineId = +params.id
-
-    const service = await app.container.make(DeleteDeadlineService)
-    await service.run(deadlineId)
+    await this.deleteDeadlineService.run(deadlineId)
 
     return response.noContent()
   }

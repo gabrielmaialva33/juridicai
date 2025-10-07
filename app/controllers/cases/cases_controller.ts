@@ -1,6 +1,5 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 import PaginateCaseService from '#services/cases/paginate_case_service'
 import GetCaseService from '#services/cases/get_case_service'
@@ -12,6 +11,13 @@ import { createCaseValidator, updateCaseValidator } from '#validators/case'
 
 @inject()
 export default class CasesController {
+  constructor(
+    private paginateCaseService: PaginateCaseService,
+    private getCaseService: GetCaseService,
+    private createCaseService: CreateCaseService,
+    private updateCaseService: UpdateCaseService,
+    private deleteCaseService: DeleteCaseService
+  ) {}
   /**
    * GET /api/v1/cases
    */
@@ -20,27 +26,17 @@ export default class CasesController {
     const perPage = request.input('per_page', 20)
     const sortBy = request.input('sort_by', 'created_at')
     const direction = request.input('order', 'desc')
-    const search = request.input('search', undefined)
-    const clientId = request.input('client_id', undefined)
-    const status = request.input('status', undefined)
-    const priority = request.input('priority', undefined)
-    const caseType = request.input('case_type', undefined)
-    const responsibleLawyerId = request.input('responsible_lawyer_id', undefined)
+    const search = request.input('search')
+    const clientId = request.input('client_id')
+    const status = request.input('status')
+    const priority = request.input('priority')
+    const caseType = request.input('case_type')
+    const responsibleLawyerId = request.input('responsible_lawyer_id')
+    const withRelationships = request.input('with_relationships') === 'true'
+    const withDeadlinesCount = request.input('with_deadlines_count') === 'true'
+    const withDocumentsCount = request.input('with_documents_count') === 'true'
 
-    // Convert boolean query params correctly
-    const withRelationshipsParam = request.input('with_relationships')
-    const withRelationships = withRelationshipsParam === 'true' || withRelationshipsParam === true
-
-    const withDeadlinesCountParam = request.input('with_deadlines_count')
-    const withDeadlinesCount =
-      withDeadlinesCountParam === 'true' || withDeadlinesCountParam === true
-
-    const withDocumentsCountParam = request.input('with_documents_count')
-    const withDocumentsCount =
-      withDocumentsCountParam === 'true' || withDocumentsCountParam === true
-
-    const service = await app.container.make(PaginateCaseService)
-    const cases = await service.run({
+    const cases = await this.paginateCaseService.run({
       page,
       perPage,
       sortBy,
@@ -64,20 +60,11 @@ export default class CasesController {
    */
   async get({ params, request, response }: HttpContext) {
     const caseId = +params.id
+    const withClient = request.input('with_client') === 'true'
+    const withDeadlines = request.input('with_deadlines') === 'true'
+    const withDocuments = request.input('with_documents') === 'true'
 
-    // Convert boolean query params correctly
-    const withClientParam = request.input('with_client')
-    const withClient = withClientParam === 'true' || withClientParam === true
-
-    const withDeadlinesParam = request.input('with_deadlines')
-    const withDeadlines = withDeadlinesParam === 'true' || withDeadlinesParam === true
-
-    const withDocumentsParam = request.input('with_documents')
-    const withDocuments = withDocumentsParam === 'true' || withDocumentsParam === true
-
-    const service = await app.container.make(GetCaseService)
-
-    const caseRecord = await service.run(caseId, {
+    const caseRecord = await this.getCaseService.run(caseId, {
       withClient,
       withDeadlines,
       withDocuments,
@@ -98,21 +85,18 @@ export default class CasesController {
   async create({ request, response }: HttpContext) {
     const payload = await createCaseValidator.validate(request.all())
 
-    const service = await app.container.make(CreateCaseService)
-
-    const caseRecord = await service.run({
+    const caseRecord = await this.createCaseService.run({
       ...payload,
-      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
-      case_number: payload.case_number ?? undefined,
-      internal_number: payload.internal_number ?? undefined,
+      description: payload.description ?? undefined,
       court: payload.court ?? undefined,
       court_instance: payload.court_instance ?? undefined,
-      team_members: payload.team_members ?? undefined,
       tags: payload.tags ?? undefined,
-      description: payload.description ?? undefined,
-      custom_fields: payload.custom_fields ?? undefined,
       parties: payload.parties ?? undefined,
+      team_members: payload.team_members ?? undefined,
+      custom_fields: payload.custom_fields ?? undefined,
+      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
     })
+
     return response.created(caseRecord)
   }
 
@@ -123,22 +107,19 @@ export default class CasesController {
     const caseId = +params.id
     const payload = await updateCaseValidator.validate(request.all(), { meta: { caseId } })
 
-    const service = await app.container.make(UpdateCaseService)
-
-    const caseRecord = await service.run(caseId, {
+    const caseRecord = await this.updateCaseService.run(caseId, {
       ...payload,
-      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
-      closed_at: payload.closed_at ? payload.closed_at.toISOString() : undefined,
-      case_number: payload.case_number ?? undefined,
-      internal_number: payload.internal_number ?? undefined,
+      description: payload.description ?? undefined,
       court: payload.court ?? undefined,
       court_instance: payload.court_instance ?? undefined,
-      team_members: payload.team_members ?? undefined,
       tags: payload.tags ?? undefined,
-      description: payload.description ?? undefined,
-      custom_fields: payload.custom_fields ?? undefined,
       parties: payload.parties ?? undefined,
+      team_members: payload.team_members ?? undefined,
+      custom_fields: payload.custom_fields ?? undefined,
+      filed_at: payload.filed_at ? payload.filed_at.toISOString() : undefined,
+      closed_at: payload.closed_at ? payload.closed_at.toISOString() : undefined,
     })
+
     return response.json(caseRecord)
   }
 
@@ -148,9 +129,7 @@ export default class CasesController {
    */
   async delete({ params, response }: HttpContext) {
     const caseId = +params.id
-
-    const service = await app.container.make(DeleteCaseService)
-    await service.run(caseId)
+    await this.deleteCaseService.run(caseId)
 
     return response.noContent()
   }

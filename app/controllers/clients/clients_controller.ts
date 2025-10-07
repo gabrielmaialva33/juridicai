@@ -1,6 +1,5 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 import PaginateClientService from '#services/clients/paginate_client_service'
 import GetClientService from '#services/clients/get_client_service'
@@ -8,50 +7,42 @@ import CreateClientService from '#services/clients/create_client_service'
 import UpdateClientService from '#services/clients/update_client_service'
 import DeleteClientService from '#services/clients/delete_client_service'
 
-import { createClientValidator, updateClientValidator } from '#validators/client'
+import {
+  createClientValidator,
+  updateClientValidator,
+  clientFilterValidator,
+} from '#validators/client'
 
 @inject()
 export default class ClientsController {
+  constructor(
+    private paginateClientService: PaginateClientService,
+    private getClientService: GetClientService,
+    private createClientService: CreateClientService,
+    private updateClientService: UpdateClientService,
+    private deleteClientService: DeleteClientService
+  ) {}
+
   /**
    * GET /api/v1/clients
    * List clients with pagination and filters
    */
   async paginate({ request, response }: HttpContext) {
-    const page = request.input('page', 1)
-    const perPage = request.input('per_page', 20)
-    const sortBy = request.input('sort_by', 'created_at')
-    const direction = request.input('order', 'desc')
-    const search = request.input('search', undefined)
-    const clientType = request.input('client_type', undefined)
+    const filters = await clientFilterValidator.validate(request.qs())
 
-    // Convert boolean query params correctly (query strings are always strings)
-    const isActiveParam = request.input('is_active')
-    const isActive = isActiveParam !== undefined ? isActiveParam === 'true' : undefined
-
-    const state = request.input('state', undefined)
-    const city = request.input('city', undefined)
-    const tags = request.input('tags', undefined)
-
-    const withCasesParam = request.input('with_cases')
-    const withCases = withCasesParam === 'true' || withCasesParam === true
-
-    const withCasesCountParam = request.input('with_cases_count')
-    const withCasesCount = withCasesCountParam === 'true' || withCasesCountParam === true
-
-    const service = await app.container.make(PaginateClientService)
-    const clients = await service.run({
-      page,
-      perPage,
-      sortBy,
-      direction,
-      search,
-      clientType,
-      isActive,
-      state,
-      city,
-      tags,
-      withCases,
-      withCasesCount,
+    const clients = await this.paginateClientService.run({
+      page: filters.page || 1,
+      perPage: filters.per_page || 20,
+      sortBy: 'created_at',
+      direction: 'desc',
+      search: filters.search,
+      clientType: filters.client_type,
+      isActive: filters.is_active,
+      state: filters.state,
+      city: filters.city,
+      tags: filters.tags,
+      withCases: filters.with_cases || false,
+      withCasesCount: filters.with_cases_count || false,
     })
 
     return response.json(clients)
@@ -63,18 +54,11 @@ export default class ClientsController {
    */
   async get({ params, request, response }: HttpContext) {
     const clientId = +params.id
+    const filters = await clientFilterValidator.validate(request.qs())
 
-    // Convert boolean query params correctly
-    const withCasesParam = request.input('with_cases')
-    const withCases = withCasesParam === 'true' || withCasesParam === true
-
-    const withCasesCountParam = request.input('with_cases_count')
-    const withCasesCount = withCasesCountParam === 'true' || withCasesCountParam === true
-
-    const service = await app.container.make(GetClientService)
-    const client = await service.run(clientId, {
-      withCases,
-      withCasesCount,
+    const client = await this.getClientService.run(clientId, {
+      withCases: filters.with_cases || false,
+      withCasesCount: filters.with_cases_count || false,
     })
 
     if (!client) {
@@ -92,9 +76,7 @@ export default class ClientsController {
    */
   async create({ request, response }: HttpContext) {
     const payload = await createClientValidator.validate(request.all())
-
-    const service = await app.container.make(CreateClientService)
-    const client = await service.run(payload)
+    const client = await this.createClientService.run(payload)
 
     return response.created(client)
   }
@@ -106,9 +88,7 @@ export default class ClientsController {
   async update({ params, request, response }: HttpContext) {
     const clientId = +params.id
     const payload = await updateClientValidator.validate(request.all(), { meta: { clientId } })
-
-    const service = await app.container.make(UpdateClientService)
-    const client = await service.run(clientId, payload)
+    const client = await this.updateClientService.run(clientId, payload)
 
     return response.json(client)
   }
@@ -119,9 +99,7 @@ export default class ClientsController {
    */
   async delete({ params, response }: HttpContext) {
     const clientId = +params.id
-
-    const service = await app.container.make(DeleteClientService)
-    await service.run(clientId)
+    await this.deleteClientService.run(clientId)
 
     return response.noContent()
   }

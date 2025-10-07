@@ -1,6 +1,5 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 import GetCaseEventService from '#services/case_events/get_case_event_service'
 import PaginateCaseEventService from '#services/case_events/paginate_case_event_service'
@@ -11,13 +10,18 @@ import { createCaseEventValidator, updateCaseEventValidator } from '#validators/
 
 @inject()
 export default class CaseEventsController {
+  constructor(
+    private getCaseEventService: GetCaseEventService,
+    private paginateCaseEventService: PaginateCaseEventService,
+    private createCaseEventService: CreateCaseEventService,
+    private updateCaseEventService: UpdateCaseEventService,
+    private deleteCaseEventService: DeleteCaseEventService
+  ) {}
   /**
    * GET /api/v1/case-events
    */
   async paginate({ request, response }: HttpContext) {
-    const service = await app.container.make(PaginateCaseEventService)
-
-    const events = await service.run({
+    const events = await this.paginateCaseEventService.run({
       page: request.input('page', 1),
       perPage: request.input('per_page', 20),
       sortBy: request.input('sort_by', 'event_date'),
@@ -35,8 +39,7 @@ export default class CaseEventsController {
    */
   async get({ params, response }: HttpContext) {
     const eventId = +params.id
-    const service = await app.container.make(GetCaseEventService)
-    const event = await service.run(eventId, { withCase: true })
+    const event = await this.getCaseEventService.run(eventId, { withCase: true })
 
     if (!event) {
       return response.status(404).json({
@@ -52,8 +55,7 @@ export default class CaseEventsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createCaseEventValidator.validate(request.all())
-    const service = await app.container.make(CreateCaseEventService)
-    const event = await service.run(payload, auth.user!.id)
+    const event = await this.createCaseEventService.run(payload, auth.user!.id)
 
     return response.created(event)
   }
@@ -67,8 +69,7 @@ export default class CaseEventsController {
       meta: { eventId },
     })
 
-    const service = await app.container.make(UpdateCaseEventService)
-    const event = await service.run(eventId, payload)
+    const event = await this.updateCaseEventService.run(eventId, payload)
     return response.json(event)
   }
 
@@ -77,8 +78,7 @@ export default class CaseEventsController {
    */
   async delete({ params, response }: HttpContext) {
     const eventId = +params.id
-    const service = await app.container.make(DeleteCaseEventService)
-    await service.run(eventId)
+    await this.deleteCaseEventService.run(eventId)
     return response.noContent()
   }
 }

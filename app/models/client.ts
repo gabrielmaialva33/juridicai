@@ -1,5 +1,12 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  column,
+  hasMany,
+  scope,
+  computed,
+  SnakeCaseNamingStrategy,
+} from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
@@ -302,15 +309,26 @@ export default class Client extends compose(BaseModel, TenantScoped) {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Computed Properties
    * ------------------------------------------------------
    */
+
+  /**
+   * Returns the display name based on client type
+   * For individual clients, returns full_name; for companies, returns company_name
+   */
+  @computed()
   get display_name(): string {
     return this.client_type === 'individual'
       ? this.full_name || 'No name'
       : this.company_name || 'No company name'
   }
 
+  /**
+   * Returns the tax ID based on client type
+   * For individual clients, returns CPF; for companies, returns CNPJ
+   */
+  @computed()
   get tax_id(): string | null {
     return this.client_type === 'individual' ? this.cpf : this.cnpj
   }

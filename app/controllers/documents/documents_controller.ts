@@ -1,6 +1,5 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 import GetDocumentService from '#services/documents/get_document_service'
 import PaginateDocumentService from '#services/documents/paginate_document_service'
@@ -12,13 +11,19 @@ import { createDocumentValidator, updateDocumentValidator } from '#validators/do
 
 @inject()
 export default class DocumentsController {
+  constructor(
+    private getDocumentService: GetDocumentService,
+    private paginateDocumentService: PaginateDocumentService,
+    private createDocumentService: CreateDocumentService,
+    private updateDocumentService: UpdateDocumentService,
+    private deleteDocumentService: DeleteDocumentService,
+    private downloadDocumentService: DownloadDocumentService
+  ) {}
   /**
    * GET /api/v1/documents
    */
   async paginate({ request, response }: HttpContext) {
-    const service = await app.container.make(PaginateDocumentService)
-
-    const documents = await service.run({
+    const documents = await this.paginateDocumentService.run({
       page: request.input('page', 1),
       perPage: request.input('per_page', 20),
       sortBy: request.input('sort_by', 'created_at'),
@@ -37,8 +42,7 @@ export default class DocumentsController {
    */
   async get({ params, response }: HttpContext) {
     const documentId = +params.id
-    const service = await app.container.make(GetDocumentService)
-    const document = await service.run(documentId, {
+    const document = await this.getDocumentService.run(documentId, {
       withCase: true,
       withClient: true,
     })
@@ -57,8 +61,7 @@ export default class DocumentsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createDocumentValidator.validate(request.all())
-    const service = await app.container.make(CreateDocumentService)
-    const document = await service.run(payload, auth.user!.id)
+    const document = await this.createDocumentService.run(payload, auth.user!.id)
 
     return response.created(document)
   }
@@ -72,8 +75,7 @@ export default class DocumentsController {
       meta: { documentId },
     })
 
-    const service = await app.container.make(UpdateDocumentService)
-    const document = await service.run(documentId, payload)
+    const document = await this.updateDocumentService.run(documentId, payload)
     return response.json(document)
   }
 
@@ -82,8 +84,7 @@ export default class DocumentsController {
    */
   async delete({ params, response }: HttpContext) {
     const documentId = +params.id
-    const service = await app.container.make(DeleteDocumentService)
-    await service.run(documentId)
+    await this.deleteDocumentService.run(documentId)
     return response.noContent()
   }
 
@@ -96,7 +97,6 @@ export default class DocumentsController {
    */
   async download({ params, request, response }: HttpContext) {
     const documentId = +params.id
-    const service = await app.container.make(DownloadDocumentService)
 
     // Check if client wants a signed URL or direct stream
     const urlOnly = request.input('url_only', 'false') === 'true'
@@ -104,7 +104,7 @@ export default class DocumentsController {
     if (urlOnly) {
       // Return signed URL for client-side download
       const expiresIn = request.input('expires_in', 3600)
-      const url = await service.getSignedUrl(documentId, expiresIn)
+      const url = await this.downloadDocumentService.getSignedUrl(documentId, expiresIn)
 
       return response.json({
         url,
@@ -113,7 +113,7 @@ export default class DocumentsController {
     }
 
     // Stream file directly (best for local storage)
-    const { document, stream } = await service.stream(documentId)
+    const { document, stream } = await this.downloadDocumentService.stream(documentId)
 
     response.header('Content-Type', document.mime_type)
     response.header('Content-Disposition', `attachment; filename="${document.original_filename}"`)
