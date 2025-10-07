@@ -2119,8 +2119,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.5.231:
-    resolution: {integrity: sha512-cyl6vqZGkEBnz/PmvFHn/u9G/hbo+FF2CNAOXriG87QOeLsUdifCZ9UbHNscE9wGdrC8XstNMli0CbQnZQ+fkA==}
+  electron-to-chromium@1.5.232:
+    resolution: {integrity: sha512-ENirSe7wf8WzyPCibqKUG1Cg43cPaxH4wRR7AJsX7MCABCHBIOFqvaYODSLKUuZdraxUTHRE/0A2Aq8BYKEHOg==}
 
   emittery@1.2.0:
     resolution: {integrity: sha512-KxdRyyFcS85pH3dnU8Y5yFUm2YJdaHwcBZWrfG8o89ZY9a13/f9itbN+YG3ELbBo9Pg5zvIozstmuV8bX13q6g==}
@@ -6511,7 +6511,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.8.12
       caniuse-lite: 1.0.30001748
-      electron-to-chromium: 1.5.231
+      electron-to-chromium: 1.5.232
       node-releases: 2.0.23
       update-browserslist-db: 1.1.3(browserslist@4.26.3)
 
@@ -6889,7 +6889,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.5.231: {}
+  electron-to-chromium@1.5.232: {}
 
   emittery@1.2.0: {}
 
