@@ -1,5 +1,5 @@
+import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 import ListPermissionsService from '#services/permissions/list_permissions_service'
 import {
   createPermissionValidator,
@@ -11,7 +11,15 @@ import SyncRolePermissionsService from '#services/permissions/sync_role_permissi
 import SyncUserPermissionsService from '#services/permissions/sync_user_permissions_service'
 import CheckUserPermissionService from '#services/permissions/check_user_permission_service'
 
+@inject()
 export default class PermissionsController {
+  constructor(
+    private listPermissionsService: ListPermissionsService,
+    private createPermissionService: CreatePermissionService,
+    private syncRolePermissionsService: SyncRolePermissionsService,
+    private syncUserPermissionsService: SyncUserPermissionsService,
+    private checkUserPermissionService: CheckUserPermissionService
+  ) {}
   /**
    * List all permissions with pagination
    */
@@ -21,8 +29,7 @@ export default class PermissionsController {
     const resource = request.input('resource', undefined)
     const action = request.input('action', undefined)
 
-    const service = await app.container.make(ListPermissionsService)
-    const result = await service.run(page, perPage, resource, action)
+    const result = await this.listPermissionsService.run(page, perPage, resource, action)
 
     return response.json(result)
   }
@@ -33,8 +40,7 @@ export default class PermissionsController {
   async create({ request, response }: HttpContext) {
     const data = await request.validateUsing(createPermissionValidator)
 
-    const service = await app.container.make(CreatePermissionService)
-    const permission = await service.run(data)
+    const permission = await this.createPermissionService.run(data)
 
     return response.created(permission)
   }
@@ -47,8 +53,7 @@ export default class PermissionsController {
       syncRolePermissionsValidator
     )
 
-    const service = await app.container.make(SyncRolePermissionsService)
-    await service.run(roleId, permissionIds)
+    await this.syncRolePermissionsService.run(roleId, permissionIds)
 
     return response.json({ message: 'Permissions synced successfully' })
   }
@@ -61,8 +66,7 @@ export default class PermissionsController {
       syncRolePermissionsValidator
     )
 
-    const service = await app.container.make(SyncRolePermissionsService)
-    await service.attachPermissions(roleId, permissionIds)
+    await this.syncRolePermissionsService.attachPermissions(roleId, permissionIds)
 
     return response.json({ message: 'Permissions attached successfully' })
   }
@@ -75,8 +79,7 @@ export default class PermissionsController {
       syncRolePermissionsValidator
     )
 
-    const service = await app.container.make(SyncRolePermissionsService)
-    await service.detachPermissions(roleId, permissionIds)
+    await this.syncRolePermissionsService.detachPermissions(roleId, permissionIds)
 
     return response.json({ message: 'Permissions detached successfully' })
   }
@@ -87,8 +90,7 @@ export default class PermissionsController {
   async syncUserPermissions({ request, response }: HttpContext) {
     const data = await request.validateUsing(syncUserPermissionsValidator)
 
-    const service = await app.container.make(SyncUserPermissionsService)
-    await service.run(data.user_id, data.permissions)
+    await this.syncUserPermissionsService.run(data.user_id, data.permissions)
 
     return response.json({ message: 'User permissions synced successfully' })
   }
@@ -99,8 +101,7 @@ export default class PermissionsController {
   async getUserPermissions({ params, response }: HttpContext) {
     const userId = params.id
 
-    const service = await app.container.make(CheckUserPermissionService)
-    const permissions = await service.getUserPermissions(userId)
+    const permissions = await this.checkUserPermissionService.getUserPermissions(userId)
 
     return response.json({ permissions })
   }
@@ -113,8 +114,7 @@ export default class PermissionsController {
     const permissions = request.input('permissions')
     const requireAll = request.input('require_all', false)
 
-    const service = await app.container.make(CheckUserPermissionService)
-    const hasPermission = await service.run(userId, permissions, requireAll)
+    const hasPermission = await this.checkUserPermissionService.run(userId, permissions, requireAll)
 
     return response.json({ has_permission: hasPermission })
   }

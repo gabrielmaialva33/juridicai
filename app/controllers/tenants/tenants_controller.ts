@@ -1,14 +1,22 @@
+import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
 import GetUserTenantsService from '#services/tenants/get_user_tenant_service'
-import Tenant from '#models/tenant'
+import GetTenantService from '#services/tenants/get_tenant_service'
 import TenantUsersRepository from '#repositories/tenant_users_repository'
 import { TenantUserRole } from '#models/tenant_user'
 import { createTenantValidator, updateTenantValidator } from '#validators/tenant'
 
+@inject()
 export default class TenantsController {
+  constructor(
+    private getUserTenantsService: GetUserTenantsService,
+    private createTenantService: CreateTenantService,
+    private updateTenantService: UpdateTenantService,
+    private getTenantService: GetTenantService,
+    private tenantUsersRepository: TenantUsersRepository
+  ) {}
   /**
    * GET /api/v1/tenants
    * List user's tenants with pagination
@@ -21,8 +29,13 @@ export default class TenantsController {
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
-    const service = await app.container.make(GetUserTenantsService)
-    const tenants = await service.run(auth.user!.id, page, perPage, sortBy, sortOrder)
+    const tenants = await this.getUserTenantsService.run(
+      auth.user!.id,
+      page,
+      perPage,
+      sortBy,
+      sortOrder
+    )
 
     return response.json(tenants)
   }
@@ -44,8 +57,7 @@ export default class TenantsController {
 
     const payload = await request.validateUsing(createTenantValidator)
 
-    const service = await app.container.make(CreateTenantService)
-    const tenant = await service.run({
+    const tenant = await this.createTenantService.run({
       ...payload,
       owner_user_id: auth.user!.id,
     })
@@ -62,14 +74,17 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if the user is a member of this tenant
-    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
-    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })
     }
 
-    const tenant = await Tenant.findOrFail(tenantId)
+    const tenant = await this.getTenantService.run(tenantId)
+
+    if (!tenant) {
+      return response.notFound({ message: 'Tenant not found' })
+    }
 
     return response.json(tenant)
   }
@@ -84,8 +99,7 @@ export default class TenantsController {
     const payload = await request.validateUsing(updateTenantValidator)
 
     // Check if a user is a member and has the appropriate role
-    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
-    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })
@@ -95,8 +109,7 @@ export default class TenantsController {
       return response.forbidden({ message: 'Insufficient permissions to update this tenant' })
     }
 
-    const service = await app.container.make(UpdateTenantService)
-    const tenant = await service.run(tenantId, payload)
+    const tenant = await this.updateTenantService.run(tenantId, payload)
 
     return response.json(tenant)
   }
@@ -110,8 +123,7 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if a user is a member and has the appropriate role
-    const tenantUsersRepo = await app.container.make(TenantUsersRepository)
-    const membership = await tenantUsersRepo.findByTenantAndUser(tenantId, auth.user!.id)
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })
@@ -121,8 +133,7 @@ export default class TenantsController {
       return response.forbidden({ message: 'Insufficient permissions to delete this tenant' })
     }
 
-    const service = await app.container.make(UpdateTenantService)
-    await service.run(tenantId, {
+    await this.updateTenantService.run(tenantId, {
       is_active: false,
       suspended_reason: 'Deleted by owner',
     })

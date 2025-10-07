@@ -29,4 +29,12 @@ export default class UsersRepository
       name: `refresh_token:${user.id}:${user.email}`,
     })
   }
+
+  async findByEmailVerificationToken(token: string): Promise<User | null> {
+    return this.model
+      .query()
+      .whereRaw("metadata->>'email_verification_token' = ?", [token])
+      .where('is_deleted', false)
+      .first()
+  }
 }
