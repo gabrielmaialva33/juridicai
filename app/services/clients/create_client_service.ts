@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import Client from '#models/client'
 import ClientsRepository from '#repositories/clients_repository'
 import ConflictException from '#exceptions/conflict_exception'
+import BadRequestException from '#exceptions/bad_request_exception'
 
 interface CreateClientPayload {
   client_type: 'individual' | 'company'
@@ -31,7 +32,7 @@ export default class CreateClientService {
     // Validate client_type consistency
     if (payload.client_type === 'individual') {
       if (!payload.full_name || !payload.cpf) {
-        throw new Error('Full name and CPF are required for individual clients')
+        throw new BadRequestException('Full name and CPF are required for individual clients')
       }
 
       // Check if CPF already exists in tenant
@@ -41,7 +42,7 @@ export default class CreateClientService {
       }
     } else if (payload.client_type === 'company') {
       if (!payload.company_name || !payload.cnpj) {
-        throw new Error('Company name and CNPJ are required for company clients')
+        throw new BadRequestException('Company name and CNPJ are required for company clients')
       }
 
       // Check if CNPJ already exists in tenant

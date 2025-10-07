@@ -2,6 +2,8 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { HttpContext } from '@adonisjs/core/http'
 import Tenant from '#models/tenant'
 import TenantUser from '#models/tenant_user'
+import BadRequestException from '#exceptions/bad_request_exception'
+import TenantContextException from '#exceptions/tenant_context_exception'
 
 interface TenantContext {
   tenant_id: string
@@ -90,7 +92,7 @@ class TenantContextService {
   setContext(context: Partial<TenantContext>): void {
     const currentContext = this.getContext()
     if (!currentContext) {
-      throw new Error('Cannot set context outside of run() scope')
+      throw new BadRequestException('Cannot set context outside of run() scope')
     }
 
     Object.assign(currentContext, context)
@@ -109,7 +111,7 @@ class TenantContextService {
   assertContext(): TenantContext {
     const context = this.getContext()
     if (!context) {
-      throw new Error('No tenant context available')
+      throw TenantContextException.noContextAvailable()
     }
     return context
   }
@@ -120,7 +122,7 @@ class TenantContextService {
   assertTenantId(): string {
     const tenantId = this.getCurrentTenantId()
     if (!tenantId) {
-      throw new Error('No tenant ID in current context')
+      throw TenantContextException.missingForCreate('')
     }
     return tenantId
   }

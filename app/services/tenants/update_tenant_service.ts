@@ -2,6 +2,8 @@ import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import Tenant from '#models/tenant'
 import TenantsRepository from '#repositories/tenants_repository'
+import NotFoundException from '#exceptions/not_found_exception'
+import ConflictException from '#exceptions/conflict_exception'
 
 interface UpdateTenantData {
   name?: string
@@ -28,14 +30,14 @@ export default class UpdateTenantService {
   async run(tenantId: string, data: UpdateTenantData): Promise<Tenant> {
     const tenant = await this.tenantsRepository.findBy('id', tenantId)
     if (!tenant) {
-      throw new Error('Tenant not found')
+      throw new NotFoundException('Tenant not found')
     }
 
     // Validate subdomain uniqueness if changed
     if (data.subdomain && data.subdomain !== tenant.subdomain) {
       const existingTenant = await this.tenantsRepository.findBySubdomain(data.subdomain)
       if (existingTenant) {
-        throw new Error(`Subdomain '${data.subdomain}' is already taken`)
+        throw new ConflictException(`Subdomain '${data.subdomain}' is already taken`)
       }
     }
 
@@ -45,7 +47,7 @@ export default class UpdateTenantService {
         data.custom_domain
       )
       if (existingCustomDomain) {
-        throw new Error(`Custom domain '${data.custom_domain}' is already in use`)
+        throw new ConflictException(`Custom domain '${data.custom_domain}' is already in use`)
       }
     }
 

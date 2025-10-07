@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import Client from '#models/client'
 import ClientsRepository from '#repositories/clients_repository'
 import ConflictException from '#exceptions/conflict_exception'
+import NotFoundException from '#exceptions/not_found_exception'
 
 interface UpdateClientPayload {
   client_type?: 'individual' | 'company'
@@ -30,7 +31,7 @@ export default class UpdateClientService {
     const client = await this.clientsRepository.findBy('id', clientId)
 
     if (!client) {
-      throw new Error('Client not found')
+      throw new NotFoundException('Client not found')
     }
 
     // If changing CPF, check uniqueness

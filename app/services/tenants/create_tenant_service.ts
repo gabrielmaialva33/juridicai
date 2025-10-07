@@ -6,6 +6,7 @@ import TenantsRepository from '#repositories/tenants_repository'
 import UsersRepository from '#repositories/users_repository'
 import TenantUsersRepository from '#repositories/tenant_users_repository'
 import ConflictException from '#exceptions/conflict_exception'
+import NotFoundException from '#exceptions/not_found_exception'
 
 interface CreateTenantData {
   name: string
@@ -52,7 +53,7 @@ export default class CreateTenantService {
     // Validate owner exists
     const owner = await this.usersRepository.findBy('id', data.owner_user_id)
     if (!owner) {
-      throw new Error('Owner user not found')
+      throw new NotFoundException('Owner user not found')
     }
 
     // Create tenant
