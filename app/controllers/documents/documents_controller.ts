@@ -7,6 +7,7 @@ import GetDocumentService from '#services/documents/get_document_service'
 import CreateDocumentService from '#services/documents/create_document_service'
 import UpdateDocumentService from '#services/documents/update_document_service'
 import DeleteDocumentService from '#services/documents/delete_document_service'
+import DownloadDocumentService from '#services/documents/download_document_service'
 import { createDocumentValidator, updateDocumentValidator } from '#validators/document'
 
 @inject()
@@ -98,27 +99,36 @@ export default class DocumentsController {
 
   /**
    * GET /api/v1/documents/:id/download
-   * TODO: Implement actual file download from storage provider
+   * Download document or get signed URL
+   *
+   * For local files: Streams file directly
+   * For cloud providers (S3/GCS): Returns signed URL
    */
-  async download({ params, response }: HttpContext) {
+  async download({ params, request, response }: HttpContext) {
     const documentId = +params.id
-    const document = await Document.find(documentId)
+    const service = await app.container.make(DownloadDocumentService)
 
-    if (!document) {
-      return response.status(404).json({
-        message: 'Document not found',
+    // Check if client wants a signed URL or direct stream
+    const urlOnly = request.input('url_only', 'false') === 'true'
+
+    if (urlOnly) {
+      // Return signed URL for client-side download
+      const expiresIn = request.input('expires_in', 3600)
+      const url = await service.getSignedUrl(documentId, expiresIn)
+
+      return response.json({
+        url,
+        expires_in: expiresIn,
       })
     }
 
-    // TODO: Generate signed URL for S3/GCS or stream local file
-    return response.json({
-      message: 'Download endpoint - implementation needed',
-      document: {
-        id: document.id,
-        title: document.title,
-        file_path: document.file_path,
-        storage_provider: document.storage_provider,
-      },
-    })
+    // Stream file directly (best for local storage)
+    const { document, stream } = await service.stream(documentId)
+
+    response.header('Content-Type', document.mime_type)
+    response.header('Content-Disposition', `attachment; filename="${document.original_filename}"`)
+    response.header('Content-Length', document.file_size.toString())
+
+    return response.stream(stream as any)
   }
 }

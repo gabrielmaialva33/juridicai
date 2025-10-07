@@ -1,6 +1,8 @@
 import { inject } from '@adonisjs/core'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import DeadlinesRepository from '#repositories/deadlines_repository'
 import Deadline from '#models/deadline'
+import Case from '#models/case'
 
 /**
  * Service for retrieving a single deadline
@@ -30,13 +32,13 @@ export default class GetDeadlineService {
 
     // Load requested relationships
     if (options.withCase) {
-      await (deadline as any).load('case', (caseQuery: any) => {
+      await deadline.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }
 
     if (options.withResponsible) {
-      await (deadline as any).load('responsible')
+      await deadline.load('responsible')
     }
 
     return deadline

@@ -1,5 +1,7 @@
 import { inject } from '@adonisjs/core'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import CaseEvent from '#models/case_event'
+import Case from '#models/case'
 import CaseEventsRepository from '#repositories/case_events_repository'
 
 /**
@@ -37,7 +39,7 @@ export default class GetCaseEventService {
 
     // Load relationships if requested
     if (options.withCase) {
-      await (event as any).load('case', (caseQuery: any) => {
+      await event.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }

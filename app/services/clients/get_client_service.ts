@@ -1,5 +1,7 @@
 import { inject } from '@adonisjs/core'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Client from '#models/client'
+import Case from '#models/case'
 import ClientsRepository from '#repositories/clients_repository'
 
 interface GetClientOptions {
@@ -23,7 +25,7 @@ export default class GetClientService {
 
     // Load relationships if requested
     if (options.withCases) {
-      await (client as any).load('cases', (query: any) => {
+      await client.load('cases', (query: ModelQueryBuilderContract<typeof Case>) => {
         query.orderBy('created_at', 'desc')
       })
     }

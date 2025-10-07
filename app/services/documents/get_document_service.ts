@@ -1,5 +1,7 @@
 import { inject } from '@adonisjs/core'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 import Document from '#models/document'
+import Case from '#models/case'
 import DocumentsRepository from '#repositories/documents_repository'
 
 /**
@@ -40,13 +42,13 @@ export default class GetDocumentService {
 
     // Load relationships if requested
     if (options.withCase) {
-      await (document as any).load('case', (caseQuery: any) => {
+      await document.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }
 
     if (options.withClient) {
-      await (document as any).load('client')
+      await document.load('client')
     }
 
     return document
