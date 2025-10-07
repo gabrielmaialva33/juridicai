@@ -474,9 +474,8 @@ test.group('Clients CRUD', (group) => {
         // Missing full_name and cpf
       })
 
-    // Currently returns 500 because validation happens in service layer
-    // TODO: Move this validation to validator for proper 422 response
-    response.assertStatus(500)
+    // Returns 400 BadRequest because validation happens in service layer
+    response.assertStatus(400)
   })
 
   test('should validate required fields for company client', async ({ client }) => {
@@ -493,9 +492,8 @@ test.group('Clients CRUD', (group) => {
         // Missing company_name and cnpj
       })
 
-    // Currently returns 500 because validation happens in service layer
-    // TODO: Move this validation to validator for proper 422 response
-    response.assertStatus(500)
+    // Returns 400 BadRequest because validation happens in service layer
+    response.assertStatus(400)
   })
 
   test('should validate CPF format', async ({ client }) => {
@@ -762,9 +760,8 @@ test.group('Clients CRUD', (group) => {
         full_name: 'Updated Name',
       })
 
-    // Currently returns 500 because service throws generic Error
-    // TODO: Use NotFoundException for proper 404 response
-    response.assertStatus(500)
+    // Returns 404 NotFound because service throws NotFoundException
+    response.assertStatus(404)
   })
 
   /**
