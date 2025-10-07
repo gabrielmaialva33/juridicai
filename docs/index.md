@@ -170,11 +170,11 @@ A API JuridicAI implementa isolamento por linha (row-level isolation) com UUID p
 ### JavaScript / Node.js
 
 ```javascript
-const axios = require('axios');
+const axios = require('axios')
 
-const API_URL = 'https://api.juridicai.com.br/api/v1';
-const TOKEN = 'seu_token_jwt';
-const TENANT_ID = '550e8400-e29b-41d4-a716-446655440000';
+const API_URL = 'https://api.juridicai.com.br/api/v1'
+const TOKEN = 'seu_token_jwt'
+const TENANT_ID = '550e8400-e29b-41d4-a716-446655440000'
 
 // Configurar cliente HTTP
 const client = axios.create({
@@ -182,9 +182,9 @@ const client = axios.create({
   headers: {
     'Authorization': `Bearer ${TOKEN}`,
     'X-Tenant-ID': TENANT_ID,
-    'Content-Type': 'application/json'
-  }
-});
+    'Content-Type': 'application/json',
+  },
+})
 
 // Criar um novo caso
 async function createCase() {
@@ -203,22 +203,22 @@ async function createCase() {
         autor: {
           name: 'Maria Santos',
           cpf: '123.456.789-09',
-          email: 'maria@email.com'
+          email: 'maria@email.com',
         },
         reu: {
           name: 'Empresa XYZ Ltda',
           cnpj: '12.345.678/0001-90',
-          email: 'contato@empresa.com'
-        }
+          email: 'contato@empresa.com',
+        },
       },
-      case_value: 50000.00
-    });
+      case_value: 50000.0,
+    })
 
-    console.log('Caso criado:', response.data);
-    return response.data;
+    console.log('Caso criado:', response.data)
+    return response.data
   } catch (error) {
-    console.error('Erro ao criar caso:', error.response?.data || error.message);
-    throw error;
+    console.error('Erro ao criar caso:', error.response?.data || error.message)
+    throw error
   }
 }
 
@@ -228,21 +228,21 @@ async function getUpcomingDeadlines() {
     const response = await client.get('/deadlines/upcoming', {
       params: {
         days: 7,
-        is_completed: false
-      }
-    });
+        is_completed: false,
+      },
+    })
 
-    console.log('Prazos próximos:', response.data);
-    return response.data;
+    console.log('Prazos próximos:', response.data)
+    return response.data
   } catch (error) {
-    console.error('Erro ao buscar prazos:', error.response?.data || error.message);
-    throw error;
+    console.error('Erro ao buscar prazos:', error.response?.data || error.message)
+    throw error
   }
 }
 
 // Executar
-createCase();
-getUpcomingDeadlines();
+createCase()
+getUpcomingDeadlines()
 ```
 
 ### Python
@@ -599,6 +599,7 @@ Quando o limite é atingido, você receberá:
   ]
 }
 ```
+
 **HTTP Status:** `429 Too Many Requests`
 
 ## 🛡️ Segurança
@@ -625,6 +626,7 @@ Quando o token expira, você receberá:
   ]
 }
 ```
+
 **HTTP Status:** `401 Unauthorized`
 
 **Solução:** Faça login novamente para obter um novo token.
@@ -646,6 +648,7 @@ Todas as requisições DEVEM ser feitas via HTTPS. Requisições HTTP serão rej
 **Causa:** Token JWT inválido ou ausente
 
 **Solução:**
+
 1. Verifique se o header `Authorization: Bearer {token}` está presente
 2. Confirme que o token não expirou
 3. Faça login novamente se necessário
@@ -655,6 +658,7 @@ Todas as requisições DEVEM ser feitas via HTTPS. Requisições HTTP serão rej
 **Causa:** Sem permissão ou tenant inválido
 
 **Soluções:**
+
 1. Verifique se o header `X-Tenant-ID` está correto
 2. Confirme que o usuário tem permissão para a ação
 3. Verifique se está tentando acessar recursos de outro tenant
@@ -664,6 +668,7 @@ Todas as requisições DEVEM ser feitas via HTTPS. Requisições HTTP serão rej
 **Causa:** Recurso não encontrado
 
 **Soluções:**
+
 1. Confirme que o ID do recurso existe
 2. Verifique se o recurso pertence ao tenant correto
 3. Confirme que a URL está correta
@@ -696,6 +701,7 @@ Todas as requisições DEVEM ser feitas via HTTPS. Requisições HTTP serão rej
 **Causa:** Rate limit excedido
 
 **Solução:**
+
 1. Aguarde o tempo indicado no header `X-RateLimit-Reset`
 2. Implemente backoff exponencial em seus clientes
 3. Cache resultados quando possível

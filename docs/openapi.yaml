@@ -1089,7 +1089,18 @@ paths:
           in: query
           schema:
             type: string
-            enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+            enum:
+              [
+                petition,
+                contract,
+                evidence,
+                judgment,
+                appeal,
+                power_of_attorney,
+                agreement,
+                report,
+                other,
+              ]
         - name: is_signed
           in: query
           schema:
@@ -1138,7 +1149,18 @@ paths:
                   type: string
                 document_type:
                   type: string
-                  enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+                  enum:
+                    [
+                      petition,
+                      contract,
+                      evidence,
+                      judgment,
+                      appeal,
+                      power_of_attorney,
+                      agreement,
+                      report,
+                      other,
+                    ]
                 case_id:
                   type: integer
                 client_id:
@@ -1261,7 +1283,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+            enum:
+              [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
         - name: source
           in: query
           schema:
@@ -1773,7 +1796,18 @@ components:
           nullable: true
         document_type:
           type: string
-          enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+          enum:
+            [
+              petition,
+              contract,
+              evidence,
+              judgment,
+              appeal,
+              power_of_attorney,
+              agreement,
+              report,
+              other,
+            ]
           example: petition
         file_path:
           type: string
@@ -1839,7 +1873,8 @@ components:
           example: 1
         event_type:
           type: string
-          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+          enum:
+            [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
           example: hearing
         title:
           type: string
@@ -2270,7 +2305,18 @@ components:
           type: string
         document_type:
           type: string
-          enum: [petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other]
+          enum:
+            [
+              petition,
+              contract,
+              evidence,
+              judgment,
+              appeal,
+              power_of_attorney,
+              agreement,
+              report,
+              other,
+            ]
         access_level:
           type: string
           enum: [tenant, case_team, owner_only]
@@ -2291,7 +2337,8 @@ components:
           type: integer
         event_type:
           type: string
-          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+          enum:
+            [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
         title:
           type: string
         description:
@@ -2311,7 +2358,8 @@ components:
       properties:
         event_type:
           type: string
-          enum: [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
+          enum:
+            [filing, hearing, decision, publication, appeal, motion, settlement, judgment, other]
         title:
           type: string
         description:
