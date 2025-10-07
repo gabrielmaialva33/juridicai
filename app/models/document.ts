@@ -1,5 +1,12 @@
 import { DateTime } from 'luxon'
-import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  belongsTo,
+  column,
+  computed,
+  scope,
+  SnakeCaseNamingStrategy,
+} from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
@@ -449,17 +456,32 @@ export default class Document extends compose(BaseModel, TenantScoped) {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Computed Properties
    * ------------------------------------------------------
    */
+
+  /**
+   * Returns the file extension from the original filename
+   * Example: 'document.pdf' -> 'pdf'
+   */
+  @computed()
   get file_extension(): string {
     return this.original_filename.split('.').pop() || ''
   }
 
+  /**
+   * Returns the file size in megabytes (MB)
+   * Rounded to 2 decimal places
+   */
+  @computed()
   get file_size_mb(): number {
     return Math.round((this.file_size / 1024 / 1024) * 100) / 100
   }
 
+  /**
+   * Returns true if the document is a PDF file
+   */
+  @computed()
   get is_pdf(): boolean {
     return this.mime_type === 'application/pdf'
   }

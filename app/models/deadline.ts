@@ -1,5 +1,12 @@
 import { DateTime } from 'luxon'
-import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  belongsTo,
+  column,
+  computed,
+  scope,
+  SnakeCaseNamingStrategy,
+} from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
@@ -352,18 +359,35 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Computed Properties
    * ------------------------------------------------------
    */
+
+  /**
+   * Returns true if the deadline is overdue
+   * Only applies to pending deadlines
+   */
+  @computed()
   get is_overdue(): boolean {
     if (this.status !== 'pending') return false
     return this.deadline_date < DateTime.now()
   }
 
+  /**
+   * Returns the number of days until the deadline
+   * Positive values mean deadline is in the future
+   * Negative values mean deadline has passed
+   */
+  @computed()
   get days_until_deadline(): number {
     return Math.ceil(this.deadline_date.diff(DateTime.now(), 'days').days)
   }
 
+  /**
+   * Returns true if the deadline is approaching (within 7 days)
+   * Only applies to pending deadlines with future dates
+   */
+  @computed()
   get is_approaching(): boolean {
     const days = this.days_until_deadline
     return days <= 7 && days > 0 && this.status === 'pending'

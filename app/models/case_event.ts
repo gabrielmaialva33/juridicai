@@ -1,5 +1,12 @@
 import { DateTime } from 'luxon'
-import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  belongsTo,
+  column,
+  computed,
+  scope,
+  SnakeCaseNamingStrategy,
+} from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
@@ -337,13 +344,22 @@ export default class CaseEvent extends compose(BaseModel, TenantScoped) {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Computed Properties
    * ------------------------------------------------------
    */
+
+  /**
+   * Returns true if the event was imported from a court API
+   */
+  @computed()
   get is_from_court(): boolean {
     return this.source === 'court_api'
   }
 
+  /**
+   * Returns true if the event was manually created by a user
+   */
+  @computed()
   get is_manual(): boolean {
     return this.source === 'manual'
   }

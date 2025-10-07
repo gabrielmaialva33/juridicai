@@ -1,5 +1,5 @@
 import { inject } from '@adonisjs/core'
-import Client from '#models/client'
+import type Client from '#models/client'
 import ClientsRepository from '#repositories/clients_repository'
 import ConflictException from '#exceptions/conflict_exception'
 import BadRequestException from '#exceptions/bad_request_exception'
@@ -53,7 +53,7 @@ export default class CreateClientService {
     }
 
     // Create client (tenant_id will be set automatically)
-    const client = await Client.create({
+    const client = await this.clientsRepository.create({
       ...payload,
       is_active: payload.is_active ?? true,
     })

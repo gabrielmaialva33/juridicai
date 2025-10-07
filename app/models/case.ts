@@ -3,6 +3,7 @@ import {
   BaseModel,
   belongsTo,
   column,
+  computed,
   hasMany,
   scope,
   SnakeCaseNamingStrategy,
@@ -380,17 +381,31 @@ export default class Case extends compose(BaseModel, TenantScoped) {
 
   /**
    * ------------------------------------------------------
-   * Helpers
+   * Computed Properties
    * ------------------------------------------------------
    */
+
+  /**
+   * Returns a display-friendly identifier for the case
+   * Prefers case_number, falls back to internal_number, then to #id
+   */
+  @computed()
   get display_identifier(): string {
     return this.case_number || this.internal_number || `#${this.id}`
   }
 
+  /**
+   * Returns true if the case status is 'active'
+   */
+  @computed()
   get is_active(): boolean {
     return this.status === 'active'
   }
 
+  /**
+   * Returns true if the case priority is 'urgent'
+   */
+  @computed()
   get is_urgent(): boolean {
     return this.priority === 'urgent'
   }
