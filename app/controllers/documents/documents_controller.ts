@@ -2,8 +2,8 @@ import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 
-import Document from '#models/document'
 import GetDocumentService from '#services/documents/get_document_service'
+import PaginateDocumentService from '#services/documents/paginate_document_service'
 import CreateDocumentService from '#services/documents/create_document_service'
 import UpdateDocumentService from '#services/documents/update_document_service'
 import DeleteDocumentService from '#services/documents/delete_document_service'
@@ -16,28 +16,18 @@ export default class DocumentsController {
    * GET /api/v1/documents
    */
   async paginate({ request, response }: HttpContext) {
-    const page = request.input('page', 1)
-    const perPage = request.input('per_page', 20)
-    const sortBy = request.input('sort_by', 'created_at')
-    const direction = request.input('order', 'desc')
-    const search = request.input('search', undefined)
-    const caseId = request.input('case_id', undefined)
-    const clientId = request.input('client_id', undefined)
-    const documentType = request.input('document_type', undefined)
+    const service = await app.container.make(PaginateDocumentService)
 
-    const query = Document.query()
-      .if(caseId, (q) => q.where('case_id', caseId))
-      .if(clientId, (q) => q.where('client_id', clientId))
-      .if(documentType, (q) => q.where('document_type', documentType))
-      .if(search, (q) =>
-        q.where((builder) => {
-          builder.whereILike('title', `%${search}%`)
-          builder.orWhereILike('description', `%${search}%`)
-        })
-      )
-      .orderBy(sortBy, direction)
-
-    const documents = await query.paginate(page, perPage)
+    const documents = await service.run({
+      page: request.input('page', 1),
+      perPage: request.input('per_page', 20),
+      sortBy: request.input('sort_by', 'created_at'),
+      direction: request.input('order', 'desc'),
+      search: request.input('search', undefined),
+      caseId: request.input('case_id', undefined),
+      clientId: request.input('client_id', undefined),
+      documentType: request.input('document_type', undefined),
+    })
 
     return response.json(documents)
   }

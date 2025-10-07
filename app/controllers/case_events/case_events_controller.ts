@@ -2,8 +2,8 @@ import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 
-import CaseEvent from '#models/case_event'
 import GetCaseEventService from '#services/case_events/get_case_event_service'
+import PaginateCaseEventService from '#services/case_events/paginate_case_event_service'
 import CreateCaseEventService from '#services/case_events/create_case_event_service'
 import UpdateCaseEventService from '#services/case_events/update_case_event_service'
 import DeleteCaseEventService from '#services/case_events/delete_case_event_service'
@@ -15,21 +15,17 @@ export default class CaseEventsController {
    * GET /api/v1/case-events
    */
   async paginate({ request, response }: HttpContext) {
-    const page = request.input('page', 1)
-    const perPage = request.input('per_page', 20)
-    const sortBy = request.input('sort_by', 'event_date')
-    const direction = request.input('order', 'desc')
-    const caseId = request.input('case_id', undefined)
-    const eventType = request.input('event_type', undefined)
-    const source = request.input('source', undefined)
+    const service = await app.container.make(PaginateCaseEventService)
 
-    const query = CaseEvent.query()
-      .if(caseId, (q) => q.where('case_id', caseId))
-      .if(eventType, (q) => q.where('event_type', eventType))
-      .if(source, (q) => q.where('source', source))
-      .orderBy(sortBy, direction)
-
-    const events = await query.paginate(page, perPage)
+    const events = await service.run({
+      page: request.input('page', 1),
+      perPage: request.input('per_page', 20),
+      sortBy: request.input('sort_by', 'event_date'),
+      direction: request.input('order', 'desc'),
+      caseId: request.input('case_id', undefined),
+      eventType: request.input('event_type', undefined),
+      source: request.input('source', undefined),
+    })
 
     return response.json(events)
   }

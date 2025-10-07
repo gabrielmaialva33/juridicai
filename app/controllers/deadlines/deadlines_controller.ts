@@ -1,8 +1,8 @@
 import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 
-import Deadline from '#models/deadline'
 import GetDeadlineService from '#services/deadlines/get_deadline_service'
+import PaginateDeadlineService from '#services/deadlines/paginate_deadline_service'
 import CreateDeadlineService from '#services/deadlines/create_deadline_service'
 import UpdateDeadlineService from '#services/deadlines/update_deadline_service'
 import CompleteDeadlineService from '#services/deadlines/complete_deadline_service'
@@ -12,34 +12,28 @@ import {
   updateDeadlineValidator,
   completeDeadlineValidator,
 } from '#validators/deadline'
-import { DateTime } from 'luxon'
 
 export default class DeadlinesController {
   /**
    * GET /api/v1/deadlines
    */
   async paginate({ request, response }: HttpContext) {
-    const page = request.input('page', 1)
-    const perPage = request.input('per_page', 20)
-    const sortBy = request.input('sort_by', 'deadline_date')
-    const direction = request.input('order', 'asc')
-    const caseId = request.input('case_id', undefined)
-    const status = request.input('status', undefined)
+    const service = await app.container.make(PaginateDeadlineService)
 
     // Convert boolean query params correctly
     const isFatalParam = request.input('is_fatal')
     const isFatal = isFatalParam !== undefined ? isFatalParam === 'true' : undefined
 
-    const responsibleId = request.input('responsible_id', undefined)
-
-    const query = Deadline.query()
-      .if(caseId, (q) => q.where('case_id', caseId))
-      .if(status, (q) => q.where('status', status))
-      .if(isFatal !== undefined, (q) => q.where('is_fatal', isFatal!))
-      .if(responsibleId, (q) => q.where('responsible_id', responsibleId))
-      .orderBy(sortBy, direction)
-
-    const deadlines = await query.paginate(page, perPage)
+    const deadlines = await service.run({
+      page: request.input('page', 1),
+      perPage: request.input('per_page', 20),
+      sortBy: request.input('sort_by', 'deadline_date'),
+      direction: request.input('order', 'asc'),
+      caseId: request.input('case_id', undefined),
+      status: request.input('status', undefined),
+      isFatal,
+      responsibleId: request.input('responsible_id', undefined),
+    })
 
     return response.json(deadlines)
   }
@@ -48,14 +42,10 @@ export default class DeadlinesController {
    * GET /api/v1/deadlines/upcoming
    */
   async upcoming({ request, response }: HttpContext) {
-    const days = request.input('days', 7)
-    const upcomingDate = DateTime.now().plus({ days })
+    const service = await app.container.make(PaginateDeadlineService)
 
-    const deadlines = await Deadline.query()
-      .where('status', 'pending')
-      .where('deadline_date', '<=', upcomingDate.toSQLDate())
-      .orderBy('deadline_date', 'asc')
-      .limit(50)
+    const days = request.input('days', 7)
+    const deadlines = await service.getUpcoming(days)
 
     return response.json(deadlines)
   }
