@@ -369,7 +369,7 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
    */
   @computed()
   get is_overdue(): boolean {
-    if (this.status !== 'pending') return false
+    if (this.status !== 'pending' || !this.deadline_date) return false
     return this.deadline_date < DateTime.now()
   }
 
@@ -380,6 +380,7 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
    */
   @computed()
   get days_until_deadline(): number {
+    if (!this.deadline_date) return 0
     return Math.ceil(this.deadline_date.diff(DateTime.now(), 'days').days)
   }
 

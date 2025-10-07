@@ -706,6 +706,7 @@ test.group('Documents CRUD', (group) => {
           uploaded_by: user.id,
           case_id: caseModel.id,
           client_id: clientModel.id,
+          storage_provider: 's3', // Use S3 to avoid file existence check in tests
         }).create()
 
         return { document: createdDocument }
@@ -713,19 +714,14 @@ test.group('Documents CRUD', (group) => {
     )
 
     const response = await client
-      .get(`/api/v1/documents/${document.id}/download`)
+      .get(`/api/v1/documents/${document.id}/download?url_only=true`)
       .header('X-Tenant-ID', tenant.id)
       .loginAs(user)
 
     response.assertStatus(200)
     response.assertBodyContains({
-      message: 'Download endpoint - implementation needed',
-      document: {
-        id: document.id,
-        title: document.title,
-        file_path: document.file_path,
-        storage_provider: document.storage_provider,
-      },
+      url: response.body().url,
+      expires_in: 3600,
     })
   })
 
