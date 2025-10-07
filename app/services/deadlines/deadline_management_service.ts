@@ -1,3 +1,4 @@
+import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import type { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import Deadline from '#models/deadline'
@@ -12,6 +13,7 @@ interface DeadlineFilters {
   toDate?: DateTime
 }
 
+@inject()
 export default class DeadlineManagementService {
   /**
    * Get deadlines dashboard with categorized deadlines
@@ -45,17 +47,14 @@ export default class DeadlineManagementService {
           scopes.withCase()
           scopes.byPriority()
         })
-        .limit(10)
-        .exec(),
+        .limit(10),
 
       // Today's deadlines
-      todayQuery
-        .withScopes((scopes) => {
-          scopes.dueToday()
-          scopes.withCase()
-          scopes.byPriority()
-        })
-        .exec(),
+      todayQuery.withScopes((scopes) => {
+        scopes.dueToday()
+        scopes.withCase()
+        scopes.byPriority()
+      }),
 
       // Upcoming deadlines (next 7 days)
       upcomingQuery
@@ -64,8 +63,7 @@ export default class DeadlineManagementService {
           scopes.withCase()
           scopes.byDeadlineOrder()
         })
-        .limit(20)
-        .exec(),
+        .limit(20),
 
       // Recently completed deadlines
       completedQuery
@@ -74,8 +72,7 @@ export default class DeadlineManagementService {
           scopes.withCase()
           scopes.newest()
         })
-        .limit(10)
-        .exec(),
+        .limit(10),
     ])
 
     return {
@@ -155,14 +152,12 @@ export default class DeadlineManagementService {
    * @returns List of deadlines requiring alerts
    */
   async getDeadlinesNeedingAlerts(): Promise<Deadline[]> {
-    return Deadline.query()
-      .withScopes((scopes) => {
-        scopes.needsAlert()
-        scopes.withCase()
-        scopes.withResponsible()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return Deadline.query().withScopes((scopes) => {
+      scopes.needsAlert()
+      scopes.withCase()
+      scopes.withResponsible()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**
@@ -172,15 +167,13 @@ export default class DeadlineManagementService {
    * @returns List of approaching fatal deadlines
    */
   async getFatalDeadlinesApproaching(days: number = 14): Promise<Deadline[]> {
-    return Deadline.query()
-      .withScopes((scopes) => {
-        scopes.fatal()
-        scopes.upcoming(days)
-        scopes.withCase()
-        scopes.withResponsible()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return Deadline.query().withScopes((scopes) => {
+      scopes.fatal()
+      scopes.upcoming(days)
+      scopes.withCase()
+      scopes.withResponsible()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**
@@ -191,9 +184,7 @@ export default class DeadlineManagementService {
    * @returns List of case deadlines
    */
   async getCaseDeadlines(caseId: number, includeCompleted: boolean = false): Promise<Deadline[]> {
-    const query = Deadline.query()
-
-    query.withScopes((scopes) => {
+    return Deadline.query().withScopes((scopes) => {
       scopes.forCase(caseId)
 
       if (!includeCompleted) {
@@ -203,8 +194,6 @@ export default class DeadlineManagementService {
       scopes.withResponsible()
       scopes.byDeadlineOrder()
     })
-
-    return query.exec()
   }
 
   /**
@@ -334,7 +323,7 @@ export default class DeadlineManagementService {
       scopes.byDeadlineOrder()
     })
 
-    const deadlines = await query.exec()
+    const deadlines = await query
 
     // Group deadlines by date
     const groupedByDate = deadlines.reduce(

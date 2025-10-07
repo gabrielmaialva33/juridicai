@@ -1,5 +1,7 @@
+import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import CaseEvent from '#models/case_event'
+import CaseEventsRepository from '#repositories/case_events_repository'
 
 /**
  * Service for creating case events
@@ -12,7 +14,10 @@ import CaseEvent from '#models/case_event'
  * @example
  * const event = await createCaseEventService.run(payload, userId)
  */
+@inject()
 export default class CreateCaseEventService {
+  constructor(private caseEventsRepository: CaseEventsRepository) {}
+
   /**
    * Create a new case event with automatic defaults
    *
@@ -51,6 +56,6 @@ export default class CreateCaseEventService {
       source: 'manual' as const,
     }
 
-    return await CaseEvent.create(eventData as any)
+    return await this.caseEventsRepository.create(eventData as any)
   }
 }

@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import Document from '#models/document'
+import DocumentsRepository from '#repositories/documents_repository'
 
 /**
  * Service for creating documents
@@ -13,7 +15,10 @@ import Document from '#models/document'
  * @example
  * const document = await createDocumentService.run(payload, userId)
  */
+@inject()
 export default class CreateDocumentService {
+  constructor(private documentsRepository: DocumentsRepository) {}
+
   /**
    * Create a new document with automatic defaults
    *
@@ -66,6 +71,6 @@ export default class CreateDocumentService {
       version: 1,
     }
 
-    return await Document.create(documentData as any)
+    return await this.documentsRepository.create(documentData as any)
   }
 }

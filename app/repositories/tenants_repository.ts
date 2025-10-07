@@ -41,13 +41,10 @@ export default class TenantsRepository
    * @returns Array of active tenants with the specified plan
    */
   async findActiveByPlan(plan: 'free' | 'starter' | 'pro' | 'enterprise'): Promise<Tenant[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.active()
-        scopes.byPlan(plan)
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.active()
+      scopes.byPlan(plan)
+    })
   }
 
   /**
@@ -170,7 +167,6 @@ export default class TenantsRepository
       .whereHas('tenant_users', (tenantUserQuery) => {
         tenantUserQuery.where('user_id', userId).where('is_active', true)
       })
-      .exec()
   }
 
   /**

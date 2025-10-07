@@ -67,14 +67,11 @@ export default class CasesRepository
    * @returns Array of cases for the client
    */
   async findByClient(clientId: number): Promise<Case[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.forClient(clientId)
-        scopes.active()
-        scopes.newest()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.forClient(clientId)
+      scopes.active()
+      scopes.newest()
+    })
   }
 
   /**
@@ -92,7 +89,6 @@ export default class CasesRepository
       })
       .preload('client')
       .preload('responsible_lawyer')
-      .exec()
   }
 
   /**
@@ -110,7 +106,6 @@ export default class CasesRepository
       })
       .preload('client')
       .preload('responsible_lawyer')
-      .exec()
   }
 
   /**
@@ -119,14 +114,11 @@ export default class CasesRepository
    * @returns Array of cases assigned to the lawyer
    */
   async findByResponsible(lawyerId: number): Promise<Case[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.assignedTo(lawyerId)
-        scopes.active()
-        scopes.newest()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.assignedTo(lawyerId)
+      scopes.active()
+      scopes.newest()
+    })
   }
 
   /**
@@ -164,7 +156,7 @@ export default class CasesRepository
     byPriority: Record<string, number>
     byType: Record<string, number>
   }> {
-    const cases = await this.model.query().select('status', 'priority', 'case_type').exec()
+    const cases = await this.model.query().select('status', 'priority', 'case_type')
 
     const byStatus: Record<string, number> = {}
     const byPriority: Record<string, number> = {}
@@ -199,6 +191,5 @@ export default class CasesRepository
       })
       .preload('client')
       .preload('responsible_lawyer')
-      .exec()
   }
 }

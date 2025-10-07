@@ -1,4 +1,5 @@
-import CaseEvent from '#models/case_event'
+import { inject } from '@adonisjs/core'
+import CaseEventsRepository from '#repositories/case_events_repository'
 import NotFoundException from '#exceptions/not_found_exception'
 
 /**
@@ -9,7 +10,10 @@ import NotFoundException from '#exceptions/not_found_exception'
  * @example
  * await deleteCaseEventService.run(123)
  */
+@inject()
 export default class DeleteCaseEventService {
+  constructor(private caseEventsRepository: CaseEventsRepository) {}
+
   /**
    * Delete a case event by ID
    *
@@ -18,7 +22,7 @@ export default class DeleteCaseEventService {
    * @throws {NotFoundException} if case event not found
    */
   async run(eventId: number): Promise<void> {
-    const event = await CaseEvent.find(eventId)
+    const event = await this.caseEventsRepository.findBy('id', eventId)
 
     if (!event) {
       throw new NotFoundException('Case event not found')

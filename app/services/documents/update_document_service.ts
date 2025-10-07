@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import Document from '#models/document'
+import DocumentsRepository from '#repositories/documents_repository'
 import NotFoundException from '#exceptions/not_found_exception'
 
 /**
@@ -9,7 +11,10 @@ import NotFoundException from '#exceptions/not_found_exception'
  * @example
  * const updated = await updateDocumentService.run(123, { title: 'New Title' })
  */
+@inject()
 export default class UpdateDocumentService {
+  constructor(private documentsRepository: DocumentsRepository) {}
+
   /**
    * Update a document by ID
    *
@@ -51,7 +56,7 @@ export default class UpdateDocumentService {
       parent_document_id?: number | null
     }
   ): Promise<Document> {
-    const document = await Document.find(documentId)
+    const document = await this.documentsRepository.findBy('id', documentId)
 
     if (!document) {
       throw new NotFoundException('Document not found')

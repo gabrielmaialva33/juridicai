@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import CaseEvent from '#models/case_event'
+import CaseEventsRepository from '#repositories/case_events_repository'
 
 /**
  * Service for retrieving a case event by ID with optional relationships
@@ -9,7 +11,10 @@ import CaseEvent from '#models/case_event'
  * @example
  * const event = await getCaseEventService.run(123, { withCase: true })
  */
+@inject()
 export default class GetCaseEventService {
+  constructor(private caseEventsRepository: CaseEventsRepository) {}
+
   /**
    * Get a case event by ID with optional relationships
    *
@@ -24,7 +29,7 @@ export default class GetCaseEventService {
       withCase?: boolean
     } = {}
   ): Promise<CaseEvent | null> {
-    const event = await CaseEvent.find(eventId)
+    const event = await this.caseEventsRepository.findBy('id', eventId)
 
     if (!event) {
       return null

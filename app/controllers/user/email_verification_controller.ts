@@ -24,7 +24,7 @@ export default class EmailVerificationController {
 
     const { token } = await request.validateUsing(schema)
 
-    const user = await this.verifyEmailService.handle(token)
+    const user = await this.verifyEmailService.run(token)
 
     return response.ok({
       message: 'Email verified successfully',
@@ -45,7 +45,7 @@ export default class EmailVerificationController {
       })
     }
 
-    await this.sendVerificationEmailService.handle(user)
+    await this.sendVerificationEmailService.run(user)
 
     return response.ok({
       message: 'Verification email sent successfully',

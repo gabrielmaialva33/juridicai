@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import Document from '#models/document'
+import DocumentsRepository from '#repositories/documents_repository'
 
 /**
  * Service for retrieving a document by ID with optional relationships
@@ -10,7 +12,10 @@ import Document from '#models/document'
  * @example
  * const document = await getDocumentService.run(123, { withCase: true, withClient: true })
  */
+@inject()
 export default class GetDocumentService {
+  constructor(private documentsRepository: DocumentsRepository) {}
+
   /**
    * Get a document by ID with optional relationships
    *
@@ -27,7 +32,7 @@ export default class GetDocumentService {
       withClient?: boolean
     } = {}
   ): Promise<Document | null> {
-    const document = await Document.find(documentId)
+    const document = await this.documentsRepository.findBy('id', documentId)
 
     if (!document) {
       return null

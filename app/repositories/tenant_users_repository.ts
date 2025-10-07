@@ -26,7 +26,7 @@ export default class TenantUsersRepository
    * @returns Array of active tenant users
    */
   async findActiveByTenant(tenantId: string): Promise<TenantUser[]> {
-    return this.model.query().where('tenant_id', tenantId).where('is_active', true).exec()
+    return this.model.query().where('tenant_id', tenantId).where('is_active', true)
   }
 
   /**
@@ -35,7 +35,7 @@ export default class TenantUsersRepository
    * @returns Array of active tenant users
    */
   async findActiveByUser(userId: number): Promise<TenantUser[]> {
-    return this.model.query().where('user_id', userId).where('is_active', true).exec()
+    return this.model.query().where('user_id', userId).where('is_active', true)
   }
 
   /**

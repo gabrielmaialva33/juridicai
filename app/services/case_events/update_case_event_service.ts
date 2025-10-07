@@ -1,5 +1,7 @@
+import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import CaseEvent from '#models/case_event'
+import CaseEventsRepository from '#repositories/case_events_repository'
 import NotFoundException from '#exceptions/not_found_exception'
 
 /**
@@ -11,7 +13,10 @@ import NotFoundException from '#exceptions/not_found_exception'
  * @example
  * const updated = await updateCaseEventService.run(123, { title: 'New Title' })
  */
+@inject()
 export default class UpdateCaseEventService {
+  constructor(private caseEventsRepository: CaseEventsRepository) {}
+
   /**
    * Update a case event by ID
    *
@@ -41,7 +46,7 @@ export default class UpdateCaseEventService {
       metadata?: Record<string, any> | null
     }
   ): Promise<CaseEvent> {
-    const event = await CaseEvent.find(eventId)
+    const event = await this.caseEventsRepository.findBy('id', eventId)
 
     if (!event) {
       throw new NotFoundException('Case event not found')

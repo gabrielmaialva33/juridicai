@@ -1,4 +1,5 @@
-import Document from '#models/document'
+import { inject } from '@adonisjs/core'
+import DocumentsRepository from '#repositories/documents_repository'
 import NotFoundException from '#exceptions/not_found_exception'
 
 /**
@@ -9,7 +10,10 @@ import NotFoundException from '#exceptions/not_found_exception'
  * @example
  * await deleteDocumentService.run(123)
  */
+@inject()
 export default class DeleteDocumentService {
+  constructor(private documentsRepository: DocumentsRepository) {}
+
   /**
    * Delete a document by ID
    *
@@ -18,7 +22,7 @@ export default class DeleteDocumentService {
    * @throws {NotFoundException} if document not found
    */
   async run(documentId: number): Promise<void> {
-    const document = await Document.find(documentId)
+    const document = await this.documentsRepository.findBy('id', documentId)
 
     if (!document) {
       throw new NotFoundException('Document not found')

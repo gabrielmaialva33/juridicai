@@ -5,7 +5,7 @@ import User from '#models/user'
 import VerifyEmailNotification from '#services/users/verify_email_notification'
 
 export default class SendVerificationEmailService {
-  async handle(user: User): Promise<void> {
+  async run(user: User): Promise<void> {
     // Generate verification token
     const token = string.generateRandom(32)
 

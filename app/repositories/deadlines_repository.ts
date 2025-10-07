@@ -18,14 +18,11 @@ export default class DeadlinesRepository
    * @returns Array of overdue deadlines
    */
   async findOverdue(): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.overdue()
-        scopes.withCase()
-        scopes.byPriority()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.overdue()
+      scopes.withCase()
+      scopes.byPriority()
+    })
   }
 
   /**
@@ -33,14 +30,11 @@ export default class DeadlinesRepository
    * @returns Array of today's deadlines
    */
   async findDueToday(): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.dueToday()
-        scopes.withCase()
-        scopes.byPriority()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.dueToday()
+      scopes.withCase()
+      scopes.byPriority()
+    })
   }
 
   /**
@@ -49,14 +43,11 @@ export default class DeadlinesRepository
    * @returns Array of upcoming deadlines
    */
   async findUpcoming(days: number): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.upcoming(days)
-        scopes.withCase()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.upcoming(days)
+      scopes.withCase()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**
@@ -65,14 +56,11 @@ export default class DeadlinesRepository
    * @returns Array of deadlines for the case
    */
   async findByCase(caseId: number): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.forCase(caseId)
-        scopes.withResponsible()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.forCase(caseId)
+      scopes.withResponsible()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**
@@ -81,15 +69,12 @@ export default class DeadlinesRepository
    * @returns Array of deadlines assigned to the user
    */
   async findByResponsible(userId: number): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.assignedTo(userId)
-        scopes.pending()
-        scopes.withCase()
-        scopes.byPriority()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.assignedTo(userId)
+      scopes.pending()
+      scopes.withCase()
+      scopes.byPriority()
+    })
   }
 
   /**
@@ -98,16 +83,13 @@ export default class DeadlinesRepository
    * @returns Array of approaching fatal deadlines
    */
   async findFatalApproaching(days: number): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.fatal()
-        scopes.upcoming(days)
-        scopes.withCase()
-        scopes.withResponsible()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.fatal()
+      scopes.upcoming(days)
+      scopes.withCase()
+      scopes.withResponsible()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**
@@ -115,15 +97,12 @@ export default class DeadlinesRepository
    * @returns Array of deadlines needing alerts
    */
   async findNeedingAlerts(): Promise<Deadline[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.needsAlert()
-        scopes.withCase()
-        scopes.withResponsible()
-        scopes.byDeadlineOrder()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.needsAlert()
+      scopes.withCase()
+      scopes.withResponsible()
+      scopes.byDeadlineOrder()
+    })
   }
 
   /**

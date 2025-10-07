@@ -22,12 +22,7 @@ export default class AuditLogsRepository
    * @returns Array of audit logs ordered by most recent first
    */
   async getUserLogs(userId: number, limit: number = 100): Promise<AuditLog[]> {
-    return this.model
-      .query()
-      .where('user_id', userId)
-      .orderBy('created_at', 'desc')
-      .limit(limit)
-      .exec()
+    return this.model.query().where('user_id', userId).orderBy('created_at', 'desc').limit(limit)
   }
 
   /**
@@ -43,7 +38,6 @@ export default class AuditLogsRepository
       .where('result', 'denied')
       .where('created_at', '>=', cutoffDate.toISO())
       .orderBy('created_at', 'desc')
-      .exec()
   }
 
   /**
@@ -115,12 +109,7 @@ export default class AuditLogsRepository
    * @returns Array of audit logs matching the action
    */
   async findByAction(action: string, limit: number = 100): Promise<AuditLog[]> {
-    return this.model
-      .query()
-      .where('action', action)
-      .orderBy('created_at', 'desc')
-      .limit(limit)
-      .exec()
+    return this.model.query().where('action', action).orderBy('created_at', 'desc').limit(limit)
   }
 
   /**
@@ -130,12 +119,7 @@ export default class AuditLogsRepository
    * @returns Array of audit logs matching the resource
    */
   async findByResource(resource: string, limit: number = 100): Promise<AuditLog[]> {
-    return this.model
-      .query()
-      .where('resource', resource)
-      .orderBy('created_at', 'desc')
-      .limit(limit)
-      .exec()
+    return this.model.query().where('resource', resource).orderBy('created_at', 'desc').limit(limit)
   }
 
   /**
@@ -145,12 +129,7 @@ export default class AuditLogsRepository
    * @returns Array of audit logs matching the result
    */
   async findByResult(result: 'granted' | 'denied', limit: number = 100): Promise<AuditLog[]> {
-    return this.model
-      .query()
-      .where('result', result)
-      .orderBy('created_at', 'desc')
-      .limit(limit)
-      .exec()
+    return this.model.query().where('result', result).orderBy('created_at', 'desc').limit(limit)
   }
 
   /**
@@ -165,7 +144,6 @@ export default class AuditLogsRepository
       .where('ip_address', ipAddress)
       .orderBy('created_at', 'desc')
       .limit(limit)
-      .exec()
   }
 
   /**

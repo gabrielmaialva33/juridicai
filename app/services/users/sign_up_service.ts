@@ -22,7 +22,7 @@ export default class SignUpService {
     await user.load('roles')
 
     // Send verification email
-    await this.sendVerificationEmailService.handle(user)
+    await this.sendVerificationEmailService.run(user)
 
     const auth = await this.jwtAuthTokensService.run({ userId: user.id })
 

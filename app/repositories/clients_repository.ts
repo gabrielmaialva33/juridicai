@@ -107,14 +107,11 @@ export default class ClientsRepository
    * @returns Array of clients matching any of the tags
    */
   async findByTags(tags: string[]): Promise<Client[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.hasAnyTag(tags)
-        scopes.active()
-        scopes.alphabetical()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.hasAnyTag(tags)
+      scopes.active()
+      scopes.alphabetical()
+    })
   }
 
   /**
@@ -123,14 +120,11 @@ export default class ClientsRepository
    * @returns Array of clients in the specified state
    */
   async findByState(state: string): Promise<Client[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.byState(state)
-        scopes.active()
-        scopes.alphabetical()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.byState(state)
+      scopes.active()
+      scopes.alphabetical()
+    })
   }
 
   /**
@@ -139,13 +133,10 @@ export default class ClientsRepository
    * @returns Array of clients created within the specified days
    */
   async getRecentClients(days: number): Promise<Client[]> {
-    return this.model
-      .query()
-      .withScopes((scopes) => {
-        scopes.recent(days)
-        scopes.active()
-        scopes.newest()
-      })
-      .exec()
+    return this.model.query().withScopes((scopes) => {
+      scopes.recent(days)
+      scopes.active()
+      scopes.newest()
+    })
   }
 }

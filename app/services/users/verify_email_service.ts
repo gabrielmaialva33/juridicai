@@ -6,7 +6,7 @@ import User from '#models/user'
 import BadRequestException from '#exceptions/bad_request_exception'
 
 export default class VerifyEmailService {
-  async handle(token: string): Promise<User> {
+  async run(token: string): Promise<User> {
     const { i18n } = HttpContext.getOrFail()
 
     // Find a user by verification token
