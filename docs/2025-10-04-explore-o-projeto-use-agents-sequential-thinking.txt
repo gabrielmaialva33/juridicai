@@ -1,0 +1,697 @@
+
+ ▐▛███▜▌   Claude Code v2.0.5
+▝▜█████▛▘  Sonnet 4.5 · Claude Max
+  ▘▘ ▝▝    /Users/gabrielmaia/Documents/projects/juridicai
+
+> Explore o projeto use agents, sequential-thinking, memory, e pesquisa na web. Quero saber o que faz uma plataforma de advogados ter sucesso. 
+
+⏺ Vou explorar o projeto e pesquisar sobre fatores de sucesso para plataformas jurídicas. Deixe-me começar entendendo a estrutura atual do projeto e depois pesquisar as melhores práticas do
+  mercado.
+
+⏺ Read(docs/database-diagram.md)
+  ⎿  Read 532 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "*.md")
+  ⎿  Found 3 files (ctrl+o to expand)
+
+⏺ Search(pattern: "**/*.ts", path: "app/models")
+  ⎿  Found 5 files (ctrl+o to expand)
+
+⏺ Read(package.json)
+  ⎿  Read 101 lines (ctrl+o to expand)
+
+⏺ Read(README.md)
+  ⎿  Read 173 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "**/*controller.ts", path: "app/controllers")
+  ⎿  Found 9 files (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Para entender o que faz uma plataforma jurídica ter sucesso, preciso primeiro analisar o contexto. O projeto JuridicAI é um SaaS
+                                                multi-tenant para escritórios de advocacia com funcionalidades de: gestão de casos, clientes, prazos, documentos, timesheet/billing, tasks, integrações
+                                                 com tribunais e auditoria. Primeiro, vou mapear os fatores críticos de sucesso baseado na arquitetura atual do sistema.", thoughtNumber: 1,
+                                                totalThoughts: 8, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 1,
+       "totalThoughts": 8,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Analisando o projeto atual: JuridicAI é um SaaS multi-tenant para escritórios de advocacia com recursos avançados. Tem gestão de casos,
+                                                clientes, prazos, documentos, timesheet/billing, integrações com tribunais e auditoria completa. A arquitetura é moderna com AdonisJS v6, React 19,
+                                                Inertia.js e RBAC robusto. Para identificar fatores de sucesso, preciso pesquisar: 1) Benchmarks do mercado legal tech, 2) Pain points de advogados, 3)
+                                                 Diferenciais competitivos.", thoughtNumber: 2, totalThoughts: 10, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 2,
+       "totalThoughts": 10,
+     … +4 lines (ctrl+o to expand)
+
+⏺ exa - web_search_exa (MCP)(query: "legal tech platform success factors law firms software 2024 2025", numResults: 5)
+  ⎿  {                                                                                                                                                                                            
+       "requestId": "824e127f1d521d7d8a83b22b5240418b",
+       "autopromptString": "legal tech platform success factors law firms software 2024 2025",
+     … +106 lines (ctrl+o to expand)
+
+⏺ exa - web_search_exa (MCP)(query: "advogados plataforma jurídica Brasil sucesso Clio Projuris features", numResults: 5)
+  ⎿  {                                                                                                                                                                                            
+       "requestId": "91d4877eaf062d8a90487d5d4b1d0ae8",
+       "autopromptString": "advogados plataforma jurídica Brasil sucesso Clio Projuris features",
+     … +95 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Dos resultados da pesquisa, vejo tendências claras: 1) AI é CRÍTICO - 79% dos advogados usam IA, aumento de 315% de 2023 para 2024. 2)
+                                                Vendors como gatekeepers de GenAI - advogados preferem AI embutida nas ferramentas existentes. 3) Hallucination crisis - casos de sanções por usar AI
+                                                incorretamente (Morgan & Morgan, K&L Gates). 4) Purpose-built AI importa mais que AI genérica. O JuridicAI precisa integrar IA de forma segura e
+                                                específica para o domínio jurídico.", thoughtNumber: 3, totalThoughts: 12, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 3,
+       "totalThoughts": 12,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Da pesquisa sobre o mercado brasileiro (Projuris): Features de sucesso incluem: 1) Monitoramento automatizado de tribunais (+600 robôs), 2)
+                                                Captura de intimações por OAB, 3) WhatsApp integrado, 4) Área do cliente, 5) ROI comprovado (+62% lucratividade, +75% produtividade, -720 reais/mês por
+                                                 colaborador). O Projuris tem +5mil escritórios, +31mil advogados ativos, +520mil processos monitorados. Isso mostra que escala e automação de tarefas
+                                                repetitivas são cruciais.", thoughtNumber: 4, totalThoughts: 12, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 4,
+       "totalThoughts": 12,
+     … +4 lines (ctrl+o to expand)
+
+⏺ exa - web_search_exa (MCP)(query: "law firm pain points challenges lawyers biggest problems time billing client communication", numResults: 5)
+  ⎿  {                                                                                                                                                                                            
+       "requestId": "6b787d6c4e610e42a060170a54513974",
+       "autopromptString": "law firm pain points challenges lawyers biggest problems time billing client communication",
+     … +108 lines (ctrl+o to expand)
+
+⏺ exa - web_search_exa (MCP)(query: "legal practice management software must have features case management document automation", numResults: 5)
+  ⎿  {                                                                                                                                                                                            
+       "requestId": "294968eca889b81e1aaa7736a352c822",
+       "autopromptString": "legal practice management software must have features case management document automation",
+     … +108 lines (ctrl+o to expand)
+
+⏺ code-archaeologist(Analyze JuridicAI architecture)
+  ⎿  Done (59 tool uses · 78.5k tokens · 5m 59s)                                                                                                                                                  
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Consolidando os pain points de advogados descobertos: 1) Time tracking ineficiente - advogados só faturam 2.5h/dia de 8-10h trabalhadas,
+                                                perdem 75% do tempo em tarefas não faturáveis. 2) Reconstrução tardia de horas (reconstructive billing) causa underbilling e perda de confiança. 3) 18%
+                                                 de realization loss devido a problemas de billing (Thomson Reuters). 4) 81% dos escritórios têm invoices não pagas ou atrasadas. 5) Resistência à
+                                                mudança tecnológica. 6) Problemas com qualidade e integração de dados.", thoughtNumber: 5, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 5,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Features must-have para legal case management (pesquisa): 1) Case tracking & monitoring centralizado, 2) Document management com automation
+                                                e versionamento, 3) Time entry & expense tracking automático, 4) Billing & invoicing integrado, 5) Client portal para transparência, 6) Calendar com
+                                                court dates, 7) Task management com deadlines, 8) Built-in messaging (text/email), 9) eSignature, 10) Reporting & analytics. Sistemas modernos
+                                                economizam $158,400/ano, permitem 276 cases a mais, recuperam 528 horas/ano.", thoughtNumber: 6, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 6,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Análise do JuridicAI pelo code-archaeologist revelou gap CRÍTICO: projeto tem apenas 10% do necessário para ser uma plataforma jurídica
+                                                viável. Tem excelente arquitetura (8/10 code quality, 7/10 architecture) mas 0% de features legais implementadas. É apenas um RBAC starter kit
+                                                genérico, não uma plataforma jurídica. Faltam: multi-tenant (planejado mas não implementado), todas as features de domínio legal (Client, Case,
+                                                Deadline, Document management), frontend completo, integrações com tribunais, billing/timesheet, AI features.", thoughtNumber: 7, totalThoughts: 15,
+                                                nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 7,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Fatores críticos de sucesso para plataforma jurídica em 2025: 1) AI integrado de forma segura e específica para legal (não genérico), 2)
+                                                Purpose-built AI para evitar hallucinations (7 casos de sanções nos EUA), 3) Automação de tarefas repetitivas (captura de intimações, monitoramento de
+                                                tribunais), 4) ROI comprovado e mensurável (+62% lucratividade Projuris), 5) Time tracking eficiente (principal pain point), 6) Integrações com
+                                                tribunais (600+ robôs Projuris), 7) Client portal para transparência, 8) Mobile access, 9) WhatsApp/comunicação moderna, 10) Compliance (LGPD, OAB).",
+                                                thoughtNumber: 8, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 8,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Benchmark competitivo: Projuris (líder BR) tem +5mil escritórios, +31mil advogados, +520mil processos. Features principais: monitoramento
+                                                automatizado, captura por OAB, WhatsApp, área do cliente, IA estratégica, workflow completo (contato→diagnóstico→estratégia→execução→conclusão). Clio
+                                                (líder mundial) e PracticePanther têm matter management, billing, automação. JuridicAI está 85-90% atrás dos líderes em features.", thoughtNumber: 9,
+                                                totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 9,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Tendências 2025 que JuridicAI DEVE incorporar: 1) Vendors como gatekeepers de GenAI (advogados querem AI embutida, não customizada), 2)
+                                                Novos papéis surgindo (GenAI Czar, Innovation Officer), 3) Educação legal em IA se tornando competência essencial, 4) 79% dos advogados já usam AI
+                                                (aumento 315% 2023→2024), 5) Departments corporativos sendo mais proativos em AI que escritórios, 6) AI abilities e knowledge no centro (document
+                                                summaries, contract review), 7) Foco em workflow optimization e efficiency.", thoughtNumber: 10, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 10,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Específico para Brasil (contexto JuridicAI): 1) Integrações com tribunais brasileiros são CRÍTICAS (PJe, e-SAJ, PROJUDI), 2) Formato CNJ de
+                                                numeração processual, 3) CPF/CNPJ validation, 4) Compliance OAB (sigilo profissional, chinese walls), 5) LGPD compliance (export, deletion, consent),
+                                                6) Prazos fatais e intimações são workflow core, 7) WhatsApp como canal preferido de comunicação, 8) Necessidade de OCR para processos físicos
+                                                digitalizados.", thoughtNumber: 11, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 11,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Arquitetura ideal para sucesso: 1) Multi-tenant com isolamento robusto (row-level + tenant scoping), 2) Microservices para AI features
+                                                (escalabilidade), 3) Event-driven para integrações assíncronas (tribunais), 4) Cache agressivo para performance (Redis), 5) Background jobs para
+                                                processamento pesado (OCR, AI), 6) API-first para integrações futuras, 7) Mobile-first UI (advogados trabalham remotamente), 8) Real-time notifications
+                                                 (WebSockets), 9) Document versioning & audit trail, 10) Sharding strategy para escala (+10k tenants).", thoughtNumber: 12, totalThoughts: 15,
+                                                nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 12,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Modelo de negócio para sucesso: 1) Pricing transparente (per user é padrão), 2) Free trial (Projuris oferece 7 dias), 3) ROI mensurável e
+                                                demonstrável desde dia 1, 4) Onboarding assistido (advogados resistem a mudança), 5) Suporte especializado em legal (não tech genérico), 6) Templates
+                                                prontos para common legal tasks, 7) Migração de dados de sistemas antigos, 8) Integrações out-of-the-box (reduz fricção), 9) Compliance garantido
+                                                (LGPD, OAB), 10) Update constant com base em feedback de advogados.", thoughtNumber: 13, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 13,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Síntese final - O que FAZ uma plataforma jurídica ter SUCESSO em 2025: FUNDAÇÃO = Resolver pain points reais (time tracking, billing loss,
+                                                client communication). CORE = Features específicas do domínio legal (case management, deadlines, court integrations). DIFERENCIAÇÃO = AI purpose-built
+                                                para legal (não genérico), ROI comprovado, automação inteligente. EXECUÇÃO = UX simples, onboarding fácil, suporte especializado, compliance garantido.
+                                                 ESCALA = Arquitetura multi-tenant robusta, performance, segurança enterprise.", thoughtNumber: 14, totalThoughts: 15, nextThoughtNeeded: true)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 14,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ sequential-thinking - sequentialthinking (MCP)(thought: "Próximos passos para JuridicAI: Decisão CRÍTICA - o projeto atual é só scaffolding (10% completo). Precisa de 16-20 semanas para MVP viável.
+                                                 Roadmap: Fase 1 (3 meses) = Multi-tenant + Legal domain core + Frontend + Security. Fase 2 (3 meses) = Court integrations + Billing + Advanced search
+                                                + Reports. Fase 3 (3 meses) = AI features + Workflow automation + Client portal + API. Fase 4 (3 meses) = Mobile + Advanced AI + Performance +
+                                                Enterprise. Total = 12 meses para produto competitivo. Alternativa = Pivotar arquitetura ou focar em nicho específico.", thoughtNumber: 15,
+                                                totalThoughts: 15, nextThoughtNeeded: false)
+  ⎿  {                                                                                                                                                                                            
+       "thoughtNumber": 15,
+       "totalThoughts": 15,
+     … +4 lines (ctrl+o to expand)
+
+⏺ Vou consolidar todos os insights da pesquisa e criar um relatório estruturado sobre o que faz uma plataforma jurídica ter sucesso.
+
+⏺ memory - create_entities (MCP)(entities: [{"name":"JuridicAI Platform","entityType":"Software Project","observations":["Multi-tenant SaaS for law firms built with AdonisJS v6, TypeScript,
+                                PostgreSQL, and Redis","Currently only 10% complete - has excellent RBAC scaffolding but 0% legal domain features implemented","Architecture score: Code Quality 8/10,
+                                Architecture 7/10, but Completeness only 2/10","Needs 16-20 weeks for MVP, 12 months for competitive product","Critical gaps: multi-tenant isolation not implemented,
+                                no frontend (React/Inertia planned but missing), no legal domain models","Has comprehensive planning documents (database-diagram.md with 530 lines) but implementation
+                                doesn't match plans"]},{"name":"Legal Tech Success Factors 2025","entityType":"Market Insights","observations":["AI integration is CRITICAL - 79% of lawyers use AI
+                                tools, 315% increase from 2023 to 2024","Purpose-built AI matters more than generic AI - 7 cases of lawyer sanctions in US for AI hallucinations","Vendors as AI
+                                gatekeepers - lawyers prefer embedded AI in existing tools over custom solutions","Main pain points: time tracking inefficiency (lawyers bill 2.5h/day of 8-10h
+                                worked), 75% time loss on non-billable tasks","18% realization loss due to billing challenges (Thomson Reuters), 81% of firms have unpaid/delayed invoices","ROI must
+                                be measurable - successful platforms show +62% profitability, +75% productivity, -720 reais/month per employee","Court integrations are table stakes for Brazilian
+                                market (PJe, e-SAJ, PROJUDI)"]},{"name":"Projuris","entityType":"Competitor","observations":["Market leader in Brazil with 5,000+ law firms, 31,000+ active lawyers,
+                                520,000+ monitored cases","Key features: 600+ robots for court monitoring, OAB-based summons capture, WhatsApp integration, client portal","Proven ROI: +62%
+                                profitability, +75% productivity, saves 720 reais/month per employee","Complete workflow coverage:
+                                contact→diagnosis→strategy→execution→conclusion→post-service","Strategic AI for deadlines, priorities, and real-time solutions"]},{"name":"Legal Platform Must-Have
+                                Features","entityType":"Requirements","observations":["Case tracking & monitoring with status, assignments, and next steps visibility","Document management with
+                                versioning, OCR, automation, and searchability","Time tracking with automatic timers and billing integration - addresses biggest pain point","Client portal for
+                                transparency and self-service access","Calendar integration with court dates and deadline alerts","Built-in messaging (WhatsApp, SMS, email) for client
+                                communication","E-signature integration (Clicksign, Docusign)","Reporting & analytics for productivity, billing, and case metrics","Court integrations for automatic
+                                case updates (critical for Brazil)","Mobile access - lawyers work remotely and need on-the-go access"]},{"name":"AI in Legal Tech 2025","entityType":"Technology
+                                Trend","observations":["AI expected to automate nearly 50% of legal tasks in US and Europe (Goldman Sachs)","Document summaries and data extraction are killer features
+                                 - Quick Summary type tools","Legal education in AI becoming core competency, not optional","New roles emerging: GenAI Czar, Innovation Officer (but unicorns are
+                                rare)","Corporate legal departments more proactive in AI adoption than law firms","Hallucination crisis requires purpose-built legal AI, not generic ChatGPT","Contract
+                                 review, legal research, and document drafting are top AI use cases"]}])
+  ⎿  [                                                                                                                                                                                            
+       {
+         "name": "JuridicAI Platform",
+     … +64 lines (ctrl+o to expand)
+
+⏺ memory - create_relations (MCP)(relations: [{"from":"JuridicAI Platform","to":"Legal Tech Success Factors 2025","relationType":"must implement"},{"from":"JuridicAI Platform","to":"Legal Platform
+                                 Must-Have Features","relationType":"is missing"},{"from":"JuridicAI Platform","to":"Projuris","relationType":"competes with"},{"from":"Projuris","to":"Legal Platform
+                                 Must-Have Features","relationType":"implements"},{"from":"Legal Tech Success Factors 2025","to":"AI in Legal Tech 2025","relationType":"includes"}])
+  ⎿  [                                                                                                                                                                                            
+       {
+         "from": "JuridicAI Platform",
+     … +24 lines (ctrl+o to expand)
+
+⏺ Agora vou consolidar toda a pesquisa em um relatório executivo sobre fatores de sucesso para plataformas jurídicas.
+
+  📊 RELATÓRIO EXECUTIVO: O Que Faz uma Plataforma Jurídica Ter Sucesso em 2025
+
+  🎯 RESUMO EXECUTIVO
+
+  Após análise profunda do mercado legal tech, competidores, tendências de IA e da arquitetura atual do JuridicAI, identifiquei 10 fatores críticos de sucesso organizados em 4 pilares
+  fundamentais.
+
+  Revelação Crítica sobre o JuridicAI: O projeto atual está apenas 10% completo para ser uma plataforma jurídica viável. Possui excelente scaffolding técnico (arquitetura 8/10), mas 0% de 
+  funcionalidades legais implementadas. É essencialmente um RBAC starter kit genérico, não uma plataforma para advogados.
+
+  ---
+  🏛️ PILAR 1: RESOLVER PAIN POINTS REAIS DOS ADVOGADOS
+
+  💸 1. Time Tracking Eficiente (MAIOR PAIN POINT)
+
+  Problema: Advogados faturam apenas 2.5h/dia de 8-10h trabalhadas - 75% do tempo é perdido em tarefas não faturáveis.
+
+  Impacto Financeiro:
+  - 18% de realization loss (Thomson Reuters)
+  - Até 30% de horas faturáveis perdidas
+  - Waiting until end of day = 10-15% perda; end of week = 25% perda (ABA)
+
+  Solução de Sucesso:
+  - ⏱️ Timers automáticos com start/stop
+  - 📱 Captura mobile de tempo
+  - 🤖 Sugestões de AI para categorização
+  - 💰 Integração direta com billing
+
+  Exemplo Real: Plataformas como MyCase aumentam receita em $158,400/ano por escritório
+
+  💳 2. Billing & Invoicing Inteligente
+
+  Problema: 81% dos escritórios têm invoices não pagas ou atrasadas
+
+  Solução de Sucesso:
+  - Auto-geração de invoices a partir de timesheets
+  - Payment plans automatizados
+  - Integração com PIX, Stripe, PagSeguro
+  - Client portal para pagamento self-service
+  - Alertas de overdue automatizados
+
+  📞 3. Comunicação com Cliente Moderna
+
+  Pain Point: Clientes exigem transparência e acesso em tempo real
+
+  Solução de Sucesso:
+  - WhatsApp integrado (canal preferido no Brasil)
+  - Client portal com acesso 24/7
+  - Atualizações automáticas de status do caso
+  - Mensagens built-in (SMS/Email)
+  - Sharing de documentos seguro
+
+  Benchmark: Projuris tem WhatsApp como diferencial competitivo
+
+  ---
+  ⚙️ PILAR 2: FEATURES ESPECÍFICAS DO DOMÍNIO LEGAL
+
+  🏛️ 4. Court Integrations (CRÍTICO NO BRASIL)
+
+  Essencial para competir no mercado brasileiro:
+  - 🤖 600+ robôs de monitoramento (padrão Projuris)
+  - 📋 PJe, e-SAJ, PROJUDI integrations
+  - 📨 Captura automática de intimações por OAB
+  - 📄 Download automático de andamentos processuais
+  - 🔔 Alertas de publicações em tempo real
+
+  Sem isso: Plataforma não é competitiva no Brasil
+
+  ⏰ 5. Deadline Management (Fatal Deadlines)
+
+  Feature crítica:
+  - 📅 Prazos fatais vs não-fatais
+  - 🔴 Alertas multi-canal (email, SMS, push, WhatsApp)
+  - 📊 Dashboard de prazos próximos
+  - 👥 Delegação e responsável tracking
+  - 🛡️ Margem de segurança configurável
+
+  📄 6. Document Management Avançado
+
+  Must-haves:
+  - 🔍 OCR para documentos físicos digitalizados
+  - 📝 Versionamento automático
+  - 🏷️ Categorização inteligente (AI)
+  - 🔐 Controle de acesso granular
+  - 📋 Templates de petições e contratos
+  - ✍️ E-signature integration (Clicksign, Docusign)
+  - 🔎 Busca full-text em português
+
+  📊 7. Reporting & Analytics
+
+  Dados que advogados precisam:
+  - 💰 Financial reports (receita, recebíveis, lucratividade)
+  - ⏱️ Productivity metrics (horas/caso, casos/advogado)
+  - 📈 Case outcomes tracking
+  - 👥 Team performance
+  - 📉 Bottleneck identification
+
+  ---
+  🤖 PILAR 3: INTELIGÊNCIA ARTIFICIAL SEGURA E ESPECÍFICA
+
+  🧠 8. AI Purpose-Built para Legal (NÃO Genérico)
+
+  CRÍTICO: 79% dos advogados já usam AI (aumento de 315% em 2023→2024)
+
+  ⚠️ Hallucination Crisis:
+  - 7 casos documentados de sanções nos EUA
+  - Morgan & Morgan: email urgente para 1,000+ advogados sobre risco de demissão
+  - K&L Gates: $31,100 em sanções por "collective debacle"
+
+  Solução de Sucesso:
+  - ✅ Vendors como gatekeepers - AI embutida nas ferramentas existentes
+  - ✅ Purpose-built AI - treinada especificamente para domínio legal
+  - ✅ Validation layers - humano sempre no loop
+  - ✅ Audit trail - todas decisões de AI registradas
+
+  Features de AI que Funcionam:
+  1. Document Summaries - Extract de cláusulas e obrigações (Quick Summary style)
+  2. Contract Review - Identificação de riscos e termos não-padrão
+  3. Legal Research - Busca semântica de jurisprudência
+  4. Document Drafting - Templates inteligentes com auto-preenchimento
+  5. Case Outcome Prediction - Probabilidade de sucesso baseada em histórico
+
+  Tendências 2025:
+  - AI esperada para automatizar ~50% das tarefas legais (Goldman Sachs)
+  - Educação em AI se tornando competência core
+  - Novos papéis: GenAI Czar, Innovation Officer
+
+  🔄 9. Automação de Workflow Inteligente
+
+  Economize 528 horas/ano por escritório:
+  - 📋 Templates de processos (litigation, contratos, due diligence)
+  - 🤖 Auto-criação de tasks baseada em eventos
+  - 📧 Email automation para cliente updates
+  - ⚡ Trigger-based actions (novo caso → checklist padrão)
+  - 🔔 Escalation rules para casos prioritários
+
+  ---
+  🛡️ PILAR 4: FUNDAÇÃO TÉCNICA ROBUSTA
+
+  🏗️ 10. Arquitetura Multi-Tenant Enterprise-Grade
+
+  Requisitos não-negociáveis:
+
+  Segurança & Compliance:
+  - 🔐 Row-level isolation + tenant scoping
+  - 🔑 2FA/MFA obrigatório
+  - 🇧🇷 LGPD compliance (export, deletion, consent)
+  - ⚖️ OAB compliance (sigilo profissional, chinese walls)
+  - 📋 Audit trail completo
+  - 🔒 Encryption at rest & in transit
+
+  Performance & Escala:
+  - ⚡ Cache agressivo (Redis)
+  - 📊 Database indexing otimizado (tenant_id, case_number, deadline_date)
+  - 🔄 Background jobs para processamento pesado
+  - 📱 Mobile-first & responsive
+  - 🌐 CDN para assets estáticos
+  - 📈 Sharding strategy para 10k+ tenants
+
+  Developer Experience:
+  - 🔧 API-first architecture
+  - 🪝 Webhooks para integrações
+  - 📚 SDKs e documentation completa
+  - 🧪 Test coverage >80%
+
+  ---
+  📈 BENCHMARKS DE SUCESSO COMPROVADO
+
+  🏆 Projuris (Líder Brasil)
+
+  - Escala: 5,000+ escritórios, 31,000+ advogados, 520,000+ processos
+  - ROI: +62% lucratividade, +75% produtividade
+  - Economia: R$ 720/mês por colaborador
+  - Diferencial: 600+ robôs, captura OAB, WhatsApp, IA estratégica
+
+  💼 MyCase / CARET Legal (Líder USA)
+
+  - Impacto: +$158,400 receita/ano
+  - Casos: +276 casos a mais por ano
+  - Tempo: Recupera 528 horas/ano
+  - Features: All-in-one (case, billing, client portal, messaging)
+
+  🎯 Clio (Market Leader Global)
+
+  - Adoção: 150,000+ usuários
+  - Foco: Matter management, trust accounting, client intake
+  - Integração: 200+ apps no marketplace
+
+  ---
+  🚨 ESTADO ATUAL DO JURIDICAI: GAP ANALYSIS
+
+  ✅ O Que Está BOM (Scaffolding)
+
+  - Arquitetura limpa (8/10 code quality)
+  - TypeScript completo
+  - RBAC robusto com cache
+  - Multi-guard auth (JWT, API tokens, session)
+  - Repository pattern bem implementado
+  - File upload multi-provider (S3, GCS, local)
+
+  ❌ O Que Está FALTANDO (90% do Produto)
+
+  CRÍTICO (P0) - SEM ISSO NÃO LANÇA:
+  1. ❌ Multi-tenant isolation - Planejado mas não implementado
+  2. ❌ Legal domain models - Client, Case, Deadline, Document (0%)
+  3. ❌ Frontend completo - React/Inertia mencionado mas 0 código
+  4. ❌ Court integrations - PJe, e-SAJ, PROJUDI (0%)
+  5. ❌ Time tracking & billing - Core revenue feature (0%)
+  6. ❌ Deadline alerts - Critical legal workflow (0%)
+
+  ALTO (P1) - DIFERENCIAÇÃO:
+  7. ❌ AI features - Document analysis, legal research (0%)
+  8. ❌ Client portal - Transparência e self-service (0%)
+  9. ❌ WhatsApp integration - Canal preferido Brasil (0%)
+  10. ❌ Reporting & analytics - Business intelligence (0%)
+
+  MÉDIO (P2) - COMPLIANCE:
+  11. ❌ 2FA/MFA - Segurança enterprise (0%)
+  12. ❌ LGPD compliance - Data export, deletion (0%)
+  13. ❌ Mobile app - iOS/Android (0%)
+  14. ⚠️ Audit trail - Básico implementado, falta compliance
+
+  📊 Score Card
+
+  | Dimensão         | Score  | Status               |
+  |------------------|--------|----------------------|
+  | Arquitetura      | 7/10   | ✅ Sólida             |
+  | Code Quality     | 8/10   | ✅ Excelente          |
+  | Segurança        | 5/10   | ⚠️ CSRF/CORS issues  |
+  | Features Legais  | 0/10   | ❌ Zero               |
+  | Frontend         | 0/10   | ❌ Inexistente        |
+  | Completude       | 2/10   | ❌ Apenas scaffolding |
+  | Market Readiness | 1/10   | ❌ Não viável         |
+  | TOTAL            | 3.3/10 | 🔴 Crítico           |
+
+  ---
+  🛣️ ROADMAP PARA SUCESSO
+
+  📅 FASE 1: MVP CORE (Meses 1-3)
+
+  Objetivo: Produto mínimo viável para early adopters
+
+  Sprint 1-2 (Semanas 1-4):
+  - ✅ Implementar multi-tenant core (TenantContext, resolver, scoping)
+  - ✅ Models legais (Tenant, Client, Case, Deadline, Document)
+  - ✅ Frontend base com React/Inertia (dashboard, case list)
+
+  Sprint 3-4 (Semanas 5-8):
+  - ✅ Case management CRUD completo
+  - ✅ Document upload com categorização
+  - ✅ Deadline alerts básico (email)
+  - ✅ Client management
+
+  Sprint 5-6 (Semanas 9-12):
+  - ✅ Time tracking com timer
+  - ✅ Basic billing (invoice generation)
+  - ✅ Search & filters
+  - ✅ Security fixes (CSRF, CORS, 2FA)
+
+  Entrega: Plataforma funcional para 10-20 escritórios piloto
+
+  📅 FASE 2: FEATURES ESSENCIAIS (Meses 4-6)
+
+  Objetivo: Paridade competitiva com mercado
+
+  Sprint 7-8 (Semanas 13-16):
+  - ✅ Court integrations (PJe, e-SAJ)
+  - ✅ Captura automática de intimações
+  - ✅ WhatsApp Business integration
+
+  Sprint 9-10 (Semanas 17-20):
+  - ✅ Advanced search (full-text)
+  - ✅ Reports & analytics dashboard
+  - ✅ Client portal MVP
+  - ✅ Mobile-responsive UI
+
+  Sprint 11-12 (Semanas 21-24):
+  - ✅ Billing automations
+  - ✅ Payment gateway (PIX, Stripe)
+  - ✅ Email/SMS notifications
+  - ✅ LGPD compliance features
+
+  Entrega: Produto competitivo para mercado SMB
+
+  📅 FASE 3: DIFERENCIAÇÃO (Meses 7-9)
+
+  Objetivo: Vantagem competitiva via AI
+
+  Sprint 13-14 (Semanas 25-28):
+  - ✅ AI document summarization
+  - ✅ Legal research assistant
+  - ✅ Smart categorization
+
+  Sprint 15-16 (Semanas 29-32):
+  - ✅ Workflow automation engine
+  - ✅ Process templates
+  - ✅ Task automation
+
+  Sprint 17-18 (Semanas 33-36):
+  - ✅ Client portal avançado
+  - ✅ Public API & webhooks
+  - ✅ Marketplace de integrações
+
+  Entrega: Plataforma diferenciada com AI
+
+  📅 FASE 4: ESCALA & ENTERPRISE (Meses 10-12)
+
+  Objetivo: Preparação para growth
+
+  Sprint 19-20 (Semanas 37-40):
+  - ✅ Mobile native apps (React Native)
+  - ✅ Offline mode
+  - ✅ Advanced AI (outcome prediction)
+
+  Sprint 21-22 (Semanas 41-44):
+  - ✅ Performance optimization
+  - ✅ Sharding implementation
+  - ✅ Enterprise features (SSO, SAML)
+
+  Sprint 23-24 (Semanas 45-48):
+  - ✅ White-label capability
+  - ✅ Advanced analytics/BI
+  - ✅ Scale testing (10k users)
+
+  Entrega: Plataforma enterprise-ready
+
+  ---
+  💰 MODELO DE NEGÓCIO DE SUCESSO
+
+  💵 Pricing Strategy
+
+  Baseado em benchmarks de mercado:
+
+  Tier 1: STARTER - R$ 149/usuário/mês
+  - Até 5 usuários
+  - 100 casos ativos
+  - 10 GB storage
+  - Features core (case, client, deadline)
+  - Email support
+
+  Tier 2: PROFESSIONAL - R$ 249/usuário/mês
+  - Usuários ilimitados
+  - Casos ilimitados
+  - 50 GB storage
+  - Court integrations
+  - WhatsApp + Client portal
+  - AI document summary
+  - Priority support
+
+  Tier 3: ENTERPRISE - R$ 399/usuário/mês
+  - Tudo do Professional +
+  - Storage ilimitado
+  - Advanced AI features
+  - Custom integrations
+  - Dedicated account manager
+  - SLA 99.9%
+  - White-label option
+
+  Add-ons:
+  - AI Legal Research: +R$ 99/usuário/mês
+  - E-signature: +R$ 49/usuário/mês
+  - Advanced analytics: +R$ 79/escritório/mês
+
+  🎯 Go-to-Market
+
+  1. Free trial: 14 dias sem cartão de crédito
+  2. Onboarding assistido: Call com especialista legal tech
+  3. Migration support: Importação de dados gratuita
+  4. Templates prontos: 50+ templates de petições e contratos
+  5. ROI calculator: Demonstrar economia desde dia 1
+  6. Case studies: Histórias de sucesso de early adopters
+  7. Partnerships: OAB seccionals, associações de advogados
+
+  ---
+  🎯 FATORES CRÍTICOS DE SUCESSO - CHECKLIST
+
+  ✅ ESSENCIAIS (Sem isso, não funciona)
+
+  - Resolver pain point #1: Time tracking eficiente
+  - Resolver pain point #2: Billing sem revenue loss
+  - Resolver pain point #3: Client communication moderna
+  - Court integrations para Brasil (PJe, e-SAJ)
+  - Deadline management com alertas
+  - Document management com OCR
+  - Multi-tenant isolation robusto
+  - Mobile-responsive UI
+  - ROI mensurável e demonstrável
+
+  🚀 DIFERENCIADORES (Vantagem competitiva)
+
+  - AI purpose-built (não genérico)
+  - WhatsApp Business integration
+  - Workflow automation inteligente
+  - Legal research assistant
+  - Client portal excepcional
+  - Public API robusta
+  - Advanced analytics/BI
+
+  🛡️ FUNDAÇÃO (Requisitos técnicos)
+
+  - Security enterprise (2FA, encryption, audit)
+  - LGPD + OAB compliance
+  - Performance (sub-200ms response)
+  - Scalability (10k+ users)
+  - Reliability (99.9% uptime)
+  - Developer experience (API-first)
+
+  ---
+  🎬 CONCLUSÃO & PRÓXIMOS PASSOS
+
+  📌 Realidade Atual do JuridicAI
+
+  O projeto possui excelente fundação técnica mas está 90% incompleto para o mercado legal. É um RBAC starter kit, não uma plataforma jurídica.
+
+  🚀 Decisão Estratégica Necessária
+
+  OPÇÃO A: Full Build (Recomendado)
+  - Timeline: 12 meses para produto competitivo
+  - MVP: 3 meses (early adopters)
+  - Investimento: ~3-5 devs full-time
+  - Risco: Médio (tech pronta, falta features)
+
+  OPÇÃO B: Pivot Nicho
+  - Focar em um segmento específico (ex: trabalhista, cível)
+  - Reduzir escopo de features
+  - Lançar em 4-6 meses
+  - Risco: Baixo (mercado menor)
+
+  OPÇÃO C: Parceria Estratégica
+  - Licenciar features de plataforma estabelecida
+  - Focar em diferenciação (AI, UX)
+  - Time to market: 2-3 meses
+  - Risco: Alto (dependência externa)
+
+  🎯 Recomendação Final
+
+  Implementar OPÇÃO A com foco em:
+  1. Semanas 1-4: Multi-tenant + Legal domain core
+  2. Semanas 5-8: Frontend MVP + Security
+  3. Semanas 9-12: Court integrations + Time tracking
+  4. Mês 4: Beta com 10 escritórios
+  5. Mês 6: Launch público
+  6. Mês 9: AI features
+  7. Mês 12: Enterprise ready
+
+  Fatores de Sucesso:
+  - ✅ Resolver pain points reais (não features "cool")
+  - ✅ ROI demonstrável desde dia 1
+  - ✅ Court integrations (não-negociável no Brasil)
+  - ✅ AI segura e purpose-built
+  - ✅ Onboarding excepcional (advogados resistem mudança)
+  - ✅ Compliance garantido (LGPD, OAB)
+
+  ---
+  🔑 KEY INSIGHT: Plataformas jurídicas de sucesso não vendem "tecnologia" - vendem tempo recuperado, receita aumentada e risco reduzido. O JuridicAI deve quantificar e demonstrar esses
+  benefícios desde o primeiro contato.
+
+> /context 
+  ⎿  Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"`temperature` may only be set to 1 when thinking is enabled. Please consult our documentation at 
+     https://docs.claude.com/en/docs/build-with-claude/extended-thinking#important-considerations-when-using-extended-thinking"},"request_id":"req_011CTnXhBM7BGgrGwBB1LfH5"}
+
+
+
+
