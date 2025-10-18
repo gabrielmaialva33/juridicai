@@ -66,6 +66,8 @@ export default defineConfig({
     () => import('@rlanz/bull-queue/queue_provider'),
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@adonisjs/drive/drive_provider'),
+    () => import('@adonisjs/inertia/inertia_provider'),
+    () => import('@adonisjs/vite/vite_provider'),
   ],
 
   /*
@@ -117,7 +119,15 @@ export default defineConfig({
       pattern: 'resources/lang/**/*.{json,yaml,yml}',
       reloadServer: false,
     },
+    {
+      pattern: 'public/**',
+      reloadServer: false,
+    },
   ],
 
+  assetsBundler: false,
+  hooks: {
+    onBuildStarting: [() => import('@adonisjs/vite/build_hook')],
+  },
   assetsBundler: false,
 })
