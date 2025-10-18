@@ -7,12 +7,16 @@ import {
   scope,
   SnakeCaseNamingStrategy,
 } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
 
+import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 import Role from '#models/role'
 
-export default class Permission extends BaseModel {
+const TenantScoped = withTenantScope()
+
+export default class Permission extends compose(BaseModel, TenantScoped) {
   static table = 'permissions'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
@@ -23,6 +27,9 @@ export default class Permission extends BaseModel {
    */
   @column({ isPrimary: true })
   declare id: number
+
+  @column()
+  declare tenant_id: string
 
   @column()
   declare name: string
