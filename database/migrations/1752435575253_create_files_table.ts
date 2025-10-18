@@ -6,6 +6,9 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.bigIncrements('id')
+
+      table.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
+
       table.bigInteger('owner_id').unsigned().references('id').inTable('users').onDelete('CASCADE')
       table.string('client_name').notNullable()
       table.string('file_name').notNullable()
@@ -13,6 +16,8 @@ export default class extends BaseSchema {
       table.string('file_type').notNullable()
       table.string('file_category').notNullable()
       table.string('url').notNullable()
+
+      table.index(['tenant_id', 'owner_id'], 'idx_files_tenant_owner')
 
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })

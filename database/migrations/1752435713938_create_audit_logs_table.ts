@@ -7,6 +7,8 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.bigIncrements('id')
 
+      table.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
+
       // User and session info
       table.bigInteger('user_id').unsigned().nullable()
       table.string('session_id', 100).nullable()
@@ -36,10 +38,10 @@ export default class extends BaseSchema {
       table.timestamp('updated_at', { useTz: true }).nullable()
 
       // Indexes for performance
-      table.index(['user_id', 'created_at'], 'idx_audit_logs_user_date')
-      table.index(['resource', 'action'], 'idx_audit_logs_resource_action')
-      table.index(['result', 'created_at'], 'idx_audit_logs_result_date')
-      table.index(['ip_address', 'created_at'], 'idx_audit_logs_ip_date')
+      table.index(['tenant_id', 'user_id', 'created_at'], 'idx_audit_logs_tenant_user_date')
+      table.index(['tenant_id', 'resource', 'action'], 'idx_audit_logs_tenant_resource_action')
+      table.index(['tenant_id', 'result', 'created_at'], 'idx_audit_logs_tenant_result_date')
+      table.index(['tenant_id', 'ip_address', 'created_at'], 'idx_audit_logs_tenant_ip_date')
 
       // Foreign keys
       table.foreign('user_id').references('id').inTable('users').onDelete('SET NULL')

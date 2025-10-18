@@ -1,13 +1,14 @@
 import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
+import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 
-type Builder = ModelQueryBuilderContract<typeof AuditLog>
+const TenantScoped = withTenantScope()
 
-export default class AuditLog extends BaseModel {
+export default class AuditLog extends compose(BaseModel, TenantScoped) {
   static table = 'audit_logs'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
@@ -18,6 +19,9 @@ export default class AuditLog extends BaseModel {
    */
   @column({ isPrimary: true })
   declare id: number
+
+  @column()
+  declare tenant_id: string
 
   @column()
   declare user_id: number | null
@@ -142,7 +146,7 @@ export default class AuditLog extends BaseModel {
    * Order audit logs by creation date (newest first)
    * @example AuditLog.query().withScopes((scopes) => scopes.recentFirst())
    */
-  static recentFirst = scope((query: Builder) => {
+  static recentFirst = scope((query) => {
     return query.orderBy('created_at', 'desc')
   })
 }

@@ -7,14 +7,15 @@ import {
   scope,
   SnakeCaseNamingStrategy,
 } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
+import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 
-type Builder = ModelQueryBuilderContract<typeof File>
+const TenantScoped = withTenantScope()
 
-export default class File extends BaseModel {
+export default class File extends compose(BaseModel, TenantScoped) {
   static table = 'files'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
@@ -25,6 +26,9 @@ export default class File extends BaseModel {
    */
   @column({ isPrimary: true })
   declare id: number
+
+  @column()
+  declare tenant_id: string
 
   @column()
   declare owner_id: number
@@ -140,15 +144,15 @@ export default class File extends BaseModel {
    * Include owner relationship
    * @example File.query().withScopes((scopes) => scopes.withOwner())
    */
-  static withOwner = scope((query: Builder) => {
-    return query.preload('owner')
+  static withOwner = scope((query) => {
+    return query.preload('owner' as any)
   })
 
   /**
    * Order by creation date (newest first)
    * @example File.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: Builder) => {
+  static newest = scope((query) => {
     return query.orderBy('created_at', 'desc')
   })
 
@@ -156,7 +160,7 @@ export default class File extends BaseModel {
    * Order by creation date (oldest first)
    * @example File.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: Builder) => {
+  static oldest = scope((query) => {
     return query.orderBy('created_at', 'asc')
   })
 
@@ -164,7 +168,7 @@ export default class File extends BaseModel {
    * Order by file size (largest first)
    * @example File.query().withScopes((scopes) => scopes.byLargestSize())
    */
-  static byLargestSize = scope((query: Builder) => {
+  static byLargestSize = scope((query) => {
     return query.orderBy('file_size', 'desc')
   })
 
@@ -172,7 +176,7 @@ export default class File extends BaseModel {
    * Order by file size (smallest first)
    * @example File.query().withScopes((scopes) => scopes.bySmallestSize())
    */
-  static bySmallestSize = scope((query: Builder) => {
+  static bySmallestSize = scope((query) => {
     return query.orderBy('file_size', 'asc')
   })
 

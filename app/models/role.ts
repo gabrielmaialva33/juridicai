@@ -2,14 +2,11 @@ import { DateTime } from 'luxon'
 import { BaseModel, column, manyToMany, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
 import IRole from '#interfaces/role_interface'
 import User from '#models/user'
 import Permission from '#models/permission'
-
-type Builder = ModelQueryBuilderContract<typeof Role>
 
 const TenantScoped = withTenantScope()
 
@@ -94,7 +91,7 @@ export default class Role extends compose(BaseModel, TenantScoped) {
    * @example Role.query().withScopes((scopes) => scopes.withPermissions())
    */
   static withPermissions = scope((query) => {
-    return (query as any).preload('permissions')
+    return query.preload('permissions' as any)
   })
 
   /**
@@ -102,7 +99,7 @@ export default class Role extends compose(BaseModel, TenantScoped) {
    * @example Role.query().withScopes((scopes) => scopes.withUsers())
    */
   static withUsers = scope((query) => {
-    return (query as any).preload('users')
+    return query.preload('users' as any)
   })
 
   /**
