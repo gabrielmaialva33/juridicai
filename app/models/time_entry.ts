@@ -131,7 +131,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter active (not deleted) time entries
    * @example TimeEntry.query().withScopes((scopes) => scopes.active())
    */
-  static active = scope((query: Builder) => {
+  static active = scope((query) => {
     return query.where('is_deleted', false)
   })
 
@@ -139,7 +139,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter completed time entries (with end time)
    * @example TimeEntry.query().withScopes((scopes) => scopes.completed())
    */
-  static completed = scope((query: Builder) => {
+  static completed = scope((query) => {
     return query.whereNotNull('ended_at')
   })
 
@@ -147,7 +147,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter running timers (no end time yet)
    * @example TimeEntry.query().withScopes((scopes) => scopes.running())
    */
-  static running = scope((query: Builder) => {
+  static running = scope((query) => {
     return query.whereNull('ended_at')
   })
 
