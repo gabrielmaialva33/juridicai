@@ -1,3 +1,4 @@
+import { Demo1Layout } from '@/layouts/demo1-layout'
 import { Demo6Layout } from '@/layouts/demo6-layout'
 import type { LayoutKey, LayoutRegistry } from '@/types/layout'
 
@@ -22,9 +23,9 @@ export const LAYOUTS: LayoutRegistry = {
     key: 'demo1',
     name: 'Classic Sidebar',
     description: 'Traditional left sidebar with fixed header',
-    component: PlaceholderLayout,
+    component: Demo1Layout,
     features: ['Left sidebar', 'Fixed header', 'Collapsible', 'Accordion menu'],
-    sidebarWidth: 'auto',
+    sidebarWidth: '260px',
     headerHeight: '60px',
     category: 'sidebar',
   },
@@ -117,7 +118,7 @@ export const LAYOUTS: LayoutRegistry = {
   },
 }
 
-export const DEFAULT_LAYOUT: LayoutKey = 'demo6'
+export const DEFAULT_LAYOUT: LayoutKey = 'demo1'
 
 export function getLayout(key: LayoutKey) {
   return LAYOUTS[key] || LAYOUTS[DEFAULT_LAYOUT]
