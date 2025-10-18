@@ -286,8 +286,8 @@ export default class CaseEvent extends compose(BaseModel, TenantScoped) {
    * Include case relationship
    * @example CaseEvent.query().withScopes((scopes) => scopes.withCase())
    */
-  static withCase = scope((query: Builder) => {
-    return query.preload('case', (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
+  static withCase = scope((query) => {
+    return query.preload('case', (caseQuery) => {
       caseQuery.preload('client')
     })
   })
@@ -296,7 +296,7 @@ export default class CaseEvent extends compose(BaseModel, TenantScoped) {
    * Include creator relationship
    * @example CaseEvent.query().withScopes((scopes) => scopes.withCreator())
    */
-  static withCreator = scope((query: Builder) => {
+  static withCreator = scope((query) => {
     return query.preload('creator')
   })
 
@@ -304,9 +304,9 @@ export default class CaseEvent extends compose(BaseModel, TenantScoped) {
    * Include all relationships
    * @example CaseEvent.query().withScopes((scopes) => scopes.withRelationships())
    */
-  static withRelationships = scope((query: ModelQueryBuilderContract<typeof CaseEvent>) => {
+  static withRelationships = scope((query) => {
     return query
-      .preload('case', (q: ModelQueryBuilderContract<typeof Case>) => q.preload('client'))
+      .preload('case', (q) => q.preload('client'))
       .preload('creator')
   })
 
