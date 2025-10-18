@@ -37,8 +37,7 @@ export default defineConfig({
       'react-router-dom',
       '@tanstack/react-query',
       '@tanstack/react-table',
-      'apexcharts',
-      'react-apexcharts',
+      'recharts',
     ],
   },
 })

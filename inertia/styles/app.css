@@ -1,9 +1,9 @@
 /* JuridicAI - Main Application Styles */
 
 /* Tailwind CSS v4 - Explicit imports for @tailwindcss/vite */
-@import "tailwindcss/theme.css";
-@import "tailwindcss/preflight.css";
-@import "tailwindcss/utilities.css";
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
 
 /* Import custom layout styles */
 @import './juridicai-layout.css';

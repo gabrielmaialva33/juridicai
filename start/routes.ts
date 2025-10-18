@@ -27,6 +27,8 @@ import '#routes/documents/index'
 import '#routes/case_events/index'
 import '#routes/time_entries/index'
 import '#routes/ai/index'
+import '#routes/dashboards/index'
+import '#routes/dashboards/demo'
 
 router
   .get('/version', async () => {
@@ -41,4 +43,7 @@ router
     }
   })
   .use(throttle)
-router.on('/').renderInertia('home')
+// Redirect home to dashboard
+router.get('/', async ({ response }) => {
+  return response.redirect('/dashboard')
+})
