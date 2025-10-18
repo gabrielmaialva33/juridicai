@@ -3,6 +3,7 @@ import { BaseModel, column, belongsTo, scope, computed } from '@adonisjs/lucid/o
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+import { SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
@@ -14,6 +15,9 @@ type Builder = ModelQueryBuilderContract<typeof TimeEntry>
 const TenantScoped = withTenantScope()
 
 export default class TimeEntry extends compose(BaseModel, TenantScoped) {
+  static table = 'time_entries'
+  static namingStrategy = new SnakeCaseNamingStrategy()
+
   /**
    * ------------------------------------------------------
    * Columns
@@ -49,22 +53,8 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
   @column()
   declare hourly_rate: number | null
 
-  @column({
-    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : '{}'),
-    consume: (value: string | string[] | null) => {
-      if (!value) return []
-      if (Array.isArray(value)) return value
-      if (typeof value === 'string') {
-        try {
-          return JSON.parse(value)
-        } catch {
-          return []
-        }
-      }
-      return []
-    },
-  })
-  declare tags: string[]
+  @column()
+  declare tags: string[] | null
 
   @column()
   declare is_deleted: boolean

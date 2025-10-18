@@ -1,23 +1,20 @@
-/// <reference path="../../adonisrc.ts" />
-/// <reference path="../../config/inertia.ts" />
-
-import '../css/app.css'
-import { hydrateRoot } from 'react-dom/client'
 import { createInertiaApp } from '@inertiajs/react'
-import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { createRoot } from 'react-dom/client'
+import Layout from './metronic/components/layouts/layout-1'
 
-const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
+// Estilos Globais do Metronic
+import './metronic/styles/globals.css'
+import './metronic/styles/layout.css'
 
 createInertiaApp({
-  progress: { color: '#5468FF' },
-
-  title: (title) => `${title} - ${appName}`,
-
   resolve: (name) => {
-    return resolvePageComponent(`../pages/${name}.tsx`, import.meta.glob('../pages/**/*.tsx'))
+    const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
+    let page = pages[`../pages/${name}.tsx`]
+    // Define o Layout do Metronic como o layout padrão para todas as páginas
+    page.default.layout = page.default.layout || ((page) => <Layout>{page}</Layout>)
+    return page
   },
-
   setup({ el, App, props }) {
-    hydrateRoot(el, <App {...props} />)
+    createRoot(el).render(<App {...props} />)
   },
 })

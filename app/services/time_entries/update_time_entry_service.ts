@@ -3,6 +3,7 @@ import TimeEntry from '#models/time_entry'
 import NotFoundException from '#exceptions/not_found_exception'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import { DateTime } from 'luxon'
+import logger from '@adonisjs/core/services/logger'
 
 interface UpdateTimeEntryPayload {
   description?: string
@@ -37,6 +38,7 @@ export default class UpdateTimeEntryService {
     }
 
     // Check ownership
+    logger.info(`TimeEntry ownership check - DB user_id: ${timeEntry.user_id}, Request user_id: ${userId}, Match: ${timeEntry.user_id === userId}`)
     if (timeEntry.user_id !== userId) {
       throw new ForbiddenException('You can only update your own time entries')
     }

@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import TimeEntry from '#models/time_entry'
 import NotFoundException from '#exceptions/not_found_exception'
 import ForbiddenException from '#exceptions/forbidden_exception'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * Service to soft delete a time entry
@@ -23,6 +24,7 @@ export default class DeleteTimeEntryService {
     }
 
     // Check ownership
+    logger.info(`DeleteTimeEntry ownership check - DB user_id: ${timeEntry.user_id}, Request user_id: ${userId}, Match: ${timeEntry.user_id === userId}`)
     if (timeEntry.user_id !== userId) {
       throw new ForbiddenException('You can only delete your own time entries')
     }
