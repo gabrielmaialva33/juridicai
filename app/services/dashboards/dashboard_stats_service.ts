@@ -221,17 +221,17 @@ export default class DashboardStatsService {
    */
   static async getUpcomingDeadlines(limit: number = 5) {
     const deadlines = await Deadline.query()
-      .preload('case')
+      .preload('case' as any)
       .preload('responsible')
       .where('status', 'pending')
       .where('deadline_date', '>=', DateTime.now().toSQLDate()!)
       .orderBy('deadline_date', 'asc')
       .limit(limit)
 
-    return deadlines.map((deadline: any) => ({
+    return deadlines.map((deadline) => ({
       id: deadline.id,
       title: deadline.title,
-      case_number: deadline.case.number,
+      case_number: deadline.case.case_number,
       case_id: deadline.case.id,
       due_date: deadline.deadline_date.toISODate(),
       priority: deadline.is_fatal ? 'high' : 'normal',

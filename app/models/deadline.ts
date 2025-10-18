@@ -300,8 +300,8 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
    * Include case relationship
    * @example Deadline.query().withScopes((scopes) => scopes.withCase())
    */
-  static withCase = scope((query) => {
-    return query.preload('case', (caseQuery) => {
+  static withCase = scope((query: any) => {
+    return query.preload('case', (caseQuery: any) => {
       caseQuery.preload('client')
     })
   })
@@ -310,7 +310,7 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
    * Include responsible user relationship
    * @example Deadline.query().withScopes((scopes) => scopes.withResponsible())
    */
-  static withResponsible = scope((query) => {
+  static withResponsible = scope((query: any) => {
     return query.preload('responsible')
   })
 
@@ -318,9 +318,9 @@ export default class Deadline extends compose(BaseModel, TenantScoped) {
    * Include all relationships
    * @example Deadline.query().withScopes((scopes) => scopes.withRelationships())
    */
-  static withRelationships = scope((query) => {
+  static withRelationships = scope((query: any) => {
     return query
-      .preload('case', (q) => q.preload('client'))
+      .preload('case', (q: any) => q.preload('client'))
       .preload('responsible')
       .preload('completed_by_user')
   })

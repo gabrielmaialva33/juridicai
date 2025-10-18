@@ -138,11 +138,11 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
          * Hook: Auto-set tenant_id before creating a record
          */
         if (config.autoSetOnCreate) {
-          this.before('create', (model: any) => {
+          this.before('create', (model) => {
             const columnName = config.tenantColumn
 
             // Only set if tenant column is not already set
-            if (!model[columnName]) {
+            if (!(model as any)[columnName]) {
               const tenantId =
                 config.tenantResolver?.() || TenantContextService.getCurrentTenantId()
 
@@ -151,7 +151,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
               }
 
               if (tenantId) {
-                model[columnName] = tenantId
+                ;(model as any)[columnName] = tenantId
               }
             }
           })
@@ -161,16 +161,16 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
          * Hook: Scope queries to the current tenant (for find, findBy, first, etc.)
          */
         if (config.autoFilter) {
-          this.before('find', (query: any) => {
+          this.before('find', (query) => {
             // Skip automatic scoping if explicitly disabled
-            if (query._skipTenantScope) {
+            if ((query as any)._skipTenantScope) {
               return
             }
 
             const tenantId = config.tenantResolver?.() || TenantContextService.getCurrentTenantId()
             if (tenantId) {
               query.where(config.tenantColumn, tenantId)
-            } else if (config.strictMode && !query._allowCrossTenant) {
+            } else if (config.strictMode && !(query as any)._allowCrossTenant) {
               // In strict mode, queries without tenant context should fail
               throw TenantContextException.missingForQuery(this.name)
             }
@@ -238,7 +238,8 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       ensureTenantContext(): void {
         const columnName = config.tenantColumn
-        if (!this[columnName as keyof this]) {
+        const value = (this as any)[columnName]
+        if (!value) {
           throw TenantContextException.missingOnInstance(this.constructor.name)
         }
       }
@@ -248,7 +249,8 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       belongsToTenant(tenantId: string): boolean {
         const columnName = config.tenantColumn
-        return this[columnName as keyof this] === tenantId
+        const value = (this as any)[columnName]
+        return value === tenantId
       }
 
       /**
@@ -368,7 +370,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
       )
     }
 
-    return TenantScopedModelClass
+    return TenantScopedModelClass as any
   }
 }
 

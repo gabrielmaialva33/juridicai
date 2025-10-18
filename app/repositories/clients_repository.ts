@@ -49,7 +49,7 @@ export default class ClientsRepository
         next_page_url: page < Math.ceil(total / perPage) ? '' : null,
         previous_page_url: page > 1 ? '' : null,
       },
-    }
+    } as any
   }
 
   /**

@@ -34,7 +34,7 @@ export default class GetDeadlineService {
 
     // Load requested relationships
     if (options.withCase) {
-      await deadline.load('case', (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
+      await deadline.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }

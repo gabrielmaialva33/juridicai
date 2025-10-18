@@ -43,10 +43,10 @@ export default class CreateCaseService {
     }
 
     // Convert Date fields to DateTime if they exist
-    const data: any = { ...payload }
+    const data = { ...payload }
 
     if (payload.filed_at) {
-      data.filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
+      (data as any).filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
     }
 
     // Set default status if not provided
@@ -54,6 +54,6 @@ export default class CreateCaseService {
       data.status = 'active'
     }
 
-    return this.casesRepository.create(data)
+    return this.casesRepository.create(data as any)
   }
 }

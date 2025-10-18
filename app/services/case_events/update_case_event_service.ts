@@ -7,7 +7,6 @@ import NotFoundException from '#exceptions/not_found_exception'
 /**
  * Service for updating an existing case event
  *
- * Converts event_date from Date to DateTime if provided
  * Uses merge() and save() pattern for updates
  *
  * @example
@@ -41,7 +40,7 @@ export default class UpdateCaseEventService {
         | 'other'
       title?: string
       description?: string | null
-      event_date?: Date
+      event_date?: DateTime
       source?: 'manual' | 'court_api' | 'email' | 'import'
       metadata?: Record<string, any> | null
     }
@@ -52,17 +51,7 @@ export default class UpdateCaseEventService {
       throw new NotFoundException('Case event not found')
     }
 
-    // Convert event_date if provided
-    if (payload.event_date) {
-      const eventDateTime = DateTime.fromJSDate(payload.event_date)
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { event_date, ...rest } = payload
-      event.merge(rest)
-      event.event_date = eventDateTime
-    } else {
-      event.merge(payload)
-    }
-
+    event.merge(payload)
     await event.save()
 
     return event

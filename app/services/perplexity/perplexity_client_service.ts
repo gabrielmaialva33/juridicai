@@ -74,7 +74,7 @@ export default class PerplexityClientService {
         typeof messageContent === 'string'
           ? messageContent
           : Array.isArray(messageContent)
-            ? messageContent.map((chunk: any) => chunk.text || '').join('')
+            ? messageContent.map((chunk) => (chunk as any).text || '').join('')
             : ''
 
       logger.info('Perplexity API response received', {
@@ -85,8 +85,8 @@ export default class PerplexityClientService {
 
       return {
         content,
-        search_results: this.formatSearchResults(response.search_results),
-        related_questions: response.related_questions || [],
+        search_results: this.formatSearchResults((response.search_results || undefined) as any),
+        related_questions: (response as any).related_questions || [],
         usage: response.usage
           ? {
               prompt_tokens: response.usage.prompt_tokens,
@@ -156,13 +156,13 @@ export default class PerplexityClientService {
         typeof messageContent === 'string'
           ? messageContent
           : Array.isArray(messageContent)
-            ? messageContent.map((chunk: any) => chunk.text || '').join('')
+            ? messageContent.map((chunk) => (chunk as any).text || '').join('')
             : ''
 
       return {
         content,
-        search_results: this.formatSearchResults(response.search_results),
-        related_questions: response.related_questions || [],
+        search_results: this.formatSearchResults((response.search_results || undefined) as any),
+        related_questions: (response as any).related_questions || [],
         usage: response.usage
           ? {
               prompt_tokens: response.usage.prompt_tokens,
@@ -232,7 +232,9 @@ Sempre cite suas fontes. Responda em português do Brasil.`,
   /**
    * Format search results from Perplexity response
    */
-  private formatSearchResults(results: any[] | undefined): IPerplexity.SearchResult[] | undefined {
+  private formatSearchResults(
+    results: Array<{ title?: string; url?: string; date?: string; snippet?: string }> | undefined
+  ): IPerplexity.SearchResult[] | undefined {
     if (!results || !Array.isArray(results)) {
       return undefined
     }

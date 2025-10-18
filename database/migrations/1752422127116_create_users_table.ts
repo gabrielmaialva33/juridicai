@@ -7,16 +7,22 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.bigIncrements('id').notNullable().primary()
 
+      table.uuid('tenant_id').notNullable().index()
+
       table.string('full_name').notNullable()
 
-      table.string('email', 254).notNullable().unique()
-      table.string('username', 80).nullable().unique()
+      table.string('email', 254).notNullable()
+      table.string('username', 80).nullable()
       table.string('password').notNullable()
 
       table.string('firebase_uid').nullable().unique()
       table.index('firebase_uid')
 
       table.boolean('is_deleted').defaultTo(false)
+
+      // Composite unique index for email per tenant
+      table.unique(['tenant_id', 'email'])
+      table.unique(['tenant_id', 'username'])
 
       table.jsonb('metadata').defaultTo(
         JSON.stringify({

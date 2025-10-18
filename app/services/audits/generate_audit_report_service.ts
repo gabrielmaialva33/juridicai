@@ -2,11 +2,36 @@ import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import AuditLogsRepository from '#repositories/audit_logs_repository'
 
+interface AuditSummaryStats {
+  result: string
+  total: number
+  unique_users: number
+  unique_resources: number
+}
+
+interface AuditDailyStats {
+  date: string
+  total: number
+  unique_users: number
+}
+
+interface AuditActionStats {
+  action: string
+  result: string
+  total: number
+}
+
+interface AuditResourceStats {
+  resource: string
+  result: string
+  total: number
+}
+
 interface AuditReportResult {
-  summary: any[]
-  daily: any[]
-  byAction: any[]
-  byResource: any[]
+  summary: AuditSummaryStats[]
+  daily: AuditDailyStats[]
+  byAction: AuditActionStats[]
+  byResource: AuditResourceStats[]
 }
 
 @inject()

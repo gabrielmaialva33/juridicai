@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import redis from '@adonisjs/redis/services/main'
+import { DateTime } from 'luxon'
 import Deadline from '#models/deadline'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
@@ -69,9 +70,9 @@ export default class DeadlineCacheService {
         const deadline = new Deadline()
         deadline.id = d.id
         deadline.title = d.title
-        deadline.deadline_date = new Date(d.deadline_date)
+        deadline.deadline_date = DateTime.fromISO(d.deadline_date)
         deadline.internal_deadline_date = d.internal_deadline_date
-          ? new Date(d.internal_deadline_date)
+          ? DateTime.fromISO(d.internal_deadline_date)
           : null
         deadline.status = d.status
         deadline.is_fatal = d.is_fatal
@@ -130,9 +131,9 @@ export default class DeadlineCacheService {
         const deadline = new Deadline()
         deadline.id = d.id
         deadline.title = d.title
-        deadline.deadline_date = new Date(d.deadline_date)
+        deadline.deadline_date = DateTime.fromISO(d.deadline_date)
         deadline.internal_deadline_date = d.internal_deadline_date
-          ? new Date(d.internal_deadline_date)
+          ? DateTime.fromISO(d.internal_deadline_date)
           : null
         deadline.status = d.status
         deadline.is_fatal = true

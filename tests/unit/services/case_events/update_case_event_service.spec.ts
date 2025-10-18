@@ -74,7 +74,7 @@ test.group('UpdateCaseEventService', (group) => {
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
         return await service.run(event.id, {
-          event_date: newDate,
+          event_date: newDate as any,
         })
       }
     )

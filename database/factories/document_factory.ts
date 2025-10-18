@@ -13,19 +13,19 @@ function generateFileHash(): string {
 export const DocumentFactory = factory
   .define(Document, async ({ faker }: FactoryContextContract) => {
     const documentTypes = [
-      { type: 'petition', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'contract', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'evidence', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'judgment', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'appeal', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'power_of_attorney', ext: 'pdf', mime: 'application/pdf' },
-      { type: 'agreement', ext: 'pdf', mime: 'application/pdf' },
+      { type: 'petition' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'contract' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'evidence' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'judgment' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'appeal' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'power_of_attorney' as const, ext: 'pdf', mime: 'application/pdf' },
+      { type: 'agreement' as const, ext: 'pdf', mime: 'application/pdf' },
       {
-        type: 'report',
+        type: 'report' as const,
         ext: 'docx',
         mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       },
-      { type: 'other', ext: 'pdf', mime: 'application/pdf' },
+      { type: 'other' as const, ext: 'pdf', mime: 'application/pdf' },
     ]
 
     const docType = faker.helpers.arrayElement(documentTypes)
@@ -66,19 +66,19 @@ export const DocumentFactory = factory
     }
   })
   .state('petition', (document) => {
-    document.document_type = 'petition'
+    document.document_type = 'petition' as const
     document.title = 'Petição Inicial'
     document.is_signed = true
-    document.access_level = 'case_team'
+    document.access_level = 'case_team' as const
   })
   .state('contract', (document) => {
-    document.document_type = 'contract'
+    document.document_type = 'contract' as const
     document.title = 'Contrato'
     document.is_signed = true
-    document.access_level = 'owner_only'
+    document.access_level = 'owner_only' as const
   })
   .state('evidence', (document) => {
-    document.document_type = 'evidence'
+    document.document_type = 'evidence' as const
     document.title = 'Documento Probatório'
     document.tags = ['importante', 'prova']
   })

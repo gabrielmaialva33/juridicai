@@ -31,23 +31,23 @@ export default class UpdateDeadlineService {
     }
 
     // Convert date strings to DateTime objects if they exist
-    const updateData: any = { ...payload }
+    const updateData = { ...payload }
 
     if (payload.deadline_date) {
-      updateData.deadline_date = DateTime.fromJSDate(new Date(payload.deadline_date))
+      (updateData as any).deadline_date = DateTime.fromJSDate(new Date(payload.deadline_date))
     }
 
     if (payload.internal_deadline_date) {
-      updateData.internal_deadline_date = DateTime.fromJSDate(
+      (updateData as any).internal_deadline_date = DateTime.fromJSDate(
         new Date(payload.internal_deadline_date)
       )
     }
 
     if (payload.completed_at) {
-      updateData.completed_at = DateTime.fromJSDate(new Date(payload.completed_at))
+      (updateData as any).completed_at = DateTime.fromJSDate(new Date(payload.completed_at))
     }
 
-    deadline.merge(updateData)
+    deadline.merge(updateData as any)
     await deadline.save()
 
     // Invalidate cache for current tenant

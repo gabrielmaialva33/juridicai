@@ -6,6 +6,30 @@ import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 
+interface AuditStatsResult {
+  summary: Array<{
+    result: string
+    total: number
+    unique_users: number
+    unique_resources: number
+  }>
+  daily: Array<{
+    date: string
+    total: number
+    unique_users: number
+  }>
+  byAction: Array<{
+    action: string
+    result: string
+    total: number
+  }>
+  byResource: Array<{
+    resource: string
+    result: string
+    total: number
+  }>
+}
+
 @inject()
 export default class AuditLogsRepository
   extends LucidRepository<typeof AuditLog>
@@ -46,7 +70,7 @@ export default class AuditLogsRepository
    * @param endDate - End date for the range
    * @returns Aggregated statistics including total logs, granted/denied counts, unique users, and resources
    */
-  async getStatsByDateRange(startDate: DateTime, endDate: DateTime): Promise<any> {
+  async getStatsByDateRange(startDate: DateTime, endDate: DateTime): Promise<AuditStatsResult> {
     const stats = await db
       .from('audit_logs')
       .whereBetween('created_at', [startDate.toISO()!, endDate.toISO()!])

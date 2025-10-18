@@ -2,13 +2,10 @@ import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 import Case from '#models/case'
-
-type Builder = ModelQueryBuilderContract<typeof NvidiaQuery>
 
 type QueryType =
   | 'document_analysis'
@@ -162,7 +159,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Filter queries created recently
    * @example NvidiaQuery.query().withScopes((scopes) => scopes.recent(7))
    */
-  static recent = scope((query: Builder, days = 7) => {
+  static recent = scope((query: any, days = 7) => {
     const date = DateTime.now().minus({ days })
     return query.where('created_at', '>=', date.toISO())
   })
@@ -179,7 +176,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Order by creation date (newest first)
    * @example NvidiaQuery.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: Builder) => {
+  static newest = scope((query: any) => {
     return query.orderBy('created_at', 'desc')
   })
 
@@ -187,7 +184,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Order by creation date (oldest first)
    * @example NvidiaQuery.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: Builder) => {
+  static oldest = scope((query: any) => {
     return query.orderBy('created_at', 'asc')
   })
 
@@ -195,7 +192,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Order by tokens used (most expensive first)
    * @example NvidiaQuery.query().withScopes((scopes) => scopes.mostExpensive())
    */
-  static mostExpensive = scope((query: Builder) => {
+  static mostExpensive = scope((query: any) => {
     return query.orderBy('tokens_used', 'desc')
   })
 
@@ -203,7 +200,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Include user relationship
    * @example NvidiaQuery.query().withScopes((scopes) => scopes.withUser())
    */
-  static withUser = scope((query: Builder) => {
+  static withUser = scope((query: any) => {
     return query.preload('user')
   })
 
@@ -211,7 +208,7 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * Include case relationship
    * @example NvidiaQuery.query().preload('caseRecord')
    */
-  static withCaseRecord = scope((query: Builder) => {
+  static withCaseRecord = scope((query: any) => {
     return query.preload('caseRecord')
   })
 }

@@ -38,17 +38,18 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       error.code === 'E_VALIDATION_ERROR'
     ) {
       const validationError = error
+      const messages = 'messages' in validationError ? validationError.messages : []
       const acceptType = ctx.request.accepts(['html', 'json'])
 
       // Always return JSON for API routes
       if (acceptType === 'json' || ctx.request.url().startsWith('/api/')) {
         return ctx.response.status(422).json({
-          errors: validationError.messages || [],
+          errors: messages || [],
         })
       }
 
       ctx.session.flashAll()
-      ctx.session.flash('errors', validationError.messages || {})
+      ctx.session.flash('errors', messages || {})
       return ctx.response.redirect().back()
     }
 
@@ -64,17 +65,42 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       const rateLimitError = error
 
       // Set rate limit headers from the response object
-      if (rateLimitError.response) {
-        ctx.response.header('x-ratelimit-limit', rateLimitError.response.limit)
-        ctx.response.header('x-ratelimit-remaining', rateLimitError.response.remaining)
-        ctx.response.header('retry-after', rateLimitError.response.availableIn)
+      if (
+        'response' in rateLimitError &&
+        rateLimitError.response &&
+        typeof rateLimitError.response === 'object'
+      ) {
+        const response = rateLimitError.response
+        if (
+          'limit' in response &&
+          (typeof response.limit === 'string' || typeof response.limit === 'number')
+        ) {
+          ctx.response.header('x-ratelimit-limit', response.limit)
+        }
+        if (
+          'remaining' in response &&
+          (typeof response.remaining === 'string' || typeof response.remaining === 'number')
+        ) {
+          ctx.response.header('x-ratelimit-remaining', response.remaining)
+        }
+        if (
+          'availableIn' in response &&
+          (typeof response.availableIn === 'string' || typeof response.availableIn === 'number')
+        ) {
+          ctx.response.header('retry-after', response.availableIn)
+        }
       }
+
+      const message =
+        'message' in rateLimitError && typeof rateLimitError.message === 'string'
+          ? rateLimitError.message
+          : 'Too many requests'
 
       return ctx.response.status(429).json({
         errors: [
           {
             code: 'E_TOO_MANY_REQUESTS',
-            message: rateLimitError.message || 'Too many requests',
+            message,
             status: 429,
           },
         ],

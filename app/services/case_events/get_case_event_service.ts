@@ -41,7 +41,7 @@ export default class GetCaseEventService {
 
     // Load relationships if requested
     if (options.withCase) {
-      await event.load('case', (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
+      await event.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }

@@ -1,4 +1,4 @@
-import { Home, Users, FolderOpen, FileText, Scale, Calendar, Clock, BarChart3 } from 'lucide-react'
+import { BarChart3, Calendar, Clock, FileText, FolderOpen, Home, Scale, Users } from 'lucide-react'
 
 export interface Breadcrumb {
   label: string

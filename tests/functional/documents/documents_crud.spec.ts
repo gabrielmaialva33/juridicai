@@ -67,7 +67,7 @@ test.group('Documents CRUD', (group) => {
     assert.equal(response.body().data.length, 3)
     // Verify all created documents are in the response (order may vary)
     const responseIds = response.body().data.map((doc: any) => doc.id)
-    documents.forEach((doc) => {
+    documents.forEach((doc: any) => {
       assert.include(responseIds, doc.id)
     })
   })

@@ -3,7 +3,7 @@ import { createInertiaApp } from '@inertiajs/react'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { QueryProvider } from '@/providers/query-provider'
 
-export default function render(page: any) {
+export default function render(page) {
   return createInertiaApp({
     page,
     render: ReactDOMServer.renderToString,

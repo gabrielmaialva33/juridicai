@@ -128,6 +128,6 @@ export default class DocumentsController {
     response.header('Content-Disposition', `attachment; filename="${document.original_filename}"`)
     response.header('Content-Length', document.file_size.toString())
 
-    return response.stream(stream)
+    return response.stream(stream as any)
   }
 }

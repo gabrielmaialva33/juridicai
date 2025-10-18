@@ -101,7 +101,7 @@ test.group('CreateCaseService', (group) => {
     assert.equal(result.court, 'Tribunal de Justiça de São Paulo - TJ-SP')
     assert.deepEqual(result.tags, ['urgente', 'trabalhista'])
     assert.exists(result.parties)
-    assert.equal(result.parties.autor?.name, 'João Silva')
+    assert.equal((result.parties as any)?.autor?.name, 'João Silva')
   })
 
   test('should set default status as active', async ({ assert }) => {

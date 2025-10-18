@@ -129,7 +129,7 @@ export default class OwnershipService {
             .from('team_members')
             .where('user_id', userId)
             .select('team_id')
-            .then((rows) => rows.map((r: any) => r.team_id))
+            .then((rows) => rows.map((r) => r.team_id))
         : []
 
       const userDepartments = options.includeDepartment
@@ -137,7 +137,7 @@ export default class OwnershipService {
             .from('department_members')
             .where('user_id', userId)
             .select('department_id')
-            .then((rows) => rows.map((r: any) => r.department_id))
+            .then((rows) => rows.map((r) => r.department_id))
         : []
 
       query = query.where((builder) => {
@@ -324,10 +324,10 @@ export default class OwnershipService {
       .where('user_id', userId2)
       .select('team_id')
 
-    const user1TeamIds = user1Teams.map((t: any) => t.team_id)
-    const user2TeamIds = user2Teams.map((t: any) => t.team_id)
+    const user1TeamIds = user1Teams.map((t) => t.team_id)
+    const user2TeamIds = user2Teams.map((t) => t.team_id)
 
-    return user1TeamIds.some((teamId: any) => user2TeamIds.includes(teamId))
+    return user1TeamIds.some((teamId) => user2TeamIds.includes(teamId))
   }
 
   /**
@@ -346,10 +346,10 @@ export default class OwnershipService {
       .where('user_id', userId2)
       .select('department_id')
 
-    const user1DeptIds = user1Departments.map((d: any) => d.department_id)
-    const user2DeptIds = user2Departments.map((d: any) => d.department_id)
+    const user1DeptIds = user1Departments.map((d) => d.department_id)
+    const user2DeptIds = user2Departments.map((d) => d.department_id)
 
-    return user1DeptIds.some((deptId: any) => user2DeptIds.includes(deptId))
+    return user1DeptIds.some((deptId) => user2DeptIds.includes(deptId))
   }
 
   /**

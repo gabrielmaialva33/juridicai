@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 
 import GetCaseEventService from '#services/case_events/get_case_event_service'
 import PaginateCaseEventService from '#services/case_events/paginate_case_event_service'
@@ -69,7 +70,12 @@ export default class CaseEventsController {
       meta: { eventId },
     })
 
-    const event = await this.updateCaseEventService.run(eventId, payload)
+    // Convert event_date from Date to DateTime if present
+    if (payload.event_date) {
+      ;(payload as any).event_date = DateTime.fromJSDate(payload.event_date)
+    }
+
+    const event = await this.updateCaseEventService.run(eventId, payload as any)
     return response.json(event)
   }
 
