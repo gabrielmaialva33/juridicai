@@ -13,6 +13,9 @@ export default class extends BaseSchema {
       table.string('username', 80).nullable().unique()
       table.string('password').notNullable()
 
+      table.string('firebase_uid').nullable().unique()
+      table.index('firebase_uid')
+
       table.boolean('is_deleted').defaultTo(false)
 
       table.jsonb('metadata').defaultTo(

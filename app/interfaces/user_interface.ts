@@ -24,6 +24,18 @@ namespace IUser {
      * @param abilities
      */
     generateRefreshToken(userId: number, abilities?: string[]): Promise<AccessToken>
+
+    /**
+     * Find user by Firebase UID
+     * @param firebaseUid
+     */
+    findByFirebaseUid(firebaseUid: string): Promise<User | null>
+
+    /**
+     * Find user by email
+     * @param email
+     */
+    findByEmail(email: string): Promise<User | null>
   }
 
   export interface CreatePayload {

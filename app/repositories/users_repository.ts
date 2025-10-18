@@ -37,4 +37,12 @@ export default class UsersRepository
       .where('is_deleted', false)
       .first()
   }
+
+  async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+    return this.findBy('firebase_uid', firebaseUid)
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.model.query().where('email', email).where('is_deleted', false).first()
+  }
 }

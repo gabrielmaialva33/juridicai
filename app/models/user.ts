@@ -62,6 +62,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column({ serializeAs: null })
   declare password: string
 
+  @column()
+  declare firebase_uid: string | null
+
   @column({ serializeAs: null })
   declare is_deleted: boolean
 
