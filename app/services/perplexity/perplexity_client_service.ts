@@ -2,7 +2,6 @@ import { inject } from '@adonisjs/core'
 import env from '#start/env'
 import Perplexity from '@perplexity-ai/perplexity_ai'
 import IPerplexity from '#interfaces/perplexity_interface'
-import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 
 /**
@@ -24,9 +23,7 @@ export default class PerplexityClientService {
     const apiKey = env.get('PERPLEXITY_API_KEY')
 
     if (!apiKey || apiKey === 'your-perplexity-api-key') {
-      throw new Error(
-        'PERPLEXITY_API_KEY not configured. Please set it in your .env file.'
-      )
+      throw new Error('PERPLEXITY_API_KEY not configured. Please set it in your .env file.')
     }
 
     this.client = new Perplexity({
@@ -43,8 +40,8 @@ export default class PerplexityClientService {
   async chat(request: IPerplexity.BaseRequest): Promise<IPerplexity.PerplexityResponse> {
     try {
       const model = request.model || env.get('PERPLEXITY_DEFAULT_MODEL', 'sonar-pro')
-      const maxTokens = request.max_tokens || Number(env.get('PERPLEXITY_MAX_TOKENS', 4000))
-      const temperature = request.temperature ?? Number(env.get('PERPLEXITY_TEMPERATURE', 0.2))
+      const maxTokens = request.max_tokens || env.get('PERPLEXITY_MAX_TOKENS', 4000)
+      const temperature = request.temperature ?? env.get('PERPLEXITY_TEMPERATURE', 0.2)
 
       logger.info('Perplexity API request', {
         search_type: request.search_type,
@@ -72,7 +69,13 @@ export default class PerplexityClientService {
       } as any)
 
       const choice = response.choices[0]
-      const content = choice?.message?.content || ''
+      const messageContent = choice?.message?.content
+      const content =
+        typeof messageContent === 'string'
+          ? messageContent
+          : Array.isArray(messageContent)
+            ? messageContent.map((chunk: any) => chunk.text || '').join('')
+            : ''
 
       logger.info('Perplexity API response received', {
         search_type: request.search_type,
@@ -117,8 +120,8 @@ export default class PerplexityClientService {
     const domains = this.buildDomainList(domainFilters)
 
     const model = request.model || env.get('PERPLEXITY_DEFAULT_MODEL', 'sonar-pro')
-    const maxTokens = request.max_tokens || Number(env.get('PERPLEXITY_MAX_TOKENS', 4000))
-    const temperature = request.temperature ?? Number(env.get('PERPLEXITY_TEMPERATURE', 0.2))
+    const maxTokens = request.max_tokens || env.get('PERPLEXITY_MAX_TOKENS', 4000)
+    const temperature = request.temperature ?? env.get('PERPLEXITY_TEMPERATURE', 0.2)
 
     try {
       logger.info('Perplexity API request with domain filter', {
@@ -148,7 +151,13 @@ export default class PerplexityClientService {
       } as any)
 
       const choice = response.choices[0]
-      const content = choice?.message?.content || ''
+      const messageContent = choice?.message?.content
+      const content =
+        typeof messageContent === 'string'
+          ? messageContent
+          : Array.isArray(messageContent)
+            ? messageContent.map((chunk: any) => chunk.text || '').join('')
+            : ''
 
       return {
         content,
@@ -223,9 +232,7 @@ Sempre cite suas fontes. Responda em português do Brasil.`,
   /**
    * Format search results from Perplexity response
    */
-  private formatSearchResults(
-    results: any[] | undefined
-  ): IPerplexity.SearchResult[] | undefined {
+  private formatSearchResults(results: any[] | undefined): IPerplexity.SearchResult[] | undefined {
     if (!results || !Array.isArray(results)) {
       return undefined
     }

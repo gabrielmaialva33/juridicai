@@ -25,6 +25,7 @@ import '#routes/cases/index'
 import '#routes/deadlines/index'
 import '#routes/documents/index'
 import '#routes/case_events/index'
+import '#routes/ai/index'
 
 router
   .get('/version', async () => {

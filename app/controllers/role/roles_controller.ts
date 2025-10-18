@@ -7,17 +7,13 @@ import { attachRoleValidator } from '#validators/role'
 
 import ListRolesService from '#services/roles/list_roles_service'
 import SyncRolesService from '#services/roles/sync_roles_service'
-import UsersRepository from '#repositories/users_repository'
 import RolesRepository from '#repositories/roles_repository'
 import NotFoundException from '#exceptions/not_found_exception'
 import ConflictException from '#exceptions/conflict_exception'
 
 @inject()
 export default class RolesController {
-  constructor(
-    private usersRepository: UsersRepository,
-    private rolesRepository: RolesRepository
-  ) {}
+  constructor(private rolesRepository: RolesRepository) {}
   async paginate({ request, response }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('per_page', 10)

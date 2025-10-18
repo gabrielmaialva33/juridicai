@@ -8,31 +8,31 @@ import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 import Case from '#models/case'
 
-type Builder = ModelQueryBuilderContract<typeof PerplexitySearch>
+type Builder = ModelQueryBuilderContract<typeof NvidiaQuery>
 
-type SearchType = 'legal_research' | 'legislation' | 'case_analysis' | 'legal_writing' | 'general'
+type QueryType =
+  | 'document_analysis'
+  | 'contract_review'
+  | 'code_generation'
+  | 'text_analysis'
+  | 'general'
 
-interface SearchMetadata {
-  domain_filter?: string[]
-  recency_filter?: string
-  related_questions?: string[]
+interface QueryMetadata {
+  analysis_type?: string
+  review_focus?: string[]
+  template_type?: string
+  context?: string
   temperature?: number
+  top_p?: number
   max_tokens?: number
   [key: string]: any
-}
-
-interface SearchResult {
-  title: string
-  url: string
-  date?: string
-  snippet?: string
 }
 
 // Create the tenant-scoped mixin
 const TenantScoped = withTenantScope()
 
-export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
-  static table = 'perplexity_searches'
+export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
+  static table = 'nvidia_queries'
   static namingStrategy = new SnakeCaseNamingStrategy()
 
   /**
@@ -56,13 +56,16 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
   declare response: string
 
   @column()
-  declare search_type: SearchType
+  declare query_type: QueryType
 
   @column()
   declare model: string
 
   @column()
-  declare search_mode: string | null
+  declare temperature: number | null
+
+  @column()
+  declare top_p: number | null
 
   @column()
   declare tokens_used: number | null
@@ -74,18 +77,11 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
   declare completion_tokens: number | null
 
   @column({
-    prepare: (value: SearchMetadata | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | SearchMetadata | null) =>
+    prepare: (value: QueryMetadata | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | QueryMetadata | null) =>
       value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
-  declare metadata: SearchMetadata | null
-
-  @column({
-    prepare: (value: SearchResult[] | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | SearchResult[] | null) =>
-      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
-  })
-  declare search_results: SearchResult[] | null
+  declare metadata: QueryMetadata | null
 
   @column()
   declare case_id: number | null
@@ -118,16 +114,16 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
    */
 
   /**
-   * Filter by search type
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.ofType('legal_research'))
+   * Filter by query type
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.ofType('document_analysis'))
    */
-  static ofType = scope((query, type: SearchType) => {
-    return query.where('search_type', type)
+  static ofType = scope((query, type: QueryType) => {
+    return query.where('query_type', type)
   })
 
   /**
    * Filter by user ID
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.byUser(userId))
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.byUser(userId))
    */
   static byUser = scope((query, userId: number) => {
     return query.where('user_id', userId)
@@ -135,7 +131,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Filter by case ID
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.byCase(caseId))
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.byCase(caseId))
    */
   static byCase = scope((query, caseId: number) => {
     return query.where('case_id', caseId)
@@ -143,7 +139,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Filter by model used
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.byModel('sonar-pro'))
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.byModel('qwen/qwen3-coder-480b-a35b-instruct'))
    */
   static byModel = scope((query, model: string) => {
     return query.where('model', model)
@@ -151,7 +147,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Search queries by text
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.search('jurisprudência'))
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.search('contrato'))
    */
   static search = scope((query, term: string) => {
     if (!term || !term.trim()) return query
@@ -163,8 +159,8 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
   })
 
   /**
-   * Filter searches created recently
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.recent(7))
+   * Filter queries created recently
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.recent(7))
    */
   static recent = scope((query: Builder, days = 7) => {
     const date = DateTime.now().minus({ days })
@@ -172,8 +168,8 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
   })
 
   /**
-   * Filter searches created between dates
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.createdBetween(from, to))
+   * Filter queries created between dates
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.createdBetween(from, to))
    */
   static createdBetween = scope((query, from: DateTime, to: DateTime) => {
     return query.whereBetween('created_at', [from.toISO()!, to.toISO()!])
@@ -181,7 +177,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Order by creation date (newest first)
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.newest())
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.newest())
    */
   static newest = scope((query: Builder) => {
     return query.orderBy('created_at', 'desc')
@@ -189,7 +185,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Order by creation date (oldest first)
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.oldest())
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.oldest())
    */
   static oldest = scope((query: Builder) => {
     return query.orderBy('created_at', 'asc')
@@ -197,7 +193,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Order by tokens used (most expensive first)
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.mostExpensive())
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.mostExpensive())
    */
   static mostExpensive = scope((query: Builder) => {
     return query.orderBy('tokens_used', 'desc')
@@ -205,7 +201,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Include user relationship
-   * @example PerplexitySearch.query().withScopes((scopes) => scopes.withUser())
+   * @example NvidiaQuery.query().withScopes((scopes) => scopes.withUser())
    */
   static withUser = scope((query: Builder) => {
     return query.preload('user')
@@ -213,7 +209,7 @@ export default class PerplexitySearch extends compose(BaseModel, TenantScoped) {
 
   /**
    * Include case relationship
-   * @example PerplexitySearch.query().preload('caseRecord')
+   * @example NvidiaQuery.query().preload('caseRecord')
    */
   static withCaseRecord = scope((query: Builder) => {
     return query.preload('caseRecord' as any)

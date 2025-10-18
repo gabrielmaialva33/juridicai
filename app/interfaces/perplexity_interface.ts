@@ -254,11 +254,7 @@ namespace IPerplexity {
   /**
    * Legislation domains
    */
-  export const LEGISLATION_DOMAINS = [
-    'planalto.gov.br',
-    'senado.leg.br',
-    'camara.leg.br',
-  ]
+  export const LEGISLATION_DOMAINS = ['planalto.gov.br', 'senado.leg.br', 'camara.leg.br']
 }
 
 export default IPerplexity

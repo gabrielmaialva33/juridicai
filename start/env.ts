@@ -135,4 +135,28 @@ export default await Env.create(new URL('../', import.meta.url), {
   MAILGUN_API_KEY: Env.schema.string.optional(),
   MAILGUN_DOMAIN: Env.schema.string.optional(),
   MAILGUN_BASE_URL: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring Perplexity AI integration
+  |----------------------------------------------------------
+  */
+  PERPLEXITY_API_KEY: Env.schema.string(),
+  PERPLEXITY_DEFAULT_MODEL: Env.schema.string.optional(),
+  PERPLEXITY_ACADEMIC_MODEL: Env.schema.string.optional(),
+  PERPLEXITY_CACHE_TTL: Env.schema.number.optional(),
+  PERPLEXITY_MAX_TOKENS: Env.schema.number.optional(),
+  PERPLEXITY_TEMPERATURE: Env.schema.number.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring NVIDIA AI integration
+  |----------------------------------------------------------
+  */
+  NVIDIA_API_KEY: Env.schema.string(),
+  NVIDIA_BASE_URL: Env.schema.string(),
+  NVIDIA_DEFAULT_MODEL: Env.schema.string(),
+  NVIDIA_TEMPERATURE: Env.schema.number.optional(),
+  NVIDIA_TOP_P: Env.schema.number.optional(),
+  NVIDIA_MAX_TOKENS: Env.schema.number.optional(),
 })
