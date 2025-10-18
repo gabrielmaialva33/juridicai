@@ -155,7 +155,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter by billable status
    * @example TimeEntry.query().withScopes((scopes) => scopes.billable(true))
    */
-  static billable = scope((query: Builder, isBillable: boolean) => {
+  static billable = scope((query, isBillable: boolean) => {
     return query.where('billable', isBillable)
   })
 
@@ -163,7 +163,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter by case ID
    * @example TimeEntry.query().withScopes((scopes) => scopes.byCase(caseId))
    */
-  static byCase = scope((query: Builder, caseId: number) => {
+  static byCase = scope((query, caseId: number) => {
     return query.where('case_id', caseId)
   })
 
@@ -171,7 +171,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter by user ID
    * @example TimeEntry.query().withScopes((scopes) => scopes.byUser(userId))
    */
-  static byUser = scope((query: Builder, userId: number) => {
+  static byUser = scope((query, userId: number) => {
     return query.where('user_id', userId)
   })
 
@@ -179,7 +179,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter time entries within a date range
    * @example TimeEntry.query().withScopes((scopes) => scopes.inPeriod(from, to))
    */
-  static inPeriod = scope((query: Builder, from: DateTime, to: DateTime) => {
+  static inPeriod = scope((query, from: DateTime, to: DateTime) => {
     return query.whereBetween('started_at', [from.toISO()!, to.toISO()!])
   })
 
@@ -187,7 +187,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Filter by specific date
    * @example TimeEntry.query().withScopes((scopes) => scopes.onDate(date))
    */
-  static onDate = scope((query: Builder, date: DateTime) => {
+  static onDate = scope((query, date: DateTime) => {
     const startOfDay = date.startOf('day')
     const endOfDay = date.endOf('day')
     return query.whereBetween('started_at', [startOfDay.toISO()!, endOfDay.toISO()!])
