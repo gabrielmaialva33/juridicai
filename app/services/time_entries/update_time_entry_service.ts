@@ -1,9 +1,7 @@
 import { inject } from '@adonisjs/core'
 import TimeEntry from '#models/time_entry'
 import NotFoundException from '#exceptions/not_found_exception'
-import ForbiddenException from '#exceptions/forbidden_exception'
 import { DateTime } from 'luxon'
-import logger from '@adonisjs/core/services/logger'
 
 interface UpdateTimeEntryPayload {
   description?: string
@@ -27,20 +25,17 @@ export default class UpdateTimeEntryService {
     userId: number,
     payload: UpdateTimeEntryPayload
   ): Promise<TimeEntry> {
-    // Find the time entry
+    // Find the time entry - include user_id in the query like StopTimerService does
     const timeEntry = await TimeEntry.query()
       .where('id', timeEntryId)
+      .where('user_id', userId)
       .where('is_deleted', false)
       .first()
 
     if (!timeEntry) {
-      throw new NotFoundException(`Time entry with ID ${timeEntryId} not found`)
-    }
-
-    // Check ownership
-    logger.info(`TimeEntry ownership check - DB user_id: ${timeEntry.user_id}, Request user_id: ${userId}, Match: ${timeEntry.user_id === userId}`)
-    if (timeEntry.user_id !== userId) {
-      throw new ForbiddenException('You can only update your own time entries')
+      throw new NotFoundException(
+        `Time entry with ID ${timeEntryId} not found or you don't have permission to update it`
+      )
     }
 
     // Update fields

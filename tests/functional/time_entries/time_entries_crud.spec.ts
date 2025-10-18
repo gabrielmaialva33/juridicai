@@ -385,7 +385,6 @@ test.group('Time Entries CRUD', (group) => {
           billable: false,
         }).create()
         timeEntryId = timeEntry.id
-        console.log('TEST: Created TimeEntry with user_id:', timeEntry.user_id, 'Expected user.id:', user.id)
       }
     )
 
