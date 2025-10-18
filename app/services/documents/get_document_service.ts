@@ -44,7 +44,7 @@ export default class GetDocumentService {
 
     // Load relationships if requested
     if (options.withCase) {
-      await document.load('case' as any, (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
+      await document.load('case', (caseQuery: ModelQueryBuilderContract<typeof Case>) => {
         caseQuery.preload('client')
       })
     }

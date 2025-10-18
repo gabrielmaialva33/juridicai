@@ -16,7 +16,10 @@ export default class extends BaseSchema {
       table.string('context', 50).nullable().defaultTo('any')
 
       table.unique(['tenant_id', 'resource', 'action', 'context'])
-      table.index(['tenant_id', 'resource', 'action', 'context'], 'idx_permissions_tenant_resource_action_context')
+      table.index(
+        ['tenant_id', 'resource', 'action', 'context'],
+        'idx_permissions_tenant_resource_action_context'
+      )
 
       table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
       table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())

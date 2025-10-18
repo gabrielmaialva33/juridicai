@@ -11,7 +11,7 @@ createInertiaApp({
   title: (title) => `${title} - ${appName}`,
   resolve: (name) => {
     const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
-    const pageModule = pages[`../pages/${name}.tsx`] as any
+    const pageModule = pages[`../pages/${name}.tsx`]
 
     if (!pageModule) {
       throw new Error(`Page not found: ${name}`)

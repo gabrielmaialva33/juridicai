@@ -56,6 +56,6 @@ export default class CreateCaseEventService {
       source: 'manual' as const,
     }
 
-    return await this.caseEventsRepository.create(eventData as any)
+    return await this.caseEventsRepository.create(eventData)
   }
 }

@@ -57,10 +57,10 @@ export default class UpdateCaseEventService {
       const eventDateTime = DateTime.fromJSDate(payload.event_date)
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const { event_date, ...rest } = payload
-      event.merge(rest as any)
+      event.merge(rest)
       event.event_date = eventDateTime
     } else {
-      event.merge(payload as any)
+      event.merge(payload)
     }
 
     await event.save()

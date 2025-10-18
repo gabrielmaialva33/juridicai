@@ -111,7 +111,7 @@ export default class LucidRepository<T extends typeof BaseModel>
 
     // Check if the model has an is_deleted column
     if ('is_deleted' in record.$attributes) {
-      return record.merge({ is_deleted: true } as any).save()
+      return record.merge({ is_deleted: true }).save()
     }
 
     // Fall back to hard delete if no soft delete support

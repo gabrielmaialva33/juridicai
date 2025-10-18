@@ -210,6 +210,6 @@ test.group('UpdateCaseService', (group) => {
     )
 
     assert.deepEqual(result.tags, ['novo', 'atualizado'])
-    assert.equal((result.parties as any).autor?.name, 'Updated Author')
+    assert.equal(result.parties.autor?.name, 'Updated Author')
   })
 })

@@ -127,7 +127,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       static boot() {
         // Prevent double-booting
-        if ((this as any).booted) {
+        if (this.booted) {
           return
         }
 
@@ -274,7 +274,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       static withoutTenantScope() {
         const query = this.query()
-        ;(query as any)._skipTenantScope = true
+        query._skipTenantScope = true
         return query
       }
 
@@ -308,7 +308,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       static crossTenant() {
         const query = this.query()
-        ;(query as any)._allowCrossTenant = true
+        query._allowCrossTenant = true
         return query
       }
 
@@ -336,7 +336,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        * ```
        */
       static withoutTenantScopeScope = scope((query: ModelQueryBuilderContract<any>) => {
-        ;(query as any)._skipTenantScope = true
+        query._skipTenantScope = true
       })
 
       /**
@@ -368,7 +368,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
       )
     }
 
-    return TenantScopedModelClass as any
+    return TenantScopedModelClass
   }
 }
 

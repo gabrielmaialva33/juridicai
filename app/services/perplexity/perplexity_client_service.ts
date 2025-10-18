@@ -66,7 +66,7 @@ export default class PerplexityClientService {
         search_mode: request.search_mode,
         return_related_questions: true,
         return_images: false,
-      } as any)
+      })
 
       const choice = response.choices[0]
       const messageContent = choice?.message?.content
@@ -85,8 +85,8 @@ export default class PerplexityClientService {
 
       return {
         content,
-        search_results: this.formatSearchResults(response.search_results as any),
-        related_questions: (response as any).related_questions || [],
+        search_results: this.formatSearchResults(response.search_results),
+        related_questions: response.related_questions || [],
         usage: response.usage
           ? {
               prompt_tokens: response.usage.prompt_tokens,
@@ -148,7 +148,7 @@ export default class PerplexityClientService {
         search_domain_filter: domains,
         return_related_questions: true,
         return_images: false,
-      } as any)
+      })
 
       const choice = response.choices[0]
       const messageContent = choice?.message?.content
@@ -161,8 +161,8 @@ export default class PerplexityClientService {
 
       return {
         content,
-        search_results: this.formatSearchResults(response.search_results as any),
-        related_questions: (response as any).related_questions || [],
+        search_results: this.formatSearchResults(response.search_results),
+        related_questions: response.related_questions || [],
         usage: response.usage
           ? {
               prompt_tokens: response.usage.prompt_tokens,

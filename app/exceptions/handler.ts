@@ -37,7 +37,7 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       'code' in error &&
       error.code === 'E_VALIDATION_ERROR'
     ) {
-      const validationError = error as any
+      const validationError = error
       const acceptType = ctx.request.accepts(['html', 'json'])
 
       // Always return JSON for API routes
@@ -61,7 +61,7 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       'code' in error &&
       error.code === 'E_TOO_MANY_REQUESTS'
     ) {
-      const rateLimitError = error as any
+      const rateLimitError = error
 
       // Set rate limit headers from the response object
       if (rateLimitError.response) {

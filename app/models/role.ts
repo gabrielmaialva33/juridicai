@@ -91,7 +91,7 @@ export default class Role extends compose(BaseModel, TenantScoped) {
    * @example Role.query().withScopes((scopes) => scopes.withPermissions())
    */
   static withPermissions = scope((query) => {
-    return query.preload('permissions' as any)
+    return query.preload('permissions')
   })
 
   /**
@@ -99,7 +99,7 @@ export default class Role extends compose(BaseModel, TenantScoped) {
    * @example Role.query().withScopes((scopes) => scopes.withUsers())
    */
   static withUsers = scope((query) => {
-    return query.preload('users' as any)
+    return query.preload('users')
   })
 
   /**

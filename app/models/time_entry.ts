@@ -211,7 +211,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * @example TimeEntry.query().withScopes((scopes) => scopes.withUser())
    */
   static withUser = scope((query) => {
-    return (query as any).preload('user')
+    return query.preload('user')
   })
 
   /**
@@ -219,6 +219,6 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * @example TimeEntry.query().withScopes((scopes) => scopes.withCase())
    */
   static withCase = scope((query) => {
-    return (query as any).preload('caseRecord')
+    return query.preload('case_record')
   })
 }

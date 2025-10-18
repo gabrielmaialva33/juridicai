@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, scope, SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
@@ -212,6 +212,6 @@ export default class NvidiaQuery extends compose(BaseModel, TenantScoped) {
    * @example NvidiaQuery.query().preload('caseRecord')
    */
   static withCaseRecord = scope((query: Builder) => {
-    return query.preload('caseRecord' as any)
+    return query.preload('caseRecord')
   })
 }

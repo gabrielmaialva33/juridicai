@@ -69,9 +69,9 @@ export default class DeadlineCacheService {
         const deadline = new Deadline()
         deadline.id = d.id
         deadline.title = d.title
-        deadline.deadline_date = new Date(d.deadline_date) as any
+        deadline.deadline_date = new Date(d.deadline_date)
         deadline.internal_deadline_date = d.internal_deadline_date
-          ? (new Date(d.internal_deadline_date) as any)
+          ? new Date(d.internal_deadline_date)
           : null
         deadline.status = d.status
         deadline.is_fatal = d.is_fatal
@@ -130,9 +130,9 @@ export default class DeadlineCacheService {
         const deadline = new Deadline()
         deadline.id = d.id
         deadline.title = d.title
-        deadline.deadline_date = new Date(d.deadline_date) as any
+        deadline.deadline_date = new Date(d.deadline_date)
         deadline.internal_deadline_date = d.internal_deadline_date
-          ? (new Date(d.internal_deadline_date) as any)
+          ? new Date(d.internal_deadline_date)
           : null
         deadline.status = d.status
         deadline.is_fatal = true

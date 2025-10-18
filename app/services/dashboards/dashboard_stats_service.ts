@@ -221,7 +221,7 @@ export default class DashboardStatsService {
    */
   static async getUpcomingDeadlines(limit: number = 5) {
     const deadlines = await Deadline.query()
-      .preload('case' as any)
+      .preload('case')
       .preload('responsible')
       .where('status', 'pending')
       .where('deadline_date', '>=', DateTime.now().toSQLDate()!)

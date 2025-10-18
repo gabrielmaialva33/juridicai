@@ -77,8 +77,8 @@ test.group('GetDocumentService', (group) => {
       async () => {
         const result = await service.run(document.id, { withCase: true })
         assert.exists(result)
-        assert.exists((result as any).case)
-        assert.equal((result as any).case.id, caseRecord.id)
+        assert.exists(result.case)
+        assert.equal(result.case.id, caseRecord.id)
       }
     )
   })
@@ -105,8 +105,8 @@ test.group('GetDocumentService', (group) => {
       async () => {
         const result = await service.run(document.id, { withClient: true })
         assert.exists(result)
-        assert.exists((result as any).client)
-        assert.equal((result as any).client.id, client.id)
+        assert.exists(result.client)
+        assert.equal(result.client.id, client.id)
       }
     )
   })

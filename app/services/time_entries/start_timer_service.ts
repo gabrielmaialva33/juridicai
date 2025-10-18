@@ -29,7 +29,7 @@ export default class StartTimerService {
       throw new NotFoundException(`Case with ID ${payload.case_id} not found`)
     }
 
-    // Check if user has any running timers
+    // Check if user h running timers
     const runningTimer = await TimeEntry.query()
       .where('user_id', payload.user_id)
       .whereNull('ended_at')

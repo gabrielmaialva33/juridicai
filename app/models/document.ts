@@ -382,7 +382,7 @@ export default class Document extends compose(BaseModel, TenantScoped) {
    * @example Document.query().withScopes((scopes) => scopes.withCase())
    */
   static withCase = scope((query) => {
-    return (query as any).preload('case', (caseQuery: any) => {
+    return query.preload('case', (caseQuery: any) => {
       caseQuery.preload('client')
     })
   })
@@ -392,7 +392,7 @@ export default class Document extends compose(BaseModel, TenantScoped) {
    * @example Document.query().withScopes((scopes) => scopes.withClient())
    */
   static withClient = scope((query) => {
-    return (query as any).preload('client')
+    return query.preload('client')
   })
 
   /**
@@ -400,7 +400,7 @@ export default class Document extends compose(BaseModel, TenantScoped) {
    * @example Document.query().withScopes((scopes) => scopes.withUploader())
    */
   static withUploader = scope((query) => {
-    return (query as any).preload('uploader')
+    return query.preload('uploader')
   })
 
   /**
@@ -408,7 +408,7 @@ export default class Document extends compose(BaseModel, TenantScoped) {
    * @example Document.query().withScopes((scopes) => scopes.withRelationships())
    */
   static withRelationships = scope((query) => {
-    return (query as any)
+    return query
       .preload('case', (q: any) => q.preload('client'))
       .preload('client')
       .preload('uploader')

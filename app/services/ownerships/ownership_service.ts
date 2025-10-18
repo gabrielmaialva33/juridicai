@@ -93,7 +93,7 @@ export default class OwnershipService {
       return IOwnership.OwnershipLevel.DEPARTMENT_MEMBER
     }
 
-    // Check if user has any collaboration permissions
+    // Check if user h collaboration permissions
     if (await this.hasCollaborationPermissions(userId, resource, resourceId)) {
       return IOwnership.OwnershipLevel.COLLABORATOR
     }

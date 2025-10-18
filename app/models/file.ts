@@ -145,7 +145,7 @@ export default class File extends compose(BaseModel, TenantScoped) {
    * @example File.query().withScopes((scopes) => scopes.withOwner())
    */
   static withOwner = scope((query) => {
-    return query.preload('owner' as any)
+    return query.preload('owner')
   })
 
   /**

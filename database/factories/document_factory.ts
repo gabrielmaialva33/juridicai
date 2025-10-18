@@ -45,7 +45,7 @@ export const DocumentFactory = factory
         'Recibo de Pagamento',
       ]),
       description: faker.helpers.arrayElement([faker.lorem.sentence(), null]),
-      document_type: docType.type as any,
+      document_type: docType.type,
       file_path: `uploads/documents/${faker.string.uuid()}/${fileName}`,
       file_hash: generateFileHash(),
       file_size: fileSize,

@@ -71,6 +71,6 @@ export default class CreateDocumentService {
       version: 1,
     }
 
-    return await this.documentsRepository.create(documentData as any)
+    return await this.documentsRepository.create(documentData)
   }
 }

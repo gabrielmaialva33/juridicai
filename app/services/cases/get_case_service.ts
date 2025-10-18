@@ -41,15 +41,15 @@ export default class GetCaseService {
 
     // Load relationships if requested
     if (options.withClient) {
-      await (caseInstance as any).load('client')
+      await caseInstance.load('client')
     }
 
     if (options.withDeadlines) {
-      await (caseInstance as any).load('deadlines')
+      await caseInstance.load('deadlines')
     }
 
     if (options.withDocuments) {
-      await (caseInstance as any).load('documents')
+      await caseInstance.load('documents')
     }
 
     return caseInstance

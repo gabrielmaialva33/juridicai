@@ -182,7 +182,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
    * @example User.query().withScopes((scopes) => scopes.forTenant(tenantId))
    */
   static forTenant = scope((query, tenantId: string | number) => {
-    return (query as any).whereHas('tenant_users', (tenantQuery: any) => {
+    return query.whereHas('tenant_users', (tenantQuery: any) => {
       tenantQuery.where('tenant_id', tenantId).where('is_active', true)
     })
   })
@@ -228,7 +228,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
    * @example User.query().withScopes((scopes) => scopes.byRole('admin'))
    */
   static byRole = scope((query, roleSlug: string) => {
-    return (query as any).whereHas('roles', (roleQuery: any) => {
+    return query.whereHas('roles', (roleQuery: any) => {
       roleQuery.where('slug', roleSlug)
     })
   })
@@ -238,7 +238,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
    * @example User.query().withScopes((scopes) => scopes.byRoles(['admin', 'manager']))
    */
   static byRoles = scope((query, roleSlugs: string[]) => {
-    return (query as any).whereHas('roles', (roleQuery: any) => {
+    return query.whereHas('roles', (roleQuery: any) => {
       roleQuery.whereIn('slug', roleSlugs)
     })
   })
@@ -248,7 +248,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
    * @example User.query().withScopes((scopes) => scopes.withPermission('users.create'))
    */
   static withPermission = scope((query, permissionSlug: string) => {
-    return (query as any).where((builder: any) => {
+    return query.where((builder: any) => {
       // Direct permission
       builder
         .whereHas('permissions', (permQuery: any) => {
