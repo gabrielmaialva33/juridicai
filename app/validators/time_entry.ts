@@ -61,6 +61,7 @@ export const listTimeEntriesValidator = vine.compile(
  */
 export const statsValidator = vine.compile(
   vine.object({
+    user_id: vine.number().withoutDecimals().positive().optional(),
     case_id: vine.number().withoutDecimals().positive().optional(),
     from_date: vine.string().trim().optional(),
     to_date: vine.string().trim().optional(),

@@ -105,7 +105,8 @@ export default class TimeEntriesController {
     const filters = await statsValidator.validate(request.qs())
 
     const statsFilters = {
-      user_id: auth.user!.id,
+      // Allow user_id from query params, or default to current user if not specified
+      user_id: filters.user_id || auth.user!.id,
       case_id: filters.case_id,
       from_date: filters.from_date ? DateTime.fromISO(filters.from_date) : undefined,
       to_date: filters.to_date ? DateTime.fromISO(filters.to_date) : undefined,
