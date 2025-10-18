@@ -40,11 +40,11 @@ export function Demo1Sidebar() {
   const classNames: AccordionMenuClassNames = {
     root: 'space-y-0.5',
     group: 'gap-0.5',
-    label: 'uppercase text-[11px] font-semibold text-muted-foreground/70 px-3 py-2 mt-4 first:mt-0',
-    item: 'mx-2 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+    label: 'uppercase text-[11px] font-semibold text-muted-foreground/70 px-3 py-1.5 mt-3 first:mt-0',
+    item: 'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
     subTrigger:
-      'mx-2 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
-    subContent: 'mt-1 mb-2',
+      'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+    subContent: 'mt-0.5 mb-1',
     indicator: 'text-muted-foreground/50',
   }
 
@@ -101,12 +101,12 @@ export function Demo1Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-20 w-[260px] bg-background border-r border-border flex flex-col">
       {/* Sidebar Header with Logo */}
-      <div className="h-[60px] flex items-center justify-between px-5 border-b border-border shrink-0">
+      <div className="h-[60px] flex items-center justify-between px-4 border-b border-border shrink-0">
         <Logo size="md" showText />
       </div>
 
       {/* Scrollable Menu Area */}
-      <ScrollArea className="flex-1 py-4">
+      <ScrollArea className="flex-1 py-3">
         <AccordionMenu
           type="single"
           collapsible

@@ -73,15 +73,15 @@ export function LawStats({ stats = defaultStats }: LawStatsProps) {
 
         return (
           <Card key={index} variant="default">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {stat.title}
                   </CardDescription>
-                  <CardTitle className="text-2xl font-bold mt-2">{stat.value}</CardTitle>
+                  <CardTitle className="text-2xl font-bold mt-1.5">{stat.value}</CardTitle>
 
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2 mt-2">
                     <Badge
                       variant={isPositive ? 'success' : 'destructive'}
                       appearance="light"
@@ -95,8 +95,8 @@ export function LawStats({ stats = defaultStats }: LawStatsProps) {
                   </div>
                 </div>
 
-                <div className={cn('rounded-lg p-3', stat.iconBg)}>
-                  <Icon className={cn('w-6 h-6', stat.iconColor)} />
+                <div className={cn('rounded-lg p-2.5', stat.iconBg)}>
+                  <Icon className={cn('w-5 h-5', stat.iconColor)} />
                 </div>
               </div>
             </CardContent>

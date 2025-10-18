@@ -13,7 +13,7 @@ function Dashboard() {
     <>
       <Head title="Dashboard" />
 
-      <div className="p-4 sm:p-5 lg:p-7.5 space-y-4 sm:space-y-5 lg:space-y-6">
+      <div className="p-4 sm:p-5 lg:p-6 space-y-4 sm:space-y-4 lg:space-y-5">
         {/* Page Header - Responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -31,15 +31,15 @@ function Dashboard() {
         <LawStats />
 
         {/* Charts Row - Responsive grid */}
-        <div className="grid gap-4 sm:gap-5 lg:gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-4 lg:gap-5 md:grid-cols-2">
           <CasesChart />
           <DeadlinesChart />
         </div>
 
         {/* Data Tables Row - Responsive grid */}
-        <div className="grid gap-4 sm:gap-5 lg:gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-4 lg:gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+            <div className="space-y-4 sm:space-y-4 lg:space-y-5">
               <RecentClients />
               <UpcomingDeadlines />
             </div>

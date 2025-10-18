@@ -31,7 +31,7 @@
 
 /* Body classes for layout states */
 body.demo1 {
-  overflow: hidden;
+  /* Layout-specific styles - overflow managed by layout structure */
 }
 
 body.sidebar-fixed {

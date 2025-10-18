@@ -28,7 +28,7 @@ export function Demo1Layout({ children }: Demo1LayoutProps) {
   const isDesktop = useIsDesktop()
 
   // Apply body classes for layout-specific styling
-  useBodyClass('demo1 sidebar-fixed header-fixed')
+  useBodyClass('demo1 sidebar-fixed header-fixed bg-muted')
 
   return (
     <div className="flex min-h-screen bg-background overflow-x-hidden">
@@ -41,11 +41,8 @@ export function Demo1Layout({ children }: Demo1LayoutProps) {
         <Demo1Header />
 
         {/* Main Content Area - Offset for fixed header */}
-        <main
-          className="flex-1 px-4 sm:px-5 lg:px-7.5 py-4 sm:py-5 lg:py-7.5 pt-[70px]"
-          role="main"
-        >
-          <div className="w-full max-w-screen-2xl mx-auto">{children}</div>
+        <main className="flex-1 pt-[70px]" role="main">
+          {children}
         </main>
 
         {/* Footer */}

@@ -20,7 +20,26 @@ export function useBodyClass(classes: string) {
       .map((c) => c.trim())
       .filter(Boolean)
 
-    // Add classes
+    // Remove ALL existing layout-related classes first to avoid conflicts
+    const existingClasses = Array.from(bodyElement.classList)
+    existingClasses.forEach((cls) => {
+      // Remove old layout classes (demo1-10, CSS variables, layout-specific utilities)
+      if (
+        cls.match(/^demo\d+$/) ||
+        cls.includes('[--') ||
+        cls === 'sidebar-fixed' ||
+        cls === 'header-fixed' ||
+        cls === 'lg:overflow-hidden' ||
+        cls === 'bg-muted' ||
+        cls === 'bg-muted!' ||
+        cls === 'h-full' ||
+        cls === 'flex'
+      ) {
+        bodyElement.classList.remove(cls)
+      }
+    })
+
+    // Add new classes
     classArray.forEach((className) => {
       if (className) bodyElement.classList.add(className)
     })

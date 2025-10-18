@@ -119,7 +119,7 @@ export function Demo1Header() {
   }
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-10 h-[60px] bg-background border-b border-border flex items-center justify-between px-5 lg:px-7.5">
+    <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-10 h-[60px] w-full max-w-full bg-background border-b border-border flex items-center justify-between px-4 sm:px-5 lg:px-6">
       {/* Left Side - Mobile Logo + Menu Trigger */}
       <div className="flex items-center gap-3">
         {isMobile && (
