@@ -13,31 +13,33 @@ function Dashboard() {
     <>
       <Head title="Dashboard" />
 
-      <div className="p-5 lg:p-7.5 space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-5 lg:p-7.5 space-y-4 sm:space-y-5 lg:space-y-6">
+        {/* Page Header - Responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Bem-vindo ao painel de controle do JuridicAI
             </p>
           </div>
-          <LayoutSwitcher />
+          <div className="sm:flex-shrink-0">
+            <LayoutSwitcher />
+          </div>
         </div>
 
         {/* KPI Cards - Stats */}
         <LawStats />
 
-        {/* Charts Row */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Charts Row - Responsive grid */}
+        <div className="grid gap-4 sm:gap-5 lg:gap-6 md:grid-cols-2">
           <CasesChart />
           <DeadlinesChart />
         </div>
 
-        {/* Data Tables Row */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        {/* Data Tables Row - Responsive grid */}
+        <div className="grid gap-4 sm:gap-5 lg:gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-5 lg:space-y-6">
               <RecentClients />
               <UpcomingDeadlines />
             </div>

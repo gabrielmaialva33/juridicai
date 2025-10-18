@@ -31,18 +31,21 @@ export function Demo1Layout({ children }: Demo1LayoutProps) {
   useBodyClass('demo1 sidebar-fixed header-fixed')
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background overflow-x-hidden">
       {/* Desktop Sidebar - Fixed left sidebar, hidden on mobile */}
       {isDesktop && <Demo1Sidebar />}
 
       {/* Main Content Wrapper */}
-      <div className="flex flex-col flex-1 lg:ml-[260px]">
+      <div className="flex flex-col flex-1 min-w-0 lg:ml-[260px]">
         {/* Header - Contains logo (mobile), menu trigger, search, notifications, user menu */}
         <Demo1Header />
 
         {/* Main Content Area - Offset for fixed header */}
-        <main className="flex-1 p-5 lg:p-7.5 pt-[70px]" role="main">
-          <div className="container-fixed max-w-screen-2xl mx-auto">{children}</div>
+        <main
+          className="flex-1 px-4 sm:px-5 lg:px-7.5 py-4 sm:py-5 lg:py-7.5 pt-[70px]"
+          role="main"
+        >
+          <div className="w-full max-w-screen-2xl mx-auto">{children}</div>
         </main>
 
         {/* Footer */}

@@ -28,17 +28,17 @@ export function Demo6Layout({ children }: Demo6LayoutProps) {
   useBodyClass('[--header-height:60px] [--sidebar-width:270px] lg:overflow-hidden bg-muted!')
 
   return (
-    <div className="flex min-h-screen bg-muted">
+    <div className="flex min-h-screen bg-muted overflow-x-hidden">
       {/* Sidebar - Desktop Only (270px fixed width) */}
       {!isMobile && <Demo6Sidebar currentPath={props.currentPath || '/dashboard'} />}
 
       {/* Main Content Wrapper */}
-      <div className="flex flex-col flex-1 lg:ml-[270px]">
+      <div className="flex flex-col flex-1 min-w-0 lg:ml-[270px]">
         {/* Header - Mobile Only */}
         {isMobile && <Demo6Header />}
 
-        {/* Content Area with Rounded Border */}
-        <div className="flex-1 m-[15px] lg:mt-[15px] lg:mr-[15px] lg:mb-[15px] rounded-xl bg-background border border-border overflow-hidden flex flex-col">
+        {/* Content Area with Rounded Border - Responsive margins */}
+        <div className="flex-1 m-3 sm:m-4 lg:m-[15px] rounded-lg lg:rounded-xl bg-background border border-border overflow-hidden flex flex-col">
           {/* Scrollable Content */}
           <main className="flex-1 overflow-y-auto">{children}</main>
 

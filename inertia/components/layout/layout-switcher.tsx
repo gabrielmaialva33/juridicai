@@ -41,22 +41,24 @@ export function LayoutSwitcher() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <i className="ki-filled ki-setting-2" />
-          <span className="hidden sm:inline">Layout:</span> {layoutConfig.name}
+        <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <i className="ki-filled ki-setting-2 text-sm sm:text-base" />
+          <span className="hidden sm:inline">Layout:</span>
+          <span className="hidden md:inline">{layoutConfig.name}</span>
+          <span className="md:hidden">Layouts</span>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Escolha o Layout do Dashboard</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-2 sm:space-y-3">
+          <DialogTitle className="text-lg sm:text-xl">Escolha o Layout do Dashboard</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Teste diferentes layouts do Metronic v9.3.2 e escolha o que melhor se adequa ao seu
             fluxo de trabalho
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
           {allLayoutsList.map((layout) => (
             <button
               key={layout.key}
