@@ -274,7 +274,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       static withoutTenantScope() {
         const query = this.query()
-        query._skipTenantScope = true
+        ;(query as any)._skipTenantScope = true
         return query
       }
 
@@ -308,7 +308,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        */
       static crossTenant() {
         const query = this.query()
-        query._allowCrossTenant = true
+        ;(query as any)._allowCrossTenant = true
         return query
       }
 
