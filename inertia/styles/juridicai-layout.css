@@ -1,0 +1,162 @@
+/* JuridicAI Layout Styles - High Density Enterprise Design */
+
+/* CSS Variables for Layout */
+:root {
+  /* Sidebar widths */
+  --sidebar-width-expanded: 16rem; /* 256px */
+  --sidebar-width-collapsed: 4rem; /* 64px */
+
+  /* Header height */
+  --header-height: 4rem; /* 64px */
+
+  /* High density spacing */
+  --spacing-tight: 0.25rem;
+  --spacing-compact: 0.5rem;
+  --spacing-normal: 0.75rem;
+  --spacing-comfortable: 1rem;
+
+  /* Enterprise colors */
+  --color-primary: 79 70 229; /* indigo-600 */
+  --color-primary-hover: 67 56 202; /* indigo-700 */
+  --color-secondary: 107 114 128; /* gray-500 */
+  --color-border: 229 231 235; /* gray-200 */
+  --color-bg-hover: 243 244 246; /* gray-100 */
+}
+
+/* Dark mode variables */
+.dark {
+  --color-border: 55 65 81; /* gray-700 */
+  --color-bg-hover: 55 65 81; /* gray-700 */
+}
+
+/* Body classes for layout states */
+body.demo1 {
+  overflow: hidden;
+}
+
+body.sidebar-fixed {
+  /* Sidebar is fixed positioned */
+}
+
+body.header-fixed {
+  /* Header is fixed positioned */
+}
+
+/* Sidebar collapse state - force width change */
+body.sidebar-collapse aside.lg\:flex {
+  width: var(--sidebar-width-collapsed) !important;
+  min-width: var(--sidebar-width-collapsed) !important;
+  max-width: var(--sidebar-width-collapsed) !important;
+}
+
+body:not(.sidebar-collapse) aside.lg\:flex {
+  width: var(--sidebar-width-expanded) !important;
+  min-width: var(--sidebar-width-expanded) !important;
+  max-width: var(--sidebar-width-expanded) !important;
+}
+
+/* High density styling - compact spacing throughout */
+.high-density {
+  /* Reduce padding and margins */
+  --spacing-default: var(--spacing-compact);
+}
+
+/* Menu item high density styling */
+.menu-item-dense {
+  padding: var(--spacing-compact) var(--spacing-normal) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+/* Card high density */
+.card-dense {
+  padding: var(--spacing-normal) !important;
+}
+
+/* Table high density */
+.table-dense th,
+.table-dense td {
+  padding: var(--spacing-compact) var(--spacing-normal) !important;
+  font-size: 0.875rem !important;
+}
+
+/* Button high density */
+.btn-dense {
+  padding: var(--spacing-compact) var(--spacing-normal) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+/* Form input high density */
+.input-dense {
+  padding: var(--spacing-compact) var(--spacing-normal) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+/* Animations for sidebar toggle */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Scrollbar styling for enterprise look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-secondary) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-secondary) / 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-secondary) / 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-secondary) / 0.7);
+}
+
+/* Layout initialized - smooth transitions */
+body.layout-initialized * {
+  transition-property: width, height, padding, margin, opacity, transform;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent transition on page load */
+body:not(.layout-initialized) * {
+  transition: none !important;
+}

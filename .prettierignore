@@ -25,3 +25,5 @@ tmp/
 
 # Cache
 .cache/
+
+.playwright-mcp

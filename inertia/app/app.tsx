@@ -1,20 +1,49 @@
+import '../styles/app.css'
 import { createInertiaApp } from '@inertiajs/react'
-import { createRoot } from 'react-dom/client'
-import Layout from './metronic/components/layouts/layout-1'
+import { createRoot, hydrateRoot } from 'react-dom/client'
+import { StrictMode } from 'react'
+import { ThemeProvider } from '@/providers/theme-provider'
+import { QueryProvider } from '@/providers/query-provider'
+import Layout from '@/metronic/components/layouts/layout-1'
 
-// Estilos Globais do Metronic
-import './metronic/styles/globals.css'
-import './metronic/styles/layout.css'
+const appName = import.meta.env.VITE_APP_NAME || 'JuridicAI'
 
 createInertiaApp({
+  title: (title) => `${title} - ${appName}`,
   resolve: (name) => {
     const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
-    let page = pages[`../pages/${name}.tsx`]
-    // Define o Layout do Metronic como o layout padrão para todas as páginas
-    page.default.layout = page.default.layout || ((page) => <Layout>{page}</Layout>)
-    return page
+    const pageModule = pages[`../pages/${name}.tsx`] as any
+
+    if (!pageModule) {
+      throw new Error(`Page not found: ${name}`)
+    }
+
+    // Define default layout if page doesn't have one
+    if (!pageModule.default.layout) {
+      pageModule.default.layout = (page: React.ReactNode) => <Layout>{page}</Layout>
+    }
+
+    return pageModule
   },
   setup({ el, App, props }) {
-    createRoot(el).render(<App {...props} />)
+    const app = (
+      <StrictMode>
+        <ThemeProvider>
+          <QueryProvider>
+            <App {...props} />
+          </QueryProvider>
+        </ThemeProvider>
+      </StrictMode>
+    )
+
+    if (import.meta.env.DEV) {
+      createRoot(el).render(app)
+    } else {
+      hydrateRoot(el, app)
+    }
+  },
+  progress: {
+    color: '#4F46E5',
+    showSpinner: true,
   },
 })
