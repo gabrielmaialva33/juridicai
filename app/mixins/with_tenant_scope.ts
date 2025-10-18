@@ -336,7 +336,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
        * ```
        */
       static withoutTenantScopeScope = scope((query: ModelQueryBuilderContract<any>) => {
-        query._skipTenantScope = true
+        ;(query as any)._skipTenantScope = true
       })
 
       /**
