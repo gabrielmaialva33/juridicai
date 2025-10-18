@@ -159,4 +159,13 @@ export default await Env.create(new URL('../', import.meta.url), {
   NVIDIA_TEMPERATURE: Env.schema.number.optional(),
   NVIDIA_TOP_P: Env.schema.number.optional(),
   NVIDIA_MAX_TOKENS: Env.schema.number.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring Firebase integration
+  |----------------------------------------------------------
+  */
+  FIREBASE_PROJECT_ID: Env.schema.string.optional(),
+  FIREBASE_CLIENT_EMAIL: Env.schema.string.optional(),
+  FIREBASE_PRIVATE_KEY: Env.schema.string.optional(),
 })

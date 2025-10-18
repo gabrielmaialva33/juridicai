@@ -16,7 +16,9 @@ export default class FirebaseProvider {
   async boot() {
     // Only initialize if Firebase credentials are configured
     if (!firebaseConfig.projectId || !firebaseConfig.clientEmail || !firebaseConfig.privateKey) {
-      console.warn('Firebase credentials not configured. Skipping Firebase Admin SDK initialization.')
+      console.warn(
+        'Firebase credentials not configured. Skipping Firebase Admin SDK initialization.'
+      )
       return
     }
 
