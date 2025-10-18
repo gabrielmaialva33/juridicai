@@ -1,7 +1,6 @@
 import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
 
-const DashboardsController = () => import('#controllers/dashboards_controller')
+const DashboardsController = () => import('#controllers/dashboards/dashboards_controller')
 
 // Dashboard routes - TEMPORARILY PUBLIC for layout testing
 router.group(() => {

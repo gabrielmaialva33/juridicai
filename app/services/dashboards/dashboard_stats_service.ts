@@ -28,14 +28,14 @@ export default class DashboardStatsService {
 
     // Pending deadlines
     const pendingDeadlines = await Deadline.query()
-      .where('status', 'PENDING')
-      .where('due_date', '>=', now.toSQL())
+      .where('status', 'pending')
+      .where('deadline_date', '>=', now.toSQL())
       .count('* as total')
 
     const pendingDeadlinesLastMonth = await Deadline.query()
-      .where('status', 'PENDING')
-      .where('due_date', '>=', lastMonth.toSQL())
-      .where('due_date', '<', now.toSQL())
+      .where('status', 'pending')
+      .where('deadline_date', '>=', lastMonth.toSQL())
+      .where('deadline_date', '<', now.toSQL())
       .count('* as total')
 
     // Documents created this month
@@ -221,20 +221,20 @@ export default class DashboardStatsService {
    */
   static async getUpcomingDeadlines(limit: number = 5) {
     const deadlines = await Deadline.query()
-      .preload('caseRecord')
+      .preload('case')
       .preload('responsible')
-      .where('status', 'PENDING')
-      .where('due_date', '>=', DateTime.now().toSQLDate()!)
-      .orderBy('due_date', 'asc')
+      .where('status', 'pending')
+      .where('deadline_date', '>=', DateTime.now().toSQLDate()!)
+      .orderBy('deadline_date', 'asc')
       .limit(limit)
 
     return deadlines.map((deadline) => ({
       id: deadline.id,
       title: deadline.title,
-      case_number: deadline.caseRecord.number,
-      case_id: deadline.caseRecord.id,
-      due_date: deadline.due_date.toISODate(),
-      priority: deadline.priority.toLowerCase(),
+      case_number: deadline.case.number,
+      case_id: deadline.case.id,
+      due_date: deadline.deadline_date.toISODate(),
+      priority: deadline.is_fatal ? 'high' : 'normal',
       responsible: deadline.responsible?.full_name || 'Não atribuído',
       status: deadline.status.toLowerCase(),
     }))
