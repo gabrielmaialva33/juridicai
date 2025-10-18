@@ -69,7 +69,7 @@ export default class GoogleSignInService {
       })
 
       // Emit user registered event
-      AuthEventService.emitUserRegistered(user, 'google', false, ctx)
+      AuthEventService.emitUserRegistered(user, 'oauth', false, ctx)
     }
 
     // Load relationships
@@ -80,7 +80,7 @@ export default class GoogleSignInService {
 
     // 5. Emit login succeeded event
     const isAdmin = user.roles.some((role) => role.name === 'ADMIN' || role.name === 'ROOT')
-    AuthEventService.emitLoginSucceeded(user, 'google', isAdmin, ctx)
+    AuthEventService.emitLoginSucceeded(user, 'oauth', isAdmin, ctx)
 
     const userJson = user.toJSON()
     return { ...userJson, auth } as GoogleSignInResponse
