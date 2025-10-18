@@ -1,7 +1,6 @@
 import { inject } from '@adonisjs/core'
 import TimeEntry from '#models/time_entry'
 import { DateTime } from 'luxon'
-import db from '@adonisjs/lucid/services/db'
 
 interface StatsFilters {
   user_id?: number
@@ -78,10 +77,10 @@ export default class GetTimeEntryStatsService {
     }
 
     return {
-      total_hours: parseFloat((totalMinutes / 60).toFixed(2)),
-      billable_hours: parseFloat((billableMinutes / 60).toFixed(2)),
-      non_billable_hours: parseFloat((nonBillableMinutes / 60).toFixed(2)),
-      total_amount: parseFloat(totalAmount.toFixed(2)),
+      total_hours: Number.parseFloat((totalMinutes / 60).toFixed(2)),
+      billable_hours: Number.parseFloat((billableMinutes / 60).toFixed(2)),
+      non_billable_hours: Number.parseFloat((nonBillableMinutes / 60).toFixed(2)),
+      total_amount: Number.parseFloat(totalAmount.toFixed(2)),
       entries_count: entries.length - runningTimers,
       running_timers_count: runningTimers,
     }

@@ -405,7 +405,7 @@ test.group('Time Entries CRUD', (group) => {
     assert.equal(body.hourly_rate, 350.0)
   })
 
-  test('should soft delete time entry', async ({ client }) => {
+  test('should soft delete time entry', async ({ client, assert }) => {
     const user = await UserFactory.create()
     const tenant = await setupTenantForUser(user, TenantUserRole.LAWYER)
 

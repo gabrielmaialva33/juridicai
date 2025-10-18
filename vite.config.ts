@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import adonisjs from '@adonisjs/vite/client'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   plugins: [
@@ -17,5 +19,26 @@ export default defineConfig({
       reload: ['resources/views/**/*.edge'],
     }),
     react(),
+    tailwindcss(),
   ],
+
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./inertia', import.meta.url)),
+      '~': fileURLToPath(new URL('./inertia', import.meta.url)),
+    },
+  },
+
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@inertiajs/react',
+      'react-router-dom',
+      '@tanstack/react-query',
+      '@tanstack/react-table',
+      'apexcharts',
+      'react-apexcharts',
+    ],
+  },
 })

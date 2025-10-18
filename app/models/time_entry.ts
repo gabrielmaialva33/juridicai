@@ -1,9 +1,15 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, scope, computed } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  belongsTo,
+  column,
+  computed,
+  scope,
+  SnakeCaseNamingStrategy,
+} from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
-import { SnakeCaseNamingStrategy } from '@adonisjs/lucid/orm'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
@@ -95,7 +101,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
       return null
     }
     const hours = this.duration_minutes / 60
-    return parseFloat((hours * this.hourly_rate).toFixed(2))
+    return Number.parseFloat((hours * this.hourly_rate).toFixed(2))
   }
 
   /**
@@ -104,7 +110,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
   @computed()
   get duration_hours(): number | null {
     if (!this.duration_minutes) return null
-    return parseFloat((this.duration_minutes / 60).toFixed(2))
+    return Number.parseFloat((this.duration_minutes / 60).toFixed(2))
   }
 
   /**
