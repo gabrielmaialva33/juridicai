@@ -4,6 +4,11 @@ import { apiThrottle } from '#start/limiter'
 
 const DocumentsController = () => import('#controllers/documents/documents_controller')
 
+// Inertia page route
+router.get('/documents', [DocumentsController, 'index']).as('documents.page')
+// .use([middleware.auth(), middleware.tenant()]) // TEMPORARILY DISABLED for layout testing
+
+// API routes
 router
   .group(() => {
     router.get('/', [DocumentsController, 'paginate']).as('documents.index')

@@ -2,6 +2,7 @@ packages:
   - .
 
 onlyBuiltDependencies:
+  - '@firebase/util'
   - '@parcel/watcher'
   - '@swc/core'
   - '@tailwindcss/oxide'
@@ -10,3 +11,4 @@ onlyBuiltDependencies:
   - esbuild
   - msgpackr-extract
   - msw
+  - protobufjs

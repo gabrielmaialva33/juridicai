@@ -19,6 +19,15 @@ export default class DocumentsController {
     private deleteDocumentService: DeleteDocumentService,
     private downloadDocumentService: DownloadDocumentService
   ) {}
+
+  /**
+   * GET /documents
+   * Render documents page (Inertia)
+   */
+  async index({ inertia }: HttpContext) {
+    return inertia.render('documents/index')
+  }
+
   /**
    * GET /api/v1/documents
    */

@@ -82,26 +82,4 @@ export const MENU_SIDEBAR: MenuConfig = [
     title: 'Relatórios',
     icon: BarChart3,
   },
-  {
-    heading: 'Configurações',
-  },
-  {
-    path: '/settings',
-    title: 'Configurações',
-    icon: Settings,
-    children: [
-      {
-        path: '/settings/profile',
-        title: 'Perfil',
-      },
-      {
-        path: '/settings/team',
-        title: 'Equipe',
-      },
-      {
-        path: '/settings/billing',
-        title: 'Faturamento',
-      },
-    ],
-  },
 ]

@@ -40,12 +40,13 @@ export function Demo1Sidebar() {
   const classNames: AccordionMenuClassNames = {
     root: 'space-y-0.5',
     group: 'gap-0.5',
-    label: 'uppercase text-[11px] font-semibold text-muted-foreground/70 px-3 py-1.5 mt-3 first:mt-0',
-    item: 'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+    label:
+      'uppercase text-[11px] font-semibold text-muted-foreground/80 px-3 py-1.5 mt-3 first:mt-0',
+    item: 'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
     subTrigger:
-      'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+      'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
     subContent: 'mt-0.5 mb-1',
-    indicator: 'text-muted-foreground/50',
+    indicator: 'text-muted-foreground/60',
   }
 
   // Build menu recursively
@@ -99,9 +100,9 @@ export function Demo1Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-20 w-[260px] bg-background border-r border-border flex flex-col">
+    <aside className="fixed left-0 top-0 bottom-0 z-20 w-[260px] bg-background border-r border-border/50 shadow-lg flex flex-col">
       {/* Sidebar Header with Logo */}
-      <div className="h-[60px] flex items-center justify-between px-4 border-b border-border shrink-0">
+      <div className="h-[60px] flex items-center justify-between px-4 border-b border-border/50 bg-muted/30 shrink-0">
         <Logo size="md" showText />
       </div>
 

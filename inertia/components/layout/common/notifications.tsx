@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Bell, CheckCircle2, AlertCircle, XCircle, Info } from 'lucide-react'
 
 interface Notification {
   id: string
@@ -51,63 +52,68 @@ export function Notifications() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const getTypeIcon = (type: Notification['type']) => {
+    const iconProps = { className: 'h-4 w-4', strokeWidth: 2 }
     switch (type) {
       case 'success':
-        return 'ki-check-circle text-green-500'
+        return <CheckCircle2 {...iconProps} className="h-4 w-4 text-green-600" />
       case 'warning':
-        return 'ki-information text-yellow-500'
+        return <AlertCircle {...iconProps} className="h-4 w-4 text-yellow-600" />
       case 'error':
-        return 'ki-close-circle text-red-500'
+        return <XCircle {...iconProps} className="h-4 w-4 text-red-600" />
       default:
-        return 'ki-notification-on text-blue-500'
+        return <Info {...iconProps} className="h-4 w-4 text-blue-600" />
     }
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <i className="ki-filled ki-notification-on text-xl" />
+        <Button variant="ghost" size="icon" className="relative hover:bg-accent">
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs"
+              className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-[10px] flex items-center justify-center"
             >
               {unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80" align="end" forceMount>
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notificações</span>
+      <DropdownMenuContent className="w-96" align="end" forceMount>
+        <DropdownMenuLabel className="flex items-center justify-between py-3 px-4">
+          <span className="text-base font-semibold">Notificações</span>
           {unreadCount > 0 && (
-            <Badge variant="secondary" className="ml-auto">
+            <Badge variant="secondary" className="ml-auto text-xs">
               {unreadCount} nova{unreadCount > 1 ? 's' : ''}
             </Badge>
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[350px]">
           {notifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className={`flex flex-col items-start gap-1 p-3 ${!notification.read ? 'bg-accent/50' : ''}`}
+              className={`flex flex-col items-start gap-2 p-4 cursor-pointer hover:bg-accent/50 ${!notification.read ? 'bg-accent/30' : ''}`}
             >
-              <div className="flex items-start gap-2 w-full">
-                <i className={`ki-filled ${getTypeIcon(notification.type)} mt-0.5`} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{notification.title}</p>
-                  <p className="text-xs text-muted-foreground">{notification.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+              <div className="flex items-start gap-3 w-full">
+                <div className="mt-0.5">{getTypeIcon(notification.type)}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{notification.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    {notification.description}
+                  </p>
+                  <p className="text-xs text-muted-foreground/80 mt-1.5">{notification.time}</p>
                 </div>
-                {!notification.read && <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />}
+                {!notification.read && (
+                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                )}
               </div>
             </DropdownMenuItem>
           ))}
         </ScrollArea>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-center justify-center text-sm text-primary">
+        <DropdownMenuItem className="text-center justify-center text-sm text-primary font-medium py-3 cursor-pointer">
           Ver todas as notificações
         </DropdownMenuItem>
       </DropdownMenuContent>

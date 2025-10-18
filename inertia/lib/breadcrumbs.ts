@@ -23,15 +23,15 @@ export function getBreadcrumbs(pathname: string): Breadcrumb[] {
 
   // Mapeamento de rotas para labels e ícones
   const routeConfig: Record<string, { label: string; icon?: any }> = {
-    dashboard: { label: 'Dashboard', icon: Home },
-    clients: { label: 'Clientes', icon: Users },
-    cases: { label: 'Processos', icon: FolderOpen },
-    documents: { label: 'Documentos', icon: FileText },
+    'dashboard': { label: 'Dashboard', icon: Home },
+    'clients': { label: 'Clientes', icon: Users },
+    'cases': { label: 'Processos', icon: FolderOpen },
+    'documents': { label: 'Documentos', icon: FileText },
     'legal-matters': { label: 'Matérias Jurídicas', icon: Scale },
-    calendar: { label: 'Agenda', icon: Calendar },
+    'calendar': { label: 'Agenda', icon: Calendar },
     'time-entries': { label: 'Lançamentos de Horas', icon: Clock },
-    reports: { label: 'Relatórios', icon: BarChart3 },
-    settings: { label: 'Configurações' },
+    'reports': { label: 'Relatórios', icon: BarChart3 },
+    'settings': { label: 'Configurações' },
   }
 
   // Constrói os breadcrumbs baseado nas partes da URL

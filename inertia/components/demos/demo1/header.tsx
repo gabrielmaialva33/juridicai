@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, usePage } from '@inertiajs/react'
-import { Menu, Search } from 'lucide-react'
+import { Menu, Search, ChevronRight } from 'lucide-react'
 import { Logo } from '@/components/layout/common/logo'
 import { UserMenu } from '@/components/layout/common/user-menu'
 import { Notifications } from '@/components/layout/common/notifications'
 import { MENU_SIDEBAR, MenuItem, MenuConfig } from '@/config/menu'
 import { useIsMobile } from '@/hooks/use_media_query'
 import { Button } from '@/components/ui/button'
+import { getBreadcrumbs } from '@/lib/breadcrumbs'
 import {
   Sheet,
   SheetContent,
@@ -26,6 +27,14 @@ import {
   AccordionMenuClassNames,
 } from '@/components/ui/accordion-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 /**
  * Demo1 Header Component
@@ -119,9 +128,9 @@ export function Demo1Header() {
   }
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-10 h-[60px] w-full max-w-full bg-background border-b border-border flex items-center justify-between px-4 sm:px-5 lg:px-6">
-      {/* Left Side - Mobile Logo + Menu Trigger */}
-      <div className="flex items-center gap-3">
+    <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-10 h-[60px] bg-background/95 backdrop-blur-sm border-b border-border/50 shadow-sm flex items-center gap-4 px-4 sm:px-5 lg:px-6 overflow-hidden">
+      {/* Left Side - Mobile Logo + Menu Trigger OR Desktop Breadcrumbs */}
+      <div className="flex items-center gap-3 min-w-0 overflow-hidden">
         {isMobile && (
           <>
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -153,22 +162,58 @@ export function Demo1Header() {
             <Logo size="sm" showText />
           </>
         )}
+
+        {/* Desktop Breadcrumbs */}
+        {!isMobile && (
+          <Breadcrumb>
+            <BreadcrumbList className="flex-nowrap">
+              {getBreadcrumbs(pathname).map((breadcrumb, index, array) => {
+                const Icon = breadcrumb.icon
+                const isLast = index === array.length - 1
+
+                return (
+                  <div key={index} className="flex items-center">
+                    {index > 0 && <BreadcrumbSeparator />}
+                    <BreadcrumbItem>
+                      {isLast ? (
+                        <BreadcrumbPage className="truncate max-w-[200px] flex items-center gap-1.5">
+                          {Icon && <Icon className="h-4 w-4" />}
+                          {breadcrumb.label}
+                        </BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink
+                          href={breadcrumb.href}
+                          className="flex items-center gap-1.5"
+                        >
+                          {Icon && <Icon className="h-4 w-4" />}
+                          {breadcrumb.label}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </div>
+                )
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
+        )}
       </div>
 
-      {/* Right Side - Actions */}
-      <div className="flex items-center gap-2">
-        {/* Search Button - Desktop only */}
-        {!isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-primary/10 hover:text-primary transition-colors"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-        )}
+      {/* Center - Search Input */}
+      {!isMobile && (
+        <div className="flex-1 flex justify-center max-w-2xl mx-auto">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Buscar..."
+              className="w-full h-9 pl-9 pr-3 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
+      )}
 
+      {/* Right Side - Actions */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         {/* Notifications */}
         <Notifications />
 

@@ -31,3 +31,4 @@ yarn-error.log
 storage/uploads/*
 
 .playwright-mcp
+firebase-adminsdk.json

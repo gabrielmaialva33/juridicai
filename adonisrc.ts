@@ -62,6 +62,7 @@ export default defineConfig({
 
     () => import('#providers/app_provider'),
     () => import('#providers/auth_events_provider'),
+    () => import('#providers/firebase_provider'),
     () => import('@adonisjs/mail/mail_provider'),
     () => import('@rlanz/bull-queue/queue_provider'),
     () => import('@adonisjs/redis/redis_provider'),

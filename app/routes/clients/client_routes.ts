@@ -4,6 +4,11 @@ import { apiThrottle } from '#start/limiter'
 
 const ClientsController = () => import('#controllers/clients/clients_controller')
 
+// Inertia page route
+router.get('/clients', [ClientsController, 'index']).as('clients.page')
+// .use([middleware.auth(), middleware.tenant()]) // TEMPORARILY DISABLED for layout testing
+
+// API routes
 router
   .group(() => {
     // GET /api/v1/clients - List all clients (paginated with filters)

@@ -24,6 +24,14 @@ export default class ClientsController {
   ) {}
 
   /**
+   * GET /clients
+   * Render clients page (Inertia)
+   */
+  async index({ inertia }: HttpContext) {
+    return inertia.render('clients/index')
+  }
+
+  /**
    * GET /api/v1/clients
    * List clients with pagination and filters
    */

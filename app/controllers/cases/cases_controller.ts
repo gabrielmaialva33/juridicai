@@ -18,6 +18,15 @@ export default class CasesController {
     private updateCaseService: UpdateCaseService,
     private deleteCaseService: DeleteCaseService
   ) {}
+
+  /**
+   * GET /cases
+   * Render cases page (Inertia)
+   */
+  async index({ inertia }: HttpContext) {
+    return inertia.render('cases/index')
+  }
+
   /**
    * GET /api/v1/cases
    */
