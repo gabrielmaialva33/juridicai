@@ -48,6 +48,6 @@ export const TimeEntryFactory = factory
       is_deleted: false,
     }
   })
-  .relation('caseRecord', () => CaseFactory)
+  .relation('caseRecord' as any, () => CaseFactory)
   .relation('user', () => UserFactory)
   .build()

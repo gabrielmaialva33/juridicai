@@ -221,14 +221,14 @@ export default class DashboardStatsService {
    */
   static async getUpcomingDeadlines(limit: number = 5) {
     const deadlines = await Deadline.query()
-      .preload('case')
+      .preload('case' as any)
       .preload('responsible')
       .where('status', 'pending')
       .where('deadline_date', '>=', DateTime.now().toSQLDate()!)
       .orderBy('deadline_date', 'asc')
       .limit(limit)
 
-    return deadlines.map((deadline) => ({
+    return deadlines.map((deadline: any) => ({
       id: deadline.id,
       title: deadline.title,
       case_number: deadline.case.number,

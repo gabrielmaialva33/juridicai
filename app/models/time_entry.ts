@@ -9,13 +9,10 @@ import {
 } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
 import User from '#models/user'
 import Case from '#models/case'
-
-type Builder = ModelQueryBuilderContract<typeof TimeEntry>
 
 // Create the tenant-scoped mixin
 const TenantScoped = withTenantScope()
@@ -214,7 +211,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * @example TimeEntry.query().withScopes((scopes) => scopes.withUser())
    */
   static withUser = scope((query) => {
-    return query.preload('user')
+    return (query as any).preload('user')
   })
 
   /**
