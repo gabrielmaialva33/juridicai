@@ -39,16 +39,15 @@ export function getBreadcrumbs(pathname: string): Breadcrumb[] {
   parts.forEach((part, index) => {
     currentPath += `/${part}`
     const config = routeConfig[part]
+    const isLast = index === parts.length - 1
 
     if (config) {
-      // Último item não deve ter href (página atual)
-      const isLast = index === parts.length - 1
       breadcrumbs.push({
         label: config.label,
         href: isLast ? undefined : currentPath,
         icon: config.icon,
       })
-    } else if (!isNaN(Number(part))) {
+    } else if (!Number.isNaN(Number(part))) {
       // Se for um ID numérico, pula (será tratado como detalhe)
       // Ex: /clients/123 -> mostra apenas "Clientes" > "Detalhes"
       breadcrumbs.push({
