@@ -197,7 +197,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Order by start time (newest first)
    * @example TimeEntry.query().withScopes((scopes) => scopes.newest())
    */
-  static newest = scope((query: Builder) => {
+  static newest = scope((query) => {
     return query.orderBy('started_at', 'desc')
   })
 
@@ -205,7 +205,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Order by start time (oldest first)
    * @example TimeEntry.query().withScopes((scopes) => scopes.oldest())
    */
-  static oldest = scope((query: Builder) => {
+  static oldest = scope((query) => {
     return query.orderBy('started_at', 'asc')
   })
 
@@ -213,7 +213,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Include user relationship
    * @example TimeEntry.query().withScopes((scopes) => scopes.withUser())
    */
-  static withUser = scope((query: Builder) => {
+  static withUser = scope((query) => {
     return query.preload('user')
   })
 
@@ -221,7 +221,7 @@ export default class TimeEntry extends compose(BaseModel, TenantScoped) {
    * Include case relationship
    * @example TimeEntry.query().withScopes((scopes) => scopes.withCase())
    */
-  static withCase = scope((query: Builder) => {
+  static withCase = scope((query) => {
     return query.preload('caseRecord')
   })
 }
