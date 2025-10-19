@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Check } from 'lucide-react'
+import preferencesIllustration from '@/assets/images/undraw_preferences-popup_cru5.svg'
+import remoteWorkerIllustration from '@/assets/images/undraw_remote-worker_0l91.svg'
 
 const onboardingSchema = z.object({
   firmName: z.string().min(3, 'Nome do escritório deve ter no mínimo 3 caracteres'),
@@ -99,7 +101,7 @@ export default function Onboarding() {
               {step === 1 && (
                 <div className="space-y-8">
                   {/* Header integrado */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 text-center">
                     <h2 className="text-3xl font-bold text-[#434343]">
                       Bem-vindo ao JuridicAI
                     </h2>
@@ -108,25 +110,37 @@ export default function Onboarding() {
                     </p>
                   </div>
 
-                  {/* Content */}
+                  {/* Content with Illustrations */}
                   <div className="space-y-8">
-                    {/* Info List - Direct */}
-                    <div>
-                      <p className="font-bold text-[#434343] mb-6">O que você vai configurar:</p>
-                      <ul className="space-y-4 text-[#434343]">
-                        <li className="flex items-start gap-4">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
-                          <span>Informações do seu escritório</span>
-                        </li>
-                        <li className="flex items-start gap-4">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
-                          <span>Áreas de atuação</span>
-                        </li>
-                        <li className="flex items-start gap-4">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
-                          <span>Preferências iniciais</span>
-                        </li>
-                      </ul>
+                    {/* Main Content Grid - Illustration + Info */}
+                    <div className="grid md:grid-cols-2 gap-8 items-center">
+                      {/* Left Side - Text Content */}
+                      <div className="order-2 md:order-1">
+                        <p className="font-bold text-[#434343] mb-6">O que você vai configurar:</p>
+                        <ul className="space-y-4 text-[#434343]">
+                          <li className="flex items-start gap-4">
+                            <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm flex-shrink-0" />
+                            <span>Informações do seu escritório</span>
+                          </li>
+                          <li className="flex items-start gap-4">
+                            <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm flex-shrink-0" />
+                            <span>Áreas de atuação</span>
+                          </li>
+                          <li className="flex items-start gap-4">
+                            <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm flex-shrink-0" />
+                            <span>Preferências iniciais</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Right Side - Illustration */}
+                      <div className="order-1 md:order-2 flex justify-center">
+                        <img
+                          src={preferencesIllustration}
+                          alt="Configurações"
+                          className="w-full max-w-[280px] h-auto opacity-90 drop-shadow-lg"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2">
