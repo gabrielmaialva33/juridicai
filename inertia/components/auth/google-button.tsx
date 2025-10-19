@@ -14,11 +14,11 @@ export function GoogleButton({ className, text = 'Continue with Google' }: Googl
       type="button"
       variant="outline"
       size="lg"
-      className={className}
+      className={`h-12 rounded-[12px] border-2 border-white/60 bg-white/70 backdrop-blur-xl hover:border-[#434343] hover:bg-white/90 text-[#434343] transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-[#434343]/10 hover:scale-[1.02] ${className}`}
       onClick={signInWithGoogle}
       disabled={loading}
     >
-      <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
           fill="#4285F4"
@@ -36,7 +36,7 @@ export function GoogleButton({ className, text = 'Continue with Google' }: Googl
           fill="#EA4335"
         />
       </svg>
-      {loading ? 'Signing in...' : text}
+      {loading ? 'Entrando...' : text}
     </Button>
   )
 }
