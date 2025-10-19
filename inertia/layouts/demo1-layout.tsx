@@ -31,7 +31,7 @@ export function Demo1Layout({ children }: Demo1LayoutProps) {
   useBodyClass('demo1 sidebar-fixed header-fixed bg-muted')
 
   return (
-    <div className="flex min-h-screen bg-background overflow-x-hidden">
+    <div className="flex min-h-screen bg-muted/30 overflow-x-hidden">
       {/* Desktop Sidebar - Fixed left sidebar, hidden on mobile */}
       {isDesktop && <Demo1Sidebar />}
 
