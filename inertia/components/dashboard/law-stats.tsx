@@ -65,7 +65,7 @@ const defaultStats: StatItem[] = [
 
 export function LawStats({ stats = defaultStats }: LawStatsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         const isPositive = stat.change >= 0
@@ -73,30 +73,30 @@ export function LawStats({ stats = defaultStats }: LawStatsProps) {
 
         return (
           <Card key={index} variant="default">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <CardDescription className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                     {stat.title}
                   </CardDescription>
-                  <CardTitle className="text-2xl font-bold mt-1.5">{stat.value}</CardTitle>
+                  <CardTitle className="text-3xl font-bold mt-2 tabular-nums">{stat.value}</CardTitle>
 
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-3">
                     <Badge
                       variant={isPositive ? 'success' : 'destructive'}
                       appearance="light"
                       size="sm"
-                      className="gap-1"
+                      className="gap-1 px-2 py-0.5"
                     >
                       <TrendIcon className="w-3 h-3" />
-                      <span>{Math.abs(stat.change)}%</span>
+                      <span className="text-[11px] font-semibold">{Math.abs(stat.change)}%</span>
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{stat.changeLabel}</span>
+                    <span className="text-[11px] text-muted-foreground truncate">{stat.changeLabel}</span>
                   </div>
                 </div>
 
-                <div className={cn('rounded-lg p-2.5', stat.iconBg)}>
-                  <Icon className={cn('w-5 h-5', stat.iconColor)} />
+                <div className={cn('rounded-xl p-3 shrink-0', stat.iconBg)}>
+                  <Icon className={cn('w-6 h-6', stat.iconColor)} strokeWidth={2} />
                 </div>
               </div>
             </CardContent>
