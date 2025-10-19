@@ -95,7 +95,7 @@ export default function Onboarding() {
             <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/40 via-transparent to-white/20 pointer-events-none" />
 
             {/* Content wrapper with unified padding */}
-            <div className="relative z-10 p-10">
+            <div className="relative z-10 p-6 md:p-10">
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Step 1: Welcome */}
               {step === 1 && (
@@ -138,7 +138,7 @@ export default function Onboarding() {
                         <img
                           src={preferencesIllustration}
                           alt="Configurações"
-                          className="w-full max-w-[280px] h-auto opacity-90 drop-shadow-lg"
+                          className="w-full max-w-[180px] md:max-w-[280px] h-auto opacity-90 drop-shadow-lg"
                         />
                       </div>
                     </div>
@@ -253,7 +253,7 @@ export default function Onboarding() {
 
                   {/* Content */}
                   <div className="space-y-8">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
                       {PRACTICE_AREAS.map((area) => {
                         const isSelected = selectedAreas.includes(area)
                         return (
