@@ -154,10 +154,16 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
             const isLast = index === deadlines.length - 1
 
             return (
-              <div key={deadline.id} className={cn("p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl transition-all duration-300 ease-out", {
-                "rounded-t-xl": index === 0,
-                "rounded-b-xl": isLast
-              })}>
+              <div
+                key={deadline.id}
+                className={cn(
+                  'p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl transition-all duration-300 ease-out',
+                  {
+                    'rounded-t-xl': index === 0,
+                    'rounded-b-xl': isLast,
+                  }
+                )}
+              >
                 <div className="flex items-start gap-3">
                   <div className={cn('rounded-xl p-2.5 shrink-0', priority.bg)}>
                     {deadline.priority === 'urgent' ? (

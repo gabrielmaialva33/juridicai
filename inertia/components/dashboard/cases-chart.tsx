@@ -60,7 +60,9 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
         <CardHeading className="min-w-0 flex-1">
           <div className="min-w-0">
             <CardTitle className="mb-1">Processos</CardTitle>
-            <CardDescription className="hidden sm:block">Abertura e finalização de processos ao longo do tempo</CardDescription>
+            <CardDescription className="hidden sm:block">
+              Abertura e finalização de processos ao longo do tempo
+            </CardDescription>
           </div>
         </CardHeading>
         <CardToolbar className="shrink-0">

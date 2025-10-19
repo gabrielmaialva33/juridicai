@@ -46,7 +46,9 @@ export function DeadlinesChart({ data = defaultData }: DeadlinesChartProps) {
         <CardHeading className="min-w-0 flex-1">
           <div className="min-w-0">
             <CardTitle className="mb-1">Prazos da Semana</CardTitle>
-            <CardDescription className="hidden sm:block">Distribuição de prazos nos próximos 7 dias</CardDescription>
+            <CardDescription className="hidden sm:block">
+              Distribuição de prazos nos próximos 7 dias
+            </CardDescription>
           </div>
         </CardHeading>
       </CardHeader>

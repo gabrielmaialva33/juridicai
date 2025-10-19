@@ -17,7 +17,9 @@ function Dashboard() {
         {/* Page Header - Responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              Dashboard
+            </h1>
             <p className="text-sm text-muted-foreground mt-2">
               Bem-vindo ao painel de controle do JuridicAI
             </p>

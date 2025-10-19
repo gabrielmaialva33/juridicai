@@ -210,10 +210,13 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
               return (
                 <div
                   key={activity.id}
-                  className={cn("relative px-5 py-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl transition-all duration-300 ease-out", {
-                    "rounded-t-xl": index === 0,
-                    "rounded-b-xl": isLast
-                  })}
+                  className={cn(
+                    'relative px-5 py-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl transition-all duration-300 ease-out',
+                    {
+                      'rounded-t-xl': index === 0,
+                      'rounded-b-xl': isLast,
+                    }
+                  )}
                 >
                   {/* Timeline dot */}
                   <div className="absolute left-10 top-7 -translate-x-1/2">

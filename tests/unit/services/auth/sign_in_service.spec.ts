@@ -150,7 +150,9 @@ test.group('SignInService', (group) => {
       })
 
       // Attach admin role in addition to default user role
-      const adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).firstOrFail()
+      const adminRole = await Role.withoutTenantScope()
+        .where('slug', IRole.Slugs.ADMIN)
+        .firstOrFail()
       await db.table('user_roles').insert({
         user_id: user.id,
         role_id: adminRole.id,

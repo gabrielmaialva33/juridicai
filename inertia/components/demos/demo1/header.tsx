@@ -101,7 +101,10 @@ export function Demo1Header() {
                     value={child.path || ''}
                     className="text-sm"
                   >
-                    <Link href={child.path || '#'} className="flex items-center gap-2 w-full px-4 py-2.5">
+                    <Link
+                      href={child.path || '#'}
+                      className="flex items-center gap-2 w-full px-4 py-2.5"
+                    >
                       {child.title}
                     </Link>
                   </AccordionMenuItem>
@@ -139,7 +142,10 @@ export function Demo1Header() {
                 <Menu className="h-5 w-5" strokeWidth={2} />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] p-0 sm:w-[360px] bg-background/95 backdrop-blur-xl shadow-2xl border-r border-border/20">
+            <SheetContent
+              side="left"
+              className="w-[320px] p-0 sm:w-[360px] bg-background/95 backdrop-blur-xl shadow-2xl border-r border-border/20"
+            >
               <SheetHeader className="h-[60px] flex flex-row items-center justify-between px-5 border-b border-border/30 shrink-0 bg-background/80 backdrop-blur-sm">
                 <Logo size="md" showText />
                 <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
@@ -165,7 +171,9 @@ export function Demo1Header() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">Gabriel Maia</p>
-                      <p className="text-xs text-muted-foreground truncate">gabriel@juridicai.com</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        gabriel@juridicai.com
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -198,7 +206,10 @@ export function Demo1Header() {
                             {breadcrumb.label}
                           </BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink href={breadcrumb.href} className="flex items-center gap-1.5">
+                          <BreadcrumbLink
+                            href={breadcrumb.href}
+                            className="flex items-center gap-1.5"
+                          >
                             {Icon && <Icon className="h-4 w-4" />}
                             {breadcrumb.label}
                           </BreadcrumbLink>
