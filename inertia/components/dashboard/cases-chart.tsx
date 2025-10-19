@@ -55,7 +55,7 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
   }))
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
       <CardHeader>
         <CardHeading>
           <div>

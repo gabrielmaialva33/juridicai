@@ -108,7 +108,7 @@ export function RecentClients({ clients = defaultClients }: RecentClientsProps) 
         </CardToolbar>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-border">
+        <div className="space-y-0">
           {clients.map((client) => (
             <div key={client.id} className="p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl border-l-2 border-primary/20 hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 transition-all duration-300">
               <div className="flex items-start justify-between gap-5">
