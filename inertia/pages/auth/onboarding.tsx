@@ -334,14 +334,14 @@ export default function Onboarding() {
                         variant="outline"
                         onClick={() => setStep(2)}
                         size="lg"
-                        className="rounded-[12px] border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all"
+                        className="rounded-[12px] border-purple-200 dark:border-purple-500/30 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all"
                       >
                         Voltar
                       </Button>
                       <Button
                         type="submit"
                         size="lg"
-                        className="rounded-[12px] shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+                        className="rounded-[12px] bg-gradient-to-r from-pink-600 via-orange-600 to-yellow-600 hover:from-pink-700 hover:via-orange-700 hover:to-yellow-700 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-yellow-500/40 hover:scale-[1.02] transition-all duration-300"
                       >
                         Concluir Configuração
                       </Button>
