@@ -61,15 +61,15 @@ export function Demo1Sidebar() {
     [pathname]
   )
 
-  // Consistent styling for menu items
+  // Menu styling - Apple Glass Liquid Effect 2025
   const classNames: AccordionMenuClassNames = {
     root: 'space-y-0.5',
     group: 'gap-0.5',
     label:
       'uppercase text-[11px] font-semibold text-muted-foreground/80 px-3 py-1.5 mt-3 first:mt-0',
-    item: 'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+    item: 'mx-2 px-3 py-2 rounded-[16px] text-sm font-medium text-foreground hover:bg-accent/60 hover:backdrop-blur-xl hover:text-accent-foreground hover:scale-[1.01] transition-all duration-300 ease-out cursor-pointer data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-primary/20 data-[selected=true]:via-primary/10 data-[selected=true]:to-primary/5 data-[selected=true]:backdrop-blur-2xl data-[selected=true]:text-primary data-[selected=true]:font-semibold data-[selected=true]:shadow-2xl data-[selected=true]:shadow-primary/20 data-[selected=true]:border data-[selected=true]:border-primary/30 data-[selected=true]:scale-[1.01]',
     subTrigger:
-      'mx-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary data-[selected=true]:font-semibold',
+      'mx-2 px-3 py-2 rounded-[16px] text-sm font-medium text-foreground hover:bg-accent/60 hover:backdrop-blur-xl hover:text-accent-foreground hover:scale-[1.01] transition-all duration-300 ease-out data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-primary/15 data-[selected=true]:via-primary/8 data-[selected=true]:to-primary/3 data-[selected=true]:backdrop-blur-xl data-[selected=true]:text-primary data-[selected=true]:font-semibold data-[selected=true]:border data-[selected=true]:border-primary/20',
     subContent: 'mt-0.5 mb-1',
     indicator: 'text-muted-foreground/60',
   }
