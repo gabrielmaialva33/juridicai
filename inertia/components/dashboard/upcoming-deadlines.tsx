@@ -129,7 +129,7 @@ function formatDate(dateString: string): string {
 
 export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDeadlinesProps) {
   return (
-    <Card>
+    <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
       <CardHeader className="py-4">
         <CardHeading>
           <div>
@@ -147,13 +147,17 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
         </CardToolbar>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {deadlines.map((deadline) => {
+        <div className="space-y-0">
+          {deadlines.map((deadline, index) => {
             const priority = priorityConfig[deadline.priority]
             const status = statusConfig[deadline.status]
+            const isLast = index === deadlines.length - 1
 
             return (
-              <div key={deadline.id} className="p-5 hover:bg-accent/50 transition-colors">
+              <div key={deadline.id} className={cn("p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl transition-all duration-300 ease-out", {
+                "rounded-t-xl": index === 0,
+                "rounded-b-xl": isLast
+              })}>
                 <div className="flex items-start gap-3">
                   <div className={cn('rounded-xl p-2.5 shrink-0', priority.bg)}>
                     {deadline.priority === 'urgent' ? (
