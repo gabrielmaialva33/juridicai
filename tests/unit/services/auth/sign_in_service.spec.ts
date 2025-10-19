@@ -60,11 +60,12 @@ test.group('SignInService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should sign in user with valid credentials', async ({ assert }) => {
-    await withTenantContext(async () => {
+    await withTenantContext(async (tenant) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
       const user = await User.create({
+        tenant_id: tenant.id,
         full_name: 'John Doe',
         email: 'john@example.com',
         username: 'johndoe',
@@ -108,11 +109,12 @@ test.group('SignInService', (group) => {
   })
 
   test('should throw exception for invalid password', async ({ assert }) => {
-    await withTenantContext(async () => {
+    await withTenantContext(async (tenant) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
       const user = await User.create({
+        tenant_id: tenant.id,
         full_name: 'John Doe',
         email: 'john@example.com',
         username: 'johndoe',
@@ -135,11 +137,12 @@ test.group('SignInService', (group) => {
   })
 
   test('should include roles in user data', async ({ assert }) => {
-    await withTenantContext(async () => {
+    await withTenantContext(async (tenant) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
       const user = await User.create({
+        tenant_id: tenant.id,
         full_name: 'John Doe',
         email: 'john@example.com',
         username: 'johndoe',
@@ -167,11 +170,12 @@ test.group('SignInService', (group) => {
   })
 
   test('should handle user without roles', async ({ assert }) => {
-    await withTenantContext(async () => {
+    await withTenantContext(async (tenant) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
       const user = await User.create({
+        tenant_id: tenant.id,
         full_name: 'John Doe',
         email: 'john@example.com',
         username: 'johndoe',
@@ -193,11 +197,12 @@ test.group('SignInService', (group) => {
   })
 
   test('should handle soft deleted users', async ({ assert }) => {
-    await withTenantContext(async () => {
+    await withTenantContext(async (tenant) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
       const user = await User.create({
+        tenant_id: tenant.id,
         full_name: 'John Doe',
         email: 'john@example.com',
         username: 'johndoe',
