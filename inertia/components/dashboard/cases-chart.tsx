@@ -58,12 +58,14 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
     <Card>
       <CardHeader>
         <CardHeading>
-          <div>
+          <div className="min-w-0 flex-1">
             <CardTitle>Processos</CardTitle>
-            <CardDescription>Abertura e finalização de processos ao longo do tempo</CardDescription>
+            <CardDescription className="line-clamp-2">
+              Abertura e finalização de processos ao longo do tempo
+            </CardDescription>
           </div>
         </CardHeading>
-        <CardToolbar>
+        <CardToolbar className="flex-shrink-0">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[140px]" size="sm">
               <SelectValue placeholder="Selecione o período" />
