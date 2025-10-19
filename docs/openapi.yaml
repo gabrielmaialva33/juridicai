@@ -1495,6 +1495,16 @@ components:
                   message: Email inválido
 
   schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
     User:
       type: object
       properties:
@@ -1891,40 +1901,23 @@ components:
     Parties:
       type: [object, "null"]
       properties:
-        autor:
-          type: object
-          properties:
-            name:
-              type: string
             cpf:
-              type: string
-              nullable: true
-            cnpj:
-              type: string
-              nullable: true
-            email:
-              type: string
-              nullable: true
+              type: [string, "null"]
             phone:
-              type: string
-              nullable: true
+              type: [string, "null"]
         reu:
           type: object
           properties:
             name:
               type: string
             cpf:
-              type: string
-              nullable: true
+              type: [string, "null"]
             cnpj:
-              type: string
-              nullable: true
+              type: [string, "null"]
             email:
-              type: string
-              nullable: true
+              type: [string, "null"]
             phone:
-              type: string
-              nullable: true
+              type: [string, "null"]
         outros:
           type: array
           items:
@@ -1935,11 +1928,9 @@ components:
               name:
                 type: string
               cpf:
-                type: string
-                nullable: true
+                type: [string, "null"]
               cnpj:
-                type: string
-                nullable: true
+                type: [string, "null"]
 
     PaginationMeta:
       type: object

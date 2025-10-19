@@ -69,6 +69,7 @@ export default defineConfig({
     () => import('@adonisjs/drive/drive_provider'),
     () => import('@adonisjs/inertia/inertia_provider'),
     () => import('@adonisjs/vite/vite_provider'),
+    () => import('@adonisjs/ally/ally_provider')
   ],
 
   /*
