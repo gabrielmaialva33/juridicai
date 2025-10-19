@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Current State**: Production-Ready Core (75-80% Complete)
 
 ### Key Metrics
+
 - **Total Code**: 61,014 lines of TypeScript
 - **Backend**: 232 files (services, controllers, models, repositories)
 - **Frontend**: 74 React/TSX components
@@ -19,12 +20,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **API Endpoints**: ~48 routes across 10+ resource domains
 
 ### Architecture Quality
+
 - **Code Quality**: 8/10 - Excellent TypeScript usage, minimal `any` types
 - **Architecture**: 7/10 - Reference-quality multi-tenant implementation
 - **Security**: 5/10 - RBAC solid, but CSP disabled (critical issue)
 - **Completeness**: 7.5/10 - Core features production-ready, gaps in billing/notifications
 
 ### What's Production-Ready ✅
+
 - Multi-tenant architecture with row-level isolation
 - Legal domain features (Clients, Cases, Deadlines, Documents, Time Tracking)
 - Brazilian legal compliance (CPF/CNPJ, CNJ format, Portuguese search)
@@ -34,6 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Authentication (JWT, Firebase, Session)
 
 ### Critical Gaps ❌
+
 - Billing/invoicing system (time tracking exists, but no monetization)
 - Email notifications (infrastructure ready, not activated)
 - Court API integrations (PJe, e-SAJ planned, not implemented)
@@ -47,6 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 JuridicAI is a multi-tenant SaaS platform for Brazilian law firm management built with AdonisJS v6, React 19, and PostgreSQL. The platform provides comprehensive case management, client tracking, deadline monitoring, document management, and AI-powered legal research capabilities.
 
 **Technology Stack**:
+
 - **Backend**: AdonisJS v6, TypeScript 5.9, PostgreSQL, Redis
 - **Frontend**: React 19.2, Inertia.js, TailwindCSS 4.1, Radix UI
 - **AI**: Perplexity AI (legal research), NVIDIA AI (document analysis)
@@ -109,12 +114,14 @@ node ace make:test clients/create_client --suite=functional
 ## Technology Stack
 
 ### Backend Framework
+
 - **AdonisJS v6** - Modern TypeScript framework with IoC container
 - **Node.js** with ES Modules
 - **TypeScript 5.9** - Strict mode enabled throughout
 - **Lucid ORM** - Active Record pattern with advanced query builder
 
 ### Frontend Stack
+
 - **React 19.2** - Latest React with concurrent features
 - **Inertia.js** - SSR-like experience without API overhead
 - **Vite 7.1** - Lightning-fast build tool
@@ -126,6 +133,7 @@ node ace make:test clients/create_client --suite=functional
 - **Recharts** - Data visualization
 
 ### Database & Storage
+
 - **PostgreSQL** - Primary production database
   - JSONB columns for flexible metadata
   - GIN indexes for full-text search in Portuguese
@@ -136,6 +144,7 @@ node ace make:test clients/create_client --suite=functional
 - **AWS S3 / Google Cloud Storage** - Document storage via AdonisJS Drive
 
 ### AI Integration
+
 - **Perplexity AI** - Legal research and jurisprudence search
   - Model: `sonar-pro` (academic research mode)
   - Court-specific filtering (STF, STJ, TRFs, TJs)
@@ -146,6 +155,7 @@ node ace make:test clients/create_client --suite=functional
   - Risk identification and compliance checking
 
 ### Authentication & Security
+
 - **JWT** - Token-based authentication with httpOnly cookies
 - **Firebase Authentication** - Google Sign-In integration
 - **Argon2** - Password hashing (industry best practice)
@@ -154,6 +164,7 @@ node ace make:test clients/create_client --suite=functional
 - **Rate Limiting** - Database-backed throttling
 
 ### Infrastructure & DevOps
+
 - **Bull Queue** (@rlanz/bull-queue) - Redis-backed job processing
 - **Mailgun / SMTP** - Email delivery
 - **AdonisJS i18n** - Internationalization (Portuguese primary)
@@ -161,6 +172,7 @@ node ace make:test clients/create_client --suite=functional
 - **Vite HMR** - Hot module replacement for development
 
 ### Testing
+
 - **Japa v4** - Test runner with AdonisJS plugin
 - **Factories** - Test data generation (10 factories with valid CPF/CNPJ)
 - **In-Memory SQLite** - Fast unit tests
@@ -169,6 +181,7 @@ node ace make:test clients/create_client --suite=functional
 ## Implemented Features
 
 ### ✅ Client Management (Production Ready)
+
 - Individual clients (pessoa física) with CPF validation
 - Company clients (pessoa jurídica) with CNPJ validation
 - Brazilian address structure with state/city filtering
@@ -179,6 +192,7 @@ node ace make:test clients/create_client --suite=functional
 - Comprehensive query scopes (by type, state, city, tags, date ranges)
 
 ### ✅ Case Management (Production Ready)
+
 - 7 case types: civil, criminal, labor, family, tax, administrative, other
 - CNJ format support: NNNNNNN-DD.AAAA.J.TR.OOOO (with validation)
 - Case status tracking: active, closed, archived, suspended
@@ -191,6 +205,7 @@ node ace make:test clients/create_client --suite=functional
 - Relationships: client, responsible lawyer, events, deadlines, documents
 
 ### ✅ Deadline Tracking (Production Ready)
+
 - Fatal vs non-fatal deadline distinction
 - Internal deadline dates (buffer before official deadline)
 - Multi-channel alert configuration (email, SMS, push)
@@ -202,6 +217,7 @@ node ace make:test clients/create_client --suite=functional
 - Deadline cache service for performance
 
 ### ✅ Document Management (Production Ready)
+
 - 9 document types: petition, contract, evidence, judgment, appeal, power_of_attorney, agreement, report, other
 - Storage providers: local, S3, GCS with presigned URLs
 - Access levels: tenant, case_team, owner_only
@@ -215,6 +231,7 @@ node ace make:test clients/create_client --suite=functional
 - Relationship to case and/or client
 
 ### ✅ Case Events / Timeline (Production Ready)
+
 - 9 event types: filing, hearing, decision, publication, appeal, motion, settlement, judgment, other
 - Event sources: manual, court_api, email, import
 - Creator tracking (user or system-generated)
@@ -223,6 +240,7 @@ node ace make:test clients/create_client --suite=functional
 - Automatic event creation from services
 
 ### ✅ Time Tracking & Billing (Base Implementation)
+
 - Start/stop timer functionality
 - Duration calculation (duration_minutes, duration_hours)
 - Billable flag and hourly rate per entry
@@ -232,6 +250,7 @@ node ace make:test clients/create_client --suite=functional
 - Query scopes: active, running, billable, by case, by user, in period
 
 ### ✅ AI Legal Research (Perplexity Integration)
+
 - **Jurisprudence Search**: Court-specific filtering (STF, STJ, TRFs, TJs)
 - **Legislation Search**: Brazilian law search with recency filtering
 - **Case Analysis**: Summary analysis, legal area classification
@@ -241,6 +260,7 @@ node ace make:test clients/create_client --suite=functional
 - Academic mode for authoritative sources
 
 ### ✅ AI Document Analysis (NVIDIA Integration)
+
 - **Document Analysis**: Summary, key points, parties, obligations, risks extraction
 - **Contract Review**: Risk assessment, missing clauses, compliance checking
 - **Template Generation**: 9 legal document types (petition, contract, opinion, etc.)
@@ -249,15 +269,17 @@ node ace make:test clients/create_client --suite=functional
 - Token usage tracking
 
 ### ✅ Multi-Tenant Architecture (Enterprise Grade)
+
 - Row-level tenant isolation using AsyncLocalStorage
 - Automatic tenant_id injection on create operations
 - Query-level automatic filtering via hooks
 - Multiple resolution strategies (header, subdomain, user default)
 - Cross-tenant protection (strict mode)
 - Scopes: forTenant(), withoutTenantScope(), crossTenant(), excludeTenants()
-- Composite indexes on (tenant_id, *) for performance
+- Composite indexes on (tenant_id, \*) for performance
 
 ### ✅ Role-Based Access Control (RBAC)
+
 - 5 default roles: root, admin, user, guest, editor
 - 40+ granular permissions across 8 resource types
 - Resource-action based (e.g., `users.create`, `files.read`)
@@ -267,6 +289,7 @@ node ace make:test clients/create_client --suite=functional
 - Audit logging on every permission check
 
 ### ✅ Comprehensive Audit Logging
+
 - User action tracking (create, read, update, delete)
 - Permission check logging (granted/denied)
 - Security event monitoring
@@ -276,6 +299,7 @@ node ace make:test clients/create_client --suite=functional
 - Security alert service for anomaly detection
 
 ### ✅ Authentication System
+
 - JWT-based authentication with httpOnly cookies
 - Firebase Authentication (Google Sign-In)
 - Session-based auth (AdonisJS Session)
@@ -426,9 +450,11 @@ router.get('/tenants', [TenantsController, 'index']).use([middleware.auth()])
 The system includes comprehensive support for Brazilian legal entities and workflows:
 
 ### CPF (Cadastro de Pessoas Físicas)
+
 **Format**: XXX.XXX.XXX-XX (11 digits)
 
 **Implementation**:
+
 - Regex validation: `/^\d{3}\.\d{3}\.\d{3}-\d{2}$/`
 - Checksum validation algorithm implemented
 - Factory generates valid CPFs with correct check digits
@@ -438,9 +464,11 @@ The system includes comprehensive support for Brazilian legal entities and workf
 **Example Valid CPF**: `123.456.789-09`
 
 ### CNPJ (Cadastro Nacional da Pessoa Jurídica)
+
 **Format**: XX.XXX.XXX/XXXX-XX (14 digits)
 
 **Implementation**:
+
 - Regex validation: `/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/`
 - Checksum validation algorithm with two check digits
 - Factory generates valid CNPJs with correct verification
@@ -450,9 +478,11 @@ The system includes comprehensive support for Brazilian legal entities and workf
 **Example Valid CNPJ**: `12.345.678/0001-95`
 
 ### CNJ (Conselho Nacional de Justiça) Case Number Format
+
 **Format**: NNNNNNN-DD.AAAA.J.TR.OOOO
 
 **Components**:
+
 - **NNNNNNN**: Sequential case number (7 digits)
 - **DD**: Check digits (2 digits, calculated via modulo 97)
 - **AAAA**: Year of registration (4 digits)
@@ -470,6 +500,7 @@ The system includes comprehensive support for Brazilian legal entities and workf
 - **OOOO**: Origin code (4 digits)
 
 **Implementation**:
+
 - Full regex validation
 - Check digit calculation
 - Factory generates valid CNJ numbers
@@ -479,16 +510,19 @@ The system includes comprehensive support for Brazilian legal entities and workf
 ### Brazilian Courts Supported
 
 **Supreme Courts**:
+
 - STF (Supremo Tribunal Federal)
 - STJ (Superior Tribunal de Justiça)
 - TST (Tribunal Superior do Trabalho)
 
 **Regional Courts**:
+
 - TRF-1 through TRF-6 (Tribunais Regionais Federais)
 - TRT-2, TRT-15, etc. (Tribunais Regionais do Trabalho)
 - State courts: TJ-SP, TJ-RJ, TJ-MG, TJ-RS, etc.
 
 **Court Instances**:
+
 - 1ª instância (First instance)
 - 2ª instância (Appeals court)
 - Superior (Supreme courts)
@@ -496,6 +530,7 @@ The system includes comprehensive support for Brazilian legal entities and workf
 ### Portuguese Language Support
 
 **Full-Text Search**:
+
 ```typescript
 // GIN index with Portuguese language configuration
 CREATE INDEX idx_clients_search
@@ -504,6 +539,7 @@ CREATE INDEX idx_clients_search
 ```
 
 **Features**:
+
 - Stemming for Portuguese words
 - Stop words filtering (de, da, do, para, etc.)
 - Accent-insensitive search
@@ -512,6 +548,7 @@ CREATE INDEX idx_clients_search
 ### Brazilian Address Format
 
 **Structure** (JSONB field):
+
 ```typescript
 {
   street: string,          // Rua, Avenida, etc.
@@ -529,6 +566,7 @@ CREATE INDEX idx_clients_search
 ### Legal Document Types (Brazilian Specific)
 
 **Implemented in Document Model**:
+
 - `petition` - Petição Inicial
 - `contract` - Contrato
 - `evidence` - Prova Documental
@@ -542,14 +580,15 @@ CREATE INDEX idx_clients_search
 ### AI Integration for Brazilian Law
 
 **Perplexity Domain Filtering**:
+
 ```typescript
 const domains = [
-  'stf.jus.br',        // Supremo Tribunal Federal
-  'stj.jus.br',        // Superior Tribunal de Justiça
-  'trf1.jus.br',       // Tribunal Regional Federal 1ª Região
-  'tjsp.jus.br',       // Tribunal de Justiça de São Paulo
-  'planalto.gov.br',   // Legislação Federal
-  'senado.leg.br'      // Legislação e jurisprudência
+  'stf.jus.br', // Supremo Tribunal Federal
+  'stj.jus.br', // Superior Tribunal de Justiça
+  'trf1.jus.br', // Tribunal Regional Federal 1ª Região
+  'tjsp.jus.br', // Tribunal de Justiça de São Paulo
+  'planalto.gov.br', // Legislação Federal
+  'senado.leg.br', // Legislação e jurisprudência
 ]
 ```
 
@@ -558,6 +597,7 @@ This ensures AI searches return only authoritative Brazilian legal sources.
 ### Test Data Generation
 
 **Factory Support**:
+
 - Valid CPF generation with checksum: `123.456.789-09`
 - Valid CNPJ generation with checksum: `12.345.678/0001-95`
 - Valid CNJ numbers: `0123456-78.2024.8.26.0100`
@@ -575,6 +615,7 @@ The platform includes dual AI integration for comprehensive legal assistance:
 **Purpose**: Jurisprudence search, legislation research, case analysis
 
 **Configuration**:
+
 ```env
 PERPLEXITY_API_KEY=your_api_key
 PERPLEXITY_MODEL=sonar-pro
@@ -584,14 +625,15 @@ PERPLEXITY_CACHE_TTL=86400  # 24 hours
 **Usage Examples**:
 
 #### 1. Jurisprudence Search
+
 ```typescript
 import LegalResearchService from '#services/perplexity/legal_research_service'
 
 const result = await LegalResearchService.searchJurisprudence({
   query: 'Danos morais por acidente de trabalho',
-  court_filter: 'STJ',  // Filter by Superior Tribunal de Justiça
-  year_filter: 2023,    // Recent jurisprudence
-  max_results: 10
+  court_filter: 'STJ', // Filter by Superior Tribunal de Justiça
+  year_filter: 2023, // Recent jurisprudence
+  max_results: 10,
 })
 
 // Returns:
@@ -610,17 +652,19 @@ const result = await LegalResearchService.searchJurisprudence({
 ```
 
 #### 2. Legislation Search
+
 ```typescript
 import LegislationSearchService from '#services/perplexity/legislation_search_service'
 
 const result = await LegislationSearchService.search({
   query: 'Código Civil artigos sobre responsabilidade civil',
-  recency: 'recent',  // 'recent' or 'all_time'
-  legislation_type: 'federal'
+  recency: 'recent', // 'recent' or 'all_time'
+  legislation_type: 'federal',
 })
 ```
 
 #### 3. Case Analysis
+
 ```typescript
 import CaseAnalysisService from '#services/perplexity/case_analysis_service'
 
@@ -628,28 +672,30 @@ const analysis = await CaseAnalysisService.analyze({
   case_summary: 'Cliente sofreu acidente de trabalho...',
   legal_questions: [
     'Qual a responsabilidade do empregador?',
-    'Há precedentes de danos morais neste caso?'
-  ]
+    'Há precedentes de danos morais neste caso?',
+  ],
 })
 ```
 
 #### 4. Legal Writing Assistant
+
 ```typescript
 import LegalWritingAssistantService from '#services/perplexity/legal_writing_assistant_service'
 
 const document = await LegalWritingAssistantService.generate({
   document_type: 'petition',
   context: 'Ação de danos morais por acidente de trabalho',
-  style: 'formal',  // 'formal', 'concise', or 'detailed'
+  style: 'formal', // 'formal', 'concise', or 'detailed'
   key_points: [
     'Acidente ocorreu em 15/01/2024',
     'Cliente sofreu lesão permanente',
-    'Empresa não forneceu EPIs adequados'
-  ]
+    'Empresa não forneceu EPIs adequados',
+  ],
 })
 ```
 
 **Features**:
+
 - Response caching (24h TTL) to reduce API costs
 - Court-specific domain filtering (STF, STJ, TRFs, TJs)
 - Academic mode for authoritative sources
@@ -657,6 +703,7 @@ const document = await LegalWritingAssistantService.generate({
 - Search history with full-text search capability
 
 **API Endpoints**:
+
 - `POST /api/v1/ai/perplexity/legal-research` - Jurisprudence search
 - `POST /api/v1/ai/perplexity/legislation` - Legislation search
 - `POST /api/v1/ai/perplexity/case-analysis` - Case analysis
@@ -667,6 +714,7 @@ const document = await LegalWritingAssistantService.generate({
 **Purpose**: Contract review, document parsing, template generation
 
 **Configuration**:
+
 ```env
 NVIDIA_API_KEY=your_nvidia_api_key
 NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
@@ -678,13 +726,14 @@ NVIDIA_MAX_TOKENS=4096
 **Usage Examples**:
 
 #### 1. Document Analysis
+
 ```typescript
 import DocumentAnalysisService from '#services/nvidia/document_analysis_service'
 
 const analysis = await DocumentAnalysisService.analyze({
   document_text: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS...',
-  analysis_type: 'full',  // 'summary', 'key_points', 'parties', 'obligations', 'risks', 'full'
-  case_id: 123  // Optional: associate with case
+  analysis_type: 'full', // 'summary', 'key_points', 'parties', 'obligations', 'risks', 'full'
+  case_id: 123, // Optional: associate with case
 })
 
 // Returns structured analysis:
@@ -710,14 +759,15 @@ const analysis = await DocumentAnalysisService.analyze({
 ```
 
 #### 2. Contract Review
+
 ```typescript
 import ContractReviewService from '#services/nvidia/contract_review_service'
 
 const review = await ContractReviewService.review({
   contract_text: 'CONTRATO DE LOCAÇÃO...',
   contract_type: 'rental',
-  check_compliance: true,  // Check against CC, CLT, CDC, LGPD
-  identify_risks: true
+  check_compliance: true, // Check against CC, CLT, CDC, LGPD
+  identify_risks: true,
 })
 
 // Returns:
@@ -731,25 +781,27 @@ const review = await ContractReviewService.review({
 ```
 
 #### 3. Template Generation
+
 ```typescript
 import CodeGenerationService from '#services/nvidia/code_generation_service'
 
 const template = await CodeGenerationService.generate({
-  template_type: 'petition',  // 'petition', 'contract', 'opinion', 'motion', etc.
+  template_type: 'petition', // 'petition', 'contract', 'opinion', 'motion', etc.
   context: {
     case_type: 'civil',
     parties: {
       plaintiff: 'João Silva',
-      defendant: 'Empresa XYZ Ltda'
+      defendant: 'Empresa XYZ Ltda',
     },
     facts: 'Cliente sofreu danos...',
-    legal_basis: 'Código Civil, artigos 186 e 927'
+    legal_basis: 'Código Civil, artigos 186 e 927',
   },
-  style: 'formal'
+  style: 'formal',
 })
 ```
 
 **Template Types Available**:
+
 - `petition` - Petição Inicial
 - `contract` - Contrato
 - `opinion` - Parecer Jurídico
@@ -761,12 +813,14 @@ const template = await CodeGenerationService.generate({
 - `term` - Termo de Acordo
 
 **API Endpoints**:
+
 - `POST /api/v1/ai/nvidia/document-analysis` - Analyze documents
 - `POST /api/v1/ai/nvidia/contract-review` - Review contracts
 - `POST /api/v1/ai/nvidia/code-generation` - Generate templates
 - `POST /api/v1/ai/nvidia/text-analysis` - Analyze text
 
 **Features**:
+
 - Query history with tenant isolation
 - Token usage tracking
 - Metadata storage for all queries
@@ -778,6 +832,7 @@ const template = await CodeGenerationService.generate({
 ### Database Optimization
 
 **Indexing Strategy**:
+
 ```sql
 -- All tenant-scoped tables use composite indexes
 CREATE INDEX idx_clients_tenant_id ON clients(tenant_id, id);
@@ -790,6 +845,7 @@ CREATE INDEX idx_documents_ocr ON documents USING GIN (to_tsvector('portuguese',
 ```
 
 **Query Performance**:
+
 - Composite indexes ensure `tenant_id` filtering is always indexed
 - GIN indexes enable fast full-text search
 - JSONB fields use GIN indexes for nested queries
@@ -798,12 +854,14 @@ CREATE INDEX idx_documents_ocr ON documents USING GIN (to_tsvector('portuguese',
 ### Caching Strategy
 
 **Redis Caching**:
+
 - **Sessions**: User sessions stored in Redis (fast retrieval)
 - **Permissions**: Permission cache with 5-minute TTL
 - **Deadlines**: Upcoming deadlines cached per tenant
 - **AI Responses**: Perplexity search results cached 24h
 
 **Cache Keys Pattern**:
+
 ```
 permission:{user_id}:{resource}:{action}
 deadline:upcoming:{tenant_id}
@@ -813,12 +871,14 @@ perplexity:search:{query_hash}
 ### File Storage Performance
 
 **Presigned URLs**:
+
 - Documents uploaded directly to S3/GCS via presigned URLs
 - Reduces server load (no file buffering)
 - 15-minute expiry for security
 - Metadata stored in PostgreSQL for fast queries
 
 **Recommended CDN Setup** (Missing):
+
 - Add CloudFront distribution for document retrieval
 - Cache static assets (logos, PDF previews)
 - Reduce latency for global users
@@ -826,18 +886,21 @@ perplexity:search:{query_hash}
 ### Scalability Considerations
 
 **Current Architecture Supports**:
+
 - ✅ Horizontal scaling (stateless design with AsyncLocalStorage)
 - ✅ Database connection pooling (configurable)
 - ✅ Redis-backed sessions (multi-server support)
 - ✅ UUID tenant IDs (sharding ready)
 
 **Bottlenecks to Address**:
+
 - ❌ AI API calls not queued (single tenant could exhaust quota)
 - ❌ No database read replicas configured
 - ❌ Background jobs (Bull Queue) configured but underutilized
 - ❌ No CDN for static assets
 
 **Recommended for Production**:
+
 1. Implement Bull Queue for AI requests (rate limiting per tenant)
 2. Configure PostgreSQL read replicas for reporting queries
 3. Add CloudFront CDN for document downloads
@@ -847,12 +910,14 @@ perplexity:search:{query_hash}
 ### Performance Targets
 
 **Response Times** (Current estimates):
+
 - API endpoints: <200ms p95 (achievable with current indexing)
 - Full-text search: <500ms p95 (GIN indexes optimized)
 - AI requests: 2-5s (external API latency)
 - Document upload: <1s for <10MB files (presigned URLs)
 
 **Capacity** (Current architecture supports):
+
 - 10,000+ concurrent users
 - 1,000+ tenants
 - 100,000+ cases
@@ -863,10 +928,12 @@ perplexity:search:{query_hash}
 ### 🔴 Critical Issues (P0 - Fix Immediately)
 
 #### 1. Content Security Policy Disabled
+
 **Location**: `config/shield.ts:9`
+
 ```typescript
 csp: {
-  enabled: false  // ⚠️ CRITICAL: XSS vulnerability
+  enabled: false // ⚠️ CRITICAL: XSS vulnerability
 }
 ```
 
@@ -875,43 +942,53 @@ csp: {
 **Effort**: 4-8 hours
 
 #### 2. Firebase Admin SDK Keys
+
 **Location**: `.gitignore:34` mentions `firebase-adminsdk.json`
 **Impact**: Keys may have been committed to git history
 **Actions Required**:
+
 1. Rotate Firebase Admin SDK keys immediately
 2. Search git history: `git log --all -- *firebase*`
 3. Use environment variables only: `FIREBASE_ADMIN_SDK_JSON`
 4. Never commit service account JSON files
 
 #### 3. No Rate Limiting on AI Endpoints
+
 **Impact**: Single tenant could exhaust API quotas, cost overrun
 **Fix**: Implement tenant-level rate limits
+
 ```typescript
 // Example:
-router.post('/ai/perplexity/*')
+router
+  .post('/ai/perplexity/*')
   .use([middleware.auth(), middleware.tenant()])
   .use(middleware.aiRateLimit({ maxRequests: 100, window: '1h' }))
 ```
+
 **Effort**: 4-8 hours
 
 ### 🟡 High Priority Issues (P1)
 
 #### 1. No Password Reset Flow
+
 **Impact**: Users locked out require manual admin intervention
 **Missing**:
+
 - Password reset request endpoint
 - Email with reset token
 - Token validation and expiry
 - New password endpoint
-**Effort**: 16 hours
+  **Effort**: 16 hours
 
 #### 2. Frontend Testing Coverage: 0%
+
 **Impact**: Regression risk on UI changes, no safety net
 **Files**: 74 React/TSX components with zero test coverage
 **Fix**: Set up React Testing Library + Vitest
 **Effort**: 40+ hours (setup + initial coverage)
 
 #### 3. AI Service Error Handling
+
 **Impact**: Generic error messages, no retry logic for transient failures
 **Fix**: Implement exponential backoff, circuit breaker pattern
 **Effort**: 8 hours
@@ -945,6 +1022,7 @@ router.post('/ai/perplexity/*')
 **Goal**: Fix critical vulnerabilities and stabilize platform
 
 **Tasks**:
+
 - [ ] Enable Content Security Policy with nonce-based scripts
 - [ ] Rotate Firebase Admin SDK keys, move to env vars
 - [ ] Implement rate limiting on AI endpoints (per-tenant quotas)
@@ -959,6 +1037,7 @@ router.post('/ai/perplexity/*')
 **Goal**: Enable monetization capabilities
 
 **Tasks**:
+
 - [ ] Implement billing/invoicing module
   - Invoice generation from time entries
   - PDF invoice templates
@@ -978,6 +1057,7 @@ router.post('/ai/perplexity/*')
 **Goal**: Activate dormant features and achieve competitive parity
 
 **Tasks**:
+
 - [ ] Email notifications system
   - Deadline reminders (7 days, 3 days, 1 day before)
   - Case status change notifications
@@ -1009,6 +1089,7 @@ router.post('/ai/perplexity/*')
 **Goal**: Production deployment and quality assurance
 
 **Tasks**:
+
 - [ ] Frontend testing suite
   - React Testing Library setup
   - Unit tests for 74 components

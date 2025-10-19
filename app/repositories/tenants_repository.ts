@@ -102,6 +102,9 @@ export default class TenantsRepository
 
     const query = this.model.query()
 
+    // Exclude system tenant from regular listings
+    query.whereNot('subdomain', 'system')
+
     query.withScopes((scopes) => {
       // Apply filters using tenant scopes
       if (isActive === true) {

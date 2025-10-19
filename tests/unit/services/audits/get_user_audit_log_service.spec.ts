@@ -62,14 +62,14 @@ test.group('GetUserAuditLogsService', (group) => {
 
   test('should order by created_at desc', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create() as User
+      const user = (await UserFactory.create()) as User
 
       // Create logs with different timestamps
-      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
+      const log1 = (await AuditLogFactory.merge({ user_id: user.id }).create()) as AuditLog
       await new Promise((resolve) => setTimeout(resolve, 10))
-      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
+      const log2 = (await AuditLogFactory.merge({ user_id: user.id }).create()) as AuditLog
       await new Promise((resolve) => setTimeout(resolve, 10))
-      const log3 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
+      const log3 = (await AuditLogFactory.merge({ user_id: user.id }).create()) as AuditLog
 
       const service = await app.container.make(GetUserAuditLogsService)
       const result = await service.run(user.id)

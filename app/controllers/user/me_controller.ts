@@ -12,7 +12,7 @@ export default class MeController {
    * Get current user profile
    */
   async profile({ auth, response }: HttpContext) {
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const service = await app.container.make(GetUserService)
 
     const userWithRoles = await service.run(user.id)
@@ -23,7 +23,7 @@ export default class MeController {
    * Get current user permissions
    */
   async permissions({ auth, response }: HttpContext) {
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const service = await app.container.make(GetUserPermissionsService)
 
     const permissions = await service.run(user.id)
@@ -34,7 +34,7 @@ export default class MeController {
    * Get current user roles
    */
   async roles({ auth, response }: HttpContext) {
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const service = await app.container.make(GetUserRolesService)
 
     const roles = await service.run(user.id)

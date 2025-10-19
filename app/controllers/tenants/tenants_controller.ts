@@ -30,14 +30,8 @@ export default class TenantsController {
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
-    const user = await auth.getUserOrFail() as unknown as User
-    const tenants = await this.getUserTenantsService.run(
-      user.id,
-      page,
-      perPage,
-      sortBy,
-      sortOrder
-    )
+    const user = (await auth.getUserOrFail()) as unknown as User
+    const tenants = await this.getUserTenantsService.run(user.id, page, perPage, sortBy, sortOrder)
 
     return response.json(tenants)
   }
@@ -59,7 +53,7 @@ export default class TenantsController {
 
     const payload = await request.validateUsing(createTenantValidator)
 
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const tenant = await this.createTenantService.run({
       ...payload,
       owner_user_id: user.id,
@@ -77,7 +71,7 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if the user is a member of this tenant
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {
@@ -103,7 +97,7 @@ export default class TenantsController {
     const payload = await request.validateUsing(updateTenantValidator)
 
     // Check if a user is a member and has the appropriate role
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {
@@ -128,7 +122,7 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if a user is a member and has the appropriate role
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {

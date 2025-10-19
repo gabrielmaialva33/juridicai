@@ -103,12 +103,12 @@ test.group('GenerateAuditReportService', (group) => {
 
   test('should exclude logs outside date range', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create() as User
+      const user = (await UserFactory.create()) as User
       const startDate = DateTime.now().minus({ days: 2 })
       const endDate = DateTime.now().minus({ days: 1 })
 
       // Create log within range
-      const logInRange = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
+      const logInRange = (await AuditLogFactory.merge({ user_id: user.id }).create()) as AuditLog
       logInRange.created_at = DateTime.now().minus({ days: 1, hours: 12 })
       await logInRange.save()
 
@@ -116,7 +116,7 @@ test.group('GenerateAuditReportService', (group) => {
       await AuditLogFactory.merge({ user_id: user.id }).create()
 
       // Create log outside range (old)
-      const oldLog = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
+      const oldLog = (await AuditLogFactory.merge({ user_id: user.id }).create()) as AuditLog
       oldLog.created_at = DateTime.now().minus({ days: 5 })
       await oldLog.save()
 

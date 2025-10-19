@@ -57,7 +57,7 @@ export default class CaseEventsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createCaseEventValidator.validate(request.all())
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const event = await this.createCaseEventService.run(payload, user.id)
 
     return response.created(event)

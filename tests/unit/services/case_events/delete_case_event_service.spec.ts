@@ -19,21 +19,21 @@ test.group('DeleteCaseEventService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should hard delete case event', async ({ assert }) => {
-    const tenant = await TenantFactory.create() as Tenant
-    const user = await UserFactory.create() as User
+    const tenant = (await TenantFactory.create()) as Tenant
+    const user = (await UserFactory.create()) as User
 
     const event = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create() as Client
-        const caseRecord = await CaseFactory.merge({
+        const client = (await ClientFactory.create()) as Client
+        const caseRecord = (await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
-        }).create() as Case
-        return await CaseEventFactory.merge({
+        }).create()) as Case
+        return (await CaseEventFactory.merge({
           case_id: caseRecord.id,
           created_by: user.id,
-        }).create() as CaseEvent
+        }).create()) as CaseEvent
       }
     )
 
@@ -56,7 +56,7 @@ test.group('DeleteCaseEventService', (group) => {
   })
 
   test('should throw error if event not found', async ({ assert }) => {
-    const tenant = await TenantFactory.create() as Tenant
+    const tenant = (await TenantFactory.create()) as Tenant
 
     const service = await app.container.make(DeleteCaseEventService)
 

@@ -119,7 +119,7 @@ export default class DeadlinesController {
     const deadlineId = +params.id
     const payload = await completeDeadlineValidator.validate(request.all())
 
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const completedBy = payload.completed_by || user.id
     const completionNotes = payload.completion_notes ?? undefined
 

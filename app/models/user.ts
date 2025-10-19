@@ -153,7 +153,8 @@ export default class User extends compose(BaseModel, AuthFinder, TenantScoped) {
 
   @afterCreate()
   static async setDefaultRole(user: User) {
-    const role = await Role.findBy('slug', IRole.Slugs.USER)
+    // Default roles are stored in the System tenant, so we need to query without tenant scope
+    const role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
     if (role) {
       await user.related('roles').attach([role.id])
     }

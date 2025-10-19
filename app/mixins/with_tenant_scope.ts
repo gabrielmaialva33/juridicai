@@ -17,7 +17,9 @@ type TenantScopedModelRow = {
  * Type for the class with tenant scope capabilities
  * Following the same pattern as withAuthFinder from @adonisjs/auth
  */
-type TenantScopedModelClass<Model extends NormalizeConstructor<typeof BaseModel> = NormalizeConstructor<typeof BaseModel>> = Model & {
+type TenantScopedModelClass<
+  Model extends NormalizeConstructor<typeof BaseModel> = NormalizeConstructor<typeof BaseModel>,
+> = Model & {
   tenantColumn: string
   forTenant(tenantId: string): ModelQueryBuilderContract<Model, InstanceType<Model>>
   withoutTenantScope(): ModelQueryBuilderContract<Model, InstanceType<Model>>
@@ -111,7 +113,9 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
     ...options,
   }
 
-  return <Model extends NormalizeConstructor<typeof BaseModel>>(superclass: Model): TenantScopedModelClass<Model> => {
+  return <Model extends NormalizeConstructor<typeof BaseModel>>(
+    superclass: Model
+  ): TenantScopedModelClass<Model> => {
     class TenantScopedMixin extends superclass {
       /**
        * The tenant column name for this model

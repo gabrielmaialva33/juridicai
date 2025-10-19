@@ -188,9 +188,7 @@ export default class PerplexityController {
     const countByType = await this.searchesRepository.getCountByType(days)
 
     const recentSearches = await PerplexitySearch.query()
-      .withScopes((scopes) =>
-        scopes.recent(days)
-      )
+      .withScopes((scopes) => scopes.recent(days))
       .count('* as count')
       .first()
 

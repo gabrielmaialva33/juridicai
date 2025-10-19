@@ -71,7 +71,7 @@ export default class DocumentsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createDocumentValidator.validate(request.all())
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
     const document = await this.createDocumentService.run(payload, user.id)
 
     return response.created(document)

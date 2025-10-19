@@ -38,7 +38,7 @@ export default class EmailVerificationController {
    * Resend verification email
    */
   async resend({ auth, response }: HttpContext) {
-    const user = await auth.getUserOrFail() as unknown as User
+    const user = (await auth.getUserOrFail()) as unknown as User
 
     if (user.metadata.email_verified) {
       return response.badRequest({
