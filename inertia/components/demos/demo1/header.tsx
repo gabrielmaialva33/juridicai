@@ -212,12 +212,12 @@ export function Demo1Header() {
           </div>
 
           {/* Center - Search Input */}
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <div className="relative w-full max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none transition-colors" />
             <input
               type="search"
               placeholder="Buscar..."
-              className="w-full h-9 pl-9 pr-3 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-muted-foreground"
+              className="w-full h-10 pl-10 pr-4 text-base bg-background border border-border rounded-[16px] focus:outline-none focus:bg-gradient-to-r focus:from-primary/20 focus:via-primary/10 focus:to-primary/5 focus:backdrop-blur-2xl focus:border-primary/30 focus:shadow-2xl focus:shadow-primary/20 focus:scale-[1.01] transition-all duration-300 ease-out placeholder:text-muted-foreground"
             />
           </div>
 
