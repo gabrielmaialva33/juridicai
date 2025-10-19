@@ -82,41 +82,9 @@ export default function Onboarding() {
 
         <div className="relative w-full max-w-2xl">
           {/* Logo */}
-          <div className="mb-12 text-center">
+          <div className="mb-10 text-center">
             <h1 className="text-5xl font-bold text-[#434343] drop-shadow-sm">JuridicAI</h1>
             <p className="mt-3 text-sm font-medium text-[#6E6E6E]">Configure seu escritório</p>
-          </div>
-
-          {/* Progress Steps - Enhanced 3D Glass Style */}
-          <div className="mb-10">
-            <div className="flex items-center justify-center gap-2">
-              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-                <div key={s} className="flex items-center">
-                  <div
-                    className={cn(
-                      'flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-bold transition-all duration-300 relative',
-                      step >= s
-                        ? 'bg-[#434343] text-white shadow-2xl shadow-[#434343]/40 backdrop-blur-xl scale-110 border border-white/10'
-                        : 'bg-white/90 backdrop-blur-xl border-2 border-white shadow-xl shadow-black/5 text-[#6E6E6E]'
-                    )}
-                  >
-                    {/* Inner glow for active state */}
-                    {step >= s && (
-                      <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-white/20 to-transparent" />
-                    )}
-                    <span className="relative z-10">{s}</span>
-                  </div>
-                  {s < totalSteps && (
-                    <div
-                      className={cn(
-                        'h-1.5 w-20 rounded-full transition-all duration-500',
-                        step > s ? 'bg-[#434343] shadow-lg shadow-[#434343]/30' : 'bg-white/80 backdrop-blur-sm shadow-md'
-                      )}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Onboarding Card - Enhanced Liquid Glass Design */}
