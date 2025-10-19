@@ -125,9 +125,9 @@ export function Demo1Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-20 w-[260px] bg-background border-r border-border/50 shadow-lg flex flex-col">
+    <aside className="fixed left-0 top-0 bottom-0 z-20 w-[260px] bg-background/95 backdrop-blur-xl border-r border-border/20 shadow-2xl flex flex-col">
       {/* Sidebar Header with Logo */}
-      <div className="h-[60px] flex items-center justify-between px-4 border-b border-border/50 bg-muted/30 shrink-0">
+      <div className="h-[60px] flex items-center justify-between px-4 border-b border-border/30 bg-background/80 backdrop-blur-sm shrink-0">
         <Logo size="md" showText />
       </div>
 
@@ -145,7 +145,7 @@ export function Demo1Sidebar() {
       </ScrollArea>
 
       {/* User Profile Footer */}
-      <div className="border-t border-border/50 p-3 bg-muted/30 shrink-0">
+      <div className="border-t border-border/30 p-3 bg-background/80 backdrop-blur-sm shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full">
             <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
