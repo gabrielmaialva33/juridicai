@@ -33,7 +33,8 @@ test.group('SignInService', (group) => {
       .where('tenant_id', systemTenant.id)
       .first()
     if (!userRole) {
-      userRole = await Role.create({
+      // Create role without tenant scope to avoid context errors
+      userRole = await Role.withoutTenantScope().create({
         tenant_id: systemTenant.id,
         name: 'User',
         slug: IRole.Slugs.USER,
@@ -46,7 +47,8 @@ test.group('SignInService', (group) => {
       .where('tenant_id', systemTenant.id)
       .first()
     if (!adminRole) {
-      adminRole = await Role.create({
+      // Create role without tenant scope to avoid context errors
+      adminRole = await Role.withoutTenantScope().create({
         tenant_id: systemTenant.id,
         name: 'Admin',
         slug: IRole.Slugs.ADMIN,
