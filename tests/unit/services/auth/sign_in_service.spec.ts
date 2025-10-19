@@ -19,15 +19,15 @@ test.group('SignInService', (group) => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
 
-      // Create the role first so afterCreate hook can attach it
-      await Role.firstOrCreate(
-        { slug: IRole.Slugs.USER },
-        {
+      // Create the role in System tenant first so afterCreate hook can attach it
+      let role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
+      if (!role) {
+        role = await Role.withoutTenantScope().create({
           name: 'User',
           slug: IRole.Slugs.USER,
           description: 'Regular user role',
-        }
-      )
+        })
+      }
 
       const user = await User.create({
         full_name: 'John Doe',
@@ -105,23 +105,23 @@ test.group('SignInService', (group) => {
       const ctx = await testUtils.createHttpContext()
 
       // Create roles first
-      await Role.firstOrCreate(
-        { slug: IRole.Slugs.USER },
-        {
+      let userRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
+      if (!userRole) {
+        userRole = await Role.withoutTenantScope().create({
           name: 'User',
           slug: IRole.Slugs.USER,
           description: 'Regular user role',
-        }
-      )
+        })
+      }
 
-      const adminRole = await Role.firstOrCreate(
-        { slug: IRole.Slugs.ADMIN },
-        {
+      let adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).first()
+      if (!adminRole) {
+        adminRole = await Role.withoutTenantScope().create({
           name: 'Admin',
           slug: IRole.Slugs.ADMIN,
           description: 'Administrator role',
-        }
-      )
+        })
+      }
 
       const user = await User.create({
         full_name: 'John Doe',
@@ -155,14 +155,14 @@ test.group('SignInService', (group) => {
       const ctx = await testUtils.createHttpContext()
 
       // Ensure user role exists for afterCreate hook
-      await Role.firstOrCreate(
-        { slug: IRole.Slugs.USER },
-        {
+      let role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
+      if (!role) {
+        role = await Role.withoutTenantScope().create({
           name: 'User',
           slug: IRole.Slugs.USER,
           description: 'Regular user role',
-        }
-      )
+        })
+      }
 
       const user = await User.create({
         full_name: 'John Doe',

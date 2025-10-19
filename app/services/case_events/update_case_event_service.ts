@@ -40,7 +40,7 @@ export default class UpdateCaseEventService {
         | 'other'
       title?: string
       description?: string | null
-      event_date?: DateTime
+      event_date?: DateTime | Date | string
       source?: 'manual' | 'court_api' | 'email' | 'import'
       metadata?: Record<string, any> | null
     }
@@ -51,7 +51,17 @@ export default class UpdateCaseEventService {
       throw new NotFoundException('Case event not found')
     }
 
-    event.merge(payload)
+    // Convert event_date to DateTime if it's a Date or string
+    const processedPayload = { ...payload }
+    if (payload.event_date) {
+      if (payload.event_date instanceof Date) {
+        processedPayload.event_date = DateTime.fromJSDate(payload.event_date)
+      } else if (typeof payload.event_date === 'string') {
+        processedPayload.event_date = DateTime.fromISO(payload.event_date)
+      }
+    }
+
+    event.merge(processedPayload)
     await event.save()
 
     return event

@@ -70,7 +70,11 @@ export default class Client extends compose(BaseModel, TenantScoped) {
 
   @column({
     prepare: (value: ClientAddress | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? (true ? JSON.parse(value) : value) : null),
+    consume: (value: string | Record<string, any> | null) => {
+      if (!value) return null
+      if (typeof value === 'string') return JSON.parse(value)
+      return value
+    },
   })
   declare address: ClientAddress | null
 
