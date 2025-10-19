@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { Link, usePage } from '@inertiajs/react'
+import { Link, usePage, router } from '@inertiajs/react'
+import { LogOut, Settings, User as UserIcon } from 'lucide-react'
 import { Logo } from '@/components/layout/common/logo'
 import { MENU_SIDEBAR, MenuItem, MenuConfig } from '@/config/menu'
 import {
@@ -13,6 +14,15 @@ import {
   AccordionMenuClassNames,
 } from '@/components/ui/accordion-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 /**
  * Demo1 Sidebar Component
@@ -20,12 +30,27 @@ import { ScrollArea } from '@/components/ui/scroll-area'
  * Fixed left sidebar with:
  * - Logo header
  * - Accordion navigation menu
+ * - User profile footer
  * - Smooth animations
  * - Active state highlighting
  */
 export function Demo1Sidebar() {
   const { url } = usePage()
   const pathname = url
+
+  // Mock user data - TODO: Get from auth context
+  const userName = 'Gabriel Maia'
+  const userEmail = 'gabriel@juridicai.com'
+  const initials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  const handleLogout = () => {
+    router.post('/logout')
+  }
 
   // Check if path matches current route
   const matchPath = useCallback(
@@ -118,6 +143,52 @@ export function Demo1Sidebar() {
           {buildMenu(MENU_SIDEBAR)}
         </AccordionMenu>
       </ScrollArea>
+
+      {/* User Profile Footer */}
+      <div className="border-t border-border/50 p-3 bg-muted/30 shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="w-full">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
+              <Avatar className="h-9 w-9 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold text-sm">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
+                <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+              </div>
+              <Settings className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" side="top">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{userName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                <UserIcon className="h-4 w-4 mr-2" />
+                Meu Perfil
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="cursor-pointer">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurações
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </aside>
   )
 }

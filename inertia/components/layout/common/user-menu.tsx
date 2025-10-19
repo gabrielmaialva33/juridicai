@@ -30,9 +30,12 @@ export function UserMenu({ userName = 'Usuário', userEmail }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar>
-            <AvatarFallback className="bg-primary text-primary-foreground">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
+        >
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold text-sm">
               {initials}
             </AvatarFallback>
           </Avatar>

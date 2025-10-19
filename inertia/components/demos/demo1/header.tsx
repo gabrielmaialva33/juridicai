@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, usePage } from '@inertiajs/react'
 import { Menu, Search, ChevronRight } from 'lucide-react'
 import { Logo } from '@/components/layout/common/logo'
-import { UserMenu } from '@/components/layout/common/user-menu'
 import { Notifications } from '@/components/layout/common/notifications'
 import { MENU_SIDEBAR, MenuItem, MenuConfig } from '@/config/menu'
 import { useIsMobile } from '@/hooks/use_media_query'
@@ -216,9 +215,6 @@ export function Demo1Header() {
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Notifications */}
         <Notifications />
-
-        {/* User Menu */}
-        <UserMenu />
       </div>
     </header>
   )

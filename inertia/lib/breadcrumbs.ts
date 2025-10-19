@@ -10,6 +10,19 @@ export interface Breadcrumb {
  * Gera breadcrumbs baseado na URL atual
  */
 export function getBreadcrumbs(pathname: string): Breadcrumb[] {
+  // Remove trailing slash e divide o path
+  const parts = pathname.replace(/\/$/, '').split('/').filter(Boolean)
+
+  // Se está na raiz do dashboard, retorna apenas um breadcrumb
+  if (pathname === '/dashboard' || pathname === '/') {
+    return [
+      {
+        label: 'Dashboard',
+        icon: Home,
+      },
+    ]
+  }
+
   const breadcrumbs: Breadcrumb[] = [
     {
       label: 'Home',
@@ -17,9 +30,6 @@ export function getBreadcrumbs(pathname: string): Breadcrumb[] {
       icon: Home,
     },
   ]
-
-  // Remove trailing slash e divide o path
-  const parts = pathname.replace(/\/$/, '').split('/').filter(Boolean)
 
   // Mapeamento de rotas para labels e ícones
   const routeConfig: Record<string, { label: string; icon?: any }> = {
