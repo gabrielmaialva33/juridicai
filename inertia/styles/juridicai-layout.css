@@ -29,6 +29,39 @@
   --color-bg-hover: 55 65 81; /* gray-700 */
 }
 
+/* === Font Smoothing & Rendering Quality === */
+html {
+  /* WebKit browsers (Chrome, Safari, Edge) - Remove subpixel rendering for cleaner text */
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+
+  /* Firefox on macOS - Use grayscale antialiasing */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Better text rendering with ligatures and kerning */
+  text-rendering: optimizeLegibility;
+
+  /* Improve font kerning and ligatures */
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+}
+
+body {
+  /* Inherit font smoothing for consistent rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Subpixel rendering for crisp text */
+  text-rendering: optimizeLegibility;
+}
+
+/* High-quality rendering for images and icons */
+img, svg {
+  /* Better image quality on high-DPI screens */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 /* Body classes for layout states */
 body.demo1 {
   /* Layout-specific styles - overflow managed by layout structure */

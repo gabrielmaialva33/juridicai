@@ -187,7 +187,7 @@ function formatTimestamp(timestamp: string): string {
 
 export function ActivityFeed({ activities = defaultActivities }: ActivityFeedProps) {
   return (
-    <Card className="h-full">
+    <Card className="h-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
       <CardHeader>
         <CardHeading>
           <div>
