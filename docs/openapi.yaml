@@ -1755,8 +1755,7 @@ components:
           type: string
           example: Petição Inicial
         description:
-          type: string
-          nullable: true
+          type: [string, "null"]
         document_type:
           type: string
           enum:
@@ -1789,8 +1788,7 @@ components:
           enum: [local, s3, gcs]
           example: local
         ocr_text:
-          type: string
-          nullable: true
+          type: [string, "null"]
         is_ocr_processed:
           type: boolean
           example: false
@@ -1798,23 +1796,20 @@ components:
           type: boolean
           example: false
         signature_data:
-          type: object
-          nullable: true
+          type: [object, "null"]
         access_level:
           type: string
           enum: [tenant, case_team, owner_only]
           example: tenant
         tags:
-          type: array
+          type: [array, "null"]
           items:
             type: string
-          nullable: true
         version:
           type: integer
           example: 1
         parent_document_id:
-          type: integer
-          nullable: true
+          type: ["integer", "null"]
         created_at:
           type: string
           format: date-time
@@ -1843,8 +1838,7 @@ components:
           type: string
           example: Audiência de Conciliação
         description:
-          type: string
-          nullable: true
+          type: [string, "null"]
         event_date:
           type: string
           format: date-time
@@ -1854,11 +1848,9 @@ components:
           enum: [manual, court_api, email, import]
           example: manual
         metadata:
-          type: object
-          nullable: true
+          type: [object, "null"]
         created_by:
-          type: integer
-          nullable: true
+          type: ["integer", "null"]
         created_at:
           type: string
           format: date-time
@@ -1876,8 +1868,7 @@ components:
           type: string
           example: '1000'
         complement:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: Sala 101
         neighborhood:
           type: string
