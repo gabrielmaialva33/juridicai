@@ -13,9 +13,7 @@ import Deadline from '#models/deadline'
 import Document from '#models/document'
 
 test.group('Multi-Tenant Isolation', (group) => {
-  group.each.setup(async () => {
-    await testUtils.db().truncate()
-  })
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('users cannot access clients from other tenants', async ({ assert }) => {
     // Setup: 2 tenants with 1 client each

@@ -6,7 +6,7 @@ import ListTenantService from '#services/tenants/list_tenant_service'
 import { TenantFactory } from '#database/factories/tenant_factory'
 
 test.group('ListTenantsService', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should return paginated list of tenants', async ({ assert }) => {
     // Create 5 tenants

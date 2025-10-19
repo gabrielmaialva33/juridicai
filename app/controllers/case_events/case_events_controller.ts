@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 
+import User from '#models/user'
 import GetCaseEventService from '#services/case_events/get_case_event_service'
 import PaginateCaseEventService from '#services/case_events/paginate_case_event_service'
 import CreateCaseEventService from '#services/case_events/create_case_event_service'
@@ -56,7 +57,8 @@ export default class CaseEventsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createCaseEventValidator.validate(request.all())
-    const event = await this.createCaseEventService.run(payload, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const event = await this.createCaseEventService.run(payload, user.id)
 
     return response.created(event)
   }

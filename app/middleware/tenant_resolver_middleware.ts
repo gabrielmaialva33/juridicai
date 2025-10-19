@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+import User from '#models/user'
 import TenantContextService from '#services/tenants/tenant_context_service'
 import Tenant from '#models/tenant'
 import TenantUser from '#models/tenant_user'
@@ -38,7 +39,7 @@ export default class TenantResolverMiddleware {
     if (ctx.auth.user) {
       tenantUser = await TenantUser.query()
         .where('tenant_id', tenantId)
-        .where('user_id', ctx.auth.user.id)
+        .where('user_id', (ctx.auth.user as unknown as User).id)
         .where('is_active', true)
         .first()
 
@@ -54,7 +55,7 @@ export default class TenantResolverMiddleware {
       {
         tenant_id: tenantId,
         tenant: tenant,
-        user_id: ctx.auth.user?.id ?? null,
+        user_id: (ctx.auth.user as unknown as User | null)?.id ?? null,
         tenant_user: tenantUser,
       },
       async () => {
@@ -90,7 +91,7 @@ export default class TenantResolverMiddleware {
     // Strategy 3: User's first active tenant (fallback)
     if (ctx.auth.user) {
       const tenantUser = await TenantUser.query()
-        .where('user_id', ctx.auth.user.id)
+        .where('user_id', (ctx.auth.user as unknown as User).id)
         .where('is_active', true)
         .preload('tenant')
         .first()

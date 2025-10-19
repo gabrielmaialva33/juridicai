@@ -1,13 +1,14 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
+import User from '#models/user'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import IRole from '#interfaces/role_interface'
 
 export default class AclMiddleware {
   async handle({ auth, i18n }: HttpContext, next: NextFn, opts: { role_slugs: IRole.Slugs[] }) {
     // Get an authenticated user
-    const user = auth.user
+    const user = auth.user as unknown as User
 
     if (!user) {
       throw new ForbiddenException(i18n.t('errors.permission_denied'))

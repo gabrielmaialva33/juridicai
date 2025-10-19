@@ -9,7 +9,7 @@ import { UserFactory } from '#database/factories/user_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 
 test.group('GetUserTenantsService', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should return active tenants for user', async ({ assert }) => {
     const user = await UserFactory.create()

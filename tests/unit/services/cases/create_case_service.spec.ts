@@ -8,18 +8,21 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 import { ClientFactory } from '#database/factories/client_factory'
 import { UserFactory } from '#database/factories/user_factory'
 import TenantContextService from '#services/tenants/tenant_context_service'
+import Tenant from '#models/tenant'
+import Client from '#models/client'
+import User from '#models/user'
 
 test.group('CreateCaseService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should create case with valid data', async ({ assert }) => {
-    const tenant = await TenantFactory.create()
+    const tenant = (await TenantFactory.create()) as Tenant
 
     const result = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
-        const lawyer = await UserFactory.create()
+        const client = (await ClientFactory.create()) as Client
+        const lawyer = (await UserFactory.create()) as User
         const service = await app.container.make(CreateCaseService)
 
         const payload = {

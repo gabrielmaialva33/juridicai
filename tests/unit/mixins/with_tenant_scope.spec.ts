@@ -6,9 +6,7 @@ import { ClientFactory } from '#database/factories/client_factory'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
 test.group('withTenantScope mixin', (group) => {
-  group.each.setup(async () => {
-    await testUtils.db().truncate()
-  })
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('automatically assigns tenant_id on create when context is set', async ({ assert }) => {
     const tenant = await TenantFactory.create()

@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import vine from '@vinejs/vine'
 
+import User from '#models/user'
 import VerifyEmailService from '#services/users/verify_email_service'
 import SendVerificationEmailService from '#services/users/send_verification_email_service'
 
@@ -37,7 +38,7 @@ export default class EmailVerificationController {
    * Resend verification email
    */
   async resend({ auth, response }: HttpContext) {
-    const user = auth.getUserOrFail()
+    const user = await auth.getUserOrFail() as unknown as User
 
     if (user.metadata.email_verified) {
       return response.badRequest({

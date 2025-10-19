@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 
+import User from '#models/user'
 import GetDocumentService from '#services/documents/get_document_service'
 import PaginateDocumentService from '#services/documents/paginate_document_service'
 import CreateDocumentService from '#services/documents/create_document_service'
@@ -70,7 +71,8 @@ export default class DocumentsController {
    */
   async create({ request, response, auth }: HttpContext) {
     const payload = await createDocumentValidator.validate(request.all())
-    const document = await this.createDocumentService.run(payload, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const document = await this.createDocumentService.run(payload, user.id)
 
     return response.created(document)
   }

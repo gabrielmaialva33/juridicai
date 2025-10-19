@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { inject } from '@adonisjs/core'
+import User from '#models/user'
 import OwnershipService from '#services/ownerships/ownership_service'
 import LogPermissionCheckService from '#services/audits/log_permission_check_service'
 
@@ -30,7 +31,7 @@ export default class OwnershipMiddleware {
     } = options
 
     // Check if user is authenticated
-    const user = auth.user
+    const user = auth.user as unknown as User
     if (!user) {
       await this.logPermissionCheckService.run(
         {

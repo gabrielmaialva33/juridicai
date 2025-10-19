@@ -7,6 +7,7 @@ import CleanupOldAuditLogsService from '#services/audits/cleanup_old_audit_log_s
 import { UserFactory } from '#database/factories/user_factory'
 import { AuditLogFactory } from '#database/factories/audit_log_factory'
 import AuditLog from '#models/audit_log'
+import User from '#models/user'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('CleanupOldAuditLogsService', (group) => {
@@ -14,14 +15,14 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should delete logs older than specified days', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create old logs (older than 30 days)
-      const oldLog1 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const oldLog1 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       oldLog1.created_at = DateTime.now().minus({ days: 35 })
       await oldLog1.save()
 
-      const oldLog2 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const oldLog2 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       oldLog2.created_at = DateTime.now().minus({ days: 40 })
       await oldLog2.save()
 
@@ -41,11 +42,11 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should return count of deleted records', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create 5 old logs
       for (let i = 0; i < 5; i++) {
-        const log = await AuditLogFactory.merge({ user_id: user.id }).create()
+        const log = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
         log.created_at = DateTime.now().minus({ days: 100 })
         await log.save()
       }
@@ -59,7 +60,7 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should not delete recent logs', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create recent logs
       await AuditLogFactory.merge({ user_id: user.id }).create()
@@ -79,7 +80,7 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should handle cleanup with no old logs', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create only recent logs
       await AuditLogFactory.merge({ user_id: user.id }).createMany(3)
@@ -93,15 +94,15 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should respect different retention periods', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create log 50 days old
-      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       log1.created_at = DateTime.now().minus({ days: 50 })
       await log1.save()
 
       // Create log 20 days old
-      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       log2.created_at = DateTime.now().minus({ days: 20 })
       await log2.save()
 
@@ -120,10 +121,10 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should handle cleanup on exact boundary day', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create log exactly 30 days old
-      const log = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       log.created_at = DateTime.now().minus({ days: 30 })
       await log.save()
 
@@ -138,14 +139,14 @@ test.group('CleanupOldAuditLogsService', (group) => {
 
   test('should delete all logs when retention is 0', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create logs with various ages
-      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       log1.created_at = DateTime.now().minus({ days: 1 })
       await log1.save()
 
-      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       log2.created_at = DateTime.now().minus({ days: 10 })
       await log2.save()
 

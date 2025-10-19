@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
+import User from '#models/user'
 import StartTimerService from '#services/time_entries/start_timer_service'
 import StopTimerService from '#services/time_entries/stop_timer_service'
 import CreateManualEntryService from '#services/time_entries/create_manual_entry_service'
@@ -34,8 +35,9 @@ export default class TimeEntriesController {
   async start({ request, response, auth }: HttpContext) {
     const payload = await startTimerValidator.validate(request.all())
 
+    const user = await auth.getUserOrFail() as unknown as User
     const timeEntry = await this.startTimerService.run({
-      user_id: auth.user!.id,
+      user_id: user.id,
       ...payload,
     })
 
@@ -47,7 +49,8 @@ export default class TimeEntriesController {
    * Stop a running timer
    */
   async stop({ params, response, auth }: HttpContext) {
-    const timeEntry = await this.stopTimerService.run(+params.id, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const timeEntry = await this.stopTimerService.run(+params.id, user.id)
 
     return response.ok(timeEntry)
   }
@@ -59,8 +62,9 @@ export default class TimeEntriesController {
   async store({ request, response, auth }: HttpContext) {
     const payload = await createManualEntryValidator.validate(request.all())
 
+    const user = await auth.getUserOrFail() as unknown as User
     const timeEntry = await this.createManualEntryService.run({
-      user_id: auth.user!.id,
+      user_id: user.id,
       ...payload,
     })
 
@@ -104,9 +108,10 @@ export default class TimeEntriesController {
   async stats({ request, response, auth }: HttpContext) {
     const filters = await statsValidator.validate(request.qs())
 
+    const user = await auth.getUserOrFail() as unknown as User
     const statsFilters = {
       // Allow user_id from query params, or default to current user if not specified
-      user_id: filters.user_id || auth.user!.id,
+      user_id: filters.user_id || user.id,
       case_id: filters.case_id,
       from_date: filters.from_date ? DateTime.fromISO(filters.from_date) : undefined,
       to_date: filters.to_date ? DateTime.fromISO(filters.to_date) : undefined,
@@ -124,7 +129,8 @@ export default class TimeEntriesController {
   async update({ params, request, response, auth }: HttpContext) {
     const payload = await updateTimeEntryValidator.validate(request.all())
 
-    const timeEntry = await this.updateTimeEntryService.run(+params.id, auth.user!.id, payload)
+    const user = await auth.getUserOrFail() as unknown as User
+    const timeEntry = await this.updateTimeEntryService.run(+params.id, user.id, payload)
 
     return response.ok(timeEntry)
   }
@@ -134,7 +140,8 @@ export default class TimeEntriesController {
    * Soft delete a time entry
    */
   async destroy({ params, response, auth }: HttpContext) {
-    await this.deleteTimeEntryService.run(+params.id, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    await this.deleteTimeEntryService.run(+params.id, user.id)
 
     return response.noContent()
   }

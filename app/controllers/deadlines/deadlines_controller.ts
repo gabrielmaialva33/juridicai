@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 
+import User from '#models/user'
 import GetDeadlineService from '#services/deadlines/get_deadline_service'
 import PaginateDeadlineService from '#services/deadlines/paginate_deadline_service'
 import CreateDeadlineService from '#services/deadlines/create_deadline_service'
@@ -118,7 +119,8 @@ export default class DeadlinesController {
     const deadlineId = +params.id
     const payload = await completeDeadlineValidator.validate(request.all())
 
-    const completedBy = payload.completed_by || auth.user!.id
+    const user = await auth.getUserOrFail() as unknown as User
+    const completedBy = payload.completed_by || user.id
     const completionNotes = payload.completion_notes ?? undefined
 
     const deadline = await this.completeDeadlineService.run(

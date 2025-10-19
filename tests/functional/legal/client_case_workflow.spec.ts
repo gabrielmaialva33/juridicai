@@ -13,9 +13,7 @@ import { DateTime } from 'luxon'
 import Case from '#models/case'
 
 test.group('Client-Case Workflow', (group) => {
-  group.each.setup(async () => {
-    await testUtils.db().truncate()
-  })
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('complete legal workflow: client creation to case closure', async ({ assert }) => {
     // Setup: Create law firm (tenant) with lawyers

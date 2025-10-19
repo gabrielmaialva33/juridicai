@@ -6,6 +6,8 @@ import { DateTime } from 'luxon'
 import GenerateAuditReportService from '#services/audits/generate_audit_report_service'
 import { UserFactory } from '#database/factories/user_factory'
 import { AuditLogFactory } from '#database/factories/audit_log_factory'
+import User from '#models/user'
+import AuditLog from '#models/audit_log'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('GenerateAuditReportService', (group) => {
@@ -101,12 +103,12 @@ test.group('GenerateAuditReportService', (group) => {
 
   test('should exclude logs outside date range', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
       const startDate = DateTime.now().minus({ days: 2 })
       const endDate = DateTime.now().minus({ days: 1 })
 
       // Create log within range
-      const logInRange = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const logInRange = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       logInRange.created_at = DateTime.now().minus({ days: 1, hours: 12 })
       await logInRange.save()
 
@@ -114,7 +116,7 @@ test.group('GenerateAuditReportService', (group) => {
       await AuditLogFactory.merge({ user_id: user.id }).create()
 
       // Create log outside range (old)
-      const oldLog = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const oldLog = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       oldLog.created_at = DateTime.now().minus({ days: 5 })
       await oldLog.save()
 

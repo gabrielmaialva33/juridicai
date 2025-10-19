@@ -6,6 +6,8 @@ import { DateTime } from 'luxon'
 import GetSecurityAlertsService from '#services/audits/get_security_alert_service'
 import { UserFactory } from '#database/factories/user_factory'
 import { AuditLogFactory } from '#database/factories/audit_log_factory'
+import User from '#models/user'
+import AuditLog from '#models/audit_log'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('GetSecurityAlertsService', (group) => {
@@ -38,7 +40,7 @@ test.group('GetSecurityAlertsService', (group) => {
 
   test('should filter by days parameter', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create recent denied log (within 7 days)
       await AuditLogFactory.merge({
@@ -50,7 +52,7 @@ test.group('GetSecurityAlertsService', (group) => {
       const oldLog = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
 
       // Manually update the created_at to be 10 days ago
       oldLog.created_at = DateTime.now().minus({ days: 10 })
@@ -66,7 +68,7 @@ test.group('GetSecurityAlertsService', (group) => {
 
   test('should use default of 7 days', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create recent denied log
       await AuditLogFactory.merge({
@@ -78,7 +80,7 @@ test.group('GetSecurityAlertsService', (group) => {
       const oldLog = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
 
       oldLog.created_at = DateTime.now().minus({ days: 8 })
       await oldLog.save()
@@ -107,7 +109,7 @@ test.group('GetSecurityAlertsService', (group) => {
 
   test('should return all denied logs within custom days range', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create denied logs at different times
       await AuditLogFactory.merge({
@@ -118,14 +120,14 @@ test.group('GetSecurityAlertsService', (group) => {
       const log2 = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
       log2.created_at = DateTime.now().minus({ days: 5 })
       await log2.save()
 
       const log3 = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
       log3.created_at = DateTime.now().minus({ days: 15 })
       await log3.save()
 
@@ -138,12 +140,12 @@ test.group('GetSecurityAlertsService', (group) => {
 
   test('should order results by created_at desc', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       const log1 = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
       log1.created_at = DateTime.now().minus({ days: 3 })
       await log1.save()
 
@@ -152,7 +154,7 @@ test.group('GetSecurityAlertsService', (group) => {
       const log2 = await AuditLogFactory.merge({
         user_id: user.id,
         result: 'denied',
-      }).create()
+      }).create() as AuditLog
       log2.created_at = DateTime.now().minus({ days: 1 })
       await log2.save()
 

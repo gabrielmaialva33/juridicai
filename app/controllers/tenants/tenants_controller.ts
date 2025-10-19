@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import User from '#models/user'
 import CreateTenantService from '#services/tenants/create_tenant_service'
 import UpdateTenantService from '#services/tenants/update_tenant_service'
 import GetUserTenantsService from '#services/tenants/get_user_tenant_service'
@@ -29,8 +30,9 @@ export default class TenantsController {
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
+    const user = await auth.getUserOrFail() as unknown as User
     const tenants = await this.getUserTenantsService.run(
-      auth.user!.id,
+      user.id,
       page,
       perPage,
       sortBy,
@@ -57,9 +59,10 @@ export default class TenantsController {
 
     const payload = await request.validateUsing(createTenantValidator)
 
+    const user = await auth.getUserOrFail() as unknown as User
     const tenant = await this.createTenantService.run({
       ...payload,
-      owner_user_id: auth.user!.id,
+      owner_user_id: user.id,
     })
 
     return response.created(tenant)
@@ -74,7 +77,8 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if the user is a member of this tenant
-    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })
@@ -99,7 +103,8 @@ export default class TenantsController {
     const payload = await request.validateUsing(updateTenantValidator)
 
     // Check if a user is a member and has the appropriate role
-    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })
@@ -123,7 +128,8 @@ export default class TenantsController {
     const tenantId = params.id
 
     // Check if a user is a member and has the appropriate role
-    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, auth.user!.id)
+    const user = await auth.getUserOrFail() as unknown as User
+    const membership = await this.tenantUsersRepository.findByTenantAndUser(tenantId, user.id)
 
     if (!membership) {
       return response.notFound({ message: 'Tenant not found' })

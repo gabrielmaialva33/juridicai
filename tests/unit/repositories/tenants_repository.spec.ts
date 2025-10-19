@@ -8,7 +8,7 @@ import TenantsRepository from '#repositories/tenants_repository'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('TenantsRepository', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('findBySubdomain returns tenant by subdomain', async ({ assert }) => {
     const tenant = await TenantFactory.merge({ subdomain: 'test-firm' }).create()

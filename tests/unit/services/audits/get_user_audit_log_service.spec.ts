@@ -5,6 +5,8 @@ import app from '@adonisjs/core/services/app'
 import GetUserAuditLogsService from '#services/audits/get_user_audit_log_service'
 import { UserFactory } from '#database/factories/user_factory'
 import { AuditLogFactory } from '#database/factories/audit_log_factory'
+import User from '#models/user'
+import AuditLog from '#models/audit_log'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('GetUserAuditLogsService', (group) => {
@@ -60,14 +62,14 @@ test.group('GetUserAuditLogsService', (group) => {
 
   test('should order by created_at desc', async ({ assert }) => {
     await withTenantContext(async () => {
-      const user = await UserFactory.create()
+      const user = await UserFactory.create() as User
 
       // Create logs with different timestamps
-      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log1 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       await new Promise((resolve) => setTimeout(resolve, 10))
-      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log2 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
       await new Promise((resolve) => setTimeout(resolve, 10))
-      const log3 = await AuditLogFactory.merge({ user_id: user.id }).create()
+      const log3 = await AuditLogFactory.merge({ user_id: user.id }).create() as AuditLog
 
       const service = await app.container.make(GetUserAuditLogsService)
       const result = await service.run(user.id)

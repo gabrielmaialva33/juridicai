@@ -8,27 +8,32 @@ import { CaseFactory } from '#database/factories/case_factory'
 import { ClientFactory } from '#database/factories/client_factory'
 import { UserFactory } from '#database/factories/user_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
+import CaseEvent from '#models/case_event'
+import Case from '#models/case'
+import Client from '#models/client'
+import User from '#models/user'
+import Tenant from '#models/tenant'
 import TenantContextService from '#services/tenants/tenant_context_service'
 
 test.group('GetCaseEventService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should get case event by id', async ({ assert }) => {
-    const tenant = await TenantFactory.create()
-    const user = await UserFactory.create()
+    const tenant = await TenantFactory.create() as Tenant
+    const user = await UserFactory.create() as User
 
     const event = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.create() as Client
         const caseRecord = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
-        }).create()
+        }).create() as Case
         return await CaseEventFactory.merge({
           case_id: caseRecord.id,
           created_by: user.id,
-        }).create()
+        }).create() as CaseEvent
       }
     )
 
@@ -46,7 +51,7 @@ test.group('GetCaseEventService', (group) => {
   })
 
   test('should throw NotFoundException if event not found', async ({ assert }) => {
-    const tenant = await TenantFactory.create()
+    const tenant = await TenantFactory.create() as Tenant
     const service = await app.container.make(GetCaseEventService)
 
     await assert.rejects(async () => {
