@@ -10,7 +10,7 @@ function Documents() {
       <div className="p-4 sm:p-5 lg:p-6">
         {/* Page Header */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary">
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 backdrop-blur-xl shadow-lg shadow-primary/20 border border-primary/30 text-primary">
             <FileText className="w-6 h-6" />
           </div>
           <div>
@@ -22,7 +22,7 @@ function Documents() {
         </div>
 
         {/* Placeholder Content */}
-        <div className="bg-card border border-border rounded-lg p-8 text-center">
+        <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30 rounded-lg p-8 text-center">
           <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
           <h2 className="text-xl font-semibold mb-2">Página de Documentos</h2>
           <p className="text-muted-foreground">
