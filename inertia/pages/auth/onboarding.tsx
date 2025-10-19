@@ -99,7 +99,7 @@ export default function Onboarding() {
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Step 1: Welcome */}
               {step === 1 && (
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   {/* Header integrado */}
                   <div className="space-y-3 text-center">
                     <h2 className="text-3xl font-bold text-[#434343]">
@@ -111,9 +111,9 @@ export default function Onboarding() {
                   </div>
 
                   {/* Content with Illustrations */}
-                  <div className="space-y-8">
+                  <div className="space-y-6 md:space-y-8">
                     {/* Main Content Grid - Illustration + Info */}
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
+                    <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
                       {/* Left Side - Text Content */}
                       <div className="order-2 md:order-1">
                         <p className="font-bold text-[#434343] mb-6">O que você vai configurar:</p>
@@ -159,7 +159,7 @@ export default function Onboarding() {
 
               {/* Step 2: Firm Details */}
               {step === 2 && (
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   {/* Header integrado */}
                   <div className="space-y-3">
                     <h2 className="text-3xl font-bold text-[#434343]">
@@ -171,8 +171,8 @@ export default function Onboarding() {
                   </div>
 
                   {/* Content */}
-                  <div className="space-y-8">
-                    <div className="space-y-6">
+                  <div className="space-y-6 md:space-y-8">
+                    <div className="space-y-5 md:space-y-6">
                       <div className="space-y-2.5">
                         <Label htmlFor="firmName" className="text-sm font-medium text-[#434343]">
                           Nome do Escritório <span className="text-destructive">*</span>
@@ -240,7 +240,7 @@ export default function Onboarding() {
 
               {/* Step 3: Practice Areas */}
               {step === 3 && (
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   {/* Header integrado */}
                   <div className="space-y-3">
                     <h2 className="text-3xl font-bold text-[#434343]">
@@ -252,7 +252,7 @@ export default function Onboarding() {
                   </div>
 
                   {/* Content */}
-                  <div className="space-y-8">
+                  <div className="space-y-6 md:space-y-8">
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                       {PRACTICE_AREAS.map((area) => {
                         const isSelected = selectedAreas.includes(area)
@@ -262,7 +262,7 @@ export default function Onboarding() {
                             type="button"
                             onClick={() => toggleArea(area)}
                             className={cn(
-                              'group relative overflow-hidden rounded-[16px] p-4 text-left transition-all duration-300',
+                              'group relative overflow-hidden rounded-[16px] p-3 md:p-4 text-left transition-all duration-300',
                               'border-2 backdrop-blur-md',
                               isSelected
                                 ? 'border-[#434343] bg-white/90 shadow-xl shadow-[#434343]/10 scale-[1.03]'
