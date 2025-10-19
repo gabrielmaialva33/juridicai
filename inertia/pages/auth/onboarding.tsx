@@ -67,93 +67,77 @@ export default function Onboarding() {
   return (
     <>
       <Head title="Configuração Inicial - JuridicAI" />
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50/30 to-pink-50/20 dark:from-slate-950 dark:via-blue-950/30 dark:to-purple-950/20 p-4">
-        {/* Animated Background Blobs */}
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#EDEDED] p-4">
+        {/* Subtle Glass Background Effect */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl animate-pulse" />
-          <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-pink-400/20 to-orange-400/20 blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-gradient-to-br from-purple-400/10 to-blue-400/10 blur-3xl animate-pulse delay-500" />
+          <div className="absolute top-1/4 -left-20 h-[600px] w-[600px] rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute bottom-1/4 -right-20 h-[600px] w-[600px] rounded-full bg-[#434343]/5 blur-3xl" />
         </div>
 
         <div className="relative w-full max-w-2xl">
           {/* Logo */}
           <div className="mb-8 text-center">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
-              JuridicAI
-            </h1>
-            <p className="mt-2 text-sm font-medium bg-gradient-to-r from-blue-600/80 to-purple-600/80 bg-clip-text text-transparent">
-              Configure seu escritório
-            </p>
+            <h1 className="text-5xl font-bold text-[#434343] drop-shadow-sm">JuridicAI</h1>
+            <p className="mt-2 text-sm font-medium text-[#6E6E6E]">Configure seu escritório</p>
           </div>
 
-          {/* Progress Steps - Colorful Glass Style */}
+          {/* Progress Steps - Liquid Glass Style */}
           <div className="mb-8">
             <div className="flex items-center justify-center gap-2">
-              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => {
-                const colors = [
-                  'from-blue-500 via-blue-600 to-blue-700 shadow-blue-500/30',
-                  'from-purple-500 via-purple-600 to-purple-700 shadow-purple-500/30',
-                  'from-pink-500 via-pink-600 to-pink-700 shadow-pink-500/30',
-                ]
-                return (
-                  <div key={s} className="flex items-center">
+              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+                <div key={s} className="flex items-center">
+                  <div
+                    className={cn(
+                      'flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-bold transition-all duration-300',
+                      step >= s
+                        ? 'bg-[#434343] text-white shadow-xl shadow-[#434343]/20 backdrop-blur-xl scale-105'
+                        : 'bg-white/80 backdrop-blur-md border-2 border-white/40 text-[#6E6E6E] shadow-lg'
+                    )}
+                  >
+                    {s}
+                  </div>
+                  {s < totalSteps && (
                     <div
                       className={cn(
-                        'flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-bold transition-all duration-500',
-                        step >= s
-                          ? `bg-gradient-to-br ${colors[s - 1]} text-white shadow-2xl backdrop-blur-xl border border-white/30 scale-110 animate-bounce-subtle`
-                          : 'bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-300/30 dark:border-slate-600/30 text-slate-600 dark:text-slate-400 shadow-lg'
+                        'h-1 w-20 rounded-full transition-all duration-500',
+                        step > s ? 'bg-[#434343] shadow-md' : 'bg-white/60 backdrop-blur-sm'
                       )}
-                    >
-                      {s}
-                    </div>
-                    {s < totalSteps && (
-                      <div
-                        className={cn(
-                          'h-1.5 w-20 rounded-full transition-all duration-700',
-                          step > s
-                            ? `bg-gradient-to-r ${colors[s - 1]} shadow-lg`
-                            : 'bg-slate-300/40 dark:bg-slate-700/40'
-                        )}
-                      />
-                    )}
-                  </div>
-                )
-              })}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Onboarding Card - Colorful Premium Glass Effect */}
-          <Card className="border-white/20 dark:border-slate-700/30 shadow-2xl shadow-purple-500/5 backdrop-blur-2xl bg-white/90 dark:bg-slate-900/90 hover:shadow-purple-500/10 transition-all duration-300">
+          {/* Onboarding Card - Liquid Glass Design */}
+          <Card className="border border-white/40 shadow-2xl bg-white/95 backdrop-blur-2xl">
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Step 1: Welcome */}
               {step === 1 && (
                 <>
                   <CardHeader className="space-y-3">
-                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-3xl font-bold text-[#434343]">
                       Bem-vindo ao JuridicAI
                     </CardTitle>
-                    <CardDescription className="text-base text-slate-600 dark:text-slate-400">
+                    <CardDescription className="text-base text-[#6E6E6E]">
                       Vamos configurar seu perfil em apenas alguns passos
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Info Card - Colorful Liquid Glass Effect */}
-                    <div className="rounded-[20px] bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-pink-500/10 backdrop-blur-xl border border-purple-300/30 dark:border-purple-500/20 p-6 shadow-xl shadow-purple-500/10">
-                      <p className="font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-4">
-                        O que você vai configurar:
-                      </p>
-                      <ul className="space-y-3 text-slate-700 dark:text-slate-300">
+                    {/* Info Card - Liquid Glass Effect */}
+                    <div className="rounded-[20px] bg-white/60 backdrop-blur-xl border border-white/40 p-6 shadow-lg">
+                      <p className="font-bold text-[#434343] mb-4">O que você vai configurar:</p>
+                      <ul className="space-y-3 text-[#434343]">
                         <li className="flex items-start gap-3">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50" />
+                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
                           <span>Informações do seu escritório</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50" />
+                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
                           <span>Áreas de atuação</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-gradient-to-r from-pink-500 to-orange-500 shadow-lg shadow-pink-500/50" />
+                          <div className="mt-1.5 h-2 w-2 rounded-full bg-[#434343] shadow-sm" />
                           <span>Preferências iniciais</span>
                         </li>
                       </ul>
@@ -164,7 +148,7 @@ export default function Onboarding() {
                         type="button"
                         onClick={() => setStep(2)}
                         size="lg"
-                        className="rounded-[12px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-[1.02] transition-all duration-300"
+                        className="rounded-[12px] bg-[#434343] hover:bg-[#6E6E6E] text-white transition-all shadow-lg shadow-[#434343]/20 hover:shadow-xl hover:shadow-[#434343]/30 hover:scale-[1.02]"
                       >
                         Começar
                       </Button>
@@ -177,23 +161,23 @@ export default function Onboarding() {
               {step === 2 && (
                 <>
                   <CardHeader className="space-y-3">
-                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-3xl font-bold text-[#434343]">
                       Dados do Escritório
                     </CardTitle>
-                    <CardDescription className="text-base text-slate-600 dark:text-slate-400">
+                    <CardDescription className="text-base text-[#6E6E6E]">
                       Informe os dados básicos do seu escritório
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-5">
                       <div className="space-y-2.5">
-                        <Label htmlFor="firmName" className="text-sm font-medium">
+                        <Label htmlFor="firmName" className="text-sm font-medium text-[#434343]">
                           Nome do Escritório <span className="text-destructive">*</span>
                         </Label>
                         <Input
                           id="firmName"
                           placeholder="Escritório de Advocacia Silva & Associados"
-                          className="h-12 rounded-[12px] border-purple-200/50 dark:border-purple-500/30 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                          className="h-12 rounded-[12px] border border-white/40 bg-white/60 backdrop-blur-md shadow-sm focus:border-[#434343] focus:ring-[#434343]/20 focus:shadow-lg transition-all"
                           {...register('firmName')}
                         />
                         {errors.firmName && (
@@ -204,25 +188,25 @@ export default function Onboarding() {
                       </div>
 
                       <div className="space-y-2.5">
-                        <Label htmlFor="oabNumber" className="text-sm font-medium">
+                        <Label htmlFor="oabNumber" className="text-sm font-medium text-[#434343]">
                           Número OAB (opcional)
                         </Label>
                         <Input
                           id="oabNumber"
                           placeholder="SP 123.456"
-                          className="h-12 rounded-[12px] border-purple-200/50 dark:border-purple-500/30 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                          className="h-12 rounded-[12px] border border-white/40 bg-white/60 backdrop-blur-md shadow-sm focus:border-[#434343] focus:ring-[#434343]/20 focus:shadow-lg transition-all"
                           {...register('oabNumber')}
                         />
                       </div>
 
                       <div className="space-y-2.5">
-                        <Label htmlFor="phone" className="text-sm font-medium">
+                        <Label htmlFor="phone" className="text-sm font-medium text-[#434343]">
                           Telefone (opcional)
                         </Label>
                         <Input
                           id="phone"
                           placeholder="(11) 98765-4321"
-                          className="h-12 rounded-[12px] border-purple-200/50 dark:border-purple-500/30 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                          className="h-12 rounded-[12px] border border-white/40 bg-white/60 backdrop-blur-md shadow-sm focus:border-[#434343] focus:ring-[#434343]/20 focus:shadow-lg transition-all"
                           {...register('phone')}
                         />
                       </div>
@@ -234,7 +218,7 @@ export default function Onboarding() {
                         variant="outline"
                         onClick={() => setStep(1)}
                         size="lg"
-                        className="rounded-[12px] border-purple-200 dark:border-purple-500/30 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all"
+                        className="rounded-[12px] border border-white/40 bg-white/60 backdrop-blur-md hover:border-[#434343] hover:bg-white/80 text-[#434343] transition-all shadow-sm hover:shadow-md hover:scale-[1.01]"
                       >
                         Voltar
                       </Button>
@@ -242,7 +226,7 @@ export default function Onboarding() {
                         type="button"
                         onClick={() => setStep(3)}
                         size="lg"
-                        className="rounded-[12px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-pink-500/40 hover:scale-[1.02] transition-all duration-300"
+                        className="rounded-[12px] bg-[#434343] hover:bg-[#6E6E6E] text-white transition-all shadow-lg shadow-[#434343]/20 hover:shadow-xl hover:shadow-[#434343]/30 hover:scale-[1.02]"
                       >
                         Próximo
                       </Button>
@@ -255,30 +239,17 @@ export default function Onboarding() {
               {step === 3 && (
                 <>
                   <CardHeader className="space-y-3">
-                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-3xl font-bold text-[#434343]">
                       Áreas de Atuação
                     </CardTitle>
-                    <CardDescription className="text-base text-slate-600 dark:text-slate-400">
+                    <CardDescription className="text-base text-[#6E6E6E]">
                       Selecione as áreas em que seu escritório atua
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid grid-cols-2 gap-3">
-                      {PRACTICE_AREAS.map((area, index) => {
+                      {PRACTICE_AREAS.map((area) => {
                         const isSelected = selectedAreas.includes(area)
-                        const gradients = [
-                          'from-blue-500 to-cyan-500',
-                          'from-purple-500 to-pink-500',
-                          'from-pink-500 to-rose-500',
-                          'from-orange-500 to-amber-500',
-                          'from-green-500 to-emerald-500',
-                          'from-indigo-500 to-purple-500',
-                          'from-teal-500 to-cyan-500',
-                          'from-violet-500 to-fuchsia-500',
-                          'from-sky-500 to-blue-500',
-                          'from-amber-500 to-yellow-500',
-                        ]
-                        const gradient = gradients[index % gradients.length]
                         return (
                           <button
                             key={area}
@@ -286,17 +257,17 @@ export default function Onboarding() {
                             onClick={() => toggleArea(area)}
                             className={cn(
                               'group relative overflow-hidden rounded-[16px] p-4 text-left transition-all duration-300',
-                              'border-2 backdrop-blur-sm',
+                              'border-2 backdrop-blur-md',
                               isSelected
-                                ? `border-transparent bg-gradient-to-br ${gradient} shadow-2xl shadow-${gradient.split(' ')[0].replace('from-', '').replace('-500', '-500/40')} scale-[1.03]`
-                                : 'border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-800/40 hover:border-purple-300 dark:hover:border-purple-500/30 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 hover:scale-[1.01] hover:shadow-lg'
+                                ? 'border-[#434343] bg-white/90 shadow-xl shadow-[#434343]/10 scale-[1.03]'
+                                : 'border-white/40 bg-white/50 hover:border-[#6E6E6E] hover:bg-white/70 hover:shadow-lg hover:scale-[1.01]'
                             )}
                           >
-                            {/* Liquid Glass Shine Effect */}
+                            {/* Liquid Glass Shine Effect on Hover */}
                             <div
                               className={cn(
-                                'absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-                                isSelected && 'opacity-60'
+                                'absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500',
+                                isSelected && 'opacity-50'
                               )}
                             />
 
@@ -304,16 +275,14 @@ export default function Onboarding() {
                               <span
                                 className={cn(
                                   'font-semibold transition-colors',
-                                  isSelected
-                                    ? 'text-white drop-shadow-lg'
-                                    : 'text-slate-700 dark:text-slate-300'
+                                  isSelected ? 'text-[#434343]' : 'text-[#6E6E6E]'
                                 )}
                               >
                                 {area}
                               </span>
                               {isSelected && (
-                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg">
-                                  <Check className="h-3.5 w-3.5 text-white drop-shadow-md" strokeWidth={3} />
+                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#434343] shadow-lg">
+                                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
                                 </div>
                               )}
                             </div>
@@ -334,14 +303,14 @@ export default function Onboarding() {
                         variant="outline"
                         onClick={() => setStep(2)}
                         size="lg"
-                        className="rounded-[12px] border-purple-200 dark:border-purple-500/30 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all"
+                        className="rounded-[12px] border-[#EDEDED] hover:border-[#434343] hover:bg-[#EDEDED] text-[#434343] transition-all"
                       >
                         Voltar
                       </Button>
                       <Button
                         type="submit"
                         size="lg"
-                        className="rounded-[12px] bg-gradient-to-r from-pink-600 via-orange-600 to-yellow-600 hover:from-pink-700 hover:via-orange-700 hover:to-yellow-700 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-yellow-500/40 hover:scale-[1.02] transition-all duration-300"
+                        className="rounded-[12px] bg-[#434343] hover:bg-[#6E6E6E] text-white transition-colors"
                       >
                         Concluir Configuração
                       </Button>
@@ -354,7 +323,7 @@ export default function Onboarding() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#6E6E6E]">
               Você pode alterar essas configurações depois nas configurações do seu perfil
             </p>
           </div>
