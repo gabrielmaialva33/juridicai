@@ -1,5 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
-import { DEFAULT_PERMISSIONS, ROLE_PERMISSIONS } from '#defaults/permissions'
+import { DEFAULT_PERMISSIONS } from '#defaults/permissions'
 
 export default class extends BaseSchema {
   async up() {

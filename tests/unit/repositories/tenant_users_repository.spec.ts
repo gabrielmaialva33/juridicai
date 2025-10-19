@@ -72,7 +72,7 @@ test.group('TenantUsersRepository', (group) => {
   })
 
   test('findActiveByUser returns only active tenants for user', async ({ assert }) => {
-    await withTenantContext(async (tenant) => {
+    await withTenantContext(async (_tenant) => {
       const user = await UserFactory.create()
       const tenant1 = await TenantFactory.create()
       const tenant2 = await TenantFactory.create()

@@ -5,6 +5,32 @@ import TenantContextService from '#services/tenants/tenant_context_service'
 import TenantContextException from '#exceptions/tenant_context_exception'
 
 /**
+ * Type for instance methods added by the tenant scope mixin
+ */
+type TenantScopedModelRow = {
+  tenant_id: string
+  ensureTenantContext(): void
+  belongsToTenant(tenantId: string): boolean
+}
+
+/**
+ * Type for the class with tenant scope capabilities
+ * Following the same pattern as withAuthFinder from @adonisjs/auth
+ */
+type TenantScopedModelClass<Model extends NormalizeConstructor<typeof BaseModel> = NormalizeConstructor<typeof BaseModel>> = Model & {
+  tenantColumn: string
+  forTenant(tenantId: string): ModelQueryBuilderContract<Model, InstanceType<Model>>
+  withoutTenantScope(): ModelQueryBuilderContract<Model, InstanceType<Model>>
+  currentTenant(): ModelQueryBuilderContract<Model, InstanceType<Model>>
+  crossTenant(): ModelQueryBuilderContract<Model, InstanceType<Model>>
+  forTenantScope: ReturnType<typeof scope>
+  withoutTenantScopeScope: ReturnType<typeof scope>
+  forTenants: ReturnType<typeof scope>
+  excludeTenants: ReturnType<typeof scope>
+  new (...args: any[]): TenantScopedModelRow
+}
+
+/**
  * Configuration options for the tenant scope mixin
  */
 export interface TenantScopeOptions {
@@ -85,8 +111,8 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
     ...options,
   }
 
-  return <Model extends NormalizeConstructor<typeof BaseModel>>(superclass: Model) => {
-    class TenantScopedModelClass extends superclass {
+  return <Model extends NormalizeConstructor<typeof BaseModel>>(superclass: Model): TenantScopedModelClass<Model> => {
+    class TenantScopedMixin extends superclass {
       /**
        * The tenant column name for this model
        */
@@ -345,7 +371,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
       )
     }
 
-    return TenantScopedModelClass as any
+    return TenantScopedMixin as unknown as TenantScopedModelClass<Model>
   }
 }
 

@@ -40,7 +40,7 @@ export default class PaginateUserService {
 
         // Filter by tenant if tenantId is provided
         if (tenantId) {
-          scopes.forTenant(tenantId)
+          scopes.byTenantRelation(tenantId)
         }
 
         // Filter by verified users only

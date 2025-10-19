@@ -164,23 +164,33 @@ export default class NvidiaController {
 
       // Apply filters
       if (filters.query_type) {
-        query = query.withScopes((scopes) => scopes.ofType(filters.query_type!))
+        query = query.withScopes((scopes) =>
+          scopes.ofType(filters.query_type!)
+        )
       }
 
       if (filters.user_id) {
-        query = query.withScopes((scopes) => scopes.byUser(filters.user_id!))
+        query = query.withScopes((scopes) =>
+          scopes.byUser(filters.user_id!)
+        )
       }
 
       if (filters.case_id) {
-        query = query.withScopes((scopes) => scopes.byCase(filters.case_id!))
+        query = query.withScopes((scopes) =>
+          scopes.byCase(filters.case_id!)
+        )
       }
 
       if (filters.search) {
-        query = query.withScopes((scopes) => scopes.search(filters.search!))
+        query = query.withScopes((scopes) =>
+          scopes.search(filters.search!)
+        )
       }
 
       // Always order by newest
-      query = query.withScopes((scopes) => scopes.newest())
+      query = query.withScopes((scopes) =>
+        scopes.newest()
+      )
 
       // Paginate
       const results = await query.paginate(page, limit)

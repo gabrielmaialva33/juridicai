@@ -4,7 +4,7 @@ import { compose } from '@adonisjs/core/helpers'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 import { withTenantScope } from '#mixins/with_tenant_scope'
-import type User from '#models/user'
+import User from '#models/user'
 
 const TenantScoped = withTenantScope()
 

@@ -20,9 +20,9 @@ import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
-import type Role from '#models/role'
-import type Permission from '#models/permission'
-import type TenantUser from '#models/tenant_user'
+import Role from '#models/role'
+import Permission from '#models/permission'
+import TenantUser from '#models/tenant_user'
 import IRole from '#interfaces/role_interface'
 import { withTenantScope } from '#mixins/with_tenant_scope'
 
@@ -183,9 +183,10 @@ export default class User extends compose(BaseModel, AuthFinder, TenantScoped) {
 
   /**
    * Filter users by tenant through TenantUser relationship
-   * @example User.query().withScopes((scopes) => scopes.forTenant(tenantId))
+   * Note: Use this instead of the mixin's forTenant() for relationship-based filtering
+   * @example User.query().withScopes((scopes) => scopes.byTenantRelation(tenantId))
    */
-  static forTenant = scope((query: any, tenantId: string | number) => {
+  static byTenantRelation = scope((query: any, tenantId: string | number) => {
     return query.whereHas('tenant_users', (tenantQuery: any) => {
       tenantQuery.where('tenant_id', tenantId).where('is_active', true)
     })
