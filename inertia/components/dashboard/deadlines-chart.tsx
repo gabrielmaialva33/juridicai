@@ -51,7 +51,7 @@ export function DeadlinesChart({ data = defaultData }: DeadlinesChartProps) {
         </CardHeading>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={377}>
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid
               strokeDasharray="4 4"

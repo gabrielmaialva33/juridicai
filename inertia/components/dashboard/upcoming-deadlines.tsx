@@ -153,21 +153,21 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
             const status = statusConfig[deadline.status]
 
             return (
-              <div key={deadline.id} className="p-4 hover:bg-accent/50 transition-colors">
+              <div key={deadline.id} className="p-5 hover:bg-accent/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className={cn('rounded-lg p-2 mt-0.5', priority.bg)}>
+                  <div className={cn('rounded-xl p-2.5 shrink-0', priority.bg)}>
                     {deadline.priority === 'urgent' ? (
-                      <AlertCircle className={cn('w-4 h-4', priority.color)} />
+                      <AlertCircle className={cn('w-5 h-5', priority.color)} strokeWidth={2} />
                     ) : (
-                      <Clock className={cn('w-4 h-4', priority.color)} />
+                      <Clock className={cn('w-5 h-5', priority.color)} strokeWidth={2} />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <Link
                         href={`/cases/${deadline.case_id}`}
-                        className="font-medium text-foreground hover:text-primary transition-colors"
+                        className="font-semibold text-sm text-foreground hover:text-primary transition-colors"
                       >
                         {deadline.title}
                       </Link>
@@ -181,20 +181,20 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
                       </Badge>
                     </div>
 
-                    <p className="text-xs text-muted-foreground mb-2 font-mono">
+                    <p className="text-[11px] text-muted-foreground mb-2 font-mono tracking-tight">
                       {deadline.case_number}
                     </p>
 
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap text-[11px]">
                       <Badge variant={status.variant} appearance="light" size="xs">
                         {status.label}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground">{deadline.responsible}</span>
-                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">{deadline.responsible}</span>
+                      <span className="text-muted-foreground">•</span>
                       <span
                         className={cn(
-                          'text-xs font-medium',
+                          'font-semibold',
                           deadline.priority === 'urgent'
                             ? 'text-destructive'
                             : 'text-muted-foreground'

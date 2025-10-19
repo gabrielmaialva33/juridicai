@@ -110,17 +110,17 @@ export function RecentClients({ clients = defaultClients }: RecentClientsProps) 
       <CardContent className="p-0">
         <div className="divide-y divide-border">
           {clients.map((client) => (
-            <div key={client.id} className="p-4 hover:bg-accent/50 transition-colors">
-              <div className="flex items-start justify-between gap-4">
+            <div key={client.id} className="p-5 hover:bg-accent/50 transition-colors">
+              <div className="flex items-start justify-between gap-5">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-primary" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Link
                         href={`/clients/${client.id}`}
-                        className="font-medium text-foreground hover:text-primary transition-colors truncate"
+                        className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate"
                       >
                         {client.name}
                       </Link>
@@ -128,21 +128,22 @@ export function RecentClients({ clients = defaultClients }: RecentClientsProps) 
                         variant={client.type === 'PF' ? 'primary' : 'secondary'}
                         appearance="light"
                         size="xs"
+                        className="shrink-0"
                       >
                         {client.type}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{client.email}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs text-muted-foreground">{client.cpf_cnpj}</span>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground truncate mb-2">{client.email}</p>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span>{client.cpf_cnpj}</span>
+                      <span>•</span>
+                      <span>
                         {client.cases_count} {client.cases_count === 1 ? 'processo' : 'processos'}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                <div className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                   {formatDate(client.created_at)}
                 </div>
               </div>
