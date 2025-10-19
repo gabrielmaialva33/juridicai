@@ -41,7 +41,7 @@ export function LayoutSwitcher() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm">
+        <Button variant="outline" size="sm" className="hidden sm:inline-flex gap-1.5 sm:gap-2 text-xs sm:text-sm">
           <i className="ki-filled ki-setting-2 text-sm sm:text-base" />
           <span className="hidden sm:inline">Layout:</span>
           <span className="hidden md:inline">{layoutConfig.name}</span>

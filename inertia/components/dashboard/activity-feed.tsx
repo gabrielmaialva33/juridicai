@@ -199,7 +199,7 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
       <CardContent className="p-0">
         <div className="relative">
           {/* Timeline vertical line */}
-          <div className="absolute left-8 top-0 bottom-0 w-px bg-border" />
+          <div className="absolute left-10 top-0 bottom-0 w-0.5 bg-border" />
 
           <div className="space-y-0">
             {activities.map((activity, index) => {
@@ -210,37 +210,45 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
               return (
                 <div
                   key={activity.id}
-                  className={cn('relative px-4 py-3 hover:bg-accent/30 transition-colors')}
+                  className={cn('relative px-5 py-5 hover:bg-accent/30 transition-colors', {
+                    'border-b border-border': !isLast,
+                  })}
                 >
                   {/* Timeline dot */}
-                  <div className="absolute left-8 top-6 -translate-x-1/2">
-                    <div className={cn('rounded-full p-1.5', config.bg)}>
-                      <Icon className={cn('w-3 h-3', config.color)} />
+                  <div className="absolute left-10 top-7 -translate-x-1/2">
+                    <div className={cn('rounded-full p-2', config.bg)}>
+                      <Icon className={cn('w-3.5 h-3.5', config.color)} strokeWidth={2} />
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="pl-10">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-start justify-between gap-3 mb-1">
                       {activity.link ? (
                         <Link
                           href={activity.link}
-                          className="font-medium text-sm text-foreground hover:text-primary transition-colors"
+                          className="font-semibold text-sm text-foreground hover:text-primary transition-colors leading-tight"
                         >
                           {activity.title}
                         </Link>
                       ) : (
-                        <p className="font-medium text-sm text-foreground">{activity.title}</p>
+                        <p className="font-semibold text-sm text-foreground leading-tight">
+                          {activity.title}
+                        </p>
                       )}
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
                         {formatTimestamp(activity.timestamp)}
                       </span>
                     </div>
 
-                    <p className="text-xs text-muted-foreground mb-1.5">{activity.description}</p>
+                    <p className="text-[11px] text-muted-foreground mb-2 leading-relaxed">
+                      {activity.description}
+                    </p>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{activity.user}</span>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {activity.user}
+                      </span>
                     </div>
                   </div>
                 </div>
