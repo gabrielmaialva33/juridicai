@@ -72,7 +72,7 @@ export function LawStats({ stats = defaultStats }: LawStatsProps) {
         const TrendIcon = isPositive ? TrendingUp : TrendingDown
 
         return (
-          <Card key={index} variant="default">
+          <Card key={index} variant="default" className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
             <CardContent className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
