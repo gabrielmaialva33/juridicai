@@ -15,19 +15,15 @@ test.group('SignInService', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should sign in user with valid credentials', async ({ assert }) => {
+    // Role should exist from migrations
+    const role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
+    if (!role) {
+      throw new Error('User role not found - migrations may not have run')
+    }
+
     await withTenantContext(async () => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
-
-      // Create the role in System tenant first so afterCreate hook can attach it
-      let role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
-      if (!role) {
-        role = await Role.withoutTenantScope().create({
-          name: 'User',
-          slug: IRole.Slugs.USER,
-          description: 'Regular user role',
-        })
-      }
 
       const user = await User.create({
         full_name: 'John Doe',
@@ -100,28 +96,16 @@ test.group('SignInService', (group) => {
   })
 
   test('should include roles in user data', async ({ assert }) => {
+    // Roles should exist from migrations
+    const userRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
+    const adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).first()
+    if (!userRole || !adminRole) {
+      throw new Error('Roles not found - migrations may not have run')
+    }
+
     await withTenantContext(async () => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
-
-      // Create roles first
-      let userRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
-      if (!userRole) {
-        userRole = await Role.withoutTenantScope().create({
-          name: 'User',
-          slug: IRole.Slugs.USER,
-          description: 'Regular user role',
-        })
-      }
-
-      let adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).first()
-      if (!adminRole) {
-        adminRole = await Role.withoutTenantScope().create({
-          name: 'Admin',
-          slug: IRole.Slugs.ADMIN,
-          description: 'Administrator role',
-        })
-      }
 
       const user = await User.create({
         full_name: 'John Doe',
