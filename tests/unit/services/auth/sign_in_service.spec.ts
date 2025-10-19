@@ -5,6 +5,7 @@ import db from '@adonisjs/lucid/services/db'
 
 import Role from '#models/role'
 import User from '#models/user'
+import Tenant from '#models/tenant'
 
 import IRole from '#interfaces/role_interface'
 
@@ -12,15 +13,51 @@ import SignInService from '#services/users/sign_in_service'
 import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('SignInService', (group) => {
+  let systemTenant: Tenant
+
+  group.setup(async () => {
+    // Get or create System tenant for roles (once for all tests)
+    systemTenant = await Tenant.firstOrCreate(
+      { subdomain: 'system' },
+      {
+        name: 'System',
+        subdomain: 'system',
+        plan: 'enterprise',
+        is_active: true,
+      }
+    )
+
+    // Get or create default roles in System tenant (without tenant scope)
+    let userRole = await Role.withoutTenantScope()
+      .where('slug', IRole.Slugs.USER)
+      .where('tenant_id', systemTenant.id)
+      .first()
+    if (!userRole) {
+      userRole = await Role.create({
+        tenant_id: systemTenant.id,
+        name: 'User',
+        slug: IRole.Slugs.USER,
+        description: 'Regular user role',
+      })
+    }
+
+    let adminRole = await Role.withoutTenantScope()
+      .where('slug', IRole.Slugs.ADMIN)
+      .where('tenant_id', systemTenant.id)
+      .first()
+    if (!adminRole) {
+      adminRole = await Role.create({
+        tenant_id: systemTenant.id,
+        name: 'Admin',
+        slug: IRole.Slugs.ADMIN,
+        description: 'Administrator role',
+      })
+    }
+  })
+
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('should sign in user with valid credentials', async ({ assert }) => {
-    // Role should exist from migrations
-    const role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
-    if (!role) {
-      throw new Error('User role not found - migrations may not have run')
-    }
-
     await withTenantContext(async () => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
@@ -96,13 +133,6 @@ test.group('SignInService', (group) => {
   })
 
   test('should include roles in user data', async ({ assert }) => {
-    // Roles should exist from migrations
-    const userRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
-    const adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).first()
-    if (!userRole || !adminRole) {
-      throw new Error('Roles not found - migrations may not have run')
-    }
-
     await withTenantContext(async () => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
@@ -115,6 +145,7 @@ test.group('SignInService', (group) => {
       })
 
       // Attach admin role in addition to default user role
+      const adminRole = await Role.withoutTenantScope().where('slug', IRole.Slugs.ADMIN).firstOrFail()
       await db.table('user_roles').insert({
         user_id: user.id,
         role_id: adminRole.id,
@@ -137,16 +168,6 @@ test.group('SignInService', (group) => {
     await withTenantContext(async () => {
       const password = 'password123'
       const ctx = await testUtils.createHttpContext()
-
-      // Ensure user role exists for afterCreate hook
-      let role = await Role.withoutTenantScope().where('slug', IRole.Slugs.USER).first()
-      if (!role) {
-        role = await Role.withoutTenantScope().create({
-          name: 'User',
-          slug: IRole.Slugs.USER,
-          description: 'Regular user role',
-        })
-      }
 
       const user = await User.create({
         full_name: 'John Doe',
