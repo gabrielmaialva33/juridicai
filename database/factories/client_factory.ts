@@ -90,4 +90,15 @@ export const ClientFactory = factory
   .state('vip', (client) => {
     client.tags = ['vip', 'prioridade']
   })
+  .state('withVisibleId', (client) => {
+    Object.defineProperty(client, '$serialize', {
+      value: function () {
+        const data = this.toJSON()
+        data.id = this.id
+        return data
+      },
+      configurable: true,
+      writable: true,
+    })
+  })
   .build()

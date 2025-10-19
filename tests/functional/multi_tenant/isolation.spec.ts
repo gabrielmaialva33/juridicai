@@ -25,14 +25,18 @@ test.group('Multi-Tenant Isolation', (group) => {
     const client1 = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({ full_name: 'Tenant 1 Client' }).create()
+        return await ClientFactory.apply('withVisibleId')
+          .merge({ full_name: 'Tenant 1 Client' })
+          .create()
       }
     )
 
     const client2 = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({ full_name: 'Tenant 2 Client' }).create()
+        return await ClientFactory.apply('withVisibleId')
+          .merge({ full_name: 'Tenant 2 Client' })
+          .create()
       }
     )
 
@@ -68,7 +72,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         return await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user1.id,
@@ -80,7 +84,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     const case2 = await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         return await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user2.id,
@@ -108,7 +112,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
@@ -125,7 +129,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
@@ -159,7 +163,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     const doc1 = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
@@ -192,7 +196,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        await ClientFactory.createMany(3)
+        await ClientFactory.apply('withVisibleId').createMany(3)
       }
     )
 
@@ -200,7 +204,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        await ClientFactory.createMany(5)
+        await ClientFactory.apply('withVisibleId').createMany(5)
       }
     )
 
@@ -236,7 +240,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
@@ -254,7 +258,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant2.id, tenant: tenant2, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,
@@ -294,7 +298,7 @@ test.group('Multi-Tenant Isolation', (group) => {
     const client1 = await TenantContextService.run(
       { tenant_id: tenant1.id, tenant: tenant1, user_id: null, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: user.id,

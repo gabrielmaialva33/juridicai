@@ -5,6 +5,7 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 import { TenantUserFactory } from '#database/factories/tenant_user_factory'
 import { UserFactory } from '#database/factories/user_factory'
 import TenantsRepository from '#repositories/tenants_repository'
+import { withTenantContext } from '#tests/utils/tenant_context_helper'
 
 test.group('TenantsRepository', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -90,7 +91,7 @@ test.group('TenantsRepository', (group) => {
     const result = await repository.listWithFilters({ isActive: true, page: 1, limit: 10 })
 
     assert.lengthOf(result.all(), 3)
-    result.all().forEach((tenant) => assert.isTrue(tenant.is_active))
+    result.all().forEach((tenant: any) => assert.isTrue(tenant.is_active))
   })
 
   test('listWithFilters filters by plan', async ({ assert }) => {
@@ -101,7 +102,7 @@ test.group('TenantsRepository', (group) => {
     const result = await repository.listWithFilters({ plan: 'pro', page: 1, limit: 10 })
 
     assert.lengthOf(result.all(), 2)
-    result.all().forEach((tenant) => assert.equal(tenant.plan, 'pro'))
+    result.all().forEach((tenant: any) => assert.equal(tenant.plan, 'pro'))
   })
 
   test('listWithFilters searches by name/subdomain', async ({ assert }) => {
@@ -116,34 +117,36 @@ test.group('TenantsRepository', (group) => {
   })
 
   test('findByUserId returns tenants for user', async ({ assert }) => {
-    const user = await UserFactory.create()
-    const tenant1 = await TenantFactory.create()
-    const tenant2 = await TenantFactory.create()
-    const tenant3 = await TenantFactory.create()
+    await withTenantContext(async () => {
+      const user = await UserFactory.create()
+      const tenant1 = await TenantFactory.create()
+      const tenant2 = await TenantFactory.create()
+      const tenant3 = await TenantFactory.create()
 
-    await TenantUserFactory.merge({
-      tenant_id: tenant1.id,
-      user_id: user.id,
-      is_active: true,
-    }).create()
-    await TenantUserFactory.merge({
-      tenant_id: tenant2.id,
-      user_id: user.id,
-      is_active: true,
-    }).create()
-    await TenantUserFactory.merge({
-      tenant_id: tenant3.id,
-      user_id: user.id,
-      is_active: false,
-    }).create()
+      await TenantUserFactory.merge({
+        tenant_id: tenant1.id,
+        user_id: user.id,
+        is_active: true,
+      }).create()
+      await TenantUserFactory.merge({
+        tenant_id: tenant2.id,
+        user_id: user.id,
+        is_active: true,
+      }).create()
+      await TenantUserFactory.merge({
+        tenant_id: tenant3.id,
+        user_id: user.id,
+        is_active: false,
+      }).create()
 
-    const repository = await app.container.make(TenantsRepository)
-    const result = await repository.findByUserId(user.id)
+      const repository = await app.container.make(TenantsRepository)
+      const result = await repository.findByUserId(user.id)
 
-    assert.lengthOf(result, 2)
-    assert.includeMembers(
-      result.map((t) => t.id),
-      [tenant1.id, tenant2.id]
-    )
+      assert.lengthOf(result, 2)
+      assert.includeMembers(
+        result.map((t: any) => t.id),
+        [tenant1.id, tenant2.id]
+      )
+    })
   })
 })

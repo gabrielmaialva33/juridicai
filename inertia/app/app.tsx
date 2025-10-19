@@ -2,8 +2,9 @@ import '../styles/app.css'
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
-import { ThemeProvider } from '@/providers/theme-provider'
-import { QueryProvider } from '@/providers/query-provider'
+
+import { ThemeProvider } from '~/providers/theme-provider'
+import { QueryProvider } from '~/providers/query-provider'
 
 const appName = import.meta.env.VITE_APP_NAME || 'JuridicAI'
 

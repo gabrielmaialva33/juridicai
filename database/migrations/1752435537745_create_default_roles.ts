@@ -1,17 +1,33 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
-import app from '@adonisjs/core/services/app'
-
-import CreateDefaultRolesService from '#services/roles/create_default_roles_service'
+import { DEFAULT_ROLES } from '#defaults/roles'
 
 export default class extends BaseSchema {
   async up() {
-    const service = await app.container.make(CreateDefaultRolesService)
-    const trx = await this.db.transaction()
-    await service.run(trx)
-    await trx.commit()
+    // Get system tenant
+    const systemTenant = await this.db.from('tenants').where('subdomain', 'system').first()
+
+    if (!systemTenant) {
+      throw new Error(
+        'System tenant not found. Make sure create_system_tenant migration runs first.'
+      )
+    }
+
+    // Insert default roles
+    const now = this.now()
+    for (const role of DEFAULT_ROLES) {
+      await this.db.table('roles').insert({
+        ...role,
+        tenant_id: systemTenant.id,
+        created_at: now,
+        updated_at: now,
+      })
+    }
   }
 
   async down() {
-    await this.db.from('roles').delete()
+    const systemTenant = await this.db.from('tenants').where('subdomain', 'system').first()
+    if (systemTenant) {
+      await this.db.from('roles').where('tenant_id', systemTenant.id).delete()
+    }
   }
 }

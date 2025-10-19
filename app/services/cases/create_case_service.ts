@@ -46,7 +46,7 @@ export default class CreateCaseService {
     const data = { ...payload }
 
     if (payload.filed_at) {
-      (data as any).filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
+      ;(data as any).filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
     }
 
     // Set default status if not provided

@@ -41,14 +41,15 @@ test.group('Client-Case Workflow', (group) => {
     const client = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({
-          client_type: 'individual',
-          full_name: 'Maria Santos',
-          cpf: '123.456.789-00',
-          phone: '(11) 98765-4321',
-          email: 'maria.santos@email.com',
-          is_active: true,
-        }).create()
+        return await ClientFactory.apply('withVisibleId')
+          .merge({
+            full_name: 'Maria Santos',
+            cpf: '123.456.789-00',
+            phone: '(11) 98765-4321',
+            email: 'maria.santos@email.com',
+            is_active: true,
+          })
+          .create()
       }
     )
 
@@ -239,7 +240,9 @@ test.group('Client-Case Workflow', (group) => {
     const mainClient = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({ full_name: 'Main Client' }).create()
+        return await ClientFactory.apply('withVisibleId')
+          .merge({ full_name: 'Main Client' })
+          .create()
       }
     )
 
@@ -247,7 +250,7 @@ test.group('Client-Case Workflow', (group) => {
     const client2 = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        return await ClientFactory.merge({ full_name: 'Client 2' }).create()
+        return await ClientFactory.apply('withVisibleId').merge({ full_name: 'Client 2' }).create()
       }
     )
 
@@ -305,7 +308,7 @@ test.group('Client-Case Workflow', (group) => {
     const deadline = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: lawyer.id,
@@ -346,7 +349,7 @@ test.group('Client-Case Workflow', (group) => {
     const { document1, document2 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: lawyer.id, tenant_user: null },
       async () => {
-        const client = await ClientFactory.create()
+        const client = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: client.id,
           responsible_lawyer_id: lawyer.id,

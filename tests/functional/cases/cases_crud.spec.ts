@@ -21,7 +21,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
         await CaseFactory.merge({
           status: 'active',
           client_id: clientRecord.id,
@@ -53,7 +53,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
 
         await CaseFactory.merge({
           case_number: '1234567-89.2024.8.26.0100',
@@ -105,8 +105,8 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const client1 = await ClientFactory.create()
-        const client2 = await ClientFactory.create()
+        const client1 = await ClientFactory.apply('withVisibleId').create()
+        const client2 = await ClientFactory.apply('withVisibleId').create()
 
         targetClientId = client1.id
 
@@ -144,7 +144,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
 
         await CaseFactory.merge({
           status: 'active',
@@ -247,7 +247,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
         clientId = clientRecord.id
       }
     )
@@ -456,7 +456,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
         clientId = clientRecord.id
       }
     )
@@ -495,7 +495,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
         clientId = clientRecord.id
       }
     )
@@ -570,7 +570,7 @@ test.group('Cases CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientRecord = await ClientFactory.create()
+        const clientRecord = await ClientFactory.apply('withVisibleId').create()
         clientId = clientRecord.id
       }
     )

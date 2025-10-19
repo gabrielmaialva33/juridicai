@@ -40,29 +40,6 @@ export interface TenantScopeOptions {
 }
 
 /**
- * Type for models that have tenant scope
- */
-type TenantScopedRow = {
-  tenant_id: string
-  ensureTenantContext(): void
-  belongsToTenant(tenantId: string): boolean
-}
-
-/**
- * Type for the tenant-scoped model class
- */
-type TenantScopedModel<
-  Model extends NormalizeConstructor<typeof BaseModel> = NormalizeConstructor<typeof BaseModel>,
-> = Model & {
-  forTenant(tenantId: string): ReturnType<Model['query']>
-  withoutTenantScope(): ReturnType<Model['query']>
-  currentTenant(): ReturnType<Model['query']>
-  crossTenant(): ReturnType<Model['query']>
-  tenantColumn: string
-  new (...args: any[]): TenantScopedRow
-}
-
-/**
  * Advanced Tenant Scope Mixin for AdonisJS v6 (2025 Edition)
  *
  * Features:
@@ -108,9 +85,7 @@ export function withTenantScope(options: TenantScopeOptions = {}) {
     ...options,
   }
 
-  return <Model extends NormalizeConstructor<typeof BaseModel>>(
-    superclass: Model
-  ): TenantScopedModel<Model> => {
+  return <Model extends NormalizeConstructor<typeof BaseModel>>(superclass: Model) => {
     class TenantScopedModelClass extends superclass {
       /**
        * The tenant column name for this model

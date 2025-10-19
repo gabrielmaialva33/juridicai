@@ -2,9 +2,9 @@ import { DateTime } from 'luxon'
 import {
   BaseModel,
   column,
+  computed,
   hasMany,
   scope,
-  computed,
   SnakeCaseNamingStrategy,
 } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
@@ -70,8 +70,7 @@ export default class Client extends compose(BaseModel, TenantScoped) {
 
   @column({
     prepare: (value: ClientAddress | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) =>
-      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
+    consume: (value: string | null) => (value ? (true ? JSON.parse(value) : value) : null),
   })
   declare address: ClientAddress | null
 
@@ -92,8 +91,7 @@ export default class Client extends compose(BaseModel, TenantScoped) {
 
   @column({
     prepare: (value: Record<string, any> | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) =>
-      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
   })
   declare custom_fields: Record<string, any> | null
 

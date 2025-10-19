@@ -36,11 +36,11 @@ export default class UpdateCaseService {
     const data = { ...payload }
 
     if (payload.filed_at) {
-      (data as any).filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
+      ;(data as any).filed_at = DateTime.fromJSDate(new Date(payload.filed_at))
     }
 
     if (payload.closed_at) {
-      (data as any).closed_at = DateTime.fromJSDate(new Date(payload.closed_at))
+      ;(data as any).closed_at = DateTime.fromJSDate(new Date(payload.closed_at))
     }
 
     caseInstance.merge(data as any)

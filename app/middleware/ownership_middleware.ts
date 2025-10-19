@@ -111,7 +111,7 @@ export default class OwnershipMiddleware {
 
       // Add ownership info to context for use in controllers
       ;(ctx as any).ownershipLevel = ownershipLevel
-      ;(ctx as any).resourceId = resourceId;
+      ;(ctx as any).resourceId = resourceId
 
       await next()
     } catch (error) {

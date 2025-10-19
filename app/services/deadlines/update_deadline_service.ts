@@ -34,17 +34,17 @@ export default class UpdateDeadlineService {
     const updateData = { ...payload }
 
     if (payload.deadline_date) {
-      (updateData as any).deadline_date = DateTime.fromJSDate(new Date(payload.deadline_date))
+      ;(updateData as any).deadline_date = DateTime.fromJSDate(new Date(payload.deadline_date))
     }
 
     if (payload.internal_deadline_date) {
-      (updateData as any).internal_deadline_date = DateTime.fromJSDate(
+      ;(updateData as any).internal_deadline_date = DateTime.fromJSDate(
         new Date(payload.internal_deadline_date)
       )
     }
 
     if (payload.completed_at) {
-      (updateData as any).completed_at = DateTime.fromJSDate(new Date(payload.completed_at))
+      ;(updateData as any).completed_at = DateTime.fromJSDate(new Date(payload.completed_at))
     }
 
     deadline.merge(updateData as any)

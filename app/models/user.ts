@@ -20,17 +20,20 @@ import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
-import Role from '#models/role'
-import Permission from '#models/permission'
-import TenantUser from '#models/tenant_user'
+import type Role from '#models/role'
+import type Permission from '#models/permission'
+import type TenantUser from '#models/tenant_user'
 import IRole from '#interfaces/role_interface'
+import { withTenantScope } from '#mixins/with_tenant_scope'
 
 const AuthFinder = withAuthFinder(() => hash.use('argon'), {
   uids: ['email', 'username'],
   passwordColumnName: 'password',
 })
 
-export default class User extends compose(BaseModel, AuthFinder) {
+const TenantScoped = withTenantScope()
+
+export default class User extends compose(BaseModel, AuthFinder, TenantScoped) {
   static accessTokens = DbAccessTokensProvider.forModel(User)
   static refreshTokens = DbAccessTokensProvider.forModel(User, {
     type: 'refresh_token',

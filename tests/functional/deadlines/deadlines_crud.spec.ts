@@ -23,7 +23,7 @@ test.group('Deadlines CRUD', (group) => {
     const { caseModel } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -67,7 +67,7 @@ test.group('Deadlines CRUD', (group) => {
     const { case1 } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
 
         const createdCase1 = await CaseFactory.merge({
           client_id: clientModel.id,
@@ -117,7 +117,7 @@ test.group('Deadlines CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -163,7 +163,7 @@ test.group('Deadlines CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -208,7 +208,7 @@ test.group('Deadlines CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -263,7 +263,7 @@ test.group('Deadlines CRUD', (group) => {
     await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -314,7 +314,7 @@ test.group('Deadlines CRUD', (group) => {
     const { deadline } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -369,7 +369,7 @@ test.group('Deadlines CRUD', (group) => {
     const { caseModel } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const createdCase = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -457,7 +457,7 @@ test.group('Deadlines CRUD', (group) => {
     const { deadline } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -511,7 +511,7 @@ test.group('Deadlines CRUD', (group) => {
     const { deadline } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -552,7 +552,7 @@ test.group('Deadlines CRUD', (group) => {
     const { deadline } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
@@ -605,7 +605,7 @@ test.group('Deadlines CRUD', (group) => {
     const { deadline } = await TenantContextService.run(
       { tenant_id: tenant.id, tenant, user_id: null, tenant_user: null },
       async () => {
-        const clientModel = await ClientFactory.create()
+        const clientModel = await ClientFactory.apply('withVisibleId').create()
         const caseModel = await CaseFactory.merge({
           client_id: clientModel.id,
           responsible_lawyer_id: user.id,
