@@ -91,10 +91,10 @@ function formatDate(dateString: string): string {
 export function RecentClients({ clients = defaultClients }: RecentClientsProps) {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="py-4">
         <CardHeading>
           <div>
-            <CardTitle>Clientes Recentes</CardTitle>
+            <CardTitle className="mb-1">Clientes Recentes</CardTitle>
             <CardDescription>Últimos clientes adicionados ao sistema</CardDescription>
           </div>
         </CardHeading>

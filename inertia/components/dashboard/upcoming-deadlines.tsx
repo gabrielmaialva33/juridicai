@@ -130,10 +130,10 @@ function formatDate(dateString: string): string {
 export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDeadlinesProps) {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="py-4">
         <CardHeading>
           <div>
-            <CardTitle>Próximos Prazos</CardTitle>
+            <CardTitle className="mb-1">Próximos Prazos</CardTitle>
             <CardDescription>Prazos com vencimento nos próximos dias</CardDescription>
           </div>
         </CardHeading>
