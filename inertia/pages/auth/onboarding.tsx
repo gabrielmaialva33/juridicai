@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -124,23 +124,26 @@ export default function Onboarding() {
             {/* Glow effect on border */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/40 via-transparent to-white/20 pointer-events-none" />
 
-            {/* Content wrapper */}
-            <div className="relative z-10">
+            {/* Content wrapper with unified padding */}
+            <div className="relative z-10 p-10">
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Step 1: Welcome */}
               {step === 1 && (
-                <>
-                  <CardHeader className="space-y-4 pb-8">
-                    <CardTitle className="text-3xl font-bold text-[#434343]">
+                <div className="space-y-8">
+                  {/* Header integrado */}
+                  <div className="space-y-3">
+                    <h2 className="text-3xl font-bold text-[#434343]">
                       Bem-vindo ao JuridicAI
-                    </CardTitle>
-                    <CardDescription className="text-base text-[#6E6E6E]">
+                    </h2>
+                    <p className="text-base text-[#6E6E6E]">
                       Vamos configurar seu perfil em apenas alguns passos
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    {/* Info Card - Enhanced Liquid Glass Effect */}
-                    <div className="rounded-[20px] bg-white/70 backdrop-blur-2xl border-2 border-white/60 p-8 shadow-xl shadow-black/10">
+                    </p>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-8">
+                    {/* Info List - Direct */}
+                    <div>
                       <p className="font-bold text-[#434343] mb-6">O que você vai configurar:</p>
                       <ul className="space-y-4 text-[#434343]">
                         <li className="flex items-start gap-4">
@@ -168,22 +171,25 @@ export default function Onboarding() {
                         Começar
                       </Button>
                     </div>
-                  </CardContent>
-                </>
+                  </div>
+                </div>
               )}
 
               {/* Step 2: Firm Details */}
               {step === 2 && (
-                <>
-                  <CardHeader className="space-y-4 pb-8">
-                    <CardTitle className="text-3xl font-bold text-[#434343]">
+                <div className="space-y-8">
+                  {/* Header integrado */}
+                  <div className="space-y-3">
+                    <h2 className="text-3xl font-bold text-[#434343]">
                       Dados do Escritório
-                    </CardTitle>
-                    <CardDescription className="text-base text-[#6E6E6E]">
+                    </h2>
+                    <p className="text-base text-[#6E6E6E]">
                       Informe os dados básicos do seu escritório
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
+                    </p>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-8">
                     <div className="space-y-6">
                       <div className="space-y-2.5">
                         <Label htmlFor="firmName" className="text-sm font-medium text-[#434343]">
@@ -246,22 +252,25 @@ export default function Onboarding() {
                         Próximo
                       </Button>
                     </div>
-                  </CardContent>
-                </>
+                  </div>
+                </div>
               )}
 
               {/* Step 3: Practice Areas */}
               {step === 3 && (
-                <>
-                  <CardHeader className="space-y-4 pb-8">
-                    <CardTitle className="text-3xl font-bold text-[#434343]">
+                <div className="space-y-8">
+                  {/* Header integrado */}
+                  <div className="space-y-3">
+                    <h2 className="text-3xl font-bold text-[#434343]">
                       Áreas de Atuação
-                    </CardTitle>
-                    <CardDescription className="text-base text-[#6E6E6E]">
+                    </h2>
+                    <p className="text-base text-[#6E6E6E]">
                       Selecione as áreas em que seu escritório atua
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
+                    </p>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-8">
                     <div className="grid grid-cols-2 gap-4">
                       {PRACTICE_AREAS.map((area) => {
                         const isSelected = selectedAreas.includes(area)
@@ -330,8 +339,8 @@ export default function Onboarding() {
                         Concluir Configuração
                       </Button>
                     </div>
-                  </CardContent>
-                </>
+                  </div>
+                </div>
               )}
             </form>
             </div>
