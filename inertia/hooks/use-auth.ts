@@ -57,7 +57,7 @@ export function useAuth() {
 
       // Redirect to onboarding or dashboard
       // Backend already set JWT cookies, just redirect
-      if (data.metadata?.email_verified === false) {
+      if (data.is_new_user) {
         router.visit('/onboarding')
       } else {
         router.visit('/dashboard')

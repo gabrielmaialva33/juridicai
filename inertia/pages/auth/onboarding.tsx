@@ -58,10 +58,35 @@ export default function Onboarding() {
     setValue('practiceAreas', newAreas)
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
   const onSubmit = async (data: OnboardingFormData) => {
-    // Send onboarding data to backend
-    // For now, just redirect to dashboard
-    router.visit('/dashboard')
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const response = await fetch('/api/v1/user/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.message || 'Falha ao salvar configurações')
+      }
+
+      // Success - redirect to dashboard
+      router.visit('/dashboard')
+    } catch (error: any) {
+      console.error('Onboarding error:', error)
+      setSubmitError(error.message || 'Erro ao salvar configurações. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const totalSteps = 3
@@ -303,22 +328,30 @@ export default function Onboarding() {
                       </p>
                     )}
 
+                    {submitError && (
+                      <div className="rounded-[12px] bg-destructive/10 border border-destructive/20 p-4 backdrop-blur-md">
+                        <p className="text-sm text-destructive">{submitError}</p>
+                      </div>
+                    )}
+
                     <div className="flex justify-between gap-3 pt-2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setStep(2)}
                         size="lg"
-                        className="rounded-[12px] border-2 border-white/60 bg-white/70 backdrop-blur-xl hover:border-[#434343] hover:bg-white/90 text-[#434343] transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-[#434343]/10 hover:scale-[1.02]"
+                        disabled={isSubmitting}
+                        className="rounded-[12px] border-2 border-white/60 bg-white/70 backdrop-blur-xl hover:border-[#434343] hover:bg-white/90 text-[#434343] transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-[#434343]/10 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Voltar
                       </Button>
                       <Button
                         type="submit"
                         size="lg"
-                        className="rounded-[12px] bg-[#434343] hover:bg-[#6E6E6E] text-white transition-all shadow-lg shadow-[#434343]/20 hover:shadow-xl hover:shadow-[#434343]/30 hover:scale-[1.02]"
+                        disabled={isSubmitting}
+                        className="rounded-[12px] bg-[#434343] hover:bg-[#6E6E6E] text-white transition-all shadow-lg shadow-[#434343]/20 hover:shadow-xl hover:shadow-[#434343]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Concluir Configuração
+                        {isSubmitting ? 'Salvando...' : 'Concluir Configuração'}
                       </Button>
                     </div>
                   </div>

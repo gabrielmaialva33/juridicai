@@ -19,6 +19,7 @@ interface GoogleSignInPayload {
 
 type GoogleSignInResponse = User & {
   auth: GenerateAuthTokensResponse
+  is_new_user: boolean
 }
 
 @inject()
@@ -32,6 +33,7 @@ export default class GoogleSignInService {
 
   async run({ idToken }: GoogleSignInPayload): Promise<GoogleSignInResponse> {
     const ctx = HttpContext.getOrFail()
+    let isNewUser = false
 
     // 1. Verify Firebase ID token
     const decodedToken = await firebaseService.verifyIdToken(idToken)
@@ -55,6 +57,7 @@ export default class GoogleSignInService {
 
     // 3. Create new user if doesn't exist
     if (!user) {
+      isNewUser = true
       const fullName = name || email.split('@')[0] || 'User'
 
       // Create tenant FIRST (user needs tenant_id due to TenantScoped mixin)
@@ -114,7 +117,7 @@ export default class GoogleSignInService {
         AuthEventService.emitLoginSucceeded(user, 'oauth', isAdmin, ctx)
 
         const userJson = user.toJSON()
-        return { ...userJson, auth } as GoogleSignInResponse
+        return { ...userJson, auth, is_new_user: isNewUser } as GoogleSignInResponse
       }
     )
 
