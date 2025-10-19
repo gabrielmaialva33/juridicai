@@ -110,7 +110,7 @@ export function RecentClients({ clients = defaultClients }: RecentClientsProps) 
       <CardContent className="p-0">
         <div className="space-y-0">
           {clients.map((client, index) => (
-            <div key={client.id} className={cn("p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 transition-all duration-300", {
+            <div key={client.id} className={cn("p-5 bg-gradient-to-r from-primary/8 via-primary/5 to-primary/3 backdrop-blur-xl hover:from-primary/12 hover:via-primary/8 hover:to-primary/5 hover:backdrop-blur-2xl hover:scale-[1.01] transition-all duration-300 ease-out", {
               "rounded-t-xl": index === 0,
               "rounded-b-xl": index === clients.length - 1
             })}>

@@ -42,11 +42,11 @@ export function DeadlinesChart({ data = defaultData }: DeadlinesChartProps) {
 
   return (
     <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
-      <CardHeader>
-        <CardHeading>
-          <div>
-            <CardTitle>Prazos da Semana</CardTitle>
-            <CardDescription>Distribuição de prazos nos próximos 7 dias</CardDescription>
+      <CardHeader className="py-4">
+        <CardHeading className="min-w-0 flex-1">
+          <div className="min-w-0">
+            <CardTitle className="mb-1">Prazos da Semana</CardTitle>
+            <CardDescription className="hidden sm:block">Distribuição de prazos nos próximos 7 dias</CardDescription>
           </div>
         </CardHeading>
       </CardHeader>

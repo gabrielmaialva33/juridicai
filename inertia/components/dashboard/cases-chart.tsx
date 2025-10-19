@@ -56,14 +56,14 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
 
   return (
     <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
-      <CardHeader>
-        <CardHeading>
-          <div>
-            <CardTitle>Processos</CardTitle>
-            <CardDescription>Abertura e finalização de processos ao longo do tempo</CardDescription>
+      <CardHeader className="py-4">
+        <CardHeading className="min-w-0 flex-1">
+          <div className="min-w-0">
+            <CardTitle className="mb-1">Processos</CardTitle>
+            <CardDescription className="hidden sm:block">Abertura e finalização de processos ao longo do tempo</CardDescription>
           </div>
         </CardHeading>
-        <CardToolbar>
+        <CardToolbar className="shrink-0">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[140px]" size="sm">
               <SelectValue placeholder="Selecione o período" />
