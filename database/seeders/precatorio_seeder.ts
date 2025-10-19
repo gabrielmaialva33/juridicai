@@ -53,6 +53,9 @@ export default class extends BaseSeeder {
     // Criar 3-5 escritórios especializados em precatórios
     const numEscritorios = 5 // Todos os 5 escritórios famosos
 
+    // Adicionar timestamp para garantir subdomains únicos em múltiplas execuções
+    const timestamp = Date.now().toString().slice(-6)
+
     for (let i = 0; i < numEscritorios; i++) {
       const escritorioData = ESCRITORIOS_FAMOSOS[i]
 
@@ -61,7 +64,7 @@ export default class extends BaseSeeder {
       // 1. Criar Tenant (Escritório)
       const tenant = await TenantFactory.merge({
         name: escritorioData.name,
-        subdomain: escritorioData.subdomain,
+        subdomain: `${escritorioData.subdomain}-${timestamp}`,
         plan: escritorioData.plan,
         is_active: true,
       }).create()
@@ -279,14 +282,14 @@ export default class extends BaseSeeder {
     logger.info('🎯 Escritórios criados:')
     ESCRITORIOS_FAMOSOS.forEach((esc, idx) => {
       if (idx < numEscritorios) {
-        logger.info(`   ${idx + 1}. ${esc.name} (${esc.subdomain})`)
+        logger.info(`   ${idx + 1}. ${esc.name} (${esc.subdomain}-${timestamp})`)
         logger.info(`      Especialidades: ${esc.especialidades.join(', ')}`)
       }
     })
     logger.info('')
     logger.info('💡 Para testar, acesse:')
-    logger.info(`   http://corino-adv.localhost:3333`)
-    logger.info(`   http://sandoval-adv.localhost:3333`)
+    logger.info(`   http://corino-adv-${timestamp}.localhost:3333`)
+    logger.info(`   http://sandoval-adv-${timestamp}.localhost:3333`)
     logger.info('')
   }
 }
