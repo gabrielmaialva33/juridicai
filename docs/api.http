@@ -751,3 +751,21 @@ X-Tenant-ID: {{tenantId}}
 #
 # Prioridades:
 # - low, medium, high, urgent
+
+###############################################################################
+### ⚖️ EXTERNAL API - DATAJUD (CNJ)
+###############################################################################
+
+### Search for a lawsuit by its number
+# @name searchProcess
+GET https://api-publica.datajud.cnj.jus.br/api_publica_trf1/_search
+Content-Type: application/json
+Authorization: APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==
+
+{
+  "query": {
+    "match": {
+      "numeroProcesso": "00008323520184013202"
+    }
+  }
+}

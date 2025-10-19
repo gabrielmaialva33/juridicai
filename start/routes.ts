@@ -46,3 +46,6 @@ router
 router.get('/', async ({ response }) => {
   return response.redirect('/dashboard')
 })
+
+router.post('/api/v1/external/datajud/search', ['/app/controllers/external/datajud_controller', 'search'])
+

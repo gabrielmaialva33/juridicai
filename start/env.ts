@@ -168,4 +168,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   FIREBASE_PROJECT_ID: Env.schema.string.optional(),
   FIREBASE_CLIENT_EMAIL: Env.schema.string.optional(),
   FIREBASE_PRIVATE_KEY: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring Datajud API integration
+  |----------------------------------------------------------
+  */
+  DATAJUD_API_KEY: Env.schema.string(),
+  DATAJUD_BASE_URL: Env.schema.string(),
 })

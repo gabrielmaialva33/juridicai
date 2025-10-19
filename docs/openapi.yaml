@@ -102,7 +102,9 @@ x-tagGroups:
   - name: ⚖️ Gestão Jurídica - Eventos
     tags:
       - Case Events
-
+  - name: 🌐 APIs Externas
+    tags:
+      - External APIs
 tags:
   - name: Health
     description: Verificação de saúde do sistema
@@ -124,6 +126,8 @@ tags:
     description: Gerenciamento de documentos e arquivos processuais
   - name: Case Events
     description: Gerenciamento de eventos e movimentações processuais
+  - name: External APIs
+    description: Integração com APIs externas
 
 paths:
   /api/v1/health:
@@ -1998,6 +2002,76 @@ components:
             total:
               type: integer
               example: 100
+
+    DatajudSearchRequest:
+      type: object
+      properties:
+        numeroProcesso:
+          type: string
+          example: "00008323520184013202"
+
+    DatajudSearchResponse:
+      type: object
+      properties:
+        hits:
+          type: object
+          properties:
+            hits:
+              type: array
+              items:
+                type: object
+                properties:
+                  _source:
+                    type: object
+                    properties:
+                      numeroProcesso:
+                        type: string
+                      classe:
+                        type: object
+                        properties:
+                          codigo:
+                            type: integer
+                          nome:
+                            type: string
+                      sistema:
+                        type: object
+                        properties:
+                          codigo:
+                            type: integer
+                          nome:
+                            type: string
+                      tribunal:
+                        type: string
+
+  /api/v1/external/datajud/search:
+    post:
+      operationId: searchDatajud
+      tags:
+        - External APIs
+      summary: Consultar processo no Datajud
+      description: |
+        Consulta um processo na API pública do Datajud (CNJ).
+
+        **API Externa**: Este endpoint é um proxy para a API do Datajud.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatajudSearchRequest'
+      responses:
+        '200':
+          description: Processo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatajudSearchResponse'
+        '404':
+          description: Processo não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
             per_page:
               type: integer
               example: 20
