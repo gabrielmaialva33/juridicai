@@ -8,5 +8,7 @@ router
     router.post('/sign-in', [SessionsController, 'signIn']).as('session.signIn').use(authThrottle)
 
     router.post('/sign-up', [SessionsController, 'signUp']).as('session.signUp').use(authThrottle)
+
+    router.post('/sign-out', [SessionsController, 'signOut']).as('session.signOut')
   })
   .prefix('/api/v1/sessions')

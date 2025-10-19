@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import AuthEventService from '#services/auth_events/auth_event_service'
+import AuthEventService from '#services/users/auth_event_service'
 
 /**
  * Service responsible for handling user sign-out

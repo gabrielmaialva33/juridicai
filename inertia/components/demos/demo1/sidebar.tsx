@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { Link, usePage, router } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
 import { LogOut, Settings, User as UserIcon } from 'lucide-react'
 import { Logo } from '@/components/layout/common/logo'
 import { MENU_SIDEBAR, MenuItem, MenuConfig } from '@/config/menu'
@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/hooks/use-auth'
 
 /**
  * Demo1 Sidebar Component
@@ -37,6 +38,7 @@ import {
 export function Demo1Sidebar() {
   const { url } = usePage()
   const pathname = url
+  const { signOut } = useAuth()
 
   // Mock user data - TODO: Get from auth context
   const userName = 'Gabriel Maia'
@@ -49,7 +51,7 @@ export function Demo1Sidebar() {
     .slice(0, 2)
 
   const handleLogout = () => {
-    router.post('/logout')
+    signOut()
   }
 
   // Check if path matches current route

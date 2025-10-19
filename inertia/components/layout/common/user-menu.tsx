@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react'
+import { Link } from '@inertiajs/react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useAuth } from '@/hooks/use-auth'
 
 interface UserMenuProps {
   userName?: string
@@ -16,6 +17,8 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ userName = 'Usuário', userEmail }: UserMenuProps) {
+  const { signOut } = useAuth()
+
   const initials = userName
     .split(' ')
     .map((n) => n[0])
@@ -24,7 +27,7 @@ export function UserMenu({ userName = 'Usuário', userEmail }: UserMenuProps) {
     .slice(0, 2)
 
   const handleLogout = () => {
-    router.post('/logout')
+    signOut()
   }
 
   return (

@@ -1901,7 +1901,16 @@ components:
     Parties:
       type: [object, "null"]
       properties:
+        autor:
+          type: object
+          properties:
+            name:
+              type: string
             cpf:
+              type: [string, "null"]
+            cnpj:
+              type: [string, "null"]
+            email:
               type: [string, "null"]
             phone:
               type: [string, "null"]
