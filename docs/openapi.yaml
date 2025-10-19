@@ -1747,8 +1747,7 @@ components:
         case_id:
           type: ["integer", "null"]
         client_id:
-          type: integer
-          nullable: true
+          type: ["integer", "null"]
         uploaded_by:
           type: integer
           example: 1
