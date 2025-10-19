@@ -108,6 +108,11 @@ export default class extends BaseSeeder {
           tenant_user: null,
         },
         async () => {
+          // Contadores locais para este escritório
+          let localDeadlines = 0
+          let localDocuments = 0
+          let localEvents = 0
+
           // 4. Criar 5-10 processos de precatórios por escritório
           const numCases = i === 0 ? 10 : i === 1 ? 7 : 5 // Variação por escritório
           const tiposPrecatorio = Object.keys(TIPOS_PRECATORIO) as Array<
@@ -160,6 +165,7 @@ export default class extends BaseSeeder {
                 is_fatal: d % 2 === 0, // Metade são fatais
               }).create()
               totalDeadlines++
+              localDeadlines++
             }
 
             // 4d. Criar Documentos (5-8 por processo)
@@ -168,31 +174,36 @@ export default class extends BaseSeeder {
               const docData =
                 DOCUMENTOS_PRECATORIO[doc % DOCUMENTOS_PRECATORIO.length]
 
+              const filename = `${docData.title.toLowerCase().replace(/\s+/g, '-')}.pdf`
+
               await DocumentFactory.merge({
                 case_id: caso.id,
-                uploaded_by_id: lawyer.id,
+                uploaded_by: lawyer.id,
                 title: docData.title,
                 description: docData.description,
                 document_type: docData.type,
                 access_level: 'case_team',
-                file_name: `${docData.title.toLowerCase().replace(/\s+/g, '-')}.pdf`,
+                file_path: `/documents/${caso.id}/${filename}`,
+                original_filename: filename,
                 mime_type: 'application/pdf',
-                size_bytes: 150000 + doc * 50000, // 150KB - 500KB
+                file_size: 150000 + doc * 50000, // 150KB - 500KB
               }).create()
               totalDocuments++
+              localDocuments++
             }
 
             // 4e. Criar Eventos Processuais (timeline completa)
             for (const eventoConfig of EVENTOS_PRECATORIO) {
               await CaseEventFactory.merge({
                 case_id: caso.id,
-                created_by_id: lawyer.id,
+                created_by: lawyer.id,
                 event_type: eventoConfig.type,
                 description: eventoConfig.description,
                 event_date: DateTime.now().plus({ days: eventoConfig.prazo_medio_dias }),
                 source: 'manual',
               }).create()
               totalEvents++
+              localEvents++
             }
 
             // 4f. Criar Time Entries (honorários)
@@ -211,7 +222,7 @@ export default class extends BaseSeeder {
                 ][te] || 'Trabalho geral no processo',
                 duration_minutes: 60 + te * 30, // 1h a 2.5h
                 hourly_rate: 300 + i * 50, // R$ 300-550/h dependendo do escritório
-                is_billable: true,
+                billable: true,
               }).create()
             }
           }
@@ -253,8 +264,9 @@ export default class extends BaseSeeder {
 
           logger.info(`   ✅ ${numCases} processos criados`)
           logger.info(`   ✅ ${numCases} clientes criados`)
-          logger.info(`   ✅ ${numDeadlines} deadlines criados`)
-          logger.info(`   ✅ ${totalDocuments - (totalDocuments - numCases * 5)} documentos criados`)
+          logger.info(`   ✅ ${localDeadlines} deadlines criados`)
+          logger.info(`   ✅ ${localDocuments} documentos criados`)
+          logger.info(`   ✅ ${localEvents} eventos processuais criados`)
           logger.info(`   ✅ ${numAIQueries} AI queries criadas`)
           logger.info('')
         }

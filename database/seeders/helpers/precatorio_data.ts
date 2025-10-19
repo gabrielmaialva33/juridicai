@@ -24,7 +24,7 @@ export const ESCRITORIOS_FAMOSOS = [
   {
     name: 'Sandoval Filho Advocacia',
     subdomain: 'sandoval-adv',
-    plan: 'professional' as const,
+    plan: 'pro' as const,
     description: 'Especializado em precatórios de servidores públicos e INSS',
     faturamento_anual: 15_000_000,
     especialidades: ['servidores_publicos', 'inss', 'previdenciario'],
@@ -37,7 +37,7 @@ export const ESCRITORIOS_FAMOSOS = [
   {
     name: 'Garrastazu & Associados',
     subdomain: 'garrastazu-adv',
-    plan: 'professional' as const,
+    plan: 'pro' as const,
     description: 'Negociação extrajudicial de precatórios para evitar longas esperas',
     faturamento_anual: 12_000_000,
     especialidades: ['negociacao_extrajudicial', 'mediacao', 'desapropriacoes'],
@@ -50,7 +50,7 @@ export const ESCRITORIOS_FAMOSOS = [
   {
     name: 'Taborda & Associados',
     subdomain: 'taborda-adv',
-    plan: 'professional' as const,
+    plan: 'pro' as const,
     description: 'Precatórios estaduais e municipais com foco em SP',
     faturamento_anual: 8_000_000,
     especialidades: ['estaduais', 'municipais', 'servidores'],

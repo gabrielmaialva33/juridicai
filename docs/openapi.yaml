@@ -1509,8 +1509,7 @@ components:
           format: email
           example: advogado@escritorio.com.br
         username:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: joao.silva
         created_at:
           type: string
@@ -1533,8 +1532,7 @@ components:
           type: string
           example: silva-associados
         custom_domain:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: advocacia.silva.com.br
         plan:
           type: string
@@ -1544,8 +1542,7 @@ components:
           type: boolean
           example: true
         limits:
-          type: object
-          nullable: true
+          type: [object, "null"]
           properties:
             max_users:
               type: integer
@@ -1554,9 +1551,8 @@ components:
             max_storage_gb:
               type: integer
         trial_ends_at:
-          type: string
+          type: ["string", "null"]
           format: date-time
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -1578,44 +1574,30 @@ components:
           enum: [individual, company]
           example: individual
         full_name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: João da Silva
         cpf:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: 123.456.789-09
         company_name:
-          type: string
-          nullable: true
+          type: [string, "null"]
         cnpj:
-          type: string
-          nullable: true
+          type: [string, "null"]
         email:
-          type: string
+          type: [string, "null"]
           format: email
-          nullable: true
           example: joao@email.com
         phone:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: (11) 98765-4321
-        address:
-          $ref: '#/components/schemas/Address'
         tags:
-          type: array
+          type: [array, "null"]
           items:
             type: string
-          nullable: true
-        is_active:
-          type: boolean
-          example: true
         custom_fields:
-          type: object
-          nullable: true
+          type: [object, "null"]
         notes:
-          type: string
-          nullable: true
+          type: [string, "null"]
         created_at:
           type: string
           format: date-time
@@ -1636,24 +1618,20 @@ components:
           type: integer
           example: 1
         case_number:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: Número CNJ
           example: 0000001-23.2024.8.26.0100
         internal_number:
-          type: string
-          nullable: true
+          type: [string, "null"]
         case_type:
           type: string
           enum: [civil, criminal, labor, family, tax, administrative, other]
           example: civil
         court:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: TJ-SP
         court_instance:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: 1ª Instância
         status:
           type: string
@@ -1667,36 +1645,25 @@ components:
           type: integer
           example: 1
         team_members:
-          type: array
+          type: [array, "null"]
           items:
             type: integer
-          nullable: true
         filed_at:
-          type: string
+          type: ["string", "null"]
           format: date-time
-          nullable: true
         closed_at:
-          type: string
+          type: ["string", "null"]
           format: date-time
-          nullable: true
-        parties:
-          $ref: '#/components/schemas/Parties'
-        description:
-          type: string
-          nullable: true
         tags:
-          type: array
+          type: [array, "null"]
           items:
             type: string
-          nullable: true
         case_value:
-          type: number
+          type: ["number", "null"]
           format: decimal
-          nullable: true
           example: 50000.00
         custom_fields:
-          type: object
-          nullable: true
+          type: [object, "null"]
         created_at:
           type: string
           format: date-time
@@ -1723,16 +1690,14 @@ components:
           type: string
           example: Apresentar contestação
         description:
-          type: string
-          nullable: true
+          type: [string, "null"]
         deadline_date:
           type: string
           format: date-time
           example: '2025-02-15T23:59:59Z'
         internal_deadline_date:
-          type: string
+          type: ["string", "null"]
           format: date-time
-          nullable: true
         is_fatal:
           type: boolean
           example: true
@@ -1741,8 +1706,7 @@ components:
           enum: [pending, completed, expired, cancelled]
           example: pending
         alert_config:
-          type: object
-          nullable: true
+          type: [object, "null"]
           properties:
             days_before:
               type: array
@@ -1758,15 +1722,12 @@ components:
               items:
                 type: integer
         completed_at:
-          type: string
+          type: ["string", "null"]
           format: date-time
-          nullable: true
         completed_by:
-          type: integer
-          nullable: true
+          type: ["integer", "null"]
         completion_notes:
-          type: string
-          nullable: true
+          type: ["string", "null"]
         created_at:
           type: string
           format: date-time
@@ -1784,8 +1745,7 @@ components:
           type: string
           format: uuid
         case_id:
-          type: integer
-          nullable: true
+          type: ["integer", "null"]
         client_id:
           type: integer
           nullable: true
@@ -1908,8 +1868,7 @@ components:
           format: date-time
 
     Address:
-      type: object
-      nullable: true
+      type: [object, "null"]
       properties:
         street:
           type: string
@@ -1940,8 +1899,7 @@ components:
           example: Brasil
 
     Parties:
-      type: object
-      nullable: true
+      type: [object, "null"]
       properties:
         autor:
           type: object
@@ -2002,46 +1960,6 @@ components:
             total:
               type: integer
               example: 100
-
-    DatajudSearchRequest:
-      type: object
-      properties:
-        numeroProcesso:
-          type: string
-          example: "00008323520184013202"
-
-    DatajudSearchResponse:
-      type: object
-      properties:
-        hits:
-          type: object
-          properties:
-            hits:
-              type: array
-              items:
-                type: object
-                properties:
-                  _source:
-                    type: object
-                    properties:
-                      numeroProcesso:
-                        type: string
-                      classe:
-                        type: object
-                        properties:
-                          codigo:
-                            type: integer
-                          nome:
-                            type: string
-                      sistema:
-                        type: object
-                        properties:
-                          codigo:
-                            type: integer
-                          nome:
-                            type: string
-                      tribunal:
-                        type: string
 
   /api/v1/external/datajud/search:
     post:
