@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 
 import { useDeadlines, useUpcomingDeadlines } from '@/hooks/use-deadlines'
 import type { DeadlineFilters } from '@/types/api'
+import { DeadlineFormDialog } from '@/components/deadlines/deadline-form-dialog'
 
 // UI Components
 import { Button } from '@/components/ui/button'
@@ -47,6 +48,7 @@ function Deadlines() {
     page: 1,
     per_page: 10,
   })
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   const { data: deadlinesData, isLoading, error } = useDeadlines(filters)
   const { data: upcomingDeadlines } = useUpcomingDeadlines(7)
@@ -119,7 +121,7 @@ function Deadlines() {
               </p>
             </div>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="w-4 h-4" />
             Novo Prazo
           </Button>
@@ -324,6 +326,13 @@ function Deadlines() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create Dialog */}
+        <DeadlineFormDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          mode="create"
+        />
       </div>
     </>
   )
