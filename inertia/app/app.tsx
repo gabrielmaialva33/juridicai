@@ -2,6 +2,7 @@ import '../styles/app.css'
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
+import { Toaster } from 'sonner'
 
 import { ThemeProvider } from '~/providers/theme-provider'
 import { QueryProvider } from '~/providers/query-provider'
@@ -27,6 +28,7 @@ createInertiaApp({
         <ThemeProvider>
           <QueryProvider>
             <App {...props} />
+            <Toaster richColors position="top-right" />
           </QueryProvider>
         </ThemeProvider>
       </StrictMode>
