@@ -5,6 +5,7 @@ import { Plus, Search, FolderOpen } from 'lucide-react'
 
 import { useCases } from '@/hooks/use-cases'
 import type { CaseFilters } from '@/types/api'
+import { CaseFormDialog } from '@/components/cases/case-form-dialog'
 
 // UI Components
 import { Button } from '@/components/ui/button'
@@ -70,6 +71,7 @@ function Cases() {
     page: 1,
     per_page: 10,
   })
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   const { data: casesData, isLoading, error } = useCases(filters)
 
@@ -123,7 +125,7 @@ function Cases() {
               </p>
             </div>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="w-4 h-4" />
             Novo Processo
           </Button>
@@ -288,6 +290,13 @@ function Cases() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create Dialog */}
+        <CaseFormDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          mode="create"
+        />
       </div>
     </>
   )
