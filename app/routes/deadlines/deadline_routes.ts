@@ -4,6 +4,11 @@ import { apiThrottle } from '#start/limiter'
 
 const DeadlinesController = () => import('#controllers/deadlines/deadlines_controller')
 
+// Inertia page route - TEMPORARILY PUBLIC for testing
+router.get('/deadlines', async ({ inertia }) => {
+  return inertia.render('deadlines/index')
+}).as('deadlines.page')
+
 router
   .group(() => {
     router.get('/upcoming', [DeadlinesController, 'upcoming']).as('deadlines.upcoming')
