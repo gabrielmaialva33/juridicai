@@ -149,16 +149,20 @@ export function useAuth() {
       await firebaseSignOut(auth)
 
       // Clear backend cookies and redirect to login
-      router.post('/api/v1/sessions/sign-out', {}, {
-        onSuccess: () => {
-          router.visit('/login')
-        },
-        onError: (errors) => {
-          console.error('Sign-out error:', errors)
-          // Even if backend fails, still redirect to login
-          router.visit('/login')
+      router.post(
+        '/api/v1/sessions/sign-out',
+        {},
+        {
+          onSuccess: () => {
+            router.visit('/login')
+          },
+          onError: (errors) => {
+            console.error('Sign-out error:', errors)
+            // Even if backend fails, still redirect to login
+            router.visit('/login')
+          },
         }
-      })
+      )
     } catch (err: any) {
       console.error('Sign-out error:', err)
       setError(err.message || 'Failed to sign out')

@@ -155,13 +155,14 @@ export default class extends BaseSeeder {
                 case_id: caso.id,
                 responsible_id: lawyer.id,
                 deadline_date: DateTime.now().plus({ days: 30 + d * 15 }),
-                description: [
-                  'Manifestação sobre cálculos do precatório',
-                  'Prazo para atualização de dados cadastrais',
-                  'Prazo para impugnação de valores',
-                  'Prazo para apresentar documentação complementar',
-                  'Prazo para informar cessão de precatório',
-                ][d] || 'Prazo processual geral',
+                description:
+                  [
+                    'Manifestação sobre cálculos do precatório',
+                    'Prazo para atualização de dados cadastrais',
+                    'Prazo para impugnação de valores',
+                    'Prazo para apresentar documentação complementar',
+                    'Prazo para informar cessão de precatório',
+                  ][d] || 'Prazo processual geral',
                 is_fatal: d % 2 === 0, // Metade são fatais
               }).create()
               totalDeadlines++
@@ -171,8 +172,7 @@ export default class extends BaseSeeder {
             // 4d. Criar Documentos (5-8 por processo)
             const numDocuments = 5 + (k % 4) // 5-8 documentos
             for (let doc = 0; doc < numDocuments; doc++) {
-              const docData =
-                DOCUMENTOS_PRECATORIO[doc % DOCUMENTOS_PRECATORIO.length]
+              const docData = DOCUMENTOS_PRECATORIO[doc % DOCUMENTOS_PRECATORIO.length]
 
               const filename = `${docData.title.toLowerCase().replace(/\s+/g, '-')}.pdf`
 
@@ -213,13 +213,14 @@ export default class extends BaseSeeder {
               await TimeEntryFactory.merge({
                 case_id: caso.id,
                 user_id: lawyer.id,
-                description: [
-                  'Análise de documentos do precatório',
-                  'Elaboração de peça processual',
-                  'Acompanhamento de requisição',
-                  'Atualização de cálculos',
-                  'Atendimento ao cliente sobre precatório',
-                ][te] || 'Trabalho geral no processo',
+                description:
+                  [
+                    'Análise de documentos do precatório',
+                    'Elaboração de peça processual',
+                    'Acompanhamento de requisição',
+                    'Atualização de cálculos',
+                    'Atendimento ao cliente sobre precatório',
+                  ][te] || 'Trabalho geral no processo',
                 duration_minutes: 60 + te * 30, // 1h a 2.5h
                 hourly_rate: 300 + i * 50, // R$ 300-550/h dependendo do escritório
                 billable: true,

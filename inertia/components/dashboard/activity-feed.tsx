@@ -17,34 +17,21 @@ import {
   CheckCircle,
   AlertCircle,
   Upload,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useActivityFeed } from '@/hooks/use-dashboard'
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 type ActivityType =
-  | 'document'
-  | 'client'
-  | 'case'
-  | 'deadline'
-  | 'comment'
-  | 'status'
-  | 'alert'
-  | 'upload'
+  | 'case_created'
+  | 'deadline_added'
+  | 'document_uploaded'
+  | 'client_created'
+  | 'event_logged'
 
-interface Activity {
-  id: number
-  type: ActivityType
-  title: string
-  description: string
-  user: string
-  timestamp: string
-  link?: string
-}
-
-interface ActivityFeedProps {
-  activities?: Activity[]
-}
-
-const defaultActivities: Activity[] = [
+const mockDefaultActivities = [
   {
     id: 1,
     type: 'document',
@@ -127,65 +114,79 @@ const activityConfig: Record<
     bg: string
   }
 > = {
-  document: {
-    icon: FileText,
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-100 dark:bg-blue-950',
-  },
-  client: {
-    icon: UserPlus,
-    color: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-100 dark:bg-green-950',
-  },
-  case: {
+  case_created: {
     icon: Briefcase,
     color: 'text-purple-600 dark:text-purple-400',
     bg: 'bg-purple-100 dark:bg-purple-950',
   },
-  deadline: {
+  deadline_added: {
     icon: Clock,
     color: 'text-yellow-600 dark:text-yellow-400',
     bg: 'bg-yellow-100 dark:bg-yellow-950',
   },
-  comment: {
-    icon: MessageSquare,
-    color: 'text-cyan-600 dark:text-cyan-400',
-    bg: 'bg-cyan-100 dark:bg-cyan-950',
-  },
-  status: {
-    icon: CheckCircle,
-    color: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-100 dark:bg-green-950',
-  },
-  alert: {
-    icon: AlertCircle,
-    color: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-100 dark:bg-red-950',
-  },
-  upload: {
+  document_uploaded: {
     icon: Upload,
     color: 'text-indigo-600 dark:text-indigo-400',
     bg: 'bg-indigo-100 dark:bg-indigo-950',
   },
+  client_created: {
+    icon: UserPlus,
+    color: 'text-green-600 dark:text-green-400',
+    bg: 'bg-green-100 dark:bg-green-950',
+  },
+  event_logged: {
+    icon: MessageSquare,
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bg: 'bg-cyan-100 dark:bg-cyan-950',
+  },
 }
 
 function formatTimestamp(timestamp: string): string {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'Agora'
-  if (diffMins < 60) return `Há ${diffMins} min`
-  if (diffHours < 24) return `Há ${diffHours}h`
-  if (diffDays === 1) return 'Ontem'
-  if (diffDays < 7) return `Há ${diffDays} dias`
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  return formatDistanceToNow(new Date(timestamp), {
+    addSuffix: true,
+    locale: ptBR,
+  })
 }
 
-export function ActivityFeed({ activities = defaultActivities }: ActivityFeedProps) {
+export function ActivityFeed() {
+  const { data: activities, isLoading, error } = useActivityFeed()
+
+  if (error) {
+    return (
+      <Card className="h-full bg-gradient-to-r from-destructive/20 via-destructive/10 to-destructive/5 backdrop-blur-2xl shadow-2xl shadow-destructive/20 border-destructive/30">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-sm text-destructive">Erro ao carregar feed de atividades</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isLoading || !activities) {
+    return (
+      <Card className="h-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (activities.length === 0) {
+    return (
+      <Card className="h-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
+        <CardContent className="p-8 text-center">
+          <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+          <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="h-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
       <CardHeader>
@@ -204,6 +205,10 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
           <div className="space-y-0">
             {activities.map((activity, index) => {
               const config = activityConfig[activity.type]
+              if (!config) {
+                console.warn(`Unknown activity type: ${activity.type}`)
+                return null
+              }
               const Icon = config.icon
               const isLast = index === activities.length - 1
 
@@ -228,20 +233,11 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
                   {/* Content */}
                   <div className="pl-10">
                     <div className="flex items-start justify-between gap-3 mb-1">
-                      {activity.link ? (
-                        <Link
-                          href={activity.link}
-                          className="font-semibold text-sm text-foreground hover:text-primary transition-colors leading-tight"
-                        >
-                          {activity.title}
-                        </Link>
-                      ) : (
-                        <p className="font-semibold text-sm text-foreground leading-tight">
-                          {activity.title}
-                        </p>
-                      )}
+                      <p className="font-semibold text-sm text-foreground leading-tight">
+                        {activity.title}
+                      </p>
                       <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
-                        {formatTimestamp(activity.timestamp)}
+                        {formatTimestamp(activity.created_at)}
                       </span>
                     </div>
 
@@ -249,11 +245,13 @@ export function ActivityFeed({ activities = defaultActivities }: ActivityFeedPro
                       {activity.description}
                     </p>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {activity.user}
-                      </span>
-                    </div>
+                    {activity.user && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          {activity.user.full_name}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )

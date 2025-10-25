@@ -17,7 +17,10 @@ export function AuthCard({ title, description, children, className, ...props }: 
         <div className="absolute top-1/4 -left-20 h-[700px] w-[700px] rounded-full bg-white/40 blur-3xl animate-pulse" />
 
         {/* Bottom right dark blob */}
-        <div className="absolute bottom-1/4 -right-20 h-[700px] w-[700px] rounded-full bg-[#434343]/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-1/4 -right-20 h-[700px] w-[700px] rounded-full bg-[#434343]/10 blur-3xl animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
 
         {/* Center radial glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[800px] w-[800px] rounded-full bg-white/20 blur-3xl" />
@@ -26,12 +29,8 @@ export function AuthCard({ title, description, children, className, ...props }: 
       <div className="relative w-full max-w-md">
         {/* Logo / Brand */}
         <div className="mb-10 text-center">
-          <h1 className="text-5xl font-bold text-[#434343] drop-shadow-sm">
-            JuridicAI
-          </h1>
-          <p className="mt-3 text-sm font-medium text-[#6E6E6E]">
-            Gestão jurídica inteligente
-          </p>
+          <h1 className="text-5xl font-bold text-[#434343] drop-shadow-sm">JuridicAI</h1>
+          <p className="mt-3 text-sm font-medium text-[#6E6E6E]">Gestão jurídica inteligente</p>
         </div>
 
         {/* Auth Card - Enhanced Liquid Glass Design */}
@@ -49,14 +48,8 @@ export function AuthCard({ title, description, children, className, ...props }: 
           <div className="relative z-10 p-6 md:p-10">
             {/* Header integrado */}
             <div className="space-y-3 mb-8">
-              <h2 className="text-3xl font-bold text-[#434343]">
-                {title}
-              </h2>
-              {description && (
-                <p className="text-base text-[#6E6E6E]">
-                  {description}
-                </p>
-              )}
+              <h2 className="text-3xl font-bold text-[#434343]">{title}</h2>
+              {description && <p className="text-base text-[#6E6E6E]">{description}</p>}
             </div>
 
             {/* Content */}
@@ -66,9 +59,7 @@ export function AuthCard({ title, description, children, className, ...props }: 
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-xs text-[#6E6E6E]">
-            © 2025 JuridicAI. Todos os direitos reservados.
-          </p>
+          <p className="text-xs text-[#6E6E6E]">© 2025 JuridicAI. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

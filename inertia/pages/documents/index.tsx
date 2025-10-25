@@ -228,9 +228,7 @@ function Documents() {
                               {DOCUMENT_TYPE_LABELS[document.document_type]}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm">
-                            {document.original_filename}
-                          </TableCell>
+                          <TableCell className="text-sm">{document.original_filename}</TableCell>
                           <TableCell className="text-sm">
                             {formatFileSize(document.file_size)}
                           </TableCell>
@@ -273,7 +271,8 @@ function Documents() {
                 {documentsData.meta && documentsData.meta.lastPage > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      Mostrando {documentsData.meta.from} a {documentsData.meta.to} de {documentsData.meta.total} documentos
+                      Mostrando {documentsData.meta.from} a {documentsData.meta.to} de{' '}
+                      {documentsData.meta.total} documentos
                     </div>
                     <div className="flex gap-2">
                       <Button

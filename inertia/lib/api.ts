@@ -29,7 +29,7 @@ export class ApiClient {
         ...options,
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
+          'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
           ...options.headers,
         },
@@ -38,8 +38,7 @@ export class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        const errorMessage =
-          errorData.message || errorData.error || `Error: ${response.statusText}`
+        const errorMessage = errorData.message || errorData.error || `Error: ${response.statusText}`
         throw new Error(errorMessage)
       }
 
@@ -119,7 +118,7 @@ export class ApiClient {
         method: 'POST',
         body: formData,
         headers: {
-          Accept: 'application/json',
+          'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
         },
         credentials: 'include',
@@ -127,8 +126,7 @@ export class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        const errorMessage =
-          errorData.message || errorData.error || `Error: ${response.statusText}`
+        const errorMessage = errorData.message || errorData.error || `Error: ${response.statusText}`
         throw new Error(errorMessage)
       }
 
@@ -254,3 +252,6 @@ export const inertiaSubmit = {
     })
   },
 }
+
+// Default export for convenience
+export default api

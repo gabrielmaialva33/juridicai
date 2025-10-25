@@ -26,32 +26,49 @@ import {
   Legend,
 } from 'recharts'
 import { useTheme } from 'next-themes'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { useCasesChart } from '@/hooks/use-dashboard'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-interface CasesChartProps {
-  data?: {
-    months: string[]
-    newCases: number[]
-    closedCases: number[]
-  }
-}
-
-const defaultData = {
-  months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-  newCases: [28, 35, 42, 38, 45, 52, 48, 55, 60, 58, 65, 70],
-  closedCases: [20, 28, 32, 30, 38, 42, 40, 45, 50, 48, 55, 58],
-}
-
-export function CasesChart({ data = defaultData }: CasesChartProps) {
+export function CasesChart() {
   const { resolvedTheme } = useTheme()
   const [period, setPeriod] = useState('12m')
+  const { data, isLoading, error } = useCasesChart()
 
   const isDark = resolvedTheme === 'dark'
 
-  // Transform data to format Recharts expects
-  const chartData = data.months.map((month, index) => ({
-    month,
-    'Novos Processos': data.newCases[index],
-    'Processos Finalizados': data.closedCases[index],
+  if (error) {
+    return (
+      <Card className="bg-gradient-to-r from-destructive/20 via-destructive/10 to-destructive/5 backdrop-blur-2xl shadow-2xl shadow-destructive/20 border-destructive/30">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-sm text-destructive">Erro ao carregar gráfico de processos</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isLoading || !data) {
+    return (
+      <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-center h-96">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Transform API data to format Recharts expects
+  const chartData = data.map((point) => ({
+    'date': format(new Date(point.date), 'dd/MMM', { locale: ptBR }),
+    'Processos Ativos': point.active,
+    'Processos Encerrados': point.closed,
+    'Total': point.total,
   }))
 
   return (
@@ -98,7 +115,7 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
               vertical={false}
             />
             <XAxis
-              dataKey="month"
+              dataKey="date"
               axisLine={false}
               tickLine={false}
               tick={{ fill: isDark ? '#9CA3AF' : '#6B7280', fontSize: 12 }}
@@ -127,7 +144,7 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
             />
             <Area
               type="monotone"
-              dataKey="Novos Processos"
+              dataKey="Processos Ativos"
               stroke="#3B82F6"
               strokeWidth={2}
               fillOpacity={1}
@@ -135,7 +152,7 @@ export function CasesChart({ data = defaultData }: CasesChartProps) {
             />
             <Area
               type="monotone"
-              dataKey="Processos Finalizados"
+              dataKey="Processos Encerrados"
               stroke="#10B981"
               strokeWidth={2}
               fillOpacity={1}

@@ -303,7 +303,8 @@ export const NvidiaQueryFactory = factory
 
   .state('contract_review', (nvidiaQuery, ctx) => {
     const { faker } = ctx
-    const query = 'Revisar contrato de cessão de precatório - identificar riscos e cláusulas abusivas'
+    const query =
+      'Revisar contrato de cessão de precatório - identificar riscos e cláusulas abusivas'
 
     nvidiaQuery.query = query
     nvidiaQuery.query_type = 'contract_review'
@@ -364,14 +365,7 @@ export const NvidiaQueryFactory = factory
     nvidiaQuery.temperature = 0.4
     nvidiaQuery.metadata = {
       extraction_type: 'structured_data',
-      fields_to_extract: [
-        'numero_processo',
-        'tribunal',
-        'valor',
-        'partes',
-        'natureza',
-        'datas',
-      ],
+      fields_to_extract: ['numero_processo', 'tribunal', 'valor', 'partes', 'natureza', 'datas'],
     }
   })
 
@@ -389,8 +383,7 @@ export const NvidiaQueryFactory = factory
   })
 
   .state('analise_calculo', (nvidiaQuery) => {
-    nvidiaQuery.query =
-      'Analisar cálculo de liquidação de precatório - correção monetária e juros'
+    nvidiaQuery.query = 'Analisar cálculo de liquidação de precatório - correção monetária e juros'
     nvidiaQuery.query_type = 'text_analysis'
     nvidiaQuery.metadata = {
       ...nvidiaQuery.metadata,

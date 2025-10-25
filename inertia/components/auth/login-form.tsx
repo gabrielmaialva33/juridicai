@@ -73,9 +73,7 @@ export function LoginForm() {
             disabled={loading}
           />
           {errors.email && (
-            <p className="text-sm text-red-600 flex items-center gap-2">
-              {errors.email.message}
-            </p>
+            <p className="text-sm text-red-600 flex items-center gap-2">{errors.email.message}</p>
           )}
         </div>
 

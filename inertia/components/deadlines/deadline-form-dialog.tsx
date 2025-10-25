@@ -31,13 +31,15 @@ const deadlineSchema = z.object({
   internal_deadline_date: z.string().optional(),
   is_fatal: z.boolean().default(false),
   status: z.enum(['pending', 'completed', 'cancelled']).default('pending'),
-  alert_config: z.object({
-    days_before: z.number().min(1).max(30).default(3),
-    email_enabled: z.boolean().default(true),
-    sms_enabled: z.boolean().default(false),
-    push_enabled: z.boolean().default(true),
-    recipients: z.array(z.string().email()).optional(),
-  }).optional(),
+  alert_config: z
+    .object({
+      days_before: z.number().min(1).max(30).default(3),
+      email_enabled: z.boolean().default(true),
+      sms_enabled: z.boolean().default(false),
+      push_enabled: z.boolean().default(true),
+      recipients: z.array(z.string().email()).optional(),
+    })
+    .optional(),
 })
 
 type DeadlineFormData = z.infer<typeof deadlineSchema>
@@ -94,7 +96,9 @@ export function DeadlineFormDialog({
         case_id: deadline.case_id,
         title: deadline.title,
         description: deadline.description || '',
-        deadline_date: deadline.deadline_date ? format(new Date(deadline.deadline_date), "yyyy-MM-dd'T'HH:mm") : '',
+        deadline_date: deadline.deadline_date
+          ? format(new Date(deadline.deadline_date), "yyyy-MM-dd'T'HH:mm")
+          : '',
         internal_deadline_date: deadline.internal_deadline_date
           ? format(new Date(deadline.internal_deadline_date), "yyyy-MM-dd'T'HH:mm")
           : '',
@@ -176,19 +180,13 @@ export function DeadlineFormDialog({
                 ))}
               </SelectContent>
             </Select>
-            {errors.case_id && (
-              <p className="text-sm text-destructive">{errors.case_id.message}</p>
-            )}
+            {errors.case_id && <p className="text-sm text-destructive">{errors.case_id.message}</p>}
           </div>
 
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              {...register('title')}
-              placeholder="Ex: Prazo para Contestação"
-            />
+            <Input id="title" {...register('title')} placeholder="Ex: Prazo para Contestação" />
             {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
@@ -196,11 +194,7 @@ export function DeadlineFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="deadline_date">Data do Prazo *</Label>
-              <Input
-                id="deadline_date"
-                type="datetime-local"
-                {...register('deadline_date')}
-              />
+              <Input id="deadline_date" type="datetime-local" {...register('deadline_date')} />
               {errors.deadline_date && (
                 <p className="text-sm text-destructive">{errors.deadline_date.message}</p>
               )}
@@ -213,9 +207,7 @@ export function DeadlineFormDialog({
                 type="datetime-local"
                 {...register('internal_deadline_date')}
               />
-              <p className="text-xs text-muted-foreground">
-                Data de alerta antes do prazo oficial
-              </p>
+              <p className="text-xs text-muted-foreground">Data de alerta antes do prazo oficial</p>
             </div>
           </div>
 

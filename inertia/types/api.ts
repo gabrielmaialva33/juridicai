@@ -74,7 +74,14 @@ export interface CreateClientData {
 export type UpdateClientData = Partial<CreateClientData>
 
 // Case types
-export type CaseType = 'civil' | 'criminal' | 'labor' | 'family' | 'tax' | 'administrative' | 'other'
+export type CaseType =
+  | 'civil'
+  | 'criminal'
+  | 'labor'
+  | 'family'
+  | 'tax'
+  | 'administrative'
+  | 'other'
 export type CaseStatus = 'active' | 'closed' | 'archived' | 'suspended'
 export type CasePriority = 'low' | 'medium' | 'high' | 'urgent'
 export type CourtInstance = '1ª instância' | '2ª instância' | 'Superior'

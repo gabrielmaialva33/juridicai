@@ -6,10 +6,7 @@ export default function Login() {
   return (
     <>
       <Head title="Login - JuridicAI" />
-      <AuthCard
-        title="Bem-vindo de volta"
-        description="Entre na sua conta para continuar"
-      >
+      <AuthCard title="Bem-vindo de volta" description="Entre na sua conta para continuar">
         <LoginForm />
       </AuthCard>
     </>

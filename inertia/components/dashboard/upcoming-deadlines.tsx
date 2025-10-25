@@ -10,124 +10,101 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Link } from '@inertiajs/react'
-import { ArrowRight, AlertCircle, Clock } from 'lucide-react'
+import { ArrowRight, AlertCircle, Clock, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface Deadline {
-  id: number
-  title: string
-  case_number: string
-  case_id: number
-  due_date: string
-  priority: 'urgent' | 'high' | 'medium' | 'low'
-  responsible: string
-  status: 'pending' | 'in_progress' | 'completed'
-}
-
-interface UpcomingDeadlinesProps {
-  deadlines?: Deadline[]
-}
-
-const defaultDeadlines: Deadline[] = [
-  {
-    id: 1,
-    title: 'Apresentação de Recurso',
-    case_number: '0001234-56.2024.8.26.0100',
-    case_id: 101,
-    due_date: '2025-01-20',
-    priority: 'urgent',
-    responsible: 'Dr. Carlos Silva',
-    status: 'pending',
-  },
-  {
-    id: 2,
-    title: 'Contestação',
-    case_number: '0002345-67.2024.8.26.0200',
-    case_id: 102,
-    due_date: '2025-01-22',
-    priority: 'high',
-    responsible: 'Dra. Ana Santos',
-    status: 'in_progress',
-  },
-  {
-    id: 3,
-    title: 'Perícia Técnica',
-    case_number: '0003456-78.2024.8.26.0300',
-    case_id: 103,
-    due_date: '2025-01-25',
-    priority: 'medium',
-    responsible: 'Dr. João Pereira',
-    status: 'pending',
-  },
-  {
-    id: 4,
-    title: 'Audiência de Instrução',
-    case_number: '0004567-89.2024.8.26.0400',
-    case_id: 104,
-    due_date: '2025-01-28',
-    priority: 'high',
-    responsible: 'Dra. Maria Costa',
-    status: 'pending',
-  },
-  {
-    id: 5,
-    title: 'Juntada de Documentos',
-    case_number: '0005678-90.2024.8.26.0500',
-    case_id: 105,
-    due_date: '2025-02-02',
-    priority: 'low',
-    responsible: 'Dr. Pedro Alves',
-    status: 'pending',
-  },
-]
-
-const priorityConfig = {
-  urgent: {
-    label: 'Urgente',
-    variant: 'destructive' as const,
-    color: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-100 dark:bg-red-950',
-  },
-  high: {
-    label: 'Alta',
-    variant: 'warning' as const,
-    color: 'text-orange-600 dark:text-orange-400',
-    bg: 'bg-orange-100 dark:bg-orange-950',
-  },
-  medium: {
-    label: 'Média',
-    variant: 'info' as const,
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-100 dark:bg-blue-950',
-  },
-  low: {
-    label: 'Baixa',
-    variant: 'secondary' as const,
-    color: 'text-gray-600 dark:text-gray-400',
-    bg: 'bg-gray-100 dark:bg-gray-800',
-  },
-}
+import { useUpcomingDeadlines } from '@/hooks/use-dashboard'
+import { formatDistanceToNow, isPast, isToday, isTomorrow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const statusConfig = {
   pending: { label: 'Pendente', variant: 'outline' as const },
-  in_progress: { label: 'Em andamento', variant: 'info' as const },
   completed: { label: 'Concluído', variant: 'success' as const },
+  cancelled: { label: 'Cancelado', variant: 'secondary' as const },
 }
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  const now = new Date()
-  const diffTime = date.getTime() - now.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return 'Hoje'
-  if (diffDays === 1) return 'Amanhã'
-  if (diffDays < 0) return `Atrasado ${Math.abs(diffDays)} dias`
-  if (diffDays < 7) return `Em ${diffDays} dias`
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  if (isPast(date) && !isToday(date)) {
+    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
+  }
+  if (isToday(date)) return 'Hoje'
+  if (isTomorrow(date)) return 'Amanhã'
+
+  return formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
 }
 
-export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDeadlinesProps) {
+function getUrgencyLevel(deadlineDate: string, isFatal: boolean) {
+  const date = new Date(deadlineDate)
+
+  if (isPast(date) && !isToday(date)) {
+    return {
+      label: 'Atrasado',
+      variant: 'destructive' as const,
+      color: 'text-red-600 dark:text-red-400',
+      bg: 'bg-red-100 dark:bg-red-950',
+      icon: AlertCircle,
+    }
+  }
+
+  if (isToday(date) || isTomorrow(date)) {
+    return {
+      label: isFatal ? 'Urgente - Fatal' : 'Urgente',
+      variant: 'warning' as const,
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-100 dark:bg-orange-950',
+      icon: AlertCircle,
+    }
+  }
+
+  return {
+    label: isFatal ? 'Fatal' : 'Normal',
+    variant: 'info' as const,
+    color: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-100 dark:bg-blue-950',
+    icon: Clock,
+  }
+}
+
+export function UpcomingDeadlines() {
+  const { data: deadlines, isLoading, error } = useUpcomingDeadlines()
+
+  if (error) {
+    return (
+      <Card className="bg-gradient-to-r from-destructive/20 via-destructive/10 to-destructive/5 backdrop-blur-2xl shadow-2xl shadow-destructive/20 border-destructive/30">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-sm text-destructive">Erro ao carregar próximos prazos</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isLoading || !deadlines) {
+    return (
+      <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (deadlines.length === 0) {
+    return (
+      <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
+        <CardContent className="p-8 text-center">
+          <Clock className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+          <p className="text-sm text-muted-foreground">Nenhum prazo pendente</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30">
       <CardHeader className="py-4">
@@ -149,9 +126,10 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
       <CardContent className="p-0">
         <div className="space-y-0">
           {deadlines.map((deadline, index) => {
-            const priority = priorityConfig[deadline.priority]
+            const urgency = getUrgencyLevel(deadline.deadline_date, deadline.is_fatal)
             const status = statusConfig[deadline.status]
             const isLast = index === deadlines.length - 1
+            const UrgencyIcon = urgency.icon
 
             return (
               <div
@@ -165,52 +143,48 @@ export function UpcomingDeadlines({ deadlines = defaultDeadlines }: UpcomingDead
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className={cn('rounded-xl p-2.5 shrink-0', priority.bg)}>
-                    {deadline.priority === 'urgent' ? (
-                      <AlertCircle className={cn('w-5 h-5', priority.color)} strokeWidth={2} />
-                    ) : (
-                      <Clock className={cn('w-5 h-5', priority.color)} strokeWidth={2} />
-                    )}
+                  <div className={cn('rounded-xl p-2.5 shrink-0', urgency.bg)}>
+                    <UrgencyIcon className={cn('w-5 h-5', urgency.color)} strokeWidth={2} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <Link
-                        href={`/cases/${deadline.case_id}`}
+                        href={`/cases/${deadline.case?.id}`}
                         className="font-semibold text-sm text-foreground hover:text-primary transition-colors"
                       >
                         {deadline.title}
                       </Link>
                       <Badge
-                        variant={priority.variant}
+                        variant={urgency.variant}
                         appearance="light"
                         size="xs"
                         className="shrink-0"
                       >
-                        {priority.label}
+                        {urgency.label}
                       </Badge>
                     </div>
 
-                    <p className="text-[11px] text-muted-foreground mb-2 font-mono tracking-tight">
-                      {deadline.case_number}
-                    </p>
+                    {deadline.case && (
+                      <p className="text-[11px] text-muted-foreground mb-2 font-mono tracking-tight">
+                        {deadline.case.case_number || deadline.case.internal_number}
+                      </p>
+                    )}
 
                     <div className="flex items-center gap-2 flex-wrap text-[11px]">
                       <Badge variant={status.variant} appearance="light" size="xs">
                         {status.label}
                       </Badge>
                       <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">{deadline.responsible}</span>
-                      <span className="text-muted-foreground">•</span>
                       <span
                         className={cn(
                           'font-semibold',
-                          deadline.priority === 'urgent'
+                          urgency.variant === 'destructive'
                             ? 'text-destructive'
                             : 'text-muted-foreground'
                         )}
                       >
-                        {formatDate(deadline.due_date)}
+                        {formatDate(deadline.deadline_date)}
                       </span>
                     </div>
                   </div>

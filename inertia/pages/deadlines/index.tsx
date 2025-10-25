@@ -95,7 +95,9 @@ function Deadlines() {
       case 'today':
         return <Badge className="bg-orange-500/10 text-orange-700 dark:text-orange-400">Hoje</Badge>
       case 'tomorrow':
-        return <Badge className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">Amanhã</Badge>
+        return (
+          <Badge className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">Amanhã</Badge>
+        )
       case 'soon':
         return <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400">Em breve</Badge>
       default:
@@ -189,10 +191,7 @@ function Deadlines() {
 
               {/* Status Filter */}
               <div>
-                <Select
-                  value={filters.status || 'all'}
-                  onValueChange={handleStatusChange}
-                >
+                <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -251,8 +250,8 @@ function Deadlines() {
                           <TableRow
                             key={deadline.id}
                             className={cn(
-                              "cursor-pointer hover:bg-muted/50",
-                              isOverdue && "bg-red-50/50 dark:bg-red-950/10"
+                              'cursor-pointer hover:bg-muted/50',
+                              isOverdue && 'bg-red-50/50 dark:bg-red-950/10'
                             )}
                           >
                             <TableCell className="font-medium">
@@ -272,13 +271,19 @@ function Deadlines() {
                               {formatDate(deadline.deadline_date)}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {deadline.internal_deadline_date ? formatDate(deadline.internal_deadline_date) : '-'}
+                              {deadline.internal_deadline_date
+                                ? formatDate(deadline.internal_deadline_date)
+                                : '-'}
                             </TableCell>
                             <TableCell>
                               {deadline.is_fatal ? (
-                                <Badge variant="destructive" className="text-xs">Fatal</Badge>
+                                <Badge variant="destructive" className="text-xs">
+                                  Fatal
+                                </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs">Não Fatal</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Não Fatal
+                                </Badge>
                               )}
                             </TableCell>
                             <TableCell>
@@ -286,9 +291,7 @@ function Deadlines() {
                                 {STATUS_LABELS[deadline.status]}
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              {getUrgencyBadge(urgency)}
-                            </TableCell>
+                            <TableCell>{getUrgencyBadge(urgency)}</TableCell>
                           </TableRow>
                         )
                       })}
@@ -300,7 +303,8 @@ function Deadlines() {
                 {deadlinesData.meta && deadlinesData.meta.lastPage > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      Mostrando {deadlinesData.meta.from} a {deadlinesData.meta.to} de {deadlinesData.meta.total} prazos
+                      Mostrando {deadlinesData.meta.from} a {deadlinesData.meta.to} de{' '}
+                      {deadlinesData.meta.total} prazos
                     </div>
                     <div className="flex gap-2">
                       <Button

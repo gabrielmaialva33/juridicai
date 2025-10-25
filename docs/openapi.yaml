@@ -1519,7 +1519,7 @@ components:
           format: email
           example: advogado@escritorio.com.br
         username:
-          type: [string, "null"]
+          type: [string, 'null']
           example: joao.silva
         created_at:
           type: string
@@ -1542,7 +1542,7 @@ components:
           type: string
           example: silva-associados
         custom_domain:
-          type: [string, "null"]
+          type: [string, 'null']
           example: advocacia.silva.com.br
         plan:
           type: string
@@ -1552,7 +1552,7 @@ components:
           type: boolean
           example: true
         limits:
-          type: [object, "null"]
+          type: [object, 'null']
           properties:
             max_users:
               type: integer
@@ -1561,7 +1561,7 @@ components:
             max_storage_gb:
               type: integer
         trial_ends_at:
-          type: ["string", "null"]
+          type: ['string', 'null']
           format: date-time
         created_at:
           type: string
@@ -1584,30 +1584,30 @@ components:
           enum: [individual, company]
           example: individual
         full_name:
-          type: [string, "null"]
+          type: [string, 'null']
           example: João da Silva
         cpf:
-          type: [string, "null"]
+          type: [string, 'null']
           example: 123.456.789-09
         company_name:
-          type: [string, "null"]
+          type: [string, 'null']
         cnpj:
-          type: [string, "null"]
+          type: [string, 'null']
         email:
-          type: [string, "null"]
+          type: [string, 'null']
           format: email
           example: joao@email.com
         phone:
-          type: [string, "null"]
+          type: [string, 'null']
           example: (11) 98765-4321
         tags:
-          type: [array, "null"]
+          type: [array, 'null']
           items:
             type: string
         custom_fields:
-          type: [object, "null"]
+          type: [object, 'null']
         notes:
-          type: [string, "null"]
+          type: [string, 'null']
         created_at:
           type: string
           format: date-time
@@ -1628,20 +1628,20 @@ components:
           type: integer
           example: 1
         case_number:
-          type: [string, "null"]
+          type: [string, 'null']
           description: Número CNJ
           example: 0000001-23.2024.8.26.0100
         internal_number:
-          type: [string, "null"]
+          type: [string, 'null']
         case_type:
           type: string
           enum: [civil, criminal, labor, family, tax, administrative, other]
           example: civil
         court:
-          type: [string, "null"]
+          type: [string, 'null']
           example: TJ-SP
         court_instance:
-          type: [string, "null"]
+          type: [string, 'null']
           example: 1ª Instância
         status:
           type: string
@@ -1655,25 +1655,25 @@ components:
           type: integer
           example: 1
         team_members:
-          type: [array, "null"]
+          type: [array, 'null']
           items:
             type: integer
         filed_at:
-          type: ["string", "null"]
+          type: ['string', 'null']
           format: date-time
         closed_at:
-          type: ["string", "null"]
+          type: ['string', 'null']
           format: date-time
         tags:
-          type: [array, "null"]
+          type: [array, 'null']
           items:
             type: string
         case_value:
-          type: ["number", "null"]
+          type: ['number', 'null']
           format: decimal
           example: 50000.00
         custom_fields:
-          type: [object, "null"]
+          type: [object, 'null']
         created_at:
           type: string
           format: date-time
@@ -1700,13 +1700,13 @@ components:
           type: string
           example: Apresentar contestação
         description:
-          type: [string, "null"]
+          type: [string, 'null']
         deadline_date:
           type: string
           format: date-time
           example: '2025-02-15T23:59:59Z'
         internal_deadline_date:
-          type: ["string", "null"]
+          type: ['string', 'null']
           format: date-time
         is_fatal:
           type: boolean
@@ -1716,7 +1716,7 @@ components:
           enum: [pending, completed, expired, cancelled]
           example: pending
         alert_config:
-          type: [object, "null"]
+          type: [object, 'null']
           properties:
             days_before:
               type: array
@@ -1732,12 +1732,12 @@ components:
               items:
                 type: integer
         completed_at:
-          type: ["string", "null"]
+          type: ['string', 'null']
           format: date-time
         completed_by:
-          type: ["integer", "null"]
+          type: ['integer', 'null']
         completion_notes:
-          type: ["string", "null"]
+          type: ['string', 'null']
         created_at:
           type: string
           format: date-time
@@ -1755,9 +1755,9 @@ components:
           type: string
           format: uuid
         case_id:
-          type: ["integer", "null"]
+          type: ['integer', 'null']
         client_id:
-          type: ["integer", "null"]
+          type: ['integer', 'null']
         uploaded_by:
           type: integer
           example: 1
@@ -1765,7 +1765,7 @@ components:
           type: string
           example: Petição Inicial
         description:
-          type: [string, "null"]
+          type: [string, 'null']
         document_type:
           type: string
           enum:
@@ -1798,7 +1798,7 @@ components:
           enum: [local, s3, gcs]
           example: local
         ocr_text:
-          type: [string, "null"]
+          type: [string, 'null']
         is_ocr_processed:
           type: boolean
           example: false
@@ -1806,20 +1806,20 @@ components:
           type: boolean
           example: false
         signature_data:
-          type: [object, "null"]
+          type: [object, 'null']
         access_level:
           type: string
           enum: [tenant, case_team, owner_only]
           example: tenant
         tags:
-          type: [array, "null"]
+          type: [array, 'null']
           items:
             type: string
         version:
           type: integer
           example: 1
         parent_document_id:
-          type: ["integer", "null"]
+          type: ['integer', 'null']
         created_at:
           type: string
           format: date-time
@@ -1848,7 +1848,7 @@ components:
           type: string
           example: Audiência de Conciliação
         description:
-          type: [string, "null"]
+          type: [string, 'null']
         event_date:
           type: string
           format: date-time
@@ -1858,9 +1858,9 @@ components:
           enum: [manual, court_api, email, import]
           example: manual
         metadata:
-          type: [object, "null"]
+          type: [object, 'null']
         created_by:
-          type: ["integer", "null"]
+          type: ['integer', 'null']
         created_at:
           type: string
           format: date-time
@@ -1869,7 +1869,7 @@ components:
           format: date-time
 
     Address:
-      type: [object, "null"]
+      type: [object, 'null']
       properties:
         street:
           type: string
@@ -1878,7 +1878,7 @@ components:
           type: string
           example: '1000'
         complement:
-          type: [string, "null"]
+          type: [string, 'null']
           example: Sala 101
         neighborhood:
           type: string
@@ -1899,7 +1899,7 @@ components:
           example: Brasil
 
     Parties:
-      type: [object, "null"]
+      type: [object, 'null']
       properties:
         autor:
           type: object
@@ -1907,26 +1907,26 @@ components:
             name:
               type: string
             cpf:
-              type: [string, "null"]
+              type: [string, 'null']
             cnpj:
-              type: [string, "null"]
+              type: [string, 'null']
             email:
-              type: [string, "null"]
+              type: [string, 'null']
             phone:
-              type: [string, "null"]
+              type: [string, 'null']
         reu:
           type: object
           properties:
             name:
               type: string
             cpf:
-              type: [string, "null"]
+              type: [string, 'null']
             cnpj:
-              type: [string, "null"]
+              type: [string, 'null']
             email:
-              type: [string, "null"]
+              type: [string, 'null']
             phone:
-              type: [string, "null"]
+              type: [string, 'null']
         outros:
           type: array
           items:
@@ -1937,9 +1937,9 @@ components:
               name:
                 type: string
               cpf:
-                type: [string, "null"]
+                type: [string, 'null']
               cnpj:
-                type: [string, "null"]
+                type: [string, 'null']
 
     PaginationMeta:
       type: object

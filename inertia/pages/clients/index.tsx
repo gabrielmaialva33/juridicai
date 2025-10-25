@@ -89,10 +89,7 @@ function Clients() {
 
               {/* Client Type Filter */}
               <div>
-                <Select
-                  value={filters.client_type || 'all'}
-                  onValueChange={handleTypeChange}
-                >
+                <Select value={filters.client_type || 'all'} onValueChange={handleTypeChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Tipo de Cliente" />
                   </SelectTrigger>

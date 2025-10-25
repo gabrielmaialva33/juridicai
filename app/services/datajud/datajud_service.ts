@@ -14,7 +14,7 @@ export default class DatajudService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `APIKey ${this.apiKey}`,
+        'Authorization': `APIKey ${this.apiKey}`,
       },
       body: JSON.stringify({
         query: {

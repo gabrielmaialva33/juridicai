@@ -171,11 +171,7 @@ export function CaseFormDialog({ open, onOpenChange, mode, case: caseData }: Cas
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="internal_number">Número Interno *</Label>
-              <Input
-                id="internal_number"
-                {...register('internal_number')}
-                placeholder="2024/001"
-              />
+              <Input id="internal_number" {...register('internal_number')} placeholder="2024/001" />
               {errors.internal_number && (
                 <p className="text-sm text-destructive">{errors.internal_number.message}</p>
               )}
@@ -260,20 +256,14 @@ export function CaseFormDialog({ open, onOpenChange, mode, case: caseData }: Cas
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="court">Tribunal</Label>
-              <Input
-                id="court"
-                {...register('court')}
-                placeholder="Ex: TJ-SP, TRT-2, TRF-3"
-              />
+              <Input id="court" {...register('court')} placeholder="Ex: TJ-SP, TRT-2, TRF-3" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="court_instance">Instância</Label>
               <Select
                 value={courtInstance || ''}
-                onValueChange={(value: any) =>
-                  setValue('court_instance', value || undefined)
-                }
+                onValueChange={(value: any) => setValue('court_instance', value || undefined)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />

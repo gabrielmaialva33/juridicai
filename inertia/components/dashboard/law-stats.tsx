@@ -7,8 +7,18 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Users, Briefcase, Clock, FileText } from 'lucide-react'
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Briefcase,
+  Clock,
+  FileText,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDashboardStats } from '@/hooks/use-dashboard'
 
 interface StatItem {
   title: string
@@ -20,53 +30,84 @@ interface StatItem {
   iconColor: string
 }
 
-interface LawStatsProps {
-  stats?: StatItem[]
-}
+export function LawStats() {
+  const { data: stats, isLoading, error } = useDashboardStats()
 
-const defaultStats: StatItem[] = [
-  {
-    title: 'Total de Clientes',
-    value: '1,247',
-    change: 12.5,
-    changeLabel: 'vs mês anterior',
-    icon: Users,
-    iconBg: 'bg-blue-100 dark:bg-blue-950',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-  },
-  {
-    title: 'Processos Ativos',
-    value: '342',
-    change: 8.2,
-    changeLabel: 'vs mês anterior',
-    icon: Briefcase,
-    iconBg: 'bg-green-100 dark:bg-green-950',
-    iconColor: 'text-green-600 dark:text-green-400',
-  },
-  {
-    title: 'Prazos Pendentes',
-    value: '28',
-    change: -15.3,
-    changeLabel: 'vs mês anterior',
-    icon: Clock,
-    iconBg: 'bg-yellow-100 dark:bg-yellow-950',
-    iconColor: 'text-yellow-600 dark:text-yellow-400',
-  },
-  {
-    title: 'Documentos Criados',
-    value: '156',
-    change: 23.1,
-    changeLabel: 'este mês',
-    icon: FileText,
-    iconBg: 'bg-purple-100 dark:bg-purple-950',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-  },
-]
+  if (error) {
+    return (
+      <Card className="bg-gradient-to-r from-destructive/20 via-destructive/10 to-destructive/5 backdrop-blur-2xl shadow-2xl shadow-destructive/20 border-destructive/30">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-sm text-destructive">Erro ao carregar estatísticas</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-export function LawStats({ stats = defaultStats }: LawStatsProps) {
+  if (isLoading || !stats) {
+    return (
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card
+            key={i}
+            className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-2xl shadow-2xl shadow-primary/20 border-primary/30"
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-center h-24">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  const statItems: StatItem[] = [
+    {
+      title: 'Total de Clientes',
+      value: stats.total_clients.toLocaleString('pt-BR'),
+      change: 0, // Backend can provide this in the future
+      changeLabel: 'total cadastrado',
+      icon: Users,
+      iconBg: 'bg-blue-100 dark:bg-blue-950',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      title: 'Processos Ativos',
+      value: stats.active_cases.toLocaleString('pt-BR'),
+      change: 0,
+      changeLabel: `de ${stats.total_cases} total`,
+      icon: Briefcase,
+      iconBg: 'bg-green-100 dark:bg-green-950',
+      iconColor: 'text-green-600 dark:text-green-400',
+    },
+    {
+      title: 'Prazos Pendentes',
+      value: stats.pending_deadlines.toLocaleString('pt-BR'),
+      change: stats.overdue_deadlines > 0 ? -100 : 0,
+      changeLabel:
+        stats.overdue_deadlines > 0 ? `${stats.overdue_deadlines} atrasado(s)` : 'em dia',
+      icon: Clock,
+      iconBg: 'bg-yellow-100 dark:bg-yellow-950',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
+    },
+    {
+      title: 'Documentos',
+      value: stats.total_documents.toLocaleString('pt-BR'),
+      change: 0,
+      changeLabel: 'total cadastrado',
+      icon: FileText,
+      iconBg: 'bg-purple-100 dark:bg-purple-950',
+      iconColor: 'text-purple-600 dark:text-purple-400',
+    },
+  ]
+
   return (
     <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat, index) => {
+      {statItems.map((stat, index) => {
         const Icon = stat.icon
         const isPositive = stat.change >= 0
         const TrendIcon = isPositive ? TrendingUp : TrendingDown

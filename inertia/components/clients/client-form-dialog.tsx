@@ -138,9 +138,7 @@ export function ClientFormDialog({ open, onOpenChange, mode, client }: ClientFor
             <Label htmlFor="client_type">Tipo de Cliente</Label>
             <Select
               value={clientType}
-              onValueChange={(value: 'individual' | 'company') =>
-                setValue('client_type', value)
-              }
+              onValueChange={(value: 'individual' | 'company') => setValue('client_type', value)}
               disabled={mode === 'edit'}
             >
               <SelectTrigger>
@@ -175,12 +173,7 @@ export function ClientFormDialog({ open, onOpenChange, mode, client }: ClientFor
 
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF *</Label>
-                <Input
-                  id="cpf"
-                  {...register('cpf')}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                />
+                <Input id="cpf" {...register('cpf')} placeholder="000.000.000-00" maxLength={14} />
                 {errors.cpf && <p className="text-sm text-destructive">{errors.cpf.message}</p>}
               </div>
             </>
@@ -188,11 +181,7 @@ export function ClientFormDialog({ open, onOpenChange, mode, client }: ClientFor
             <>
               <div className="space-y-2">
                 <Label htmlFor="company_name">Razão Social *</Label>
-                <Input
-                  id="company_name"
-                  {...register('company_name')}
-                  placeholder="Empresa LTDA"
-                />
+                <Input id="company_name" {...register('company_name')} placeholder="Empresa LTDA" />
                 {errors.company_name && (
                   <p className="text-sm text-destructive">{errors.company_name.message}</p>
                 )}
@@ -215,7 +204,12 @@ export function ClientFormDialog({ open, onOpenChange, mode, client }: ClientFor
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register('email')} placeholder="email@exemplo.com" />
+              <Input
+                id="email"
+                type="email"
+                {...register('email')}
+                placeholder="email@exemplo.com"
+              />
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 

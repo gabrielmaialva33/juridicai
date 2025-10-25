@@ -167,7 +167,9 @@ function TimeEntries() {
               {/* Billable Filter */}
               <div>
                 <Select
-                  value={filters.billable === undefined ? 'all' : filters.billable ? 'true' : 'false'}
+                  value={
+                    filters.billable === undefined ? 'all' : filters.billable ? 'true' : 'false'
+                  }
                   onValueChange={handleBillableChange}
                 >
                   <SelectTrigger>
@@ -254,7 +256,9 @@ function TimeEntries() {
                               {formatDate(entry.start_time)}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {entry.end_time ? formatDate(entry.end_time) : (
+                              {entry.end_time ? (
+                                formatDate(entry.end_time)
+                              ) : (
                                 <Badge variant="outline" className="gap-1">
                                   <Play className="w-3 h-3" />
                                   Em andamento
@@ -262,14 +266,20 @@ function TimeEntries() {
                               )}
                             </TableCell>
                             <TableCell className="text-sm font-medium">
-                              {entry.duration_minutes ? formatDuration(entry.duration_minutes) : '-'}
+                              {entry.duration_minutes
+                                ? formatDuration(entry.duration_minutes)
+                                : '-'}
                             </TableCell>
                             <TableCell className="text-sm">
                               {entry.hourly_rate ? formatCurrency(entry.hourly_rate) : '-'}
                             </TableCell>
                             <TableCell className="text-sm font-medium">
                               {entry.hourly_rate && entry.duration_hours
-                                ? formatCurrency((parseFloat(entry.hourly_rate) * entry.duration_hours).toFixed(2))
+                                ? formatCurrency(
+                                    (parseFloat(entry.hourly_rate) * entry.duration_hours).toFixed(
+                                      2
+                                    )
+                                  )
                                 : '-'}
                             </TableCell>
                             <TableCell>
@@ -293,7 +303,8 @@ function TimeEntries() {
                 {timeEntriesData.meta && timeEntriesData.meta.lastPage > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      Mostrando {timeEntriesData.meta.from} a {timeEntriesData.meta.to} de {timeEntriesData.meta.total} lançamentos
+                      Mostrando {timeEntriesData.meta.from} a {timeEntriesData.meta.to} de{' '}
+                      {timeEntriesData.meta.total} lançamentos
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -308,7 +319,9 @@ function TimeEntries() {
                         variant="outline"
                         size="sm"
                         onClick={() => handlePageChange(timeEntriesData.meta!.currentPage + 1)}
-                        disabled={timeEntriesData.meta.currentPage === timeEntriesData.meta.lastPage}
+                        disabled={
+                          timeEntriesData.meta.currentPage === timeEntriesData.meta.lastPage
+                        }
                       >
                         Próxima
                       </Button>

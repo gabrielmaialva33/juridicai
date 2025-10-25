@@ -78,9 +78,7 @@ export function RegisterForm() {
             {...register('fullName')}
             disabled={loading}
           />
-          {errors.fullName && (
-            <p className="text-sm text-destructive">{errors.fullName.message}</p>
-          )}
+          {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
         </div>
 
         {/* Email Field */}

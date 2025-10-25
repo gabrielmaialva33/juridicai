@@ -82,7 +82,8 @@ function Cases() {
   const handleStatusChange = (value: string) => {
     setFilters((prev) => ({
       ...prev,
-      status: value === 'all' ? undefined : (value as 'active' | 'closed' | 'archived' | 'suspended'),
+      status:
+        value === 'all' ? undefined : (value as 'active' | 'closed' | 'archived' | 'suspended'),
       page: 1,
     }))
   }
@@ -154,10 +155,7 @@ function Cases() {
 
               {/* Status Filter */}
               <div>
-                <Select
-                  value={filters.status || 'all'}
-                  onValueChange={handleStatusChange}
-                >
+                <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -173,10 +171,7 @@ function Cases() {
 
               {/* Case Type Filter */}
               <div>
-                <Select
-                  value={filters.case_type || 'all'}
-                  onValueChange={handleCaseTypeChange}
-                >
+                <Select value={filters.case_type || 'all'} onValueChange={handleCaseTypeChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Tipo" />
                   </SelectTrigger>
@@ -237,11 +232,11 @@ function Cases() {
                             {caseItem.case_number || caseItem.internal_number}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">
-                              {CASE_TYPE_LABELS[caseItem.case_type]}
-                            </Badge>
+                            <Badge variant="outline">{CASE_TYPE_LABELS[caseItem.case_type]}</Badge>
                           </TableCell>
-                          <TableCell>{caseItem.client?.full_name || caseItem.client?.company_name || '-'}</TableCell>
+                          <TableCell>
+                            {caseItem.client?.full_name || caseItem.client?.company_name || '-'}
+                          </TableCell>
                           <TableCell>
                             <Badge className={STATUS_COLORS[caseItem.status]}>
                               {STATUS_LABELS[caseItem.status]}
@@ -264,7 +259,8 @@ function Cases() {
                 {casesData.meta && casesData.meta.lastPage > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      Mostrando {casesData.meta.from} a {casesData.meta.to} de {casesData.meta.total} processos
+                      Mostrando {casesData.meta.from} a {casesData.meta.to} de{' '}
+                      {casesData.meta.total} processos
                     </div>
                     <div className="flex gap-2">
                       <Button

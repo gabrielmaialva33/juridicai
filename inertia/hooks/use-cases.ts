@@ -66,11 +66,7 @@ export function useCreateCase() {
 
   return useMutation({
     mutationFn: async (data: CreateCaseData) => {
-      const result = await apiWithToast.post<Case>(
-        '/cases',
-        data,
-        'Processo criado com sucesso!'
-      )
+      const result = await apiWithToast.post<Case>('/cases', data, 'Processo criado com sucesso!')
       if (result.error) throw new Error(result.error)
       return result.data!
     },

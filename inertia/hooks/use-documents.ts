@@ -1,11 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiWithToast } from '@/lib/api'
-import type {
-  Document,
-  PaginatedResponse,
-  DocumentFilters,
-  CreateDocumentData,
-} from '@/types/api'
+import type { Document, PaginatedResponse, DocumentFilters, CreateDocumentData } from '@/types/api'
 
 /**
  * Query keys for documents
@@ -48,7 +43,7 @@ export function useDocument(id: number | null) {
   return useQuery({
     queryKey: documentKeys.detail(id!),
     queryFn: async () => {
-      const { data, error} = await api.get<Document>(`/documents/${id}`)
+      const { data, error } = await api.get<Document>(`/documents/${id}`)
       if (error) throw new Error(error)
       return data!
     },
@@ -64,13 +59,7 @@ export function useUploadDocument() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      file,
-      data,
-    }: {
-      file: File
-      data: CreateDocumentData
-    }) => {
+    mutationFn: async ({ file, data }: { file: File; data: CreateDocumentData }) => {
       const result = await apiWithToast.upload<Document>(
         '/documents',
         file,
@@ -93,13 +82,7 @@ export function useUpdateDocument() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: number
-      data: Partial<CreateDocumentData>
-    }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<CreateDocumentData> }) => {
       const result = await apiWithToast.patch<Document>(
         `/documents/${id}`,
         data,

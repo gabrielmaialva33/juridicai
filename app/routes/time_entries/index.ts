@@ -4,9 +4,11 @@ import { middleware } from '#start/kernel'
 const TimeEntriesController = () => import('#controllers/time_entries/time_entries_controller')
 
 // Inertia page route - TEMPORARILY PUBLIC for testing
-router.get('/time-entries', async ({ inertia }) => {
-  return inertia.render('time-entries/index')
-}).as('time_entries.page')
+router
+  .get('/time-entries', async ({ inertia }) => {
+    return inertia.render('time-entries/index')
+  })
+  .as('time_entries.page')
 
 router
   .group(() => {
