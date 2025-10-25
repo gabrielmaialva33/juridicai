@@ -9,7 +9,7 @@ import {
   TRIBUNAIS_CNJ,
   PARTES_PRECATORIO,
   TAGS_PRECATORIOS,
-} from '#database/seeders/helpers/precatorio_data'
+} from '#database/data/precatorio_data'
 
 /**
  * Generate a valid Brazilian CNJ format process number for specific tribunal

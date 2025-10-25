@@ -2,7 +2,7 @@ import factory from '@adonisjs/lucid/factories'
 import { FactoryContextContract } from '@adonisjs/lucid/types/factory'
 import NvidiaQuery from '#models/nvidia_query'
 import { UserFactory } from './user_factory.js'
-import { QUERIES_AI_PRECATORIOS } from '#database/seeders/helpers/precatorio_data'
+import { QUERIES_AI_PRECATORIOS } from '#database/data/precatorio_data'
 
 /**
  * Generate realistic document analysis response for precatórios

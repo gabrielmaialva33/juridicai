@@ -18,7 +18,7 @@ import {
   TIPOS_PRECATORIO,
   EVENTOS_PRECATORIO,
   DOCUMENTOS_PRECATORIO,
-} from '#database/seeders/helpers/precatorio_data'
+} from '#database/data/precatorio_data'
 
 /**
  * Seeder de Processos de Precatórios Brasileiros
