@@ -1,8 +1,11 @@
-import type TenantModel from '#shared/models/tenant_model'
 import TenantBaseModel from '#shared/models/tenant_base_model'
-import type { ModelAttributes } from '@adonisjs/lucid/types/model'
+import type { LucidModel, ModelAttributes } from '@adonisjs/lucid/types/model'
 
-export type Attributes<Model extends typeof TenantModel> = ModelAttributes<InstanceType<Model>>
+export type TenantScopedModel = LucidModel & {
+  softDeletes?: boolean
+}
+
+export type Attributes<Model extends TenantScopedModel> = ModelAttributes<InstanceType<Model>>
 
 /**
  * Tenant-scoped repository base.
@@ -10,7 +13,7 @@ export type Attributes<Model extends typeof TenantModel> = ModelAttributes<Insta
  * Domain repositories should expose queries through this class so tenant
  * isolation is applied consistently before any domain-specific filters.
  */
-export default class BaseRepository<Model extends typeof TenantModel> {
+export default class BaseRepository<Model extends TenantScopedModel> {
   constructor(protected model: Model) {}
 
   query(tenantId: string) {
@@ -123,6 +126,6 @@ export default class BaseRepository<Model extends typeof TenantModel> {
   }
 
   protected hasSoftDelete(): boolean {
-    return this.model.prototype instanceof TenantBaseModel
+    return Boolean(this.model.softDeletes) || this.model.prototype instanceof TenantBaseModel
   }
 }
