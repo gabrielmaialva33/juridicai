@@ -27,3 +27,7 @@ yarn-error.log
 
 # Superpowers
 .superpowers/
+
+# AI assistants
+.codex
+.claude
