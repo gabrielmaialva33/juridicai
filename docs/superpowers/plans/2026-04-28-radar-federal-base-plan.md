@@ -1,12 +1,18 @@
 # Radar Federal Base Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Construir o monolito juridicai/v0 (Spec 1 — Radar Federal Base) que ingere todo histórico SIOP federal, persiste em PostgreSQL multi-tenant com PII bunker isolada, e expõe dashboard read-only Inertia.
+**Goal:** Construir o monolito juridicai/v0 (Spec 1 — Radar Federal Base) que ingere todo histórico SIOP federal,
+persiste em PostgreSQL multi-tenant com PII bunker isolada, e expõe dashboard read-only Inertia.
 
-**Architecture:** AdonisJS 7 monolito modular (`app/modules/<domain>` + `app/shared/`), Inertia + React + Metronic (frontend), Lucid + PostgreSQL + RLS seletivo, BullMQ + Redis (workers separados), VineJS validators, audit append-only via PG RULES, pii.* schema com `SECURITY DEFINER` reveal function.
+**Architecture:** AdonisJS 7 monolito modular (`app/modules/<domain>` + `app/shared/`), Inertia + React + Metronic (
+frontend), Lucid + PostgreSQL + RLS seletivo, BullMQ + Redis (workers separados), VineJS validators, audit append-only
+via PG RULES, pii.\* schema com `SECURITY DEFINER` reveal function.
 
-**Tech Stack:** Adonis 7.3 · Inertia 4 · React 19 · Lucid 22 · PostgreSQL 15+ · Redis 7 · BullMQ 5 · VineJS 4.3 · Bouncer · Drive · adonisjs-scheduler · exceljs · TanStack Table · radix-ui · ApexCharts · Sonner · pino · Japa + Playwright.
+**Tech Stack:** Adonis 7.3 · Inertia 4 · React 19 · Lucid 22 · PostgreSQL 15+ · Redis 7 · BullMQ 5 · VineJS 4.3 ·
+Bouncer · Drive · adonisjs-scheduler · exceljs · TanStack Table · radix-ui · ApexCharts · Sonner · pino · Japa +
+Playwright.
 
 **Spec:** `docs/superpowers/specs/2026-04-28-radar-federal-base-design.md`.
 
@@ -14,21 +20,32 @@
 
 ## Working Notes
 
-**Convenções de commit:** gitmoji prefix (padrão eduguard) — `🚀 feat:`, `🐛 fix:`, `💄 style:`, `🔧 chore:`, `🌱 seed:`, `🗃️ refactor(db):`, `♻️ refactor:`, `✅ test:`, `📝 docs:`, `🔒 security:`. Concise, "why" not "what".
+**Convenções de commit:** gitmoji prefix (padrão eduguard) — `🚀 feat:`, `🐛 fix:`, `💄 style:`, `🔧 chore:`, `🌱 seed:`,
+`🗃️ refactor(db):`, `♻️ refactor:`, `✅ test:`, `📝 docs:`, `🔒 security:`. Concise, "why" not "what".
 
-**TDD strict** em: parsers, normalizers, services com regra de negócio, helpers (`sanitizeError`, `withTenantRls`, `HashService`), middleware (`tenant`, `request_id`).
+**TDD strict** em: parsers, normalizers, services com regra de negócio, helpers (`sanitizeError`, `withTenantRls`,
+`HashService`), middleware (`tenant`, `request_id`).
 
-**TDD relaxado** (write → run → verify → commit, sem failing-first) em: migrations, seeders, configs, view files Inertia.
+**TDD relaxado** (write → run → verify → commit, sem failing-first) em: migrations, seeders, configs, view files
+Inertia.
 
-**Generators obrigatórios:** `node ace make:migration <name>`, `node ace make:model <Name>`, `node ace make:controller <Name>`, `node ace make:middleware <name>`, `node ace make:command <name>`, `node ace make:factory <Model>`. Nunca criar manualmente.
+**Generators obrigatórios:** `node ace make:migration <name>`, `node ace make:model <Name>`,
+`node ace make:controller <Name>`, `node ace make:middleware <name>`, `node ace make:command <name>`,
+`node ace make:factory <Model>`. Nunca criar manualmente.
 
-**Multi-tenant:** toda query de domínio passa por `BaseRepository.query(tenantId)`. Nunca query nua. Tests de cross-tenant são must-pass na CI.
+**Multi-tenant:** toda query de domínio passa por `BaseRepository.query(tenantId)`. Nunca query nua. Tests de
+cross-tenant são must-pass na CI.
 
-**Hot reload:** o starter usa `hot-hook`. Boundaries em `package.json` cobrem `app/controllers/**` e `app/middleware/*`. Adicionar `app/modules/**/controllers/*.ts` quando módulos forem criados.
+**Hot reload:** o starter usa `hot-hook`. Boundaries em `package.json` cobrem `app/controllers/**` e `app/middleware/*`.
+Adicionar `app/modules/**/controllers/*.ts` quando módulos forem criados.
 
-**Estrutura adicional:** o starter já tem `app/{controllers, middleware, models, validators, exceptions, transformers}/` flat. Vamos **adicionar** (não substituir) `app/modules/<domain>/` e `app/shared/` ao lado. Coisas verdadeiramente cross-cutting (ex: `silent_auth_middleware`) ficam em `app/middleware/`. Coisas reutilizáveis em domínios (`base_repository`, `tenant_context`) vão em `app/shared/`.
+**Estrutura adicional:** o starter já tem `app/{controllers, middleware, models, validators, exceptions, transformers}/`
+flat. Vamos **adicionar** (não substituir) `app/modules/<domain>/` e `app/shared/` ao lado. Coisas verdadeiramente
+cross-cutting (ex: `silent_auth_middleware`) ficam em `app/middleware/`. Coisas reutilizáveis em domínios (
+`base_repository`, `tenant_context`) vão em `app/shared/`.
 
-**Path imports:** adicionar `#modules/*` e `#shared/*` ao `package.json`. Manter os existentes (`#controllers/*`, `#models/*`, etc) pra não quebrar starter.
+**Path imports:** adicionar `#modules/*` e `#shared/*` ao `package.json`. Manter os existentes (`#controllers/*`,
+`#models/*`, etc) pra não quebrar starter.
 
 **Branching:** trabalhar em `main` por enquanto (greenfield). Depois adotar feature branches por phase.
 
@@ -235,6 +252,7 @@ juridicai/
 ### Task 1: Migrar de npm → pnpm e ajustar imports
 
 **Files:**
+
 - Delete: `package-lock.json`
 - Create: `pnpm-workspace.yaml`
 - Modify: `package.json` (imports section)
@@ -304,6 +322,7 @@ git commit -m "🔧 chore: switch to pnpm and add #modules/#shared path imports"
 ### Task 2: Trocar SQLite por PostgreSQL e instalar dependências core
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `config/database.ts`
 - Modify: `start/env.ts`
@@ -369,11 +388,7 @@ const dbConfig = defineConfig({
         afterCreate: (conn: any, done: any) => {
           const piiKey = env.get('PII_ENCRYPTION_KEY')
           if (piiKey) {
-            conn.query(
-              `select set_config('app.pii_encryption_key', $1, false)`,
-              [piiKey],
-              done
-            )
+            conn.query(`select set_config('app.pii_encryption_key', $1, false)`, [piiKey], done)
           } else {
             done(null, conn)
           }
@@ -398,20 +413,40 @@ export default dbConfig
 Localizar o `Env.create` e adicionar/modificar dentro do schema:
 
 ```typescript
-DB_HOST: Env.schema.string({ format: 'host' }),
-DB_PORT: Env.schema.number(),
-DB_USER: Env.schema.string(),
-DB_PASSWORD: Env.schema.string.optional(),
-DB_DATABASE: Env.schema.string(),
+DB_HOST: Env.schema.string({format: 'host'}),
+  DB_PORT
+:
+Env.schema.number(),
+  DB_USER
+:
+Env.schema.string(),
+  DB_PASSWORD
+:
+Env.schema.string.optional(),
+  DB_DATABASE
+:
+Env.schema.string(),
 
-REDIS_HOST: Env.schema.string({ format: 'host' }),
-REDIS_PORT: Env.schema.number(),
-REDIS_PASSWORD: Env.schema.string.optional(),
+  REDIS_HOST
+:
+Env.schema.string({format: 'host'}),
+  REDIS_PORT
+:
+Env.schema.number(),
+  REDIS_PASSWORD
+:
+Env.schema.string.optional(),
 
-PII_HASH_PEPPER: Env.schema.string(),
-PII_ENCRYPTION_KEY: Env.schema.string(),
+  PII_HASH_PEPPER
+:
+Env.schema.string(),
+  PII_ENCRYPTION_KEY
+:
+Env.schema.string(),
 
-DRIVE_DISK: Env.schema.enum(['fs', 's3'] as const),
+  DRIVE_DISK
+:
+Env.schema.enum(['fs', 's3'] as const),
 ```
 
 (manter as variáveis que o starter já tinha)
@@ -451,7 +486,9 @@ Editar `config/session.ts`, mudar `driver` pra `redis` e `connection` pra `'main
 
 ```typescript
 driver: env.get('SESSION_DRIVER', 'redis'),
-connection: 'main',
+  connection
+:
+'main',
 ```
 
 Adicionar em `start/env.ts`:
@@ -478,6 +515,7 @@ git commit -m "🔧 chore: switch to PostgreSQL + Redis, install core deps (bull
 ### Task 3: Docker Compose para dev local
 
 **Files:**
+
 - Create: `docker-compose.yml`
 - Create: `.dockerignore`
 
@@ -492,11 +530,11 @@ services:
       POSTGRES_PASSWORD: juridicai
       POSTGRES_DB: juridicai_dev
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - juridicai_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U juridicai"]
+      test: ['CMD-SHELL', 'pg_isready -U juridicai']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -505,11 +543,11 @@ services:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - juridicai_redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -561,6 +599,7 @@ git commit -m "🔧 chore: add docker-compose with postgres and redis"
 ### Task 4: Configurar logger.ts com redaction expandida
 
 **Files:**
+
 - Modify: `config/logger.ts`
 
 - [ ] **Step 1: Substituir config/logger.ts**
@@ -585,15 +624,40 @@ export default defineConfig({
       },
       redact: {
         paths: [
-          'password', 'secret', 'token',
-          '*.password', '*.secret', '*.token',
-          'cpf', 'cnpj', 'document', '*.cpf', '*.cnpj', '*.document',
-          'email', 'phone', 'telefone', '*.email', '*.phone', '*.telefone',
-          'name_encrypted', 'document_encrypted',
-          'beneficiary.*', 'beneficiaries.*', 'beneficiario.*', 'beneficiarios.*',
-          'pii.*', 'raw_data.beneficiarios', 'raw_data.beneficiaries',
-          'headers.authorization', 'headers.cookie', 'headers.set-cookie',
-          'headers.x-api-key', 'apiKey', 'access_token', 'refresh_token',
+          'password',
+          'secret',
+          'token',
+          '*.password',
+          '*.secret',
+          '*.token',
+          'cpf',
+          'cnpj',
+          'document',
+          '*.cpf',
+          '*.cnpj',
+          '*.document',
+          'email',
+          'phone',
+          'telefone',
+          '*.email',
+          '*.phone',
+          '*.telefone',
+          'name_encrypted',
+          'document_encrypted',
+          'beneficiary.*',
+          'beneficiaries.*',
+          'beneficiario.*',
+          'beneficiarios.*',
+          'pii.*',
+          'raw_data.beneficiarios',
+          'raw_data.beneficiaries',
+          'headers.authorization',
+          'headers.cookie',
+          'headers.set-cookie',
+          'headers.x-api-key',
+          'apiKey',
+          'access_token',
+          'refresh_token',
         ],
         remove: true,
       },
@@ -608,7 +672,9 @@ Em `start/env.ts`:
 
 ```typescript
 APP_NAME: Env.schema.string(),
-LOG_LEVEL: Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const),
+  LOG_LEVEL
+:
+Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const),
 ```
 
 Em `.env.example`:
@@ -641,6 +707,7 @@ git commit -m "🔒 security: configure pino redaction for PII paths"
 ### Task 5: Criar .env.example completo e validar bootstrap
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `.gitignore` (verificar)
 
@@ -713,6 +780,7 @@ git commit -m "🔧 chore: complete .env.example with all required variables"
 ### Task 6: Criar TenantContext (AsyncLocalStorage)
 
 **Files:**
+
 - Create: `app/shared/helpers/tenant_context.ts`
 - Create: `tests/unit/shared/helpers/tenant_context.spec.ts`
 
@@ -738,7 +806,7 @@ test.group('TenantContext', () => {
   test('TenantContext isolates concurrent runs', async ({ assert }) => {
     const [a, b] = await Promise.all([
       TenantContext.run('tenant-a', async () => {
-        await new Promise(r => setTimeout(r, 10))
+        await new Promise((r) => setTimeout(r, 10))
         return TenantContext.get()
       }),
       TenantContext.run('tenant-b', async () => {
@@ -813,6 +881,7 @@ git commit -m "🚀 feat(shared): TenantContext via AsyncLocalStorage"
 ### Task 7: Helper `withTenantRls`
 
 **Files:**
+
 - Create: `app/shared/helpers/with_tenant_rls.ts`
 - Create: `tests/integration/shared/with_tenant_rls.spec.ts`
 
@@ -877,10 +946,7 @@ export async function withTenantRls<T>(
   callback: (trx: TransactionClientContract) => Promise<T>
 ): Promise<T> {
   return db.transaction(async (trx) => {
-    await trx.rawQuery(
-      `select set_config('app.current_tenant_id', ?, true)`,
-      [tenantId]
-    )
+    await trx.rawQuery(`select set_config('app.current_tenant_id', ?, true)`, [tenantId])
     return callback(trx)
   })
 }
@@ -906,6 +972,7 @@ git commit -m "🚀 feat(shared): withTenantRls helper for RLS-aware transaction
 ### Task 8: Helpers utilitários (`sanitize_error`, `timed`, `error_messages`)
 
 **Files:**
+
 - Create: `app/shared/helpers/sanitize_error.ts`
 - Create: `app/shared/helpers/timed.ts`
 - Create: `app/shared/helpers/error_messages.ts`
@@ -964,7 +1031,11 @@ test.group('timed', () => {
   })
 
   test('rethrows errors', async ({ assert }) => {
-    await assert.rejects(() => timed('test', async () => { throw new Error('x') }))
+    await assert.rejects(() =>
+      timed('test', async () => {
+        throw new Error('x')
+      })
+    )
   })
 
   test('completes for normal calls without crashing', async ({ assert }) => {
@@ -1012,8 +1083,7 @@ export function sanitizeError(err: any, opts: SanitizeOptions): SanitizedError {
       out.stack = stack
     } else {
       const lines = stack.split('\n').slice(0, opts.maxStackLines ?? 50)
-      out.stack = lines.map((l) => l.replace(/(\s+at\s+[^(]*\()(\/[^)]+)/g, '$1<path>'))
-                       .join('\n')
+      out.stack = lines.map((l) => l.replace(/(\s+at\s+[^(]*\()(\/[^)]+)/g, '$1<path>')).join('\n')
     }
   }
   return out
@@ -1044,20 +1114,20 @@ export async function timed<T>(label: string, cb: () => Promise<T>, slowMs = 500
 ```typescript
 // app/shared/helpers/error_messages.ts
 export const errorMessages: Record<string, string> = {
-  E_VALIDATION_ERROR:           'Dados inválidos. Verifique os campos.',
-  E_ROW_NOT_FOUND:              'Registro não encontrado.',
-  E_PERMISSION_DENIED:          'Você não tem permissão para executar esta ação.',
-  E_TENANT_NOT_RESOLVED:        'Sessão sem organização ativa. Selecione uma.',
+  E_VALIDATION_ERROR: 'Dados inválidos. Verifique os campos.',
+  E_ROW_NOT_FOUND: 'Registro não encontrado.',
+  E_PERMISSION_DENIED: 'Você não tem permissão para executar esta ação.',
+  E_TENANT_NOT_RESOLVED: 'Sessão sem organização ativa. Selecione uma.',
   E_TENANT_MEMBERSHIP_INACTIVE: 'Sua participação nesta organização está inativa.',
-  E_IMPORT_ALREADY_EXISTS:      'Este arquivo já foi importado.',
-  E_IMPORT_CONCURRENT:          'Este import já está em execução.',
-  E_CHECKSUM_CONFLICT:          'Já existe importação com esse checksum.',
-  E_SIOP_PARSE:                 'Não foi possível ler o arquivo enviado.',
-  E_PII_REVEAL_FORBIDDEN:       'Acesso a dados pessoais não autorizado.',
-  E_PII_RATE_LIMIT:             'Limite de visualizações sensíveis atingido. Tente novamente em breve.',
-  E_FILE_TOO_LARGE:             'Arquivo excede o tamanho máximo permitido.',
-  E_CSRF_TOKEN_MISMATCH:        'Sessão expirou. Recarregue a página.',
-  E_INTERNAL:                   'Erro interno. Informe o código de suporte.',
+  E_IMPORT_ALREADY_EXISTS: 'Este arquivo já foi importado.',
+  E_IMPORT_CONCURRENT: 'Este import já está em execução.',
+  E_CHECKSUM_CONFLICT: 'Já existe importação com esse checksum.',
+  E_SIOP_PARSE: 'Não foi possível ler o arquivo enviado.',
+  E_PII_REVEAL_FORBIDDEN: 'Acesso a dados pessoais não autorizado.',
+  E_PII_RATE_LIMIT: 'Limite de visualizações sensíveis atingido. Tente novamente em breve.',
+  E_FILE_TOO_LARGE: 'Arquivo excede o tamanho máximo permitido.',
+  E_CSRF_TOKEN_MISMATCH: 'Sessão expirou. Recarregue a página.',
+  E_INTERNAL: 'Erro interno. Informe o código de suporte.',
 }
 
 export function mapCodeToMessage(code: string | undefined): string {
@@ -1085,6 +1155,7 @@ git commit -m "🚀 feat(shared): sanitize_error, timed, error_messages helpers"
 ### Task 9: TenantBaseModel + TenantModel + BaseRepository
 
 **Files:**
+
 - Create: `app/shared/models/tenant_model.ts`
 - Create: `app/shared/models/tenant_base_model.ts`
 - Create: `app/shared/repositories/base_repository.ts`
@@ -1178,12 +1249,19 @@ export default class BaseRepository<M extends typeof TenantModel> {
     return this.model.create(data as any) as unknown as InstanceType<M>
   }
 
-  async createMany(tenantId: string, payloads: Partial<Attributes<M>>[]): Promise<InstanceType<M>[]> {
+  async createMany(
+    tenantId: string,
+    payloads: Partial<Attributes<M>>[]
+  ): Promise<InstanceType<M>[]> {
     const data = payloads.map((p) => ({ ...p, tenantId }))
     return this.model.createMany(data as any) as unknown as InstanceType<M>[]
   }
 
-  async update(tenantId: string, id: string, payload: Partial<Attributes<M>>): Promise<InstanceType<M>> {
+  async update(
+    tenantId: string,
+    id: string,
+    payload: Partial<Attributes<M>>
+  ): Promise<InstanceType<M>> {
     const row = await this.findByIdOrFail(tenantId, id)
     ;(row as any).merge(payload)
     await (row as any).save()
@@ -1252,6 +1330,7 @@ git commit -m "🚀 feat(shared): TenantModel hierarchy + BaseRepository with te
 ### Task 10: Migration de extensions e enums
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_extensions.ts`
 - Create: `database/migrations/<ts>_create_enums.ts`
 
@@ -1326,25 +1405,50 @@ export default class extends BaseSchema {
         'attempt_reveal','reveal_denied','reveal_success','export','contact','update','delete'
       );
     `)
-    this.schema.raw(`create type validation_status as enum ('pending','valid','invalid','warning');`)
+    this.schema.raw(
+      `create type validation_status as enum ('pending','valid','invalid','warning');`
+    )
     this.schema.raw(`create type member_status as enum ('active','inactive');`)
     this.schema.raw(`create type tenant_status as enum ('active','suspended','inactive');`)
     this.schema.raw(`create type user_status as enum ('active','disabled');`)
-    this.schema.raw(`create type asset_source as enum ('siop','datajud','djen','manual','tribunal','api_private');`)
+    this.schema.raw(
+      `create type asset_source as enum ('siop','datajud','djen','manual','tribunal','api_private');`
+    )
     this.schema.raw(`create type nature_kind as enum ('alimentar','comum','tributario','unknown');`)
-    this.schema.raw(`create type lawful_basis_kind as enum ('legitimate_interest','consent','contract','legal_obligation');`)
+    this.schema.raw(
+      `create type lawful_basis_kind as enum ('legitimate_interest','consent','contract','legal_obligation');`
+    )
     this.schema.raw(`create type document_kind as enum ('cpf','cnpj','passport','other');`)
     this.schema.raw(`create type person_kind as enum ('natural_person','legal_person','unknown');`)
-    this.schema.raw(`create type export_status as enum ('pending','running','completed','failed','expired');`)
-    this.schema.raw(`create type retention_manifest_status as enum ('pending','confirmed','applied','aborted');`)
+    this.schema.raw(
+      `create type export_status as enum ('pending','running','completed','failed','expired');`
+    )
+    this.schema.raw(
+      `create type retention_manifest_status as enum ('pending','confirmed','applied','aborted');`
+    )
   }
 
   async down() {
     const types = [
-      'retention_manifest_status', 'export_status', 'person_kind', 'document_kind',
-      'lawful_basis_kind', 'nature_kind', 'asset_source', 'user_status', 'tenant_status',
-      'member_status', 'validation_status', 'pii_action', 'job_run_origin', 'job_run_status',
-      'import_status', 'debtor_type', 'compliance_status', 'pii_status', 'lifecycle_status',
+      'retention_manifest_status',
+      'export_status',
+      'person_kind',
+      'document_kind',
+      'lawful_basis_kind',
+      'nature_kind',
+      'asset_source',
+      'user_status',
+      'tenant_status',
+      'member_status',
+      'validation_status',
+      'pii_action',
+      'job_run_origin',
+      'job_run_status',
+      'import_status',
+      'debtor_type',
+      'compliance_status',
+      'pii_status',
+      'lifecycle_status',
     ]
     for (const t of types) this.schema.raw(`drop type if exists ${t};`)
   }
@@ -1379,6 +1483,7 @@ git commit -m "🗃️ refactor(db): create extensions and native enums for doma
 ### Task 11: Migration `tenants`
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_tenants.ts`
 
 - [ ] **Step 1: Gerar migration**
@@ -1436,6 +1541,7 @@ git commit -m "🗃️ refactor(db): create tenants table"
 ### Task 12: Refatorar migration `users` (do starter) e adicionar `auth_tokens`, `tenant_memberships`
 
 **Files:**
+
 - Modify: `database/migrations/1761885935168_create_users_table.ts`
 - Create: `database/migrations/<ts>_create_auth_tokens.ts`
 - Create: `database/migrations/<ts>_create_tenant_memberships.ts`
@@ -1551,6 +1657,7 @@ git commit -m "🗃️ refactor(db): users multi-tenant + auth_tokens + tenant_m
 ### Task 13: Models Lucid `Tenant`, `User`, `TenantMembership`
 
 **Files:**
+
 - Create: `app/models/tenant.ts`
 - Modify: `app/models/user.ts` (já existe do starter)
 - Create: `app/models/tenant_membership.ts`
@@ -1668,6 +1775,7 @@ git commit -m "🚀 feat(models): Tenant, User (refatorado), TenantMembership"
 ### Task 14: Migrations RBAC (`permissions`, `roles`, `role_permissions`, `user_roles`)
 
 **Files:**
+
 - Create: 4 migrations
 
 - [ ] **Step 1: Gerar migrations**
@@ -1686,6 +1794,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
   protected tableName = 'permissions'
+
   async up() {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
@@ -1696,7 +1805,10 @@ export default class extends BaseSchema {
       t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
     })
   }
-  async down() { this.schema.dropTable(this.tableName) }
+
+  async down() {
+    this.schema.dropTable(this.tableName)
+  }
 }
 ```
 
@@ -1707,6 +1819,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
   protected tableName = 'roles'
+
   async up() {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
@@ -1717,7 +1830,10 @@ export default class extends BaseSchema {
       t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
     })
   }
-  async down() { this.schema.dropTable(this.tableName) }
+
+  async down() {
+    this.schema.dropTable(this.tableName)
+  }
 }
 ```
 
@@ -1728,14 +1844,22 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
   protected tableName = 'role_permissions'
+
   async up() {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('role_id').notNullable().references('id').inTable('roles').onDelete('CASCADE')
-      t.uuid('permission_id').notNullable().references('id').inTable('permissions').onDelete('CASCADE')
+      t.uuid('permission_id')
+        .notNullable()
+        .references('id')
+        .inTable('permissions')
+        .onDelete('CASCADE')
       t.primary(['role_id', 'permission_id'])
     })
   }
-  async down() { this.schema.dropTable(this.tableName) }
+
+  async down() {
+    this.schema.dropTable(this.tableName)
+  }
 }
 ```
 
@@ -1746,6 +1870,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
   protected tableName = 'user_roles'
+
   async up() {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
@@ -1758,7 +1883,10 @@ export default class extends BaseSchema {
       t.index(['user_id', 'tenant_id'])
     })
   }
-  async down() { this.schema.dropTable(this.tableName) }
+
+  async down() {
+    this.schema.dropTable(this.tableName)
+  }
 }
 ```
 
@@ -1780,6 +1908,7 @@ git commit -m "🗃️ refactor(db): RBAC tables (permissions, roles, role_permi
 ### Task 15: Seeders RBAC (permissions e roles)
 
 **Files:**
+
 - Create: `database/seeders/permissions_seeder.ts`
 - Create: `database/seeders/roles_seeder.ts`
 - Create: `database/seeders/index_seeder.ts`
@@ -1800,23 +1929,40 @@ import db from '@adonisjs/lucid/services/db'
 
 export default class extends BaseSeeder {
   static permissions = [
-    'precatorios.read', 'precatorios.list',
-    'imports.read', 'imports.create', 'imports.reprocess', 'imports.download_source',
-    'assets.audit', 'assets.score', 'assets.export',
-    'pii.reveal_masked', 'pii.reveal_full', 'pii.export', 'pii.opt_out_manage',
-    'users.invite', 'users.manage_roles',
-    'tenants.settings', 'tenants.manage',
-    'admin.jobs.read', 'admin.jobs.retry',
-    'exports.create', 'exports.download',
+    'precatorios.read',
+    'precatorios.list',
+    'imports.read',
+    'imports.create',
+    'imports.reprocess',
+    'imports.download_source',
+    'assets.audit',
+    'assets.score',
+    'assets.export',
+    'pii.reveal_masked',
+    'pii.reveal_full',
+    'pii.export',
+    'pii.opt_out_manage',
+    'users.invite',
+    'users.manage_roles',
+    'tenants.settings',
+    'tenants.manage',
+    'admin.jobs.read',
+    'admin.jobs.retry',
+    'exports.create',
+    'exports.download',
   ]
 
   async run() {
     for (const slug of (this.constructor as any).permissions) {
-      await db.from('permissions').insert({
-        name: slug,
-        slug,
-        description: `Permission: ${slug}`,
-      }).onConflict('slug').ignore()
+      await db
+        .from('permissions')
+        .insert({
+          name: slug,
+          slug,
+          description: `Permission: ${slug}`,
+        })
+        .onConflict('slug')
+        .ignore()
     }
   }
 }
@@ -1831,37 +1977,61 @@ import db from '@adonisjs/lucid/services/db'
 const ROLES: Record<string, string[]> = {
   radar_reader: ['precatorios.read', 'precatorios.list', 'imports.read'],
   legal_reviewer: [
-    'precatorios.read', 'precatorios.list', 'imports.read',
-    'imports.create', 'imports.reprocess', 'imports.download_source',
-    'assets.audit', 'assets.score',
+    'precatorios.read',
+    'precatorios.list',
+    'imports.read',
+    'imports.create',
+    'imports.reprocess',
+    'imports.download_source',
+    'assets.audit',
+    'assets.score',
   ],
-  sales_authorized: [
-    'precatorios.read', 'precatorios.list', 'pii.reveal_masked',
-  ],
+  sales_authorized: ['precatorios.read', 'precatorios.list', 'pii.reveal_masked'],
   privacy_admin: [
-    'pii.reveal_full', 'pii.export', 'pii.opt_out_manage',
-    'users.invite', 'tenants.settings', 'admin.jobs.read', 'admin.jobs.retry',
-    'exports.create', 'exports.download',
+    'pii.reveal_full',
+    'pii.export',
+    'pii.opt_out_manage',
+    'users.invite',
+    'tenants.settings',
+    'admin.jobs.read',
+    'admin.jobs.retry',
+    'exports.create',
+    'exports.download',
   ],
   tenant_admin: [
-    'precatorios.read', 'precatorios.list',
-    'imports.read', 'imports.create', 'imports.reprocess', 'imports.download_source',
-    'assets.audit', 'assets.score', 'assets.export',
-    'users.invite', 'users.manage_roles',
-    'tenants.settings', 'tenants.manage',
-    'admin.jobs.read', 'admin.jobs.retry',
-    'exports.create', 'exports.download',
+    'precatorios.read',
+    'precatorios.list',
+    'imports.read',
+    'imports.create',
+    'imports.reprocess',
+    'imports.download_source',
+    'assets.audit',
+    'assets.score',
+    'assets.export',
+    'users.invite',
+    'users.manage_roles',
+    'tenants.settings',
+    'tenants.manage',
+    'admin.jobs.read',
+    'admin.jobs.retry',
+    'exports.create',
+    'exports.download',
   ],
 }
 
 export default class extends BaseSeeder {
   async run() {
     for (const [slug, perms] of Object.entries(ROLES)) {
-      const [role] = await db.from('roles').insert({
-        name: slug.replace(/_/g, ' '),
-        slug,
-        description: `Role: ${slug}`,
-      }).onConflict('slug').merge(['updated_at']).returning(['id'])
+      const [role] = await db
+        .from('roles')
+        .insert({
+          name: slug.replace(/_/g, ' '),
+          slug,
+          description: `Role: ${slug}`,
+        })
+        .onConflict('slug')
+        .merge(['updated_at'])
+        .returning(['id'])
 
       const roleId = role.id
       const permRows = await db.from('permissions').whereIn('slug', perms).select('id')
@@ -1917,6 +2087,7 @@ git commit -m "🌱 seed: RBAC permissions and roles seed"
 ### Task 16: PermissionCacheService
 
 **Files:**
+
 - Create: `app/shared/services/permission_cache_service.ts`
 - Create: `tests/integration/shared/permission_cache_service.spec.ts`
 
@@ -1935,9 +2106,25 @@ test.group('PermissionCacheService', (group) => {
 
   group.each.setup(async () => {
     await redis.flushdb()
-    const [t] = await db.from('tenants').insert({ name: 'T', slug: `t-${Date.now()}`, status: 'active', rbac_version: 1 }).returning('id')
+    const [t] = await db
+      .from('tenants')
+      .insert({
+        name: 'T',
+        slug: `t-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
     tenantId = t.id
-    const [u] = await db.from('users').insert({ name: 'U', email: `u-${Date.now()}@x.com`, password_hash: 'x', status: 'active' }).returning('id')
+    const [u] = await db
+      .from('users')
+      .insert({
+        name: 'U',
+        email: `u-${Date.now()}@x.com`,
+        password_hash: 'x',
+        status: 'active',
+      })
+      .returning('id')
     userId = u.id
     const role = await db.from('roles').where('slug', 'radar_reader').first()
     await db.from('user_roles').insert({ user_id: userId, tenant_id: tenantId, role_id: role.id })
@@ -1954,7 +2141,7 @@ test.group('PermissionCacheService', (group) => {
   })
 
   test('cache invalidates when rbac_version bumps', async ({ assert }) => {
-    await permissionCacheService.userHas(userId, tenantId, 'precatorios.read')  // popula cache
+    await permissionCacheService.userHas(userId, tenantId, 'precatorios.read') // popula cache
     await db.from('tenants').where('id', tenantId).update({ rbac_version: 2 })
     const role = await db.from('roles').where('slug', 'privacy_admin').first()
     await db.from('user_roles').insert({ user_id: userId, tenant_id: tenantId, role_id: role.id })
@@ -2038,6 +2225,7 @@ git commit -m "🚀 feat(shared): PermissionCacheService with rbac_version inval
 ### Task 17: TenantMiddleware + RequestIdMiddleware + PermissionMiddleware
 
 **Files:**
+
 - Create: `app/middleware/request_id_middleware.ts`
 - Create: `app/middleware/tenant_middleware.ts`
 - Create: `app/middleware/permission_middleware.ts`
@@ -2146,7 +2334,7 @@ import permissionCacheService from '#shared/services/permission_cache_service'
 export default class PermissionMiddleware {
   async handle(ctx: HttpContext, next: NextFn, options?: { permission: string }) {
     if (!options?.permission) {
-      return next()  // sem permission configurada, deixa passar
+      return next() // sem permission configurada, deixa passar
     }
     const ok = await permissionCacheService.userHas(
       ctx.auth.user!.id,
@@ -2173,7 +2361,9 @@ E ao `router.named({...})`:
 
 ```typescript
 tenant: () => import('#middleware/tenant_middleware'),
-permission: () => import('#middleware/permission_middleware'),
+  permission
+:
+() => import('#middleware/permission_middleware'),
 ```
 
 - [ ] **Step 5: Verificar typecheck**
@@ -2196,6 +2386,7 @@ git commit -m "🚀 feat(middleware): request_id, tenant, permission middleware"
 ### Task 18: Migration `source_records`
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_source_records.ts`
 
 - [ ] **Step 1: Migration**
@@ -2260,6 +2451,7 @@ git commit -m "🗃️ refactor(db): source_records table for procedência"
 ### Task 19: Migration `siop_imports` + `siop_staging_rows`
 
 **Files:**
+
 - Create: 2 migrations
 
 - [ ] **Step 1: Migrations**
@@ -2282,7 +2474,11 @@ export default class extends BaseSchema {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
       t.integer('exercise_year').notNullable()
-      t.uuid('source_record_id').notNullable().references('id').inTable('source_records').onDelete('RESTRICT')
+      t.uuid('source_record_id')
+        .notNullable()
+        .references('id')
+        .inTable('source_records')
+        .onDelete('RESTRICT')
       t.specificType('source', 'asset_source').notNullable().defaultTo('siop')
       t.specificType('status', 'import_status').notNullable().defaultTo('pending')
       t.timestamp('started_at', { useTz: true }).nullable()
@@ -2293,7 +2489,11 @@ export default class extends BaseSchema {
       t.integer('skipped').notNullable().defaultTo(0)
       t.integer('errors').notNullable().defaultTo(0)
       t.jsonb('raw_metadata').nullable()
-      t.uuid('uploaded_by_user_id').nullable().references('id').inTable('users').onDelete('SET NULL')
+      t.uuid('uploaded_by_user_id')
+        .nullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('SET NULL')
       t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
       t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
       t.timestamp('deleted_at', { useTz: true }).nullable()
@@ -2360,6 +2560,7 @@ git commit -m "🗃️ refactor(db): siop_imports and siop_staging_rows tables"
 ### Task 20: Migrations debtors + precatorio_assets
 
 **Files:**
+
 - Create: 2 migrations
 
 - [ ] **Step 1: `create_debtors`**
@@ -2427,7 +2628,11 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('source_record_id').nullable().references('id').inTable('source_records').onDelete('SET NULL')
+      t.uuid('source_record_id')
+        .nullable()
+        .references('id')
+        .inTable('source_records')
+        .onDelete('SET NULL')
       t.specificType('source', 'asset_source').notNullable()
       t.string('external_id').nullable()
       t.string('cnj_number').nullable()
@@ -2445,7 +2650,7 @@ export default class extends BaseSchema {
       t.specificType('pii_status', 'pii_status').notNullable().defaultTo('none')
       t.specificType('compliance_status', 'compliance_status').notNullable().defaultTo('pending')
       t.smallint('current_score').nullable()
-      t.uuid('current_score_id').nullable()  // FK adicionada depois
+      t.uuid('current_score_id').nullable() // FK adicionada depois
       t.jsonb('raw_data').nullable()
       t.string('row_fingerprint').nullable()
       t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
@@ -2499,6 +2704,7 @@ git commit -m "🗃️ refactor(db): debtors and precatorio_assets with partial 
 ### Task 21: Migrations asset_events + asset_scores + FK ciclo
 
 **Files:**
+
 - Create: 3 migrations
 
 - [ ] **Step 1: `create_asset_events`**
@@ -2517,7 +2723,11 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('asset_id').notNullable().references('id').inTable('precatorio_assets').onDelete('CASCADE')
+      t.uuid('asset_id')
+        .notNullable()
+        .references('id')
+        .inTable('precatorio_assets')
+        .onDelete('CASCADE')
       t.string('event_type').notNullable()
       t.timestamp('event_date', { useTz: true }).notNullable().defaultTo(this.now())
       t.string('source').nullable()
@@ -2550,7 +2760,11 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('asset_id').notNullable().references('id').inTable('precatorio_assets').onDelete('CASCADE')
+      t.uuid('asset_id')
+        .notNullable()
+        .references('id')
+        .inTable('precatorio_assets')
+        .onDelete('CASCADE')
       t.string('score_version').notNullable()
       t.smallint('data_quality_score').nullable()
       t.smallint('maturity_score').nullable()
@@ -2621,6 +2835,7 @@ git commit -m "🗃️ refactor(db): asset_events, asset_scores, deferred FK for
 ### Task 22: Migrations judicial_processes + publications + publication_events
 
 **Files:**
+
 - Create: 3 migrations
 
 - [ ] **Step 1: `create_judicial_processes`**
@@ -2647,7 +2862,11 @@ export default class extends BaseSchema {
       t.text('subject').nullable()
       t.date('filing_date').nullable()
       t.string('secrecy_level').nullable()
-      t.uuid('source_record_id').nullable().references('id').inTable('source_records').onDelete('SET NULL')
+      t.uuid('source_record_id')
+        .nullable()
+        .references('id')
+        .inTable('source_records')
+        .onDelete('SET NULL')
       t.timestamp('last_movement_at', { useTz: true }).nullable()
       t.jsonb('raw_data').nullable()
       t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
@@ -2684,8 +2903,16 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('process_id').nullable().references('id').inTable('judicial_processes').onDelete('SET NULL')
-      t.uuid('source_record_id').nullable().references('id').inTable('source_records').onDelete('SET NULL')
+      t.uuid('process_id')
+        .nullable()
+        .references('id')
+        .inTable('judicial_processes')
+        .onDelete('SET NULL')
+      t.uuid('source_record_id')
+        .nullable()
+        .references('id')
+        .inTable('source_records')
+        .onDelete('SET NULL')
       t.specificType('source', 'asset_source').notNullable()
       t.timestamp('publication_date', { useTz: true }).notNullable()
       t.string('text_hash').nullable()
@@ -2725,7 +2952,11 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('publication_id').notNullable().references('id').inTable('publications').onDelete('CASCADE')
+      t.uuid('publication_id')
+        .notNullable()
+        .references('id')
+        .inTable('publications')
+        .onDelete('CASCADE')
       t.string('event_type').notNullable()
       t.jsonb('payload').nullable()
       t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
@@ -2753,6 +2984,7 @@ git commit -m "🗃️ refactor(db): prepared schemas for DataJud/DJEN (Spec 2/3
 ### Task 23: Schema `pii` + tabelas
 
 **Files:**
+
 - Create: 4 migrations
 
 - [ ] **Step 1: `create_pii_schema`**
@@ -2768,6 +3000,7 @@ export default class extends BaseSchema {
   async up() {
     this.schema.raw(`create schema if not exists pii;`)
   }
+
   async down() {
     this.schema.raw(`drop schema if exists pii cascade;`)
   }
@@ -2901,6 +3134,7 @@ git commit -m "🗃️ refactor(db): pii.* schema with beneficiaries, asset_bene
 ### Task 24: Função `pii.reveal_beneficiary` (SECURITY DEFINER)
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_pii_reveal_function.ts`
 
 - [ ] **Step 1: Migration**
@@ -3022,7 +3256,9 @@ export default class extends BaseSchema {
   }
 
   async down() {
-    this.schema.raw(`drop function if exists pii.reveal_beneficiary(uuid, text, text, uuid, uuid, inet, text, uuid);`)
+    this.schema.raw(
+      `drop function if exists pii.reveal_beneficiary(uuid, text, text, uuid, uuid, inet, text, uuid);`
+    )
   }
 }
 ```
@@ -3048,9 +3284,10 @@ git commit -m "🔒 security(db): pii.reveal_beneficiary SECURITY DEFINER with a
 
 ---
 
-### Task 25: RLS policies pii.* + audit append-only RULES
+### Task 25: RLS policies pii.\* + audit append-only RULES
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_pii_rls_policies.ts`
 
 - [ ] **Step 1: Migration**
@@ -3111,6 +3348,7 @@ git commit -m "🔒 security(db): RLS on pii.* and append-only RULES on access_l
 ### Task 26: Migrations audit_logs + security_audit_logs + RLS + RULES
 
 **Files:**
+
 - Create: 2 migrations
 
 - [ ] **Step 1: `create_audit_logs`**
@@ -3209,6 +3447,7 @@ git commit -m "🔒 security(db): audit_logs (RLS + append-only) and security_au
 ### Task 27: AuditService com PII validator
 
 **Files:**
+
 - Create: `app/shared/services/audit_service.ts`
 - Create: `tests/integration/shared/audit_service.spec.ts`
 
@@ -3222,7 +3461,15 @@ import auditService from '#shared/services/audit_service'
 
 test.group('AuditService', () => {
   test('record stores audit entry with tenant_id', async ({ assert }) => {
-    const [t] = await db.from('tenants').insert({ name: 'T', slug: `t-${Date.now()}`, status: 'active', rbac_version: 1 }).returning('id')
+    const [t] = await db
+      .from('tenants')
+      .insert({
+        name: 'T',
+        slug: `t-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
     await auditService.record({
       tenantId: t.id,
       actorUserId: null,
@@ -3231,16 +3478,31 @@ test.group('AuditService', () => {
       action: 'test_action',
       payload: { foo: 'bar' },
     })
-    const log = await db.from('audit_logs').where('action', 'test_action').orderBy('created_at', 'desc').first()
+    const log = await db
+      .from('audit_logs')
+      .where('action', 'test_action')
+      .orderBy('created_at', 'desc')
+      .first()
     assert.equal(log.tenant_id, t.id)
   })
 
   test('record rejects payload containing PII fields', async ({ assert }) => {
-    const [t] = await db.from('tenants').insert({ name: 'T', slug: `t-${Date.now()}`, status: 'active', rbac_version: 1 }).returning('id')
+    const [t] = await db
+      .from('tenants')
+      .insert({
+        name: 'T',
+        slug: `t-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
     await assert.rejects(async () => {
       await auditService.record({
-        tenantId: t.id, actorUserId: null,
-        entityType: 'test', entityId: 'x', action: 'leak',
+        tenantId: t.id,
+        actorUserId: null,
+        entityType: 'test',
+        entityId: 'x',
+        action: 'leak',
         payload: { cpf: '12345678900', name: 'João Silva' },
       })
     }, /PII detected/)
@@ -3252,7 +3514,11 @@ test.group('AuditService', () => {
       code: 'E_AUTH',
       payload: { reason: 'invalid_credentials' },
     })
-    const log = await db.from('security_audit_logs').where('action', 'login.failed').orderBy('created_at', 'desc').first()
+    const log = await db
+      .from('security_audit_logs')
+      .where('action', 'login.failed')
+      .orderBy('created_at', 'desc')
+      .first()
     assert.exists(log)
   })
 })
@@ -3270,7 +3536,8 @@ pnpm test --files="tests/integration/shared/audit_service.spec.ts"
 // app/shared/services/audit_service.ts
 import db from '@adonisjs/lucid/services/db'
 
-const PII_FIELD_RE = /^(cpf|cnpj|document|name|email|phone|telefone|password|secret|token|beneficiar(y|io|ies|ios))$/i
+const PII_FIELD_RE =
+  /^(cpf|cnpj|document|name|email|phone|telefone|password|secret|token|beneficiar(y|io|ies|ios))$/i
 
 class AuditService {
   async record(params: {
@@ -3355,6 +3622,7 @@ git commit -m "🚀 feat(shared): AuditService with PII guard validator"
 ### Task 28: Migrations radar_job_runs + worker_heartbeats + export_jobs + client_errors + retention
 
 **Files:**
+
 - Create: 5 migrations
 
 - [ ] **Step 1: `create_radar_job_runs`**
@@ -3453,7 +3721,11 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (t) => {
       t.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
       t.uuid('tenant_id').notNullable().references('id').inTable('tenants').onDelete('CASCADE')
-      t.uuid('requested_by_user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+      t.uuid('requested_by_user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE')
       t.string('type').notNullable()
       t.jsonb('filters').nullable()
       t.specificType('status', 'export_status').notNullable().defaultTo('pending')
@@ -3561,6 +3833,7 @@ git commit -m "🗃️ refactor(db): radar_job_runs, worker_heartbeats, export_j
 ### Task 29: QueueService (BullMQ wrapper) + JobRunService
 
 **Files:**
+
 - Create: `app/shared/services/queue_service.ts`
 - Create: `app/shared/services/job_run_service.ts`
 
@@ -3606,7 +3879,10 @@ class QueueService {
       logger.error({ err, jobId: job?.id, queue: name }, 'job.failed')
     })
     worker.on('completed', (job: Job) => {
-      logger.info({ jobId: job.id, queue: name, durationMs: Date.now() - job.timestamp }, 'job.completed')
+      logger.info(
+        { jobId: job.id, queue: name, durationMs: Date.now() - job.timestamp },
+        'job.completed'
+      )
     })
     this.workers.set(name, worker)
     return worker
@@ -3658,51 +3934,63 @@ interface StartParams {
 
 class JobRunService {
   async start(params: StartParams): Promise<string> {
-    const [row] = await db.from('radar_job_runs').insert({
-      tenant_id: params.tenantId ?? null,
-      job_name: params.jobName,
-      queue_name: params.queueName,
-      bullmq_job_id: params.bullmqJobId ?? null,
-      bullmq_attempt: params.bullmqAttempt ?? 1,
-      run_number: params.runNumber ?? 1,
-      parent_run_id: params.parentRunId ?? null,
-      origin: params.origin ?? 'http',
-      target_type: params.targetType ?? null,
-      target_id: params.targetId ?? null,
-      status: 'running',
-      started_at: db.knexRawQuery('now()').knexQuery as any,
-      metadata: params.metadata ?? null,
-      request_id: params.requestId ?? null,
-    }).returning(['id'])
+    const [row] = await db
+      .from('radar_job_runs')
+      .insert({
+        tenant_id: params.tenantId ?? null,
+        job_name: params.jobName,
+        queue_name: params.queueName,
+        bullmq_job_id: params.bullmqJobId ?? null,
+        bullmq_attempt: params.bullmqAttempt ?? 1,
+        run_number: params.runNumber ?? 1,
+        parent_run_id: params.parentRunId ?? null,
+        origin: params.origin ?? 'http',
+        target_type: params.targetType ?? null,
+        target_id: params.targetId ?? null,
+        status: 'running',
+        started_at: db.knexRawQuery('now()').knexQuery as any,
+        metadata: params.metadata ?? null,
+        request_id: params.requestId ?? null,
+      })
+      .returning(['id'])
     return row.id as string
   }
 
   async complete(runId: string, metadata?: object): Promise<void> {
-    await db.from('radar_job_runs').where('id', runId).update({
-      status: 'completed',
-      finished_at: db.knexRawQuery('now()').knexQuery as any,
-      metadata: metadata ?? null,
-    })
+    await db
+      .from('radar_job_runs')
+      .where('id', runId)
+      .update({
+        status: 'completed',
+        finished_at: db.knexRawQuery('now()').knexQuery as any,
+        metadata: metadata ?? null,
+      })
   }
 
   async skip(runId: string, reason: string): Promise<void> {
-    await db.from('radar_job_runs').where('id', runId).update({
-      status: 'skipped',
-      finished_at: db.knexRawQuery('now()').knexQuery as any,
-      error_code: 'E_SKIPPED',
-      error_message: reason,
-    })
+    await db
+      .from('radar_job_runs')
+      .where('id', runId)
+      .update({
+        status: 'skipped',
+        finished_at: db.knexRawQuery('now()').knexQuery as any,
+        error_code: 'E_SKIPPED',
+        error_message: reason,
+      })
   }
 
   async fail(runId: string, err: any): Promise<void> {
     const sanitized = sanitizeError(err, { mode: app.inProduction ? 'prod' : 'dev' })
-    await db.from('radar_job_runs').where('id', runId).update({
-      status: 'failed',
-      finished_at: db.knexRawQuery('now()').knexQuery as any,
-      error_code: err?.code ?? 'E_INTERNAL',
-      error_message: sanitized.message,
-      error_stack: sanitized.stack ?? null,
-    })
+    await db
+      .from('radar_job_runs')
+      .where('id', runId)
+      .update({
+        status: 'failed',
+        finished_at: db.knexRawQuery('now()').knexQuery as any,
+        error_code: err?.code ?? 'E_INTERNAL',
+        error_message: sanitized.message,
+        error_stack: sanitized.stack ?? null,
+      })
   }
 }
 
@@ -3727,6 +4015,7 @@ git commit -m "🚀 feat(shared): QueueService (BullMQ) and JobRunService"
 ### Task 30: bin/worker.ts + start/jobs.ts
 
 **Files:**
+
 - Create: `bin/worker.ts`
 - Create: `start/jobs.ts`
 - Modify: `package.json`
@@ -3738,14 +4027,14 @@ git commit -m "🚀 feat(shared): QueueService (BullMQ) and JobRunService"
 import queueService from '#shared/services/queue_service'
 
 export const queues = {
-  siopImport:        { name: 'siop:import',                       concurrency: 1, attempts: 3 },
-  siopReprocess:     { name: 'siop:reprocess',                    concurrency: 1, attempts: 3 },
-  siopReconcile:     { name: 'siop:reconcile',                    concurrency: 1, attempts: 3 },
-  purgeStaging:      { name: 'maintenance:purge_staging',         concurrency: 1, attempts: 2 },
-  retentionPolicy:   { name: 'maintenance:apply_retention_policy',concurrency: 1, attempts: 1 },
-  refreshAggregates: { name: 'maintenance:refresh_aggregates',    concurrency: 1, attempts: 3 },
-  vacuumHint:        { name: 'maintenance:vacuum_hint',           concurrency: 1, attempts: 1 },
-  exportPrecatorios: { name: 'exports:precatorios_csv',           concurrency: 2, attempts: 3 },
+  siopImport: { name: 'siop:import', concurrency: 1, attempts: 3 },
+  siopReprocess: { name: 'siop:reprocess', concurrency: 1, attempts: 3 },
+  siopReconcile: { name: 'siop:reconcile', concurrency: 1, attempts: 3 },
+  purgeStaging: { name: 'maintenance:purge_staging', concurrency: 1, attempts: 2 },
+  retentionPolicy: { name: 'maintenance:apply_retention_policy', concurrency: 1, attempts: 1 },
+  refreshAggregates: { name: 'maintenance:refresh_aggregates', concurrency: 1, attempts: 3 },
+  vacuumHint: { name: 'maintenance:vacuum_hint', concurrency: 1, attempts: 1 },
+  exportPrecatorios: { name: 'exports:precatorios_csv', concurrency: 2, attempts: 3 },
 } as const
 
 export async function bootWorkers() {
@@ -3824,6 +4113,7 @@ git commit -m "🚀 feat(infra): bin/worker.ts, start/jobs.ts skeleton, pnpm sta
 ### Task 31: Migration materialized views (dashboard, debtor_aggregates, asset_yearly_stats)
 
 **Files:**
+
 - Create: `database/migrations/<ts>_create_materialized_views.ts`
 
 - [ ] **Step 1: Migration**
@@ -3898,6 +4188,7 @@ git commit -m "🗃️ refactor(db): materialized views for dashboard"
 ### Task 32: HashService (HMAC-SHA256)
 
 **Files:**
+
 - Create: `app/modules/pii/services/hash_service.ts`
 - Create: `tests/unit/modules/pii/hash_service.spec.ts`
 
@@ -3954,12 +4245,7 @@ class HashService {
   }
 
   private normalize(s: string): string {
-    return s
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ')
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, ' ')
   }
 
   private onlyDigits(s: string): string {
@@ -3985,6 +4271,7 @@ git commit -m "🔒 security(pii): HashService HMAC-SHA256 with PII_HASH_PEPPER"
 ### Task 33: Login controller + view + audit
 
 **Files:**
+
 - Create: `app/modules/auth/controllers/login_controller.ts`
 - Create: `app/modules/auth/validators/login_validator.ts`
 - Create: `app/modules/auth/routes.ts`
@@ -4070,11 +4357,13 @@ import router from '@adonisjs/core/services/router'
 
 const LoginController = () => import('#modules/auth/controllers/login_controller')
 
-router.group(() => {
-  router.get('/login', [LoginController, 'show']).as('auth.login.show').use('guest')
-  router.post('/login', [LoginController, 'store']).as('auth.login.store').use('guest')
-  router.post('/logout', [LoginController, 'destroy']).as('auth.logout').use('auth')
-}).prefix('/auth')
+router
+  .group(() => {
+    router.get('/login', [LoginController, 'show']).as('auth.login.show').use('guest')
+    router.post('/login', [LoginController, 'store']).as('auth.login.store').use('guest')
+    router.post('/logout', [LoginController, 'destroy']).as('auth.logout').use('auth')
+  })
+  .prefix('/auth')
 ```
 
 - [ ] **Step 4: Importar em start/routes.ts**
@@ -4089,11 +4378,12 @@ import '#modules/auth/routes'
 
 ```typescript
 // inertia/pages/auth/login.tsx
-import { Head, useForm, Link } from '@inertiajs/react'
-import { useState } from 'react'
+import {Head, useForm, Link} from '@inertiajs/react'
+import {useState} from 'react'
 
 export default function Login() {
-  const form = useForm({ email: '', password: '' })
+  const form = useForm({email: '', password: ''})
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
     form.post('/auth/login')
@@ -4101,35 +4391,61 @@ export default function Login() {
 
   return (
     <>
-      <Head title="Entrar - juridicai" />
-      <main style={{ maxWidth: 400, margin: '4rem auto', padding: '2rem' }}>
-        <h1>juridicai</h1>
-        <form onSubmit={submit}>
-          <label>
-            Email
-            <input
-              type="email"
-              required
-              value={form.data.email}
-              onChange={(e) => form.setData('email', e.target.value)}
-            />
-          </label>
-          {form.errors.email && <p style={{ color: 'red' }}>{form.errors.email}</p>}
-          <label>
-            Senha
-            <input
-              type="password"
-              required
-              value={form.data.password}
-              onChange={(e) => form.setData('password', e.target.value)}
-            />
-          </label>
-          <button type="submit" disabled={form.processing}>Entrar</button>
-        </form>
-      </main>
-    </>
-  )
+      <Head title = "Entrar - juridicai" / >
+    <main style = {
+  {
+    maxWidth: 400, margin
+  :
+    '4rem auto', padding
+  :
+    '2rem'
+  }
+}>
+  <h1>juridicai < /h1>
+  < form
+  onSubmit = {submit} >
+    <label>
+      Email
+    < input
+  type = "email"
+  required
+  value = {form.data.email}
+  onChange = {(e)
+=>
+  form.setData('email', e.target.value)
 }
+  />
+  < /label>
+  {
+    form.errors.email && <p style = {
+    {
+      color: 'red'
+    }
+  }>
+    {
+      form.errors.email
+    }
+    </p>}
+    < label >
+    Senha
+    < input
+    type = "password"
+    required
+    value = {form.data.password}
+    onChange = {(e)
+  =>
+    form.setData('password', e.target.value)
+  }
+    />
+    < /label>
+    < button
+    type = "submit"
+    disabled = {form.processing} > Entrar < /button>
+      < /form>
+      < /main>
+      < />
+  )
+  }
 ```
 
 - [ ] **Step 6: Smoke test**
@@ -4155,6 +4471,7 @@ git commit -m "🚀 feat(auth): login flow with session.regenerate and security 
 ### Task 34: Tenant select flow
 
 **Files:**
+
 - Create: `app/modules/tenant/controllers/tenant_select_controller.ts`
 - Create: `app/modules/tenant/services/membership_service.ts`
 - Create: `app/modules/tenant/routes.ts`
@@ -4199,16 +4516,19 @@ import vine from '@vinejs/vine'
 import membershipService from '#modules/tenant/services/membership_service'
 import auditService from '#shared/services/audit_service'
 
-const selectValidator = vine.compile(vine.object({
-  tenant_id: vine.string().uuid(),
-}))
+const selectValidator = vine.compile(
+  vine.object({
+    tenant_id: vine.string().uuid(),
+  })
+)
 
 export default class TenantSelectController {
   async show({ auth, inertia, response }: HttpContext) {
     const memberships = await membershipService.listActive(auth.user!.id)
     if (memberships.length === 0) {
       return inertia.render('errors/show', {
-        status: 403, code: 'E_NO_MEMBERSHIP',
+        status: 403,
+        code: 'E_NO_MEMBERSHIP',
         message: 'Sua conta não tem acesso a nenhuma organização ativa.',
         requestId: '',
       })
@@ -4231,11 +4551,14 @@ export default class TenantSelectController {
     ctx.session.put('active_tenant_id', tenant_id)
     await ctx.session.regenerate()
     await auditService.record({
-      tenantId: tenant_id, actorUserId: userId,
-      entityType: 'tenant', entityId: tenant_id,
+      tenantId: tenant_id,
+      actorUserId: userId,
+      entityType: 'tenant',
+      entityId: tenant_id,
       action: 'tenant_switched',
       payload: { from: previous ?? null, to: tenant_id },
-      ipAddress: ctx.request.ip(), userAgent: ctx.request.header('user-agent'),
+      ipAddress: ctx.request.ip(),
+      userAgent: ctx.request.header('user-agent'),
       requestId: ctx.requestId,
     })
     return ctx.response.redirect('/dashboard')
@@ -4248,12 +4571,16 @@ export default class TenantSelectController {
 ```typescript
 // app/modules/tenant/routes.ts
 import router from '@adonisjs/core/services/router'
+
 const TenantSelectController = () => import('#modules/tenant/controllers/tenant_select_controller')
 
-router.group(() => {
-  router.get('/select', [TenantSelectController, 'show']).as('tenants.select.show')
-  router.post('/select', [TenantSelectController, 'store']).as('tenants.select.store')
-}).prefix('/tenants').use('auth')
+router
+  .group(() => {
+    router.get('/select', [TenantSelectController, 'show']).as('tenants.select.show')
+    router.post('/select', [TenantSelectController, 'store']).as('tenants.select.store')
+  })
+  .prefix('/tenants')
+  .use('auth')
 ```
 
 - [ ] **Step 4: Importar em start/routes.ts**
@@ -4266,30 +4593,59 @@ import '#modules/tenant/routes'
 
 ```typescript
 // inertia/pages/tenants/select.tsx
-import { Head, router } from '@inertiajs/react'
+import {Head, router} from '@inertiajs/react'
 
 interface Props {
   memberships: Array<{ id: string; name: string; slug: string }>
 }
 
-export default function TenantsSelect({ memberships }: Props) {
+export default function TenantsSelect({memberships}: Props) {
   return (
     <>
-      <Head title="Selecionar organização" />
-      <main style={{ maxWidth: 600, margin: '4rem auto' }}>
-        <h1>Selecione a organização ativa</h1>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {memberships.map((m) => (
-            <li key={m.id} style={{ marginBottom: '1rem' }}>
-              <button onClick={() => router.post('/tenants/select', { tenant_id: m.id })}>
-                {m.name} ({m.slug})
-              </button>
-            </li>
-          ))}
-        </ul>
-      </main>
-    </>
-  )
+      <Head title = "Selecionar organização" / >
+    <main style = {
+  {
+    maxWidth: 600, margin
+  :
+    '4rem auto'
+  }
+}>
+  <h1>Selecione
+  a
+  organização
+  ativa < /h1>
+  < ul
+  style = {
+  {
+    listStyle: 'none', padding
+  :
+    0
+  }
+}>
+  {
+    memberships.map((m) => (
+      <li key = {m.id}
+    style = {
+    {
+      marginBottom: '1rem'
+    }
+  }>
+    <button onClick = {()
+  =>
+    router.post('/tenants/select', {tenant_id: m.id})
+  }>
+    {
+      m.name
+    }
+    ({m.slug})
+    < /button>
+    < /li>
+  ))
+  }
+  </ul>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -4305,6 +4661,7 @@ git commit -m "🚀 feat(tenant): tenant select flow with audit and session.rege
 ### Task 35: Seeder do tenant Benício + admin user
 
 **Files:**
+
 - Create: `database/seeders/tenant_benicio_seeder.ts`
 - Modify: `database/seeders/index_seeder.ts`
 
@@ -4322,30 +4679,52 @@ import hash from '@adonisjs/core/services/hash'
 
 export default class extends BaseSeeder {
   async run() {
-    const [tenant] = await db.from('tenants').insert({
-      name: 'Benício',
-      slug: 'benicio',
-      status: 'active',
-      rbac_version: 1,
-    }).onConflict('slug').merge(['updated_at']).returning(['id'])
+    const [tenant] = await db
+      .from('tenants')
+      .insert({
+        name: 'Benício',
+        slug: 'benicio',
+        status: 'active',
+        rbac_version: 1,
+      })
+      .onConflict('slug')
+      .merge(['updated_at'])
+      .returning(['id'])
 
     const passwordHash = await hash.use('scrypt').make('admin1234')
-    const [user] = await db.from('users').insert({
-      name: 'Admin Benício',
-      email: 'admin@benicio.local',
-      password_hash: passwordHash,
-      status: 'active',
-    }).onConflict('email').merge(['updated_at']).returning(['id'])
+    const [user] = await db
+      .from('users')
+      .insert({
+        name: 'Admin Benício',
+        email: 'admin@benicio.local',
+        password_hash: passwordHash,
+        status: 'active',
+      })
+      .onConflict('email')
+      .merge(['updated_at'])
+      .returning(['id'])
 
-    await db.from('tenant_memberships').insert({
-      tenant_id: tenant.id, user_id: user.id, status: 'active',
-    }).onConflict(['tenant_id', 'user_id']).ignore()
+    await db
+      .from('tenant_memberships')
+      .insert({
+        tenant_id: tenant.id,
+        user_id: user.id,
+        status: 'active',
+      })
+      .onConflict(['tenant_id', 'user_id'])
+      .ignore()
 
     const tenantAdminRole = await db.from('roles').where('slug', 'tenant_admin').first()
     if (tenantAdminRole) {
-      await db.from('user_roles').insert({
-        tenant_id: tenant.id, user_id: user.id, role_id: tenantAdminRole.id,
-      }).onConflict(['tenant_id', 'user_id', 'role_id']).ignore()
+      await db
+        .from('user_roles')
+        .insert({
+          tenant_id: tenant.id,
+          user_id: user.id,
+          role_id: tenantAdminRole.id,
+        })
+        .onConflict(['tenant_id', 'user_id', 'role_id'])
+        .ignore()
     }
   }
 }
@@ -4389,6 +4768,7 @@ git commit -m "🌱 seed: tenant Benício, admin user with tenant_admin role"
 ### Task 36: CNJ parser
 
 **Files:**
+
 - Create: `app/modules/siop/parsers/cnj_parser.ts`
 - Create: `tests/unit/modules/siop/cnj_parser.spec.ts`
 
@@ -4435,11 +4815,11 @@ test.group('cnj_parser', () => {
 ```typescript
 // app/modules/siop/parsers/cnj_parser.ts
 export interface ParsedCnj {
-  normalized: string  // 20 dígitos
+  normalized: string // 20 dígitos
   sequencial: string
   verifier: string
   year: number
-  branch: string      // ramo da Justiça
+  branch: string // ramo da Justiça
   tribunal: string
   origin: string
 }
@@ -4493,6 +4873,7 @@ git commit -m "🚀 feat(siop): CNJ parser with mod-97 verifier validation"
 ### Task 37: Value parser (locale BR) e DebtorNormalizer
 
 **Files:**
+
 - Create: `app/modules/siop/parsers/value_parser.ts`
 - Create: `app/modules/siop/parsers/debtor_normalizer.ts`
 - Create: `tests/unit/modules/siop/value_parser.spec.ts`
@@ -4602,7 +4983,9 @@ export function normalizeDebtor(name: string): NormalizedDebtor {
     cleaned = cleaned.replace(re, '').trim()
   }
   // se prefeitura → traduzir pra "Município de X"
-  cleaned = cleaned.replace(/^município de\b/i, 'Município de').replace(/^estado de\b/i, 'Estado de')
+  cleaned = cleaned
+    .replace(/^município de\b/i, 'Município de')
+    .replace(/^estado de\b/i, 'Estado de')
 
   const stripAccents = cleaned.normalize('NFD').replace(/[̀-ͯ]/g, '')
   const normalizedName = stripAccents.toUpperCase().replace(/\s+/g, ' ').trim()
@@ -4616,7 +4999,11 @@ function classifyType(normalized: string): DebtorType {
   if (/^UNIAO\b/.test(normalized)) return 'union'
   if (/^ESTADO DE/.test(normalized)) return 'state'
   if (/^MUNICIPIO DE/.test(normalized)) return 'municipality'
-  if (/INSS|INCRA|FUNAI|FUNASA|IBAMA|ICMBIO|ANATEL|ANAC|INPI|CADE|DNIT|UNIVERSIDADE|UFR|UFC|UFP|UFM|UFG|IFR|IFE|IFP|UFL|UFV|UFB|UFS/.test(normalized)) {
+  if (
+    /INSS|INCRA|FUNAI|FUNASA|IBAMA|ICMBIO|ANATEL|ANAC|INPI|CADE|DNIT|UNIVERSIDADE|UFR|UFC|UFP|UFM|UFG|IFR|IFE|IFP|UFL|UFV|UFB|UFS/.test(
+      normalized
+    )
+  ) {
     return 'autarchy'
   }
   if (/FUNDACAO|FUNDAC\.|FUND\./.test(normalized)) return 'foundation'
@@ -4644,11 +5031,14 @@ git commit -m "🚀 feat(siop): parseValue (BR locale) and normalizeDebtor with 
 ### Task 38: SiopImportService — pipeline em chunks
 
 **Files:**
+
 - Create: `app/modules/siop/services/siop_import_service.ts`
 - Create: `tests/integration/modules/siop/siop_import_service.spec.ts`
 - Create: `tests/fixtures/siop/valid_2024_small.xlsx`
 
-> **Nota:** A fixture `valid_2024_small.xlsx` deve ter ~50 rows com colunas: `cnj`, `devedor`, `exercicio`, `valor_face`, `natureza`, `numero_precatorio`. Pode ser gerada manualmente em LibreOffice ou via script. Veja `tests/fixtures/siop/README.md` no Task 80.
+> **Nota:** A fixture `valid_2024_small.xlsx` deve ter ~50 rows com colunas: `cnj`, `devedor`, `exercicio`,`valor_face`,
+> `natureza`, `numero_precatorio`. Pode ser gerada manualmente em LibreOffice ou via script. Veja
+> `tests/fixtures/siop/README.md` no Task 80.
 
 - [ ] **Step 1: Integration test (alto nível)**
 
@@ -4664,9 +5054,15 @@ test.group('SiopImportService', (group) => {
   let tenantId: string
 
   group.each.setup(async () => {
-    const [t] = await db.from('tenants').insert({
-      name: 'T', slug: `t-${Date.now()}`, status: 'active', rbac_version: 1,
-    }).returning('id')
+    const [t] = await db
+      .from('tenants')
+      .insert({
+        name: 'T',
+        slug: `t-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
     tenantId = t.id
   })
 
@@ -4693,15 +5089,18 @@ test.group('SiopImportService', (group) => {
   test('idempotent: re-running same import does not duplicate assets', async ({ assert }) => {
     const fixturePath = resolve('tests/fixtures/siop/valid_2024_small.xlsx')
     const importId = await siopImportService.createImport({
-      tenantId, filePath: fixturePath, exerciseYear: 2024,
-      checksum: 'fixture-idem', uploadedByUserId: null,
+      tenantId,
+      filePath: fixturePath,
+      exerciseYear: 2024,
+      checksum: 'fixture-idem',
+      uploadedByUserId: null,
     })
     await siopImportService.run(importId)
     const before = await db.from('precatorio_assets').where('tenant_id', tenantId).count('* as c')
-    
+
     // re-run forced
     await siopImportService.run(importId, { force: true })
-    
+
     const after = await db.from('precatorio_assets').where('tenant_id', tenantId).count('* as c')
     assert.equal(Number(before[0].c), Number(after[0].c))
   })
@@ -4738,20 +5137,24 @@ interface CreateImportParams {
 class SiopImportService {
   async createImport(params: CreateImportParams): Promise<string> {
     return db.transaction(async (trx) => {
-      const [src] = await trx.from('source_records').insert({
-        tenant_id: params.tenantId,
-        source: 'siop',
-        source_file_path: params.filePath,
-        source_checksum: params.checksum,
-        original_filename: params.originalFilename ?? null,
-        mime_type: params.mimeType ?? null,
-        file_size_bytes: params.fileSizeBytes ?? null,
-        collected_at: trx.knexRawQuery('now()').knexQuery as any,
-      }).onConflict(['tenant_id', 'source', 'source_checksum'])
+      const [src] = await trx
+        .from('source_records')
+        .insert({
+          tenant_id: params.tenantId,
+          source: 'siop',
+          source_file_path: params.filePath,
+          source_checksum: params.checksum,
+          original_filename: params.originalFilename ?? null,
+          mime_type: params.mimeType ?? null,
+          file_size_bytes: params.fileSizeBytes ?? null,
+          collected_at: trx.knexRawQuery('now()').knexQuery as any,
+        })
+        .onConflict(['tenant_id', 'source', 'source_checksum'])
         .merge(['original_filename', 'mime_type', 'file_size_bytes'])
         .returning('id')
 
-      const existing = await trx.from('siop_imports')
+      const existing = await trx
+        .from('siop_imports')
         .where('tenant_id', params.tenantId)
         .andWhere('source', 'siop')
         .andWhere('exercise_year', params.exerciseYear)
@@ -4761,29 +5164,33 @@ class SiopImportService {
       if (existing) {
         if (existing.status === 'completed') {
           throw Object.assign(new Error('E_IMPORT_ALREADY_EXISTS'), {
-            code: 'E_IMPORT_ALREADY_EXISTS', status: 409, importId: existing.id,
+            code: 'E_IMPORT_ALREADY_EXISTS',
+            status: 409,
+            importId: existing.id,
           })
         }
-        return existing.id  // pending/running/failed/partial → reusa
+        return existing.id // pending/running/failed/partial → reusa
       }
 
-      const [imp] = await trx.from('siop_imports').insert({
-        tenant_id: params.tenantId,
-        exercise_year: params.exerciseYear,
-        source_record_id: src.id,
-        source: 'siop',
-        status: 'pending',
-        uploaded_by_user_id: params.uploadedByUserId,
-      }).returning('id')
+      const [imp] = await trx
+        .from('siop_imports')
+        .insert({
+          tenant_id: params.tenantId,
+          exercise_year: params.exerciseYear,
+          source_record_id: src.id,
+          source: 'siop',
+          status: 'pending',
+          uploaded_by_user_id: params.uploadedByUserId,
+        })
+        .returning('id')
       return imp.id
     })
   }
 
   async tryLock(importId: string): Promise<boolean> {
-    const result = await db.rawQuery(
-      `select pg_try_advisory_xact_lock(hashtext(?)) as locked`,
-      [importId]
-    )
+    const result = await db.rawQuery(`select pg_try_advisory_xact_lock(hashtext(?)) as locked`, [
+      importId,
+    ])
     return result.rows[0].locked === true
   }
 
@@ -4791,9 +5198,13 @@ class SiopImportService {
     const imp = await db.from('siop_imports').where('id', importId).first()
     if (!imp) throw new Error('import not found')
 
-    await db.from('siop_imports').where('id', importId).update({
-      status: 'running', started_at: db.knexRawQuery('now()').knexQuery as any,
-    })
+    await db
+      .from('siop_imports')
+      .where('id', importId)
+      .update({
+        status: 'running',
+        started_at: db.knexRawQuery('now()').knexQuery as any,
+      })
 
     const source = await db.from('source_records').where('id', imp.source_record_id).first()
 
@@ -4828,19 +5239,23 @@ class SiopImportService {
 
       // PASS 2 — normalize staging
       await withTenantRls(imp.tenant_id, async (trx) => {
-        const rows = await trx.from('siop_staging_rows')
+        const rows = await trx
+          .from('siop_staging_rows')
           .where('import_id', importId)
           .andWhere('validation_status', 'pending')
         for (const r of rows) {
           const validation = this.validateRow(r.raw_data)
-          await trx.from('siop_staging_rows').where('id', r.id).update({
-            normalized_cnj: validation.cnj ?? null,
-            normalized_debtor_key: validation.debtorKey ?? null,
-            normalized_value: validation.value,
-            normalized_year: validation.year,
-            validation_status: validation.status,
-            errors: validation.errors ?? null,
-          })
+          await trx
+            .from('siop_staging_rows')
+            .where('id', r.id)
+            .update({
+              normalized_cnj: validation.cnj ?? null,
+              normalized_debtor_key: validation.debtorKey ?? null,
+              normalized_value: validation.value,
+              normalized_year: validation.year,
+              validation_status: validation.status,
+              errors: validation.errors ?? null,
+            })
         }
       })
 
@@ -4848,7 +5263,8 @@ class SiopImportService {
       let cursor: string | null = null
       while (true) {
         const result = await withTenantRls(imp.tenant_id, async (trx) => {
-          const q = trx.from('siop_staging_rows')
+          const q = trx
+            .from('siop_staging_rows')
             .where('import_id', importId)
             .andWhere('validation_status', 'valid')
             .whereNull('processed_at')
@@ -4856,15 +5272,20 @@ class SiopImportService {
           const rows = await q.orderBy('id', 'asc').limit(1000)
           if (!rows.length) return { done: true, lastId: null, ins: 0, upd: 0, sk: 0 }
 
-          let ins = 0, upd = 0, sk = 0
+          let ins = 0,
+            upd = 0,
+            sk = 0
           for (const r of rows) {
             const action = await this.upsertOne(trx, imp.tenant_id, importId, r)
             if (action === 'inserted') ins++
             else if (action === 'updated') upd++
             else sk++
-            await trx.from('siop_staging_rows').where('id', r.id).update({
-              processed_at: trx.knexRawQuery('now()').knexQuery as any,
-            })
+            await trx
+              .from('siop_staging_rows')
+              .where('id', r.id)
+              .update({
+                processed_at: trx.knexRawQuery('now()').knexQuery as any,
+              })
           }
           return { done: false, lastId: rows[rows.length - 1].id, ins, upd, sk }
         })
@@ -4876,23 +5297,34 @@ class SiopImportService {
       }
 
       // contar erros
-      const errCount = await db.from('siop_staging_rows')
+      const errCount = await db
+        .from('siop_staging_rows')
         .where('import_id', importId)
         .andWhere('validation_status', 'invalid')
         .count('* as c')
       errorsCount = Number(errCount[0].c)
 
-      await db.from('siop_imports').where('id', importId).update({
-        status: errorsCount > 0 ? 'partial' : 'completed',
-        finished_at: db.knexRawQuery('now()').knexQuery as any,
-        total_rows: totalRows, inserted, updated: updatedCount, skipped, errors: errorsCount,
-      })
+      await db
+        .from('siop_imports')
+        .where('id', importId)
+        .update({
+          status: errorsCount > 0 ? 'partial' : 'completed',
+          finished_at: db.knexRawQuery('now()').knexQuery as any,
+          total_rows: totalRows,
+          inserted,
+          updated: updatedCount,
+          skipped,
+          errors: errorsCount,
+        })
     } catch (err) {
       logger.error({ err, importId }, 'siop:import.failed')
-      await db.from('siop_imports').where('id', importId).update({
-        status: 'failed',
-        finished_at: db.knexRawQuery('now()').knexQuery as any,
-      })
+      await db
+        .from('siop_imports')
+        .where('id', importId)
+        .update({
+          status: 'failed',
+          finished_at: db.knexRawQuery('now()').knexQuery as any,
+        })
       throw err
     }
   }
@@ -4900,7 +5332,7 @@ class SiopImportService {
   private rowToObj(row: any): Record<string, any> | null {
     const arr = row.values as any[]
     if (!arr || arr.length < 3) return null
-    if (typeof arr[1] === 'string' && /cnj/i.test(arr[1])) return null  // header
+    if (typeof arr[1] === 'string' && /cnj/i.test(arr[1])) return null // header
     return {
       cnj: arr[1],
       devedor: arr[2],
@@ -4931,34 +5363,45 @@ class SiopImportService {
     if (value === null) errors.push({ field: 'valor_face', message: 'invalid_value' })
 
     const year = Number(raw.exercicio)
-    if (!Number.isFinite(year) || year < 2000) errors.push({ field: 'exercicio', message: 'invalid_year' })
+    if (!Number.isFinite(year) || year < 2000)
+      errors.push({ field: 'exercicio', message: 'invalid_year' })
 
     const status = errors.length === 0 ? 'valid' : 'invalid'
     return {
       cnj,
       debtorKey: debtor?.normalizedKey ?? null,
-      value, year: Number.isFinite(year) ? year : null,
+      value,
+      year: Number.isFinite(year) ? year : null,
       status,
       errors: errors.length ? errors : null,
     }
   }
 
-  private async upsertOne(trx: any, tenantId: string, importId: string, staging: any): Promise<'inserted' | 'updated' | 'skipped'> {
+  private async upsertOne(
+    trx: any,
+    tenantId: string,
+    importId: string,
+    staging: any
+  ): Promise<'inserted' | 'updated' | 'skipped'> {
     const debtor = normalizeDebtor(String(staging.raw_data.devedor))
     // upsert debtor
-    let debtorRow = await trx.from('debtors')
+    let debtorRow = await trx
+      .from('debtors')
       .where('tenant_id', tenantId)
       .andWhere('debtor_type', debtor.debtorType)
       .andWhere('normalized_key', debtor.normalizedKey)
       .first()
     if (!debtorRow) {
-      const [created] = await trx.from('debtors').insert({
-        tenant_id: tenantId,
-        name: String(staging.raw_data.devedor),
-        normalized_name: debtor.normalizedName,
-        normalized_key: debtor.normalizedKey,
-        debtor_type: debtor.debtorType,
-      }).returning('id')
+      const [created] = await trx
+        .from('debtors')
+        .insert({
+          tenant_id: tenantId,
+          name: String(staging.raw_data.devedor),
+          normalized_name: debtor.normalizedName,
+          normalized_key: debtor.normalizedKey,
+          debtor_type: debtor.debtorType,
+        })
+        .returning('id')
       debtorRow = { id: created.id }
     }
 
@@ -4966,66 +5409,90 @@ class SiopImportService {
     const externalId = String(staging.raw_data.numero_precatorio ?? '') || null
     const cnj = staging.normalized_cnj
     const fingerprint = createHash('sha256')
-      .update(`${cnj}|${debtor.normalizedKey}|${staging.normalized_value}|${staging.normalized_year}|${externalId}`)
+      .update(
+        `${cnj}|${debtor.normalizedKey}|${staging.normalized_value}|${staging.normalized_year}|${externalId}`
+      )
       .digest('hex')
 
     let asset = null
     if (externalId) {
-      asset = await trx.from('precatorio_assets')
-        .where('tenant_id', tenantId).andWhere('source', 'siop').andWhere('external_id', externalId).first()
+      asset = await trx
+        .from('precatorio_assets')
+        .where('tenant_id', tenantId)
+        .andWhere('source', 'siop')
+        .andWhere('external_id', externalId)
+        .first()
     }
     if (!asset && cnj) {
-      asset = await trx.from('precatorio_assets')
-        .where('tenant_id', tenantId).andWhere('source', 'siop').andWhere('cnj_number', cnj).first()
+      asset = await trx
+        .from('precatorio_assets')
+        .where('tenant_id', tenantId)
+        .andWhere('source', 'siop')
+        .andWhere('cnj_number', cnj)
+        .first()
     }
     if (!asset) {
-      asset = await trx.from('precatorio_assets')
-        .where('tenant_id', tenantId).andWhere('source', 'siop').andWhere('row_fingerprint', fingerprint).first()
+      asset = await trx
+        .from('precatorio_assets')
+        .where('tenant_id', tenantId)
+        .andWhere('source', 'siop')
+        .andWhere('row_fingerprint', fingerprint)
+        .first()
     }
 
     let action: 'inserted' | 'updated' | 'skipped'
     if (!asset) {
-      const [created] = await trx.from('precatorio_assets').insert({
-        tenant_id: tenantId,
-        source: 'siop',
-        external_id: externalId,
-        cnj_number: cnj,
-        debtor_id: debtorRow.id,
-        asset_number: externalId,
-        exercise_year: staging.normalized_year,
-        nature: this.parseNature(staging.raw_data.natureza),
-        face_value: staging.normalized_value,
-        lifecycle_status: 'discovered',
-        pii_status: 'none',
-        compliance_status: 'pending',
-        raw_data: staging.raw_data,
-        row_fingerprint: fingerprint,
-        source_record_id: null,
-      }).returning('id')
+      const [created] = await trx
+        .from('precatorio_assets')
+        .insert({
+          tenant_id: tenantId,
+          source: 'siop',
+          external_id: externalId,
+          cnj_number: cnj,
+          debtor_id: debtorRow.id,
+          asset_number: externalId,
+          exercise_year: staging.normalized_year,
+          nature: this.parseNature(staging.raw_data.natureza),
+          face_value: staging.normalized_value,
+          lifecycle_status: 'discovered',
+          pii_status: 'none',
+          compliance_status: 'pending',
+          raw_data: staging.raw_data,
+          row_fingerprint: fingerprint,
+          source_record_id: null,
+        })
+        .returning('id')
       asset = { id: created.id }
       action = 'inserted'
     } else {
       // update preserva campos manuais
-      await trx.from('precatorio_assets').where('id', asset.id).update({
-        debtor_id: debtorRow.id,
-        face_value: staging.normalized_value,
-        nature: this.parseNature(staging.raw_data.natureza),
-        raw_data: staging.raw_data,
-      })
+      await trx
+        .from('precatorio_assets')
+        .where('id', asset.id)
+        .update({
+          debtor_id: debtorRow.id,
+          face_value: staging.normalized_value,
+          nature: this.parseNature(staging.raw_data.natureza),
+          raw_data: staging.raw_data,
+        })
       action = 'updated'
     }
 
     // asset_event idempotency
     const eventType = action === 'inserted' ? 'siop_imported' : 'siop_updated'
     const idempotencyKey = `${importId}|${staging.id}|${fingerprint}`
-    await trx.from('asset_events').insert({
-      tenant_id: tenantId,
-      asset_id: asset.id,
-      event_type: eventType,
-      source: 'siop',
-      payload: { import_id: importId, staging_row_id: staging.id },
-      idempotency_key: idempotencyKey,
-    }).onConflict(['tenant_id', 'asset_id', 'event_type', 'idempotency_key']).ignore()
+    await trx
+      .from('asset_events')
+      .insert({
+        tenant_id: tenantId,
+        asset_id: asset.id,
+        event_type: eventType,
+        source: 'siop',
+        payload: { import_id: importId, staging_row_id: staging.id },
+        idempotency_key: idempotencyKey,
+      })
+      .onConflict(['tenant_id', 'asset_id', 'event_type', 'idempotency_key'])
+      .ignore()
 
     return action
   }
@@ -5048,7 +5515,8 @@ export default new SiopImportService()
 pnpm test --files="tests/integration/modules/siop/siop_import_service.spec.ts"
 ```
 
-> Se a fixture XLSX ainda não existe, criar uma mínima manualmente ou via script `scripts/generate_fixture_siop.ts` (Task 80).
+> Se a fixture XLSX ainda não existe, criar uma mínima manualmente ou via script `scripts/generate_fixture_siop.ts` (
+> Task 80).
 
 - [ ] **Step 5: Commit**
 
@@ -5062,6 +5530,7 @@ git commit -m "🚀 feat(siop): SiopImportService with chunked pipeline, advisor
 ### Task 39: SiopImportHandler + registrar no bootWorkers
 
 **Files:**
+
 - Create: `app/modules/siop/jobs/siop_import_handler.ts`
 - Modify: `start/jobs.ts`
 
@@ -5121,7 +5590,11 @@ export default handler
 import siopImportHandler from '#modules/siop/jobs/siop_import_handler'
 
 export async function bootWorkers() {
-  queueService.registerWorker(queues.siopImport.name, siopImportHandler, queues.siopImport.concurrency)
+  queueService.registerWorker(
+    queues.siopImport.name,
+    siopImportHandler,
+    queues.siopImport.concurrency
+  )
 }
 ```
 
@@ -5139,6 +5612,7 @@ git commit -m "🚀 feat(siop): siop_import_handler + register in bootWorkers"
 ### Task 40: ImportController (upload + show + reprocess + errors + download)
 
 **Files:**
+
 - Create: `app/modules/siop/controllers/import_controller.ts`
 - Create: `app/modules/siop/validators/upload_validator.ts`
 - Create: `app/modules/siop/routes.ts`
@@ -5155,7 +5629,10 @@ export const uploadValidator = vine.compile(
       size: '50mb',
       extnames: ['xlsx', 'xls', 'csv'],
     }),
-    exercise_year: vine.number().min(2000).max(new Date().getFullYear() + 1),
+    exercise_year: vine
+      .number()
+      .min(2000)
+      .max(new Date().getFullYear() + 1),
   })
 )
 ```
@@ -5177,8 +5654,11 @@ import { uploadValidator } from '#modules/siop/validators/upload_validator'
 
 export default class ImportController {
   async index(ctx: HttpContext) {
-    const imports = await db.from('siop_imports')
-      .where('tenant_id', ctx.tenant.id).orderBy('created_at', 'desc').limit(50)
+    const imports = await db
+      .from('siop_imports')
+      .where('tenant_id', ctx.tenant.id)
+      .orderBy('created_at', 'desc')
+      .limit(50)
     return ctx.inertia.render('imports/index', { imports })
   }
 
@@ -5192,7 +5672,7 @@ export default class ImportController {
     const storedKey = `siop/${ctx.tenant.id}/${exercise_year}/${checksum}-${file.clientName}`
     await drive.use().moveFromDisk(file.tmpPath!, storedKey)
 
-    const { size } = await stat(file.tmpPath ?? storedKey).catch(() => ({ size: 0 } as any))
+    const { size } = await stat(file.tmpPath ?? storedKey).catch(() => ({ size: 0 }) as any)
 
     let importId: string
     try {
@@ -5214,16 +5694,25 @@ export default class ImportController {
       throw e
     }
 
-    await queueService.getQueue('siop:import').add('siop:import', {
-      importId, tenantId: ctx.tenant.id, requestId: ctx.requestId,
-    }, { jobId: `siop:import:${ctx.tenant.id}:${importId}` })
+    await queueService.getQueue('siop:import').add(
+      'siop:import',
+      {
+        importId,
+        tenantId: ctx.tenant.id,
+        requestId: ctx.requestId,
+      },
+      { jobId: `siop:import:${ctx.tenant.id}:${importId}` }
+    )
 
     await auditService.record({
-      tenantId: ctx.tenant.id, actorUserId: ctx.auth.user!.id,
-      entityType: 'siop_import', entityId: importId,
+      tenantId: ctx.tenant.id,
+      actorUserId: ctx.auth.user!.id,
+      entityType: 'siop_import',
+      entityId: importId,
       action: 'siop_import_created',
       payload: { exercise_year, checksum_prefix: checksum.slice(0, 8) },
-      ipAddress: ctx.request.ip(), userAgent: ctx.request.header('user-agent'),
+      ipAddress: ctx.request.ip(),
+      userAgent: ctx.request.header('user-agent'),
       requestId: ctx.requestId,
     })
 
@@ -5231,52 +5720,82 @@ export default class ImportController {
   }
 
   async show(ctx: HttpContext) {
-    const imp = await db.from('siop_imports')
-      .where('id', ctx.params.id).andWhere('tenant_id', ctx.tenant.id).first()
+    const imp = await db
+      .from('siop_imports')
+      .where('id', ctx.params.id)
+      .andWhere('tenant_id', ctx.tenant.id)
+      .first()
     if (!imp) return ctx.response.notFound()
     return ctx.inertia.render('imports/show', { import: imp })
   }
 
   async errors(ctx: HttpContext) {
-    const imp = await db.from('siop_imports')
-      .where('id', ctx.params.id).andWhere('tenant_id', ctx.tenant.id).first()
+    const imp = await db
+      .from('siop_imports')
+      .where('id', ctx.params.id)
+      .andWhere('tenant_id', ctx.tenant.id)
+      .first()
     if (!imp) return ctx.response.notFound()
     const page = Number(ctx.request.qs().page) || 1
-    const errors = await db.from('siop_staging_rows')
-      .where('import_id', imp.id).andWhere('validation_status', 'invalid')
-      .orderBy('id', 'asc').paginate(page, 50)
+    const errors = await db
+      .from('siop_staging_rows')
+      .where('import_id', imp.id)
+      .andWhere('validation_status', 'invalid')
+      .orderBy('id', 'asc')
+      .paginate(page, 50)
     return ctx.inertia.render('imports/errors', { import: imp, errors: errors.toJSON() })
   }
 
   async reprocess(ctx: HttpContext) {
-    const imp = await db.from('siop_imports')
-      .where('id', ctx.params.id).andWhere('tenant_id', ctx.tenant.id).first()
+    const imp = await db
+      .from('siop_imports')
+      .where('id', ctx.params.id)
+      .andWhere('tenant_id', ctx.tenant.id)
+      .first()
     if (!imp) return ctx.response.notFound()
     if (!['failed', 'partial'].includes(imp.status)) {
       return ctx.response.unprocessableEntity({ error: { code: 'E_INVALID_STATE' } })
     }
-    const runNumber = (await db.from('radar_job_runs')
-      .where('target_type', 'siop_import').andWhere('target_id', imp.id)
-      .max('run_number as max_run').first())?.max_run ?? 0
-    await queueService.getQueue('siop:import').add('siop:import', {
-      importId: imp.id, tenantId: ctx.tenant.id, requestId: ctx.requestId,
-      runNumber: runNumber + 1, parentRunId: null,
-    }, { jobId: `siop:import:${ctx.tenant.id}:${imp.id}:retry-${runNumber + 1}` })
+    const runNumber =
+      (
+        await db
+          .from('radar_job_runs')
+          .where('target_type', 'siop_import')
+          .andWhere('target_id', imp.id)
+          .max('run_number as max_run')
+          .first()
+      )?.max_run ?? 0
+    await queueService.getQueue('siop:import').add(
+      'siop:import',
+      {
+        importId: imp.id,
+        tenantId: ctx.tenant.id,
+        requestId: ctx.requestId,
+        runNumber: runNumber + 1,
+        parentRunId: null,
+      },
+      { jobId: `siop:import:${ctx.tenant.id}:${imp.id}:retry-${runNumber + 1}` }
+    )
     return ctx.response.redirect(`/imports/${imp.id}`)
   }
 
   async downloadSource(ctx: HttpContext) {
-    const imp = await db.from('siop_imports as i')
+    const imp = await db
+      .from('siop_imports as i')
       .join('source_records as s', 's.id', 'i.source_record_id')
-      .where('i.id', ctx.params.id).andWhere('i.tenant_id', ctx.tenant.id)
+      .where('i.id', ctx.params.id)
+      .andWhere('i.tenant_id', ctx.tenant.id)
       .select('s.source_file_path', 's.original_filename')
       .first()
     if (!imp) return ctx.response.notFound()
     await auditService.record({
-      tenantId: ctx.tenant.id, actorUserId: ctx.auth.user!.id,
-      entityType: 'siop_import', entityId: ctx.params.id,
+      tenantId: ctx.tenant.id,
+      actorUserId: ctx.auth.user!.id,
+      entityType: 'siop_import',
+      entityId: ctx.params.id,
       action: 'source_downloaded',
-      ipAddress: ctx.request.ip(), userAgent: ctx.request.header('user-agent'),
+      ipAddress: ctx.request.ip(),
+      userAgent: ctx.request.header('user-agent'),
       requestId: ctx.requestId,
     })
     return ctx.response.attachment(imp.source_file_path, imp.original_filename)
@@ -5303,15 +5822,30 @@ import { middleware } from '#start/kernel'
 
 const ImportController = () => import('#modules/siop/controllers/import_controller')
 
-router.group(() => {
-  router.get('/', [ImportController, 'index']).as('imports.index')
-  router.get('/new', [ImportController, 'newForm']).as('imports.new').use(middleware.permission({ permission: 'imports.create' }))
-  router.post('/', [ImportController, 'store']).as('imports.store').use(middleware.permission({ permission: 'imports.create' }))
-  router.get('/:id', [ImportController, 'show']).as('imports.show')
-  router.get('/:id/errors', [ImportController, 'errors']).as('imports.errors')
-  router.post('/:id/reprocess', [ImportController, 'reprocess']).as('imports.reprocess').use(middleware.permission({ permission: 'imports.reprocess' }))
-  router.get('/:id/download-source', [ImportController, 'downloadSource']).as('imports.download_source').use(middleware.permission({ permission: 'imports.download_source' }))
-}).prefix('/imports').use([middleware.auth(), middleware.tenant()])
+router
+  .group(() => {
+    router.get('/', [ImportController, 'index']).as('imports.index')
+    router
+      .get('/new', [ImportController, 'newForm'])
+      .as('imports.new')
+      .use(middleware.permission({ permission: 'imports.create' }))
+    router
+      .post('/', [ImportController, 'store'])
+      .as('imports.store')
+      .use(middleware.permission({ permission: 'imports.create' }))
+    router.get('/:id', [ImportController, 'show']).as('imports.show')
+    router.get('/:id/errors', [ImportController, 'errors']).as('imports.errors')
+    router
+      .post('/:id/reprocess', [ImportController, 'reprocess'])
+      .as('imports.reprocess')
+      .use(middleware.permission({ permission: 'imports.reprocess' }))
+    router
+      .get('/:id/download-source', [ImportController, 'downloadSource'])
+      .as('imports.download_source')
+      .use(middleware.permission({ permission: 'imports.download_source' }))
+  })
+  .prefix('/imports')
+  .use([middleware.auth(), middleware.tenant()])
 ```
 
 - [ ] **Step 4: Importar em start/routes.ts**
@@ -5332,6 +5866,7 @@ git commit -m "🚀 feat(siop): import controller (upload, show, errors, reproce
 ### Task 41: Inertia pages — imports/{index, new, show, errors}
 
 **Files:**
+
 - Create: `inertia/pages/imports/{index,new,show,errors}.tsx`
 - Create: `inertia/hooks/use_import_polling.ts`
 
@@ -5363,7 +5898,9 @@ export function useImportPolling(importId: string, currentStatus: string) {
     }
 
     const interval = setInterval(tick, backoff)
-    const onVis = () => { if (!document.hidden) tick() }
+    const onVis = () => {
+      if (!document.hidden) tick()
+    }
     document.addEventListener('visibilitychange', onVis)
 
     return () => {
@@ -5379,37 +5916,57 @@ export function useImportPolling(importId: string, currentStatus: string) {
 
 ```typescript
 // inertia/pages/imports/index.tsx
-import { Head, Link } from '@inertiajs/react'
+import {Head, Link} from '@inertiajs/react'
 
 interface Imp {
-  id: string; exercise_year: number; status: string; total_rows: number
-  inserted: number; errors: number; created_at: string
+  id: string;
+  exercise_year: number;
+  status: string;
+  total_rows: number
+  inserted: number;
+  errors: number;
+  created_at: string
 }
 
-export default function ImportsIndex({ imports }: { imports: Imp[] }) {
+export default function ImportsIndex({imports}: { imports: Imp[] }) {
   return (
     <>
-      <Head title="Imports" />
+      <Head title = "Imports" / >
       <main>
-        <h1>Imports</h1>
-        <Link href="/imports/new"><button>Novo import</button></Link>
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Exercício</th><th>Status</th><th>Rows</th><th>Inseridos</th><th>Erros</th><th>Criado em</th></tr>
-          </thead>
-          <tbody>
-            {imports.map((i) => (
-              <tr key={i.id}>
-                <td><Link href={`/imports/${i.id}`}>{i.id.slice(0, 8)}</Link></td>
-                <td>{i.exercise_year}</td><td>{i.status}</td><td>{i.total_rows}</td>
-                <td>{i.inserted}</td><td>{i.errors}</td><td>{new Date(i.created_at).toLocaleString('pt-BR')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
-    </>
-  )
+        <h1>Imports < /h1>
+      < Link
+  href = "/imports/new" > <button>Novo
+  import
+  </button></
+  Link >
+  <table>
+    <thead>
+      <tr><th>ID < /th><th>Exercício</
+  th > <th>Status < /th><th>Rows</
+  th > <th>Inseridos < /th><th>Erros</
+  th > <th>Criado
+  em < /th></
+  tr >
+  </thead>
+  < tbody >
+  {
+    imports.map((i) => (
+      <tr key = {i.id} >
+      <td><Link href = {`/imports/${i.id}`
+  } > {i.id.slice(0, 8)} < /Link></
+  td >
+  <td>{i.exercise_year} < /td><td>{i.status}</
+  td > <td>{i.total_rows} < /td>
+  < td > {i.inserted} < /td><td>{i.errors}</
+  td > <td>{new Date(i.created_at).toLocaleString('pt-BR')} < /td>
+  < /tr>
+))
+}
+  </tbody>
+  < /table>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -5417,34 +5974,59 @@ export default function ImportsIndex({ imports }: { imports: Imp[] }) {
 
 ```typescript
 // inertia/pages/imports/new.tsx
-import { Head, useForm } from '@inertiajs/react'
+import {Head, useForm} from '@inertiajs/react'
 
 export default function ImportsNew() {
-  const form = useForm<{ file: File | null; exercise_year: number }>({ file: null, exercise_year: new Date().getFullYear() })
+  const form = useForm<{ file: File | null; exercise_year: number }>({
+    file: null,
+    exercise_year: new Date().getFullYear()
+  })
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    form.post('/imports', { forceFormData: true })
+    form.post('/imports', {forceFormData: true})
   }
 
   return (
     <>
-      <Head title="Novo import" />
+      <Head title = "Novo import" / >
       <main>
-        <h1>Novo import SIOP</h1>
-        <form onSubmit={submit}>
-          <label>Arquivo XLSX/CSV
-            <input type="file" required onChange={(e) => form.setData('file', e.target.files?.[0] ?? null)} />
-          </label>
-          <label>Exercício
-            <input type="number" min={2000} max={2030} required value={form.data.exercise_year}
-              onChange={(e) => form.setData('exercise_year', Number(e.target.value))} />
-          </label>
-          <button type="submit" disabled={form.processing}>Enviar</button>
-        </form>
-      </main>
-    </>
-  )
+        <h1>Novo
+  import SIOP
+  </h1>
+  < form
+  onSubmit = {submit} >
+    <label>Arquivo
+  XLSX / CSV
+  < input
+  type = "file"
+  required
+  onChange = {(e)
+=>
+  form.setData('file', e.target.files?.[0] ?? null)
+}
+  />
+  < /label>
+  < label > Exercício
+  < input
+  type = "number"
+  min = {2000}
+  max = {2030}
+  required
+  value = {form.data.exercise_year}
+  onChange = {(e)
+=>
+  form.setData('exercise_year', Number(e.target.value))
+}
+  />
+  < /label>
+  < button
+  type = "submit"
+  disabled = {form.processing} > Enviar < /button>
+    < /form>
+    < /main>
+    < />
+)
 }
 ```
 
@@ -5452,33 +6034,87 @@ export default function ImportsNew() {
 
 ```typescript
 // inertia/pages/imports/show.tsx
-import { Head, Link, router } from '@inertiajs/react'
-import { useImportPolling } from '~/hooks/use_import_polling'
+import {Head, Link, router} from '@inertiajs/react'
+import {useImportPolling} from '~/hooks/use_import_polling'
 
-export default function ImportsShow({ import: imp }: { import: any }) {
+export default function ImportsShow({import: imp}: { import: any }) {
   useImportPolling(imp.id, imp.status)
   const isFinal = ['completed', 'partial', 'failed'].includes(imp.status)
   return (
     <>
-      <Head title={`Import ${imp.id.slice(0, 8)}`} />
-      <main>
-        <h1>Import {imp.id.slice(0, 8)} — exercício {imp.exercise_year}</h1>
-        <p>Status: <strong>{imp.status}</strong></p>
-        <ul>
-          <li>Total: {imp.total_rows}</li>
-          <li>Inseridos: {imp.inserted}</li>
-          <li>Atualizados: {imp.updated}</li>
-          <li>Pulados: {imp.skipped}</li>
-          <li>Erros: {imp.errors}</li>
-        </ul>
-        {imp.errors > 0 && <Link href={`/imports/${imp.id}/errors`}><button>Ver erros ({imp.errors})</button></Link>}
-        {(imp.status === 'failed' || imp.status === 'partial') && (
-          <button onClick={() => router.post(`/imports/${imp.id}/reprocess`)}>Reprocessar</button>
-        )}
-        <a href={`/imports/${imp.id}/download-source`}><button>Baixar arquivo original</button></a>
-      </main>
-    </>
+      <Head title = {`Import ${imp.id.slice(0, 8)}`
+}
+  />
+  < main >
+  <h1>Import
+  {
+    imp.id.slice(0, 8)
+  } — exercício
+  {
+    imp.exercise_year
+  }
+  </h1>
+  < p > Status
+:
+  <strong>{imp.status} < /strong></
+  p >
+  <ul>
+    <li>Total
+:
+  {
+    imp.total_rows
+  }
+  </li>
+  < li > Inseridos
+:
+  {
+    imp.inserted
+  }
+  </li>
+  < li > Atualizados
+:
+  {
+    imp.updated
+  }
+  </li>
+  < li > Pulados
+:
+  {
+    imp.skipped
+  }
+  </li>
+  < li > Erros
+:
+  {
+    imp.errors
+  }
+  </li>
+  < /ul>
+  {
+    imp.errors > 0 && <Link href = {`/imports/${imp.id}/errors`
+  }>
+    <button>Ver
+    erros({imp.errors}) < /button></
+    Link >
+  }
+  {
+    (imp.status === 'failed' || imp.status === 'partial') && (
+      <button onClick = {()
+  =>
+    router.post(`/imports/${imp.id}/reprocess`)
+  }>
+    Reprocessar < /button>
   )
+  }
+  <a href = {`/imports/${imp.id}/download-source`
+}>
+  <button>Baixar
+  arquivo
+  original < /button></
+  a >
+  </main>
+  < />
+)
 }
 ```
 
@@ -5486,35 +6122,49 @@ export default function ImportsShow({ import: imp }: { import: any }) {
 
 ```typescript
 // inertia/pages/imports/errors.tsx
-import { Head, Link } from '@inertiajs/react'
+import {Head, Link} from '@inertiajs/react'
 
 interface Props {
   import: any
   errors: { data: any[]; meta: any }
 }
 
-export default function ImportsErrors({ import: imp, errors }: Props) {
+export default function ImportsErrors({import: imp, errors}: Props) {
   return (
     <>
-      <Head title={`Erros — Import ${imp.id.slice(0, 8)}`} />
-      <main>
-        <h1>Erros do import {imp.id.slice(0, 8)}</h1>
-        <Link href={`/imports/${imp.id}`}>Voltar</Link>
-        <table>
-          <thead><tr><th>Linha (id)</th><th>CNJ</th><th>Erros</th></tr></thead>
-          <tbody>
-            {errors.data.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id.slice(0, 8)}</td>
-                <td>{r.normalized_cnj ?? '-'}</td>
-                <td><pre>{JSON.stringify(r.errors, null, 2)}</pre></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
-    </>
-  )
+      <Head title = {`Erros — Import ${imp.id.slice(0, 8)}`
+}
+  />
+  < main >
+  <h1>Erros
+  do import {imp
+.
+  id.slice(0, 8)
+}
+  </h1>
+  < Link
+  href = {`/imports/${imp.id}`
+}>
+  Voltar < /Link>
+  < table >
+  <thead><tr><th>Linha(id) < /th><th>CNJ</
+  th > <th>Erros < /th></
+  tr > </thead>
+  < tbody >
+  {
+    errors.data.map((r) => (
+      <tr key = {r.id} >
+        <td>{r.id.slice(0, 8)} < /td>
+        < td > {r.normalized_cnj ?? '-'} < /td>
+        < td > <pre>{JSON.stringify(r.errors, null, 2)} < /pre></td >
+  </tr>
+))
+}
+  </tbody>
+  < /table>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -5541,6 +6191,7 @@ git commit -m "🚀 feat(siop ui): imports index/new/show/errors pages with poll
 ### Task 42: PrecatorioRepository com whitelist sort/filter
 
 **Files:**
+
 - Create: `app/modules/precatorios/repositories/precatorio_repository.ts`
 - Create: `tests/integration/modules/precatorios/precatorio_repository.spec.ts`
 
@@ -5557,13 +6208,60 @@ test.group('PrecatorioRepository', (group) => {
   let tenantB: string
 
   group.each.setup(async () => {
-    const [a] = await db.from('tenants').insert({ name: 'A', slug: `a-${Date.now()}`, status: 'active', rbac_version: 1 }).returning('id')
-    const [b] = await db.from('tenants').insert({ name: 'B', slug: `b-${Date.now()}`, status: 'active', rbac_version: 1 }).returning('id')
-    tenantA = a.id; tenantB = b.id
+    const [a] = await db
+      .from('tenants')
+      .insert({
+        name: 'A',
+        slug: `a-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
+    const [b] = await db
+      .from('tenants')
+      .insert({
+        name: 'B',
+        slug: `b-${Date.now()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
+    tenantA = a.id
+    tenantB = b.id
     await db.from('precatorio_assets').insert([
-      { tenant_id: tenantA, source: 'siop', cnj_number: '00012345620234036100', face_value: 100000, lifecycle_status: 'expedited', exercise_year: 2024, nature: 'alimentar', pii_status: 'none', compliance_status: 'pending' },
-      { tenant_id: tenantA, source: 'siop', cnj_number: '00012345620234036101', face_value: 50000, lifecycle_status: 'paid', exercise_year: 2023, nature: 'comum', pii_status: 'none', compliance_status: 'pending' },
-      { tenant_id: tenantB, source: 'siop', cnj_number: '00012345620234036102', face_value: 999, lifecycle_status: 'expedited', exercise_year: 2024, nature: 'alimentar', pii_status: 'none', compliance_status: 'pending' },
+      {
+        tenant_id: tenantA,
+        source: 'siop',
+        cnj_number: '00012345620234036100',
+        face_value: 100000,
+        lifecycle_status: 'expedited',
+        exercise_year: 2024,
+        nature: 'alimentar',
+        pii_status: 'none',
+        compliance_status: 'pending',
+      },
+      {
+        tenant_id: tenantA,
+        source: 'siop',
+        cnj_number: '00012345620234036101',
+        face_value: 50000,
+        lifecycle_status: 'paid',
+        exercise_year: 2023,
+        nature: 'comum',
+        pii_status: 'none',
+        compliance_status: 'pending',
+      },
+      {
+        tenant_id: tenantB,
+        source: 'siop',
+        cnj_number: '00012345620234036102',
+        face_value: 999,
+        lifecycle_status: 'expedited',
+        exercise_year: 2024,
+        nature: 'alimentar',
+        pii_status: 'none',
+        compliance_status: 'pending',
+      },
     ])
   })
 
@@ -5574,20 +6272,35 @@ test.group('PrecatorioRepository', (group) => {
   })
 
   test('list filters by lifecycle_status', async ({ assert }) => {
-    const r = await precatorioRepository.list(tenantA, { page: 1, perPage: 10, filters: { lifecycle_status: ['expedited'] } })
+    const r = await precatorioRepository.list(tenantA, {
+      page: 1,
+      perPage: 10,
+      filters: { lifecycle_status: ['expedited'] },
+    })
     assert.equal(r.meta.total, 1)
     assert.equal(r.data[0].lifecycle_status, 'expedited')
   })
 
   test('list rejects sort outside whitelist', async ({ assert }) => {
     await assert.rejects(
-      () => precatorioRepository.list(tenantA, { page: 1, perPage: 10, sortBy: 'random_col' as any, sortDir: 'asc' }),
+      () =>
+        precatorioRepository.list(tenantA, {
+          page: 1,
+          perPage: 10,
+          sortBy: 'random_col' as any,
+          sortDir: 'asc',
+        }),
       /sort_not_allowed/i
     )
   })
 
   test('list sorts by face_value desc', async ({ assert }) => {
-    const r = await precatorioRepository.list(tenantA, { page: 1, perPage: 10, sortBy: 'face_value', sortDir: 'desc' })
+    const r = await precatorioRepository.list(tenantA, {
+      page: 1,
+      perPage: 10,
+      sortBy: 'face_value',
+      sortDir: 'desc',
+    })
     assert.isAtLeast(Number(r.data[0].face_value), Number(r.data[1].face_value))
   })
 })
@@ -5602,11 +6315,16 @@ test.group('PrecatorioRepository', (group) => {
 import db from '@adonisjs/lucid/services/db'
 
 export const SORTABLE_COLUMNS = [
-  'created_at', 'face_value', 'estimated_updated_value',
-  'exercise_year', 'lifecycle_status', 'nature', 'base_date',
+  'created_at',
+  'face_value',
+  'estimated_updated_value',
+  'exercise_year',
+  'lifecycle_status',
+  'nature',
+  'base_date',
 ] as const
 
-export type SortableColumn = typeof SORTABLE_COLUMNS[number]
+export type SortableColumn = (typeof SORTABLE_COLUMNS)[number]
 
 export interface ListParams {
   page?: number
@@ -5629,15 +6347,19 @@ class PrecatorioRepository {
     if (params.sortBy && !SORTABLE_COLUMNS.includes(params.sortBy)) {
       throw Object.assign(new Error('sort_not_allowed'), { code: 'E_VALIDATION_ERROR' })
     }
-    const q = db.from('precatorio_assets as pa')
+    const q = db
+      .from('precatorio_assets as pa')
       .leftJoin('debtors as d', 'd.id', 'pa.debtor_id')
       .where('pa.tenant_id', tenantId)
       .whereNull('pa.deleted_at')
       .select('pa.*', 'd.name as debtor_name')
 
     if (params.search) {
-      q.where((w) => w.where('pa.cnj_number', 'like', `%${params.search}%`)
-                       .orWhere('d.name', 'ilike', `%${params.search}%`))
+      q.where((w) =>
+        w
+          .where('pa.cnj_number', 'like', `%${params.search}%`)
+          .orWhere('d.name', 'ilike', `%${params.search}%`)
+      )
     }
     const f = params.filters ?? {}
     if (f.debtor_id) q.where('pa.debtor_id', f.debtor_id)
@@ -5654,14 +6376,21 @@ class PrecatorioRepository {
   }
 
   async findById(tenantId: string, id: string) {
-    return db.from('precatorio_assets')
-      .where('tenant_id', tenantId).andWhere('id', id).whereNull('deleted_at').first()
+    return db
+      .from('precatorio_assets')
+      .where('tenant_id', tenantId)
+      .andWhere('id', id)
+      .whereNull('deleted_at')
+      .first()
   }
 
   async listEvents(tenantId: string, assetId: string) {
-    return db.from('asset_events')
-      .where('tenant_id', tenantId).andWhere('asset_id', assetId)
-      .orderBy('created_at', 'desc').limit(200)
+    return db
+      .from('asset_events')
+      .where('tenant_id', tenantId)
+      .andWhere('asset_id', assetId)
+      .orderBy('created_at', 'desc')
+      .limit(200)
   }
 }
 
@@ -5681,6 +6410,7 @@ git commit -m "🚀 feat(precatorios): repository with sort whitelist + tenant s
 ### Task 43: PrecatorioController + routes
 
 **Files:**
+
 - Create: `app/modules/precatorios/controllers/precatorios_controller.ts`
 - Create: `app/modules/precatorios/routes.ts`
 
@@ -5689,7 +6419,9 @@ git commit -m "🚀 feat(precatorios): repository with sort whitelist + tenant s
 ```typescript
 // app/modules/precatorios/controllers/precatorios_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import precatorioRepository, { SORTABLE_COLUMNS } from '#modules/precatorios/repositories/precatorio_repository'
+import precatorioRepository, {
+  SORTABLE_COLUMNS,
+} from '#modules/precatorios/repositories/precatorio_repository'
 
 export default class PrecatoriosController {
   async index(ctx: HttpContext) {
@@ -5729,12 +6461,20 @@ export default class PrecatoriosController {
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
-const PrecatoriosController = () => import('#modules/precatorios/controllers/precatorios_controller')
+const PrecatoriosController = () =>
+  import('#modules/precatorios/controllers/precatorios_controller')
 
-router.group(() => {
-  router.get('/', [PrecatoriosController, 'index']).as('precatorios.index')
-  router.get('/:id', [PrecatoriosController, 'show']).as('precatorios.show')
-}).prefix('/precatorios').use([middleware.auth(), middleware.tenant(), middleware.permission({ permission: 'precatorios.read' })])
+router
+  .group(() => {
+    router.get('/', [PrecatoriosController, 'index']).as('precatorios.index')
+    router.get('/:id', [PrecatoriosController, 'show']).as('precatorios.show')
+  })
+  .prefix('/precatorios')
+  .use([
+    middleware.auth(),
+    middleware.tenant(),
+    middleware.permission({ permission: 'precatorios.read' }),
+  ])
 ```
 
 - [ ] **Step 3: Importar em start/routes.ts e commit**
@@ -5753,18 +6493,25 @@ git commit -m "🚀 feat(precatorios): list and detail controllers"
 ### Task 44: Inertia pages — precatorios/{index, show}
 
 **Files:**
+
 - Create: `inertia/pages/precatorios/{index,show}.tsx`
 
 - [ ] **Step 1: index**
 
 ```typescript
 // inertia/pages/precatorios/index.tsx
-import { Head, Link, router } from '@inertiajs/react'
-import { useState } from 'react'
+import {Head, Link, router} from '@inertiajs/react'
+import {useState} from 'react'
 
 interface Asset {
-  id: string; cnj_number: string; debtor_name: string; exercise_year: number
-  nature: string; face_value: string; lifecycle_status: string; compliance_status: string
+  id: string;
+  cnj_number: string;
+  debtor_name: string;
+  exercise_year: number
+  nature: string;
+  face_value: string;
+  lifecycle_status: string;
+  compliance_status: string
 }
 
 interface Props {
@@ -5772,52 +6519,97 @@ interface Props {
   qs: any
 }
 
-export default function PrecatoriosIndex({ precatorios, qs }: Props) {
+export default function PrecatoriosIndex({precatorios, qs}: Props) {
   const [search, setSearch] = useState(qs.search ?? '')
 
   function applyFilter() {
-    router.get('/precatorios', { ...qs, search, page: 1 }, { preserveState: true })
+    router.get('/precatorios', {...qs, search, page: 1}, {preserveState: true})
   }
 
   return (
     <>
-      <Head title="Precatórios" />
+      <Head title = "Precatórios" / >
       <main>
-        <h1>Precatórios — {precatorios.meta.total} total</h1>
-        <div>
-          <input placeholder="Buscar CNJ ou devedor..." value={search}
-            onChange={(e) => setSearch(e.target.value)} onBlur={applyFilter}
-            onKeyDown={(e) => e.key === 'Enter' && applyFilter()} />
-        </div>
-        <table>
-          <thead><tr><th>CNJ</th><th>Devedor</th><th>Exec</th><th>Nature</th><th>Valor</th><th>Lifecycle</th><th>Compliance</th></tr></thead>
-          <tbody>
-            {precatorios.data.map((p) => (
-              <tr key={p.id}>
-                <td><Link href={`/precatorios/${p.id}`}>{p.cnj_number ?? p.id.slice(0, 8)}</Link></td>
-                <td>{p.debtor_name}</td><td>{p.exercise_year}</td><td>{p.nature}</td>
-                <td>{p.face_value ? Number(p.face_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
-                <td>{p.lifecycle_status}</td><td>{p.compliance_status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <nav>
-          {precatorios.meta.first_page < precatorios.meta.last_page && (
-            <>
-              {precatorios.meta.current_page > 1 && (
-                <button onClick={() => router.get('/precatorios', { ...qs, page: precatorios.meta.current_page - 1 })}>«</button>
-              )}
-              <span>Página {precatorios.meta.current_page} de {precatorios.meta.last_page}</span>
-              {precatorios.meta.current_page < precatorios.meta.last_page && (
-                <button onClick={() => router.get('/precatorios', { ...qs, page: precatorios.meta.current_page + 1 })}>»</button>
-              )}
-            </>
-          )}
-        </nav>
-      </main>
-    </>
+        <h1>Precatórios — {
+    precatorios.meta.total
+  }
+  total < /h1>
+  < div >
+  <input placeholder = "Buscar CNJ ou devedor..."
+  value = {search}
+  onChange = {(e)
+=>
+  setSearch(e.target.value)
+}
+  onBlur = {applyFilter}
+  onKeyDown = {(e)
+=>
+  e.key === 'Enter' && applyFilter()
+}
+  />
+  < /div>
+  < table >
+  <thead><tr><th>CNJ < /th><th>Devedor</
+  th > <th>Exec < /th><th>Nature</
+  th > <th>Valor < /th><th>Lifecycle</
+  th > <th>Compliance < /th></
+  tr > </thead>
+  < tbody >
+  {
+    precatorios.data.map((p) => (
+      <tr key = {p.id} >
+      <td><Link href = {`/precatorios/${p.id}`
+  } > {p.cnj_number ?? p.id.slice(0, 8)} < /Link></
+  td >
+  <td>{p.debtor_name} < /td><td>{p.exercise_year}</
+  td > <td>{p.nature} < /td>
+  < td > {
+    p
+    .face_value ? Number(p.face_value).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : '-'
+  } < /td>
+  < td > {p.lifecycle_status} < /td><td>{p.compliance_status}</
+  td >
+  </tr>
+))
+}
+  </tbody>
+  < /table>
+  < nav >
+  {
+    precatorios.meta.first_page < precatorios.meta.last_page && (
+      <>
+        {
+          precatorios.meta.current_page > 1 && (
+            <button onClick = {()
+=>
+  router.get('/precatorios', {...qs, page: precatorios.meta.current_page - 1})
+}>«</button>
+)
+}
+  <span>Página
+  {
+    precatorios.meta.current_page
+  }
+  de
+  {
+    precatorios.meta.last_page
+  }
+  </span>
+  {
+    precatorios.meta.current_page < precatorios.meta.last_page && (
+      <button onClick = {()
+  =>
+    router.get('/precatorios', {...qs, page: precatorios.meta.current_page + 1})
+  }>»</button>
   )
+  }
+  </>
+)
+}
+  </nav>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -5825,43 +6617,92 @@ export default function PrecatoriosIndex({ precatorios, qs }: Props) {
 
 ```typescript
 // inertia/pages/precatorios/show.tsx
-import { Head, Link } from '@inertiajs/react'
+import {Head, Link} from '@inertiajs/react'
 
-interface Props { asset: any; events: any[] }
+interface Props {
+  asset: any;
+  events: any[]
+}
 
-export default function PrecatorioShow({ asset, events }: Props) {
+export default function PrecatorioShow({asset, events}: Props) {
   return (
     <>
-      <Head title={`Precatório ${asset.cnj_number ?? asset.id.slice(0, 8)}`} />
-      <main>
-        <Link href="/precatorios">← Voltar</Link>
-        <h1>Precatório {asset.cnj_number ?? '<sem CNJ>'}</h1>
-        <section>
-          <h2>Visão geral</h2>
-          <ul>
-            <li>Source: {asset.source}</li>
-            <li>External ID: {asset.external_id ?? '-'}</li>
-            <li>Exercício: {asset.exercise_year ?? '-'}</li>
-            <li>Natureza: {asset.nature}</li>
-            <li>Valor face: {asset.face_value ? Number(asset.face_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</li>
-            <li>Lifecycle: {asset.lifecycle_status}</li>
-            <li>Compliance: {asset.compliance_status}</li>
-            <li>PII status: {asset.pii_status}</li>
-          </ul>
-        </section>
-        <section>
-          <h2>Eventos ({events.length})</h2>
-          <ul>
-            {events.map((e) => (
-              <li key={e.id}>
-                <strong>{e.event_type}</strong> · {new Date(e.event_date).toLocaleString('pt-BR')}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </main>
-    </>
-  )
+      <Head title = {`Precatório ${asset.cnj_number ?? asset.id.slice(0, 8)}`
+}
+  />
+  < main >
+  <Link href = "/precatorios" >← Voltar < /Link>
+  < h1 > Precatório
+  {
+    asset.cnj_number ?? '<sem CNJ>'
+  }
+  </h1>
+  < section >
+  <h2>Visão
+  geral < /h2>
+  < ul >
+  <li>Source
+:
+  {
+    asset.source
+  }
+  </li>
+  < li > External
+  ID: {
+    asset.external_id ?? '-'
+  }
+  </li>
+  < li > Exercício
+:
+  {
+    asset.exercise_year ?? '-'
+  }
+  </li>
+  < li > Natureza
+:
+  {
+    asset.nature
+  }
+  </li>
+  < li > Valor
+  face: {
+    asset.face_value ? Number(asset.face_value).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : '-'
+  }
+  </li>
+  < li > Lifecycle
+:
+  {
+    asset.lifecycle_status
+  }
+  </li>
+  < li > Compliance
+:
+  {
+    asset.compliance_status
+  }
+  </li>
+  < li > PII
+  status: {
+    asset.pii_status
+  }
+  </li>
+  < /ul>
+  < /section>
+  < section >
+  <h2>Eventos({events.length}) < /h2>
+  < ul >
+  {
+    events.map((e) => (
+      <li key = {e.id} >
+        <strong>{e.event_type} < /strong> · {new Date(e.event_date).toLocaleString('pt-BR')}
+        < /li>
+    ))
+  }
+  < /ul>
+  < /section>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -5879,6 +6720,7 @@ git commit -m "🚀 feat(precatorios ui): list page with filters and detail page
 ### Task 45: DebtorsController + pages
 
 **Files:**
+
 - Create: `app/modules/debtors/controllers/debtors_controller.ts`
 - Create: `app/modules/debtors/repositories/debtor_repository.ts`
 - Create: `app/modules/debtors/routes.ts`
@@ -5892,22 +6734,35 @@ import db from '@adonisjs/lucid/services/db'
 
 class DebtorRepository {
   async list(tenantId: string, page = 1, perPage = 25) {
-    return db.from('v_debtor_aggregates')
-      .where('tenant_id', tenantId).orderBy('total_face_value', 'desc')
-      .paginate(page, perPage).then((r) => r.toJSON())
+    return db
+      .from('v_debtor_aggregates')
+      .where('tenant_id', tenantId)
+      .orderBy('total_face_value', 'desc')
+      .paginate(page, perPage)
+      .then((r) => r.toJSON())
   }
 
   async findById(tenantId: string, id: string) {
-    return db.from('debtors')
-      .where('tenant_id', tenantId).andWhere('id', id).whereNull('deleted_at').first()
+    return db
+      .from('debtors')
+      .where('tenant_id', tenantId)
+      .andWhere('id', id)
+      .whereNull('deleted_at')
+      .first()
   }
 
   async listAssetsByDebtor(tenantId: string, debtorId: string, page = 1, perPage = 25) {
-    return db.from('precatorio_assets')
-      .where('tenant_id', tenantId).andWhere('debtor_id', debtorId).whereNull('deleted_at')
-      .orderBy('created_at', 'desc').paginate(page, perPage).then((r) => r.toJSON())
+    return db
+      .from('precatorio_assets')
+      .where('tenant_id', tenantId)
+      .andWhere('debtor_id', debtorId)
+      .whereNull('deleted_at')
+      .orderBy('created_at', 'desc')
+      .paginate(page, perPage)
+      .then((r) => r.toJSON())
   }
 }
+
 export default new DebtorRepository()
 ```
 
@@ -5927,7 +6782,11 @@ export default class DebtorsController {
   async show(ctx: HttpContext) {
     const debtor = await debtorRepository.findById(ctx.tenant.id, ctx.params.id)
     if (!debtor) return ctx.response.notFound()
-    const assets = await debtorRepository.listAssetsByDebtor(ctx.tenant.id, debtor.id, Number(ctx.request.qs().page) || 1)
+    const assets = await debtorRepository.listAssetsByDebtor(
+      ctx.tenant.id,
+      debtor.id,
+      Number(ctx.request.qs().page) || 1
+    )
     return ctx.inertia.render('debtors/show', { debtor, assets })
   }
 }
@@ -5937,12 +6796,20 @@ export default class DebtorsController {
 // app/modules/debtors/routes.ts
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+
 const DebtorsController = () => import('#modules/debtors/controllers/debtors_controller')
 
-router.group(() => {
-  router.get('/', [DebtorsController, 'index']).as('debtors.index')
-  router.get('/:id', [DebtorsController, 'show']).as('debtors.show')
-}).prefix('/debtors').use([middleware.auth(), middleware.tenant(), middleware.permission({ permission: 'precatorios.read' })])
+router
+  .group(() => {
+    router.get('/', [DebtorsController, 'index']).as('debtors.index')
+    router.get('/:id', [DebtorsController, 'show']).as('debtors.show')
+  })
+  .prefix('/debtors')
+  .use([
+    middleware.auth(),
+    middleware.tenant(),
+    middleware.permission({ permission: 'precatorios.read' }),
+  ])
 ```
 
 Add to `start/routes.ts`: `import '#modules/debtors/routes'`
@@ -5951,51 +6818,80 @@ Add to `start/routes.ts`: `import '#modules/debtors/routes'`
 
 ```typescript
 // inertia/pages/debtors/index.tsx
-import { Head, Link } from '@inertiajs/react'
-export default function DebtorsIndex({ debtors }: { debtors: any }) {
+import {Head, Link} from '@inertiajs/react'
+
+export default function DebtorsIndex({debtors}: { debtors: any }) {
   return (
     <>
-      <Head title="Devedores" />
+      <Head title = "Devedores" / >
       <main>
-        <h1>Devedores</h1>
-        <table>
-          <thead><tr><th>Devedor</th><th>Assets</th><th>Total face value</th></tr></thead>
-          <tbody>
-            {debtors.data.map((d: any) => (
-              <tr key={d.debtor_id}>
-                <td><Link href={`/debtors/${d.debtor_id}`}>{d.debtor_name}</Link></td>
-                <td>{d.asset_count}</td>
-                <td>{Number(d.total_face_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
-    </>
-  )
+        <h1>Devedores < /h1>
+      < table >
+      <thead><tr><th>Devedor < /th><th>Assets</
+  th > <th>Total
+  face
+  value < /th></
+  tr > </thead>
+  < tbody >
+  {
+    debtors.data.map((d: any) => (
+      <tr key = {d.debtor_id} >
+      <td><Link href = {`/debtors/${d.debtor_id}`
+  } > {d.debtor_name} < /Link></
+  td >
+  <td>{d.asset_count} < /td>
+  < td > {Number(d.total_face_value
+).
+  toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+}
+  </td>
+  < /tr>
+))
+}
+  </tbody>
+  < /table>
+  < /main>
+  < />
+)
 }
 ```
 
 ```typescript
 // inertia/pages/debtors/show.tsx
-import { Head, Link } from '@inertiajs/react'
-export default function DebtorShow({ debtor, assets }: any) {
+import {Head, Link} from '@inertiajs/react'
+
+export default function DebtorShow({debtor, assets}: any) {
   return (
     <>
-      <Head title={`Devedor ${debtor.name}`} />
-      <main>
-        <Link href="/debtors">← Voltar</Link>
-        <h1>{debtor.name}</h1>
-        <p>Tipo: {debtor.debtor_type} · Estado: {debtor.state_code ?? '-'} · CNPJ: {debtor.cnpj ?? '-'}</p>
-        <h2>Precatórios ({assets.meta.total})</h2>
-        <ul>
-          {assets.data.map((a: any) => (
-            <li key={a.id}><Link href={`/precatorios/${a.id}`}>{a.cnj_number ?? a.id.slice(0, 8)}</Link> — exercício {a.exercise_year}</li>
-          ))}
-        </ul>
-      </main>
-    </>
-  )
+      <Head title = {`Devedor ${debtor.name}`
+}
+  />
+  < main >
+  <Link href = "/debtors" >← Voltar < /Link>
+  < h1 > {debtor.name} < /h1>
+  < p > Tipo
+:
+  {
+    debtor.debtor_type
+  } · Estado: {
+    debtor.state_code ?? '-'
+  } · CNPJ: {
+    debtor.cnpj ?? '-'
+  }
+  </p>
+  < h2 > Precatórios({assets.meta.total}) < /h2>
+  < ul >
+  {
+    assets.data.map((a: any) => (
+      <li key = {a.id} > <Link href = {`/precatorios/${a.id}`
+  } > {a.cnj_number ?? a.id.slice(0, 8)} < /Link> — exercício {a.exercise_year}</
+  li >
+))
+}
+  </ul>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -6013,6 +6909,7 @@ git commit -m "🚀 feat(debtors): list (via materialized view) and detail UI"
 ### Task 46: DashboardController + page
 
 **Files:**
+
 - Create: `app/modules/dashboard/controllers/dashboard_controller.ts`
 - Create: `app/modules/dashboard/routes.ts`
 - Create: `inertia/pages/dashboard/index.tsx`
@@ -6026,21 +6923,37 @@ import db from '@adonisjs/lucid/services/db'
 
 export default class DashboardController {
   async index(ctx: HttpContext) {
-    const metrics = await db.from('v_dashboard_metrics')
-      .where('tenant_id', ctx.tenant.id).first()
+    const metrics = await db.from('v_dashboard_metrics').where('tenant_id', ctx.tenant.id).first()
 
-    const yearly = await db.from('v_asset_yearly_stats')
-      .where('tenant_id', ctx.tenant.id).orderBy('exercise_year', 'asc')
+    const yearly = await db
+      .from('v_asset_yearly_stats')
+      .where('tenant_id', ctx.tenant.id)
+      .orderBy('exercise_year', 'asc')
 
-    const topDebtors = await db.from('v_debtor_aggregates')
-      .where('tenant_id', ctx.tenant.id).orderBy('total_face_value', 'desc').limit(10)
+    const topDebtors = await db
+      .from('v_debtor_aggregates')
+      .where('tenant_id', ctx.tenant.id)
+      .orderBy('total_face_value', 'desc')
+      .limit(10)
 
-    const recentImports = await db.from('siop_imports')
-      .where('tenant_id', ctx.tenant.id).orderBy('created_at', 'desc').limit(5)
+    const recentImports = await db
+      .from('siop_imports')
+      .where('tenant_id', ctx.tenant.id)
+      .orderBy('created_at', 'desc')
+      .limit(5)
 
     return ctx.inertia.render('dashboard/index', {
-      metrics: metrics ?? { total_assets: 0, debtors_count: 0, total_face_value: 0, expedited_count: 0, paid_count: 0, new_30d: 0 },
-      yearly, topDebtors, recentImports,
+      metrics: metrics ?? {
+        total_assets: 0,
+        debtors_count: 0,
+        total_face_value: 0,
+        expedited_count: 0,
+        paid_count: 0,
+        new_30d: 0,
+      },
+      yearly,
+      topDebtors,
+      recentImports,
     })
   }
 }
@@ -6052,9 +6965,12 @@ export default class DashboardController {
 // app/modules/dashboard/routes.ts
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+
 const DashboardController = () => import('#modules/dashboard/controllers/dashboard_controller')
 
-router.get('/dashboard', [DashboardController, 'index']).as('dashboard.index')
+router
+  .get('/dashboard', [DashboardController, 'index'])
+  .as('dashboard.index')
   .use([middleware.auth(), middleware.tenant()])
 ```
 
@@ -6064,29 +6980,69 @@ Add to `start/routes.ts`: `import '#modules/dashboard/routes'`
 
 ```typescript
 // inertia/pages/dashboard/index.tsx
-import { Head } from '@inertiajs/react'
+import {Head} from '@inertiajs/react'
 
-export default function Dashboard({ metrics, yearly, topDebtors, recentImports }: any) {
+export default function Dashboard({metrics, yearly, topDebtors, recentImports}: any) {
   return (
     <>
-      <Head title="Dashboard" />
+      <Head title = "Dashboard" / >
       <main>
-        <h1>Dashboard</h1>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          <div className="kpi"><strong>{metrics.total_assets}</strong><br />Total assets</div>
-          <div className="kpi"><strong>{metrics.debtors_count}</strong><br />Devedores</div>
-          <div className="kpi"><strong>{metrics.expedited_count}</strong><br />Expedidos</div>
-          <div className="kpi"><strong>{metrics.new_30d}</strong><br />Novos (30d)</div>
-        </div>
-        <h2>Por exercício</h2>
-        <ul>{yearly.map((y: any) => <li key={y.exercise_year}>{y.exercise_year}: {y.count} ({Number(y.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})</li>)}</ul>
-        <h2>Top devedores</h2>
-        <ul>{topDebtors.map((d: any) => <li key={d.debtor_id}>{d.debtor_name}: {Number(d.total_face_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</li>)}</ul>
-        <h2>Imports recentes</h2>
-        <ul>{recentImports.map((i: any) => <li key={i.id}>{i.exercise_year} — {i.status} ({i.total_rows} rows)</li>)}</ul>
-      </main>
-    </>
-  )
+        <h1>Dashboard < /h1>
+      < div
+  style = {
+  {
+    display: 'grid', gridTemplateColumns
+  :
+    'repeat(4, 1fr)', gap
+  :
+    '1rem'
+  }
+}>
+  <div className = "kpi" > <strong>{metrics.total_assets} < /strong><br / > Total
+  assets < /div>
+  < div
+  className = "kpi" > <strong>{metrics.debtors_count} < /strong><br / > Devedores < /div>
+    < div
+  className = "kpi" > <strong>{metrics.expedited_count} < /strong><br / > Expedidos < /div>
+    < div
+  className = "kpi" > <strong>{metrics.new_30d} < /strong><br / > Novos(30
+  d
+)
+  </div>
+  < /div>
+  < h2 > Por
+  exercício < /h2>
+  < ul > {yearly.map((y: any) => <li key = {y.exercise_year} > {y.exercise_year}
+:
+  {
+    y.count
+  }
+  ({Number(y.total).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+})
+  </li>)}</u
+  l >
+  <h2>Top
+  devedores < /h2>
+  < ul > {topDebtors.map((d: any) => <li key = {d.debtor_id} > {d.debtor_name}
+:
+  {
+    Number(d.total_face_value).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+  }
+  </li>)}</u
+  l >
+  <h2>Imports
+  recentes < /h2>
+  < ul > {recentImports.map((i: any) => <li key = {i.id} > {i.exercise_year} — {
+    i.status
+  }
+  ({i.total_rows}
+  rows
+)
+  </li>)}</u
+  l >
+  </main>
+  < />
+)
 }
 ```
 
@@ -6104,6 +7060,7 @@ git commit -m "🚀 feat(dashboard): KPIs, yearly stats, top debtors, recent imp
 ### Task 47: PiiPolicy + RevealService + Controller + RevealDialog
 
 **Files:**
+
 - Create: `app/modules/pii/policies/pii_policy.ts`
 - Create: `app/modules/pii/services/reveal_service.ts`
 - Create: `app/modules/pii/controllers/reveal_controller.ts`
@@ -6143,16 +7100,26 @@ class RevealService {
     requestId?: string | null
   }): Promise<{ name: string; document: string; document_type: string }> {
     return withTenantRls(params.tenantId, async (trx) => {
-      const result = await trx.rawQuery(`
+      const result = await trx.rawQuery(
+        `
         select * from pii.reveal_beneficiary($1, $2, $3, $4, $5, $6, $7, $8)
-      `, [
-        params.beneficiaryId, params.purpose, params.justification, params.actorUserId,
-        params.assetId ?? null, params.ipAddress ?? null, params.userAgent ?? null, params.requestId ?? null,
-      ])
+      `,
+        [
+          params.beneficiaryId,
+          params.purpose,
+          params.justification,
+          params.actorUserId,
+          params.assetId ?? null,
+          params.ipAddress ?? null,
+          params.userAgent ?? null,
+          params.requestId ?? null,
+        ]
+      )
       return result.rows[0]
     })
   }
 }
+
 export default new RevealService()
 ```
 
@@ -6179,8 +7146,9 @@ export default class RevealController {
     const tenantId = ctx.tenant.id
     const beneficiaryId = ctx.params.id
 
-    const hasPerm = await permissionCacheService.userHas(userId, tenantId, 'pii.reveal_masked')
-      || await permissionCacheService.userHas(userId, tenantId, 'pii.reveal_full')
+    const hasPerm =
+      (await permissionCacheService.userHas(userId, tenantId, 'pii.reveal_masked')) ||
+      (await permissionCacheService.userHas(userId, tenantId, 'pii.reveal_full'))
     if (!hasPerm) {
       return ctx.response.forbidden({ error: { code: 'E_PII_REVEAL_FORBIDDEN' } })
     }
@@ -6192,16 +7160,22 @@ export default class RevealController {
     const payload = await ctx.request.validateUsing(revealValidator)
     try {
       const data = await revealService.reveal({
-        tenantId, actorUserId: userId, beneficiaryId,
-        purpose: payload.purpose, justification: payload.justification,
-        assetId: payload.asset_id, ipAddress: ctx.request.ip(),
-        userAgent: ctx.request.header('user-agent'), requestId: ctx.requestId,
+        tenantId,
+        actorUserId: userId,
+        beneficiaryId,
+        purpose: payload.purpose,
+        justification: payload.justification,
+        assetId: payload.asset_id,
+        ipAddress: ctx.request.ip(),
+        userAgent: ctx.request.header('user-agent'),
+        requestId: ctx.requestId,
       })
       return ctx.response.json(data)
     } catch (err: any) {
-      const code = err?.message?.startsWith('E_') ? err.message.split(' ')[0] : 'E_PII_REVEAL_FORBIDDEN'
-      return ctx.response.status(code === 'E_PII_RATE_LIMIT' ? 429 : 403)
-        .json({ error: { code } })
+      const code = err?.message?.startsWith('E_')
+        ? err.message.split(' ')[0]
+        : 'E_PII_REVEAL_FORBIDDEN'
+      return ctx.response.status(code === 'E_PII_RATE_LIMIT' ? 429 : 403).json({ error: { code } })
     }
   }
 }
@@ -6213,9 +7187,11 @@ export default class RevealController {
 // app/modules/pii/routes.ts
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+
 const RevealController = () => import('#modules/pii/controllers/reveal_controller')
 
-router.post('/pii/beneficiaries/:id/reveal', [RevealController, 'store'])
+router
+  .post('/pii/beneficiaries/:id/reveal', [RevealController, 'store'])
   .as('pii.reveal')
   .use([middleware.auth(), middleware.tenant()])
 ```
@@ -6245,7 +7221,7 @@ export default client
 
 ```typescript
 // inertia/components/pii/reveal_dialog.tsx
-import { useEffect, useState } from 'react'
+import {useEffect, useState} from 'react'
 import client from '~/lib/axios_client'
 
 interface Props {
@@ -6254,7 +7230,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function RevealDialog({ beneficiaryId, assetId, onClose }: Props) {
+export default function RevealDialog({beneficiaryId, assetId, onClose}: Props) {
   const [purpose, setPurpose] = useState('')
   const [justification, setJustification] = useState('')
   const [data, setData] = useState<{ name: string; document: string; document_type: string } | null>(null)
@@ -6264,20 +7240,30 @@ export default function RevealDialog({ beneficiaryId, assetId, onClose }: Props)
   // auto-clear 90s
   useEffect(() => {
     if (!data) return
-    const t = setTimeout(() => { setData(null); onClose() }, 90 * 1000)
+    const t = setTimeout(() => {
+      setData(null);
+      onClose()
+    }, 90 * 1000)
     return () => clearTimeout(t)
   }, [data, onClose])
 
   // visibility hide → limpa
   useEffect(() => {
-    function onVis() { if (document.hidden) { setData(null); onClose() } }
+    function onVis() {
+      if (document.hidden) {
+        setData(null);
+        onClose()
+      }
+    }
+
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [onClose])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setError(null)
+    setLoading(true);
+    setError(null)
     try {
       const r = await client.post(`/pii/beneficiaries/${beneficiaryId}/reveal`, {
         purpose, justification, asset_id: assetId,
@@ -6291,29 +7277,107 @@ export default function RevealDialog({ beneficiaryId, assetId, onClose }: Props)
   }
 
   return (
-    <div role="dialog" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', padding: '2rem', maxWidth: 500, width: '100%' }}>
-        {!data ? (
-          <form onSubmit={submit}>
-            <h2>Revelar dados do beneficiário</h2>
-            <label>Finalidade<input value={purpose} onChange={(e) => setPurpose(e.target.value)} required minLength={3} /></label>
-            <label>Justificativa<textarea value={justification} onChange={(e) => setJustification(e.target.value)} required minLength={20} /></label>
-            {error && <p style={{ color: 'red' }}>Erro: {error}</p>}
-            <button type="submit" disabled={loading}>Revelar</button>
-            <button type="button" onClick={onClose}>Cancelar</button>
-          </form>
-        ) : (
-          <div>
-            <h2>Dados materializados (auto-clear em 90s)</h2>
-            <p><strong>Nome:</strong> {data.name}</p>
-            <p><strong>Documento:</strong> {data.document}</p>
-            <button onClick={() => { setData(null); onClose() }}>Ocultar agora</button>
-          </div>
-        )}
-      </div>
-    </div>
+    <div role = "dialog"
+  style = {
+  {
+    position: 'fixed', inset
+  :
+    0, background
+  :
+    'rgba(0,0,0,0.5)', display
+  :
+    'flex', alignItems
+  :
+    'center', justifyContent
+  :
+    'center'
+  }
+}>
+  <div style = {
+  {
+    background: '#fff', padding
+  :
+    '2rem', maxWidth
+  :
+    500, width
+  :
+    '100%'
+  }
+}>
+  {
+    !data ? (
+      <form onSubmit = {submit} >
+        <h2>Revelar dados
+    do beneficiário < /h2>
+    < label > Finalidade < input value = {purpose}
+    onChange = {(e)
+  =>
+    setPurpose(e.target.value)
+  }
+    required
+    minLength = {3}
+    /></
+    label >
+    <label>Justificativa < textarea
+    value = {justification}
+    onChange = {(e)
+  =>
+    setJustification(e.target.value)
+  }
+    required
+    minLength = {20}
+    /></
+    label >
+    {error && <p style = {
+    {
+      color: 'red'
+    }
+  }>
+    Erro: {
+      error
+    }
+    </p>}
+    < button
+    type = "submit"
+    disabled = {loading} > Revelar < /button>
+      < button
+    type = "button"
+    onClick = {onClose} > Cancelar < /button>
+      < /form>
+  ) :
+    (
+      <div>
+        <h2>Dados
+    materializados(auto - clear
+    em
+    90
+    s
   )
-}
+    </h2>
+    < p > <strong>Nome
+  :
+    </strong> {data.name}</
+    p >
+    <p><strong>Documento
+  :
+    </strong> {data.document}</
+    p >
+    <button onClick = {()
+  =>
+    {
+      setData(null);
+      onClose()
+    }
+  }>
+    Ocultar
+    agora < /button>
+    < /div>
+  )
+  }
+    </div>
+    < /div>
+  )
+  }
 ```
 
 - [ ] **Step 6: Commit**
@@ -6330,6 +7394,7 @@ git commit -m "🚀 feat(pii): reveal flow with rate limit, audit, one-shot dial
 ### Task 48: HealthController público + admin/health detalhado
 
 **Files:**
+
 - Create: `app/modules/healthcheck/controllers/healthz_controller.ts`
 - Create: `app/modules/admin/controllers/health_controller.ts`
 - Create: `app/modules/admin/routes.ts`
@@ -6345,8 +7410,18 @@ import redis from '@adonisjs/redis/services/main'
 export default class HealthzController {
   async index(ctx: HttpContext) {
     const checks = { app: 'ok', db: 'unknown', redis: 'unknown' }
-    try { await db.rawQuery('select 1'); checks.db = 'ok' } catch { checks.db = 'fail' }
-    try { await redis.ping(); checks.redis = 'ok' } catch { checks.redis = 'fail' }
+    try {
+      await db.rawQuery('select 1')
+      checks.db = 'ok'
+    } catch {
+      checks.db = 'fail'
+    }
+    try {
+      await redis.ping()
+      checks.redis = 'ok'
+    } catch {
+      checks.redis = 'fail'
+    }
 
     let status: 'ok' | 'degraded' | 'down' = 'ok'
     if (checks.db === 'fail') status = 'down'
@@ -6361,6 +7436,7 @@ Adicionar em `start/routes.ts`:
 
 ```typescript
 import router from '@adonisjs/core/services/router'
+
 const HealthzController = () => import('#modules/healthcheck/controllers/healthz_controller')
 router.get('/healthz', [HealthzController, 'index'])
 ```
@@ -6380,12 +7456,18 @@ export default class HealthController {
   async detail(ctx: HttpContext) {
     const dbStart = Date.now()
     let dbOk = false
-    try { await db.rawQuery('select 1'); dbOk = true } catch {}
+    try {
+      await db.rawQuery('select 1')
+      dbOk = true
+    } catch {}
     const dbLatency = Date.now() - dbStart
 
     const redisStart = Date.now()
     let redisOk = false
-    try { await redis.ping(); redisOk = true } catch {}
+    try {
+      await redis.ping()
+      redisOk = true
+    } catch {}
     const redisLatency = Date.now() - redisStart
 
     const queueDepths: Record<string, any> = {}
@@ -6395,13 +7477,17 @@ export default class HealthController {
       queueDepths[q.name] = counts
     }
 
-    const failed24h = await db.from('radar_job_runs')
+    const failed24h = await db
+      .from('radar_job_runs')
       .where('status', 'failed')
       .andWhere('finished_at', '>', db.knexRawQuery(`now() - interval '24 hours'`).knexQuery)
       .count('* as c')
 
-    const lastFailed = await db.from('radar_job_runs')
-      .where('status', 'failed').orderBy('finished_at', 'desc').limit(10)
+    const lastFailed = await db
+      .from('radar_job_runs')
+      .where('status', 'failed')
+      .orderBy('finished_at', 'desc')
+      .limit(10)
       .select('id', 'job_name', 'error_code', 'finished_at')
 
     const heartbeats = await db.from('worker_heartbeats').select()
@@ -6425,7 +7511,9 @@ export default class HealthController {
     })
   }
 
-  async live(ctx: HttpContext) { return ctx.response.json({ ok: true }) }
+  async live(ctx: HttpContext) {
+    return ctx.response.json({ ok: true })
+  }
 
   async ready(ctx: HttpContext) {
     try {
@@ -6455,11 +7543,17 @@ import { middleware } from '#start/kernel'
 
 const HealthController = () => import('#modules/admin/controllers/health_controller')
 
-router.group(() => {
-  router.get('/health', [HealthController, 'detail']).as('admin.health.detail').use(middleware.permission({ permission: 'admin.jobs.read' }))
-  router.get('/health/live', [HealthController, 'live']).as('admin.health.live')
-  router.get('/health/ready', [HealthController, 'ready']).as('admin.health.ready')
-}).prefix('/admin').use([middleware.auth(), middleware.tenant()])
+router
+  .group(() => {
+    router
+      .get('/health', [HealthController, 'detail'])
+      .as('admin.health.detail')
+      .use(middleware.permission({ permission: 'admin.jobs.read' }))
+    router.get('/health/live', [HealthController, 'live']).as('admin.health.live')
+    router.get('/health/ready', [HealthController, 'ready']).as('admin.health.ready')
+  })
+  .prefix('/admin')
+  .use([middleware.auth(), middleware.tenant()])
 ```
 
 Add to `start/routes.ts`: `import '#modules/admin/routes'`
@@ -6476,6 +7570,7 @@ git commit -m "🚀 feat(admin): /healthz public + /admin/health detail (sanitiz
 ### Task 49: JobsController + retry endpoint
 
 **Files:**
+
 - Create: `app/modules/admin/controllers/jobs_controller.ts`
 - Modify: `app/modules/admin/routes.ts`
 
@@ -6491,8 +7586,10 @@ import auditService from '#shared/services/audit_service'
 export default class JobsController {
   async index(ctx: HttpContext) {
     const page = Number(ctx.request.qs().page) || 1
-    const result = await db.from('radar_job_runs')
-      .where('tenant_id', ctx.tenant.id).orderBy('created_at', 'desc')
+    const result = await db
+      .from('radar_job_runs')
+      .where('tenant_id', ctx.tenant.id)
+      .orderBy('created_at', 'desc')
       .paginate(page, 50)
     return ctx.response.json(result.toJSON())
   }
@@ -6500,7 +7597,8 @@ export default class JobsController {
   async retry(ctx: HttpContext) {
     const run = await db.from('radar_job_runs').where('id', ctx.params.runId).first()
     if (!run) return ctx.response.notFound()
-    if (run.tenant_id !== ctx.tenant.id) return ctx.response.forbidden({ error: { code: 'E_PERMISSION_DENIED' } })
+    if (run.tenant_id !== ctx.tenant.id)
+      return ctx.response.forbidden({ error: { code: 'E_PERMISSION_DENIED' } })
     if (['running', 'pending'].includes(run.status)) {
       return ctx.response.status(423).json({ error: { code: 'E_INVALID_STATE' } })
     }
@@ -6512,21 +7610,33 @@ export default class JobsController {
     }
 
     const newRunNumber = (run.run_number ?? 1) + 1
-    await queueService.getQueue(run.queue_name).add(run.job_name, {
-      ...((run.metadata as any) ?? {}),
-      importId: run.target_id,
-      tenantId: ctx.tenant.id,
-      requestId: ctx.requestId,
-      runNumber: newRunNumber,
-      parentRunId: run.id,
-    }, { jobId: `${run.job_name}:${ctx.tenant.id}:${run.target_id}:r${newRunNumber}` })
+    await queueService.getQueue(run.queue_name).add(
+      run.job_name,
+      {
+        ...((run.metadata as any) ?? {}),
+        importId: run.target_id,
+        tenantId: ctx.tenant.id,
+        requestId: ctx.requestId,
+        runNumber: newRunNumber,
+        parentRunId: run.id,
+      },
+      { jobId: `${run.job_name}:${ctx.tenant.id}:${run.target_id}:r${newRunNumber}` }
+    )
 
     await auditService.record({
-      tenantId: ctx.tenant.id, actorUserId: ctx.auth.user!.id,
-      entityType: 'radar_job_run', entityId: run.id,
+      tenantId: ctx.tenant.id,
+      actorUserId: ctx.auth.user!.id,
+      entityType: 'radar_job_run',
+      entityId: run.id,
       action: 'job_retry',
-      payload: { run_id: run.id, parent_run_id: run.id, target_type: run.target_type, target_id: run.target_id },
-      ipAddress: ctx.request.ip(), userAgent: ctx.request.header('user-agent'),
+      payload: {
+        run_id: run.id,
+        parent_run_id: run.id,
+        target_type: run.target_type,
+        target_id: run.target_id,
+      },
+      ipAddress: ctx.request.ip(),
+      userAgent: ctx.request.header('user-agent'),
       requestId: ctx.requestId,
     })
 
@@ -6541,8 +7651,14 @@ Dentro do mesmo grupo `/admin`:
 
 ```typescript
 const JobsController = () => import('#modules/admin/controllers/jobs_controller')
-router.get('/jobs', [JobsController, 'index']).as('admin.jobs.index').use(middleware.permission({ permission: 'admin.jobs.read' }))
-router.post('/jobs/:runId/retry', [JobsController, 'retry']).as('admin.jobs.retry').use(middleware.permission({ permission: 'admin.jobs.retry' }))
+router
+  .get('/jobs', [JobsController, 'index'])
+  .as('admin.jobs.index')
+  .use(middleware.permission({ permission: 'admin.jobs.read' }))
+router
+  .post('/jobs/:runId/retry', [JobsController, 'retry'])
+  .as('admin.jobs.retry')
+  .use(middleware.permission({ permission: 'admin.jobs.retry' }))
 ```
 
 - [ ] **Step 3: Commit**
@@ -6559,6 +7675,7 @@ git commit -m "🚀 feat(admin): jobs list + retry endpoint with audit"
 ### Task 50: ExportsController + Handler
 
 **Files:**
+
 - Create: `app/modules/exports/controllers/exports_controller.ts`
 - Create: `app/modules/exports/jobs/export_precatorios_handler.ts`
 - Create: `app/modules/exports/routes.ts`
@@ -6575,29 +7692,38 @@ import drive from '@adonisjs/drive/services/main'
 import queueService from '#shared/services/queue_service'
 import auditService from '#shared/services/audit_service'
 
-const exportValidator = vine.compile(
-  vine.object({ filters: vine.object({}).optional() })
-)
+const exportValidator = vine.compile(vine.object({ filters: vine.object({}).optional() }))
 
 export default class ExportsController {
   async store(ctx: HttpContext) {
     const { filters } = await ctx.request.validateUsing(exportValidator)
-    const [job] = await db.from('export_jobs').insert({
-      tenant_id: ctx.tenant.id,
-      requested_by_user_id: ctx.auth.user!.id,
-      type: 'precatorios_csv',
-      filters: filters ?? null,
-      status: 'pending',
-      request_id: ctx.requestId,
-    }).returning('id')
+    const [job] = await db
+      .from('export_jobs')
+      .insert({
+        tenant_id: ctx.tenant.id,
+        requested_by_user_id: ctx.auth.user!.id,
+        type: 'precatorios_csv',
+        filters: filters ?? null,
+        status: 'pending',
+        request_id: ctx.requestId,
+      })
+      .returning('id')
 
-    await queueService.getQueue('exports:precatorios_csv').add('exports:precatorios_csv', {
-      exportId: job.id, tenantId: ctx.tenant.id, requestId: ctx.requestId,
-    }, { jobId: `exports:precatorios_csv:${ctx.tenant.id}:${job.id}` })
+    await queueService.getQueue('exports:precatorios_csv').add(
+      'exports:precatorios_csv',
+      {
+        exportId: job.id,
+        tenantId: ctx.tenant.id,
+        requestId: ctx.requestId,
+      },
+      { jobId: `exports:precatorios_csv:${ctx.tenant.id}:${job.id}` }
+    )
 
     await auditService.record({
-      tenantId: ctx.tenant.id, actorUserId: ctx.auth.user!.id,
-      entityType: 'export_jobs', entityId: job.id,
+      tenantId: ctx.tenant.id,
+      actorUserId: ctx.auth.user!.id,
+      entityType: 'export_jobs',
+      entityId: job.id,
       action: 'precatorios_export_requested',
       payload: { filters, count_estimate: null },
       requestId: ctx.requestId,
@@ -6607,7 +7733,11 @@ export default class ExportsController {
   }
 
   async show(ctx: HttpContext) {
-    const job = await db.from('export_jobs').where('id', ctx.params.id).andWhere('tenant_id', ctx.tenant.id).first()
+    const job = await db
+      .from('export_jobs')
+      .where('id', ctx.params.id)
+      .andWhere('tenant_id', ctx.tenant.id)
+      .first()
     if (!job) return ctx.response.notFound()
 
     let signedUrl = null
@@ -6632,49 +7762,82 @@ import jobRunService from '#shared/services/job_run_service'
 const handler: Processor = async (job) => {
   const { exportId, tenantId, requestId } = job.data
   const runId = await jobRunService.start({
-    tenantId, jobName: 'exports:precatorios_csv', queueName: 'exports:precatorios_csv',
-    bullmqJobId: job.id!, targetType: 'export_jobs', targetId: exportId, origin: 'http', requestId,
+    tenantId,
+    jobName: 'exports:precatorios_csv',
+    queueName: 'exports:precatorios_csv',
+    bullmqJobId: job.id!,
+    targetType: 'export_jobs',
+    targetId: exportId,
+    origin: 'http',
+    requestId,
   })
 
   try {
-    await db.from('export_jobs').where('id', exportId).update({
-      status: 'running', started_at: db.knexRawQuery('now()').knexQuery as any,
-    })
+    await db
+      .from('export_jobs')
+      .where('id', exportId)
+      .update({
+        status: 'running',
+        started_at: db.knexRawQuery('now()').knexQuery as any,
+      })
 
     const exportRow = await db.from('export_jobs').where('id', exportId).first()
     const filters = (exportRow.filters as any) ?? {}
     const outputKey = `exports/${tenantId}/${exportId}.csv`
-    const chunks: string[] = ['cnj_number,debtor,exercise_year,nature,face_value,lifecycle_status,compliance_status\n']
+    const chunks: string[] = [
+      'cnj_number,debtor,exercise_year,nature,face_value,lifecycle_status,compliance_status\n',
+    ]
 
-    const q = db.from('precatorio_assets as pa').leftJoin('debtors as d', 'd.id', 'pa.debtor_id')
-      .where('pa.tenant_id', tenantId).whereNull('pa.deleted_at')
+    const q = db
+      .from('precatorio_assets as pa')
+      .leftJoin('debtors as d', 'd.id', 'pa.debtor_id')
+      .where('pa.tenant_id', tenantId)
+      .whereNull('pa.deleted_at')
     if (filters.lifecycle_status) q.whereIn('pa.lifecycle_status', filters.lifecycle_status)
     if (filters.exercise_year) q.whereIn('pa.exercise_year', filters.exercise_year)
 
     let count = 0
-    const stream = q.select('pa.cnj_number', 'd.name as debtor', 'pa.exercise_year', 'pa.nature',
-      'pa.face_value', 'pa.lifecycle_status', 'pa.compliance_status').stream()
+    const stream = q
+      .select(
+        'pa.cnj_number',
+        'd.name as debtor',
+        'pa.exercise_year',
+        'pa.nature',
+        'pa.face_value',
+        'pa.lifecycle_status',
+        'pa.compliance_status'
+      )
+      .stream()
 
     for await (const row of stream as any) {
-      chunks.push(`${row.cnj_number ?? ''},"${(row.debtor ?? '').replace(/"/g, '""')}",${row.exercise_year ?? ''},${row.nature},${row.face_value ?? ''},${row.lifecycle_status},${row.compliance_status}\n`)
+      chunks.push(
+        `${row.cnj_number ?? ''},"${(row.debtor ?? '').replace(/"/g, '""')}",${row.exercise_year ?? ''},${row.nature},${row.face_value ?? ''},${row.lifecycle_status},${row.compliance_status}\n`
+      )
       count++
     }
 
     await drive.use().put(outputKey, chunks.join(''))
 
-    await db.from('export_jobs').where('id', exportId).update({
-      status: 'completed',
-      finished_at: db.knexRawQuery('now()').knexQuery as any,
-      output_path: outputKey,
-      signed_url_expires_at: db.knexRawQuery(`now() + interval '24 hours'`).knexQuery as any,
-      row_count: count,
-    })
+    await db
+      .from('export_jobs')
+      .where('id', exportId)
+      .update({
+        status: 'completed',
+        finished_at: db.knexRawQuery('now()').knexQuery as any,
+        output_path: outputKey,
+        signed_url_expires_at: db.knexRawQuery(`now() + interval '24 hours'`).knexQuery as any,
+        row_count: count,
+      })
     await jobRunService.complete(runId, { row_count: count })
   } catch (err) {
-    await db.from('export_jobs').where('id', exportId).update({
-      status: 'failed', finished_at: db.knexRawQuery('now()').knexQuery as any,
-      error_message: (err as any).message,
-    })
+    await db
+      .from('export_jobs')
+      .where('id', exportId)
+      .update({
+        status: 'failed',
+        finished_at: db.knexRawQuery('now()').knexQuery as any,
+        error_message: (err as any).message,
+      })
     await jobRunService.fail(runId, err)
     throw err
   }
@@ -6689,12 +7852,25 @@ export default handler
 // app/modules/exports/routes.ts
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+
 const ExportsController = () => import('#modules/exports/controllers/exports_controller')
 
-router.post('/exports/precatorios', [ExportsController, 'store']).as('exports.precatorios.store')
-  .use([middleware.auth(), middleware.tenant(), middleware.permission({ permission: 'exports.create' })])
-router.get('/exports/:id', [ExportsController, 'show']).as('exports.show')
-  .use([middleware.auth(), middleware.tenant(), middleware.permission({ permission: 'exports.download' })])
+router
+  .post('/exports/precatorios', [ExportsController, 'store'])
+  .as('exports.precatorios.store')
+  .use([
+    middleware.auth(),
+    middleware.tenant(),
+    middleware.permission({ permission: 'exports.create' }),
+  ])
+router
+  .get('/exports/:id', [ExportsController, 'show'])
+  .as('exports.show')
+  .use([
+    middleware.auth(),
+    middleware.tenant(),
+    middleware.permission({ permission: 'exports.download' }),
+  ])
 ```
 
 Add to `start/routes.ts`: `import '#modules/exports/routes'`
@@ -6703,7 +7879,12 @@ Em `start/jobs.ts`:
 
 ```typescript
 import exportPrecatoriosHandler from '#modules/exports/jobs/export_precatorios_handler'
-queueService.registerWorker(queues.exportPrecatorios.name, exportPrecatoriosHandler, queues.exportPrecatorios.concurrency)
+
+queueService.registerWorker(
+  queues.exportPrecatorios.name,
+  exportPrecatoriosHandler,
+  queues.exportPrecatorios.concurrency
+)
 ```
 
 - [ ] **Step 4: Commit**
@@ -6720,6 +7901,7 @@ git commit -m "🚀 feat(exports): async precatorios CSV with audit and signed U
 ### Task 51: PurgeStaging + ApplyRetentionPolicy + RefreshAggregates + VacuumHint handlers
 
 **Files:**
+
 - Create: 4 handlers em `app/modules/maintenance/jobs/`
 - Modify: `start/jobs.ts`
 - Create: `start/scheduler.ts`
@@ -6735,15 +7917,22 @@ import jobRunService from '#shared/services/job_run_service'
 
 const handler: Processor = async (job) => {
   const runId = await jobRunService.start({
-    tenantId: null, jobName: 'maintenance:purge_staging', queueName: 'maintenance:purge_staging',
-    bullmqJobId: job.id!, origin: 'scheduler',
+    tenantId: null,
+    jobName: 'maintenance:purge_staging',
+    queueName: 'maintenance:purge_staging',
+    bullmqJobId: job.id!,
+    origin: 'scheduler',
   })
   try {
-    const result = await db.from('siop_staging_rows')
+    const result = await db
+      .from('siop_staging_rows')
       .where('processed_at', '<', db.knexRawQuery(`now() - interval '90 days'`).knexQuery)
       .delete()
     await jobRunService.complete(runId, { deleted: result })
-  } catch (err) { await jobRunService.fail(runId, err); throw err }
+  } catch (err) {
+    await jobRunService.fail(runId, err)
+    throw err
+  }
 }
 export default handler
 ```
@@ -6758,15 +7947,21 @@ import jobRunService from '#shared/services/job_run_service'
 
 const handler: Processor = async (job) => {
   const runId = await jobRunService.start({
-    tenantId: null, jobName: 'maintenance:refresh_aggregates', queueName: 'maintenance:refresh_aggregates',
-    bullmqJobId: job.id!, origin: 'scheduler',
+    tenantId: null,
+    jobName: 'maintenance:refresh_aggregates',
+    queueName: 'maintenance:refresh_aggregates',
+    bullmqJobId: job.id!,
+    origin: 'scheduler',
   })
   try {
     await db.rawQuery('refresh materialized view concurrently v_dashboard_metrics')
     await db.rawQuery('refresh materialized view concurrently v_debtor_aggregates')
     await db.rawQuery('refresh materialized view concurrently v_asset_yearly_stats')
     await jobRunService.complete(runId)
-  } catch (err) { await jobRunService.fail(runId, err); throw err }
+  } catch (err) {
+    await jobRunService.fail(runId, err)
+    throw err
+  }
 }
 export default handler
 ```
@@ -6781,8 +7976,11 @@ import jobRunService from '#shared/services/job_run_service'
 
 const handler: Processor = async (job) => {
   const runId = await jobRunService.start({
-    tenantId: null, jobName: 'maintenance:apply_retention_policy', queueName: 'maintenance:apply_retention_policy',
-    bullmqJobId: job.id!, origin: 'scheduler',
+    tenantId: null,
+    jobName: 'maintenance:apply_retention_policy',
+    queueName: 'maintenance:apply_retention_policy',
+    bullmqJobId: job.id!,
+    origin: 'scheduler',
   })
   try {
     // dry-run default — só registra manifest sem deletar
@@ -6794,15 +7992,24 @@ const handler: Processor = async (job) => {
       // (este handler só prepara manifest; aplicar retenção real fica para review)
       const tableName = cfg.log_type === 'pii.access_logs' ? null : cfg.log_type
       if (!tableName) continue
-      const counts = await db.from(tableName).where('created_at', '<', cutoff as any).count('* as c')
+      const counts = await db
+        .from(tableName)
+        .where('created_at', '<', cutoff as any)
+        .count('* as c')
       await db.from('retention_manifest').insert({
         log_type: cfg.log_type,
-        range_from: '1970-01-01', range_to: cutoff as any,
-        estimated_rows: Number(counts[0].c), status: 'pending', created_by: 'system',
+        range_from: '1970-01-01',
+        range_to: cutoff as any,
+        estimated_rows: Number(counts[0].c),
+        status: 'pending',
+        created_by: 'system',
       })
     }
     await jobRunService.complete(runId)
-  } catch (err) { await jobRunService.fail(runId, err); throw err }
+  } catch (err) {
+    await jobRunService.fail(runId, err)
+    throw err
+  }
 }
 export default handler
 ```
@@ -6817,15 +8024,21 @@ import jobRunService from '#shared/services/job_run_service'
 
 const handler: Processor = async (job) => {
   const runId = await jobRunService.start({
-    tenantId: null, jobName: 'maintenance:vacuum_hint', queueName: 'maintenance:vacuum_hint',
-    bullmqJobId: job.id!, origin: 'scheduler',
+    tenantId: null,
+    jobName: 'maintenance:vacuum_hint',
+    queueName: 'maintenance:vacuum_hint',
+    bullmqJobId: job.id!,
+    origin: 'scheduler',
   })
   try {
     await db.rawQuery('analyze precatorio_assets')
     await db.rawQuery('analyze asset_events')
     await db.rawQuery('analyze siop_staging_rows')
     await jobRunService.complete(runId)
-  } catch (err) { await jobRunService.fail(runId, err); throw err }
+  } catch (err) {
+    await jobRunService.fail(runId, err)
+    throw err
+  }
 }
 export default handler
 ```
@@ -6841,12 +8054,36 @@ import vacuumHintHandler from '#modules/maintenance/jobs/vacuum_hint_handler'
 import exportPrecatoriosHandler from '#modules/exports/jobs/export_precatorios_handler'
 
 export async function bootWorkers() {
-  queueService.registerWorker(queues.siopImport.name, siopImportHandler, queues.siopImport.concurrency)
-  queueService.registerWorker(queues.purgeStaging.name, purgeStagingHandler, queues.purgeStaging.concurrency)
-  queueService.registerWorker(queues.refreshAggregates.name, refreshAggregatesHandler, queues.refreshAggregates.concurrency)
-  queueService.registerWorker(queues.retentionPolicy.name, applyRetentionPolicyHandler, queues.retentionPolicy.concurrency)
-  queueService.registerWorker(queues.vacuumHint.name, vacuumHintHandler, queues.vacuumHint.concurrency)
-  queueService.registerWorker(queues.exportPrecatorios.name, exportPrecatoriosHandler, queues.exportPrecatorios.concurrency)
+  queueService.registerWorker(
+    queues.siopImport.name,
+    siopImportHandler,
+    queues.siopImport.concurrency
+  )
+  queueService.registerWorker(
+    queues.purgeStaging.name,
+    purgeStagingHandler,
+    queues.purgeStaging.concurrency
+  )
+  queueService.registerWorker(
+    queues.refreshAggregates.name,
+    refreshAggregatesHandler,
+    queues.refreshAggregates.concurrency
+  )
+  queueService.registerWorker(
+    queues.retentionPolicy.name,
+    applyRetentionPolicyHandler,
+    queues.retentionPolicy.concurrency
+  )
+  queueService.registerWorker(
+    queues.vacuumHint.name,
+    vacuumHintHandler,
+    queues.vacuumHint.concurrency
+  )
+  queueService.registerWorker(
+    queues.exportPrecatorios.name,
+    exportPrecatoriosHandler,
+    queues.exportPrecatorios.concurrency
+  )
 }
 ```
 
@@ -6857,24 +8094,37 @@ export async function bootWorkers() {
 import { scheduler } from 'adonisjs-scheduler'
 import queueService from '#shared/services/queue_service'
 
-scheduler.call(async () => {
-  await queueService.getQueue('maintenance:refresh_aggregates').add(
-    'maintenance:refresh_aggregates', {},
-    { jobId: `refresh_aggregates:${Math.floor(Date.now() / (15 * 60 * 1000))}` }
-  )
-}).everyFifteenMinutes()
+scheduler
+  .call(async () => {
+    await queueService
+      .getQueue('maintenance:refresh_aggregates')
+      .add(
+        'maintenance:refresh_aggregates',
+        {},
+        { jobId: `refresh_aggregates:${Math.floor(Date.now() / (15 * 60 * 1000))}` }
+      )
+  })
+  .everyFifteenMinutes()
 
-scheduler.call(async () => {
-  await queueService.getQueue('maintenance:purge_staging').add('maintenance:purge_staging', {})
-}).weeklyOn('Sunday', '03:30')
+scheduler
+  .call(async () => {
+    await queueService.getQueue('maintenance:purge_staging').add('maintenance:purge_staging', {})
+  })
+  .weeklyOn('Sunday', '03:30')
 
-scheduler.call(async () => {
-  await queueService.getQueue('maintenance:apply_retention_policy').add('maintenance:apply_retention_policy', {})
-}).monthlyOn(1, '04:00')
+scheduler
+  .call(async () => {
+    await queueService
+      .getQueue('maintenance:apply_retention_policy')
+      .add('maintenance:apply_retention_policy', {})
+  })
+  .monthlyOn(1, '04:00')
 
-scheduler.call(async () => {
-  await queueService.getQueue('maintenance:vacuum_hint').add('maintenance:vacuum_hint', {})
-}).dailyAt('02:00')
+scheduler
+  .call(async () => {
+    await queueService.getQueue('maintenance:vacuum_hint').add('maintenance:vacuum_hint', {})
+  })
+  .dailyAt('02:00')
 ```
 
 Adicionar em `adonisrc.ts` no array `preloads`:
@@ -6896,12 +8146,21 @@ import db from '@adonisjs/lucid/services/db'
 
 export default class extends BaseSeeder {
   async run() {
-    await db.from('retention_config').insert([
-      { log_type: 'audit_logs', retention_days: 730, enabled: true },
-      { log_type: 'security_audit_logs', retention_days: 730, enabled: true },
-      { log_type: 'client_errors', retention_days: 90, enabled: true },
-      { log_type: 'pii.access_logs', retention_days: 1825, min_days_for_pii_access_logs: 1825, enabled: true },
-    ]).onConflict('log_type').merge(['updated_at'])
+    await db
+      .from('retention_config')
+      .insert([
+        { log_type: 'audit_logs', retention_days: 730, enabled: true },
+        { log_type: 'security_audit_logs', retention_days: 730, enabled: true },
+        { log_type: 'client_errors', retention_days: 90, enabled: true },
+        {
+          log_type: 'pii.access_logs',
+          retention_days: 1825,
+          min_days_for_pii_access_logs: 1825,
+          enabled: true,
+        },
+      ])
+      .onConflict('log_type')
+      .merge(['updated_at'])
   }
 }
 ```
@@ -6922,6 +8181,7 @@ git commit -m "🚀 feat(maintenance): purge_staging, refresh_aggregates, retent
 ### Task 52: ErrorBoundary + /api/client-errors + error pages
 
 **Files:**
+
 - Create: `inertia/components/error_boundary.tsx`
 - Create: `inertia/pages/errors/show.tsx`
 - Create: `app/modules/client_errors/controllers/client_errors_controller.ts`
@@ -6932,31 +8192,39 @@ git commit -m "🚀 feat(maintenance): purge_staging, refresh_aggregates, retent
 
 ```typescript
 // inertia/components/error_boundary.tsx
-import { Component } from 'react'
+import {Component} from 'react'
 
-interface State { hasError: boolean }
+interface State {
+  hasError: boolean
+}
 
 export default class ErrorBoundary extends Component<React.PropsWithChildren, State> {
-  state: State = { hasError: false }
+  state: State = {hasError: false}
 
-  static getDerivedStateFromError() { return { hasError: true } }
+  static getDerivedStateFromError() {
+    return {hasError: true}
+  }
 
   componentDidCatch(error: any, info: any) {
     fetch('/api/client-errors', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         message: String(error?.message ?? 'unknown').slice(0, 1024),
         stack: String(error?.stack ?? '').slice(0, 10240),
         componentStack: String(info?.componentStack ?? '').slice(0, 10240),
         url: window.location.href,
       }),
-    }).catch(() => {})
+    }).catch(() => {
+    })
   }
 
   render() {
     if (this.state.hasError) {
-      return <main><h1>Algo deu errado</h1><p>Recarregue a página.</p></main>
+      return <main><h1>Algo
+      deu
+      errado < /h1><p>Recarregue a página.</
+      p > </main>
     }
     return this.props.children
   }
@@ -6992,12 +8260,13 @@ const validator = vine.compile(
   })
 )
 
-const PII_RE = /\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2}|\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|[\w.+-]+@[\w-]+\.[\w-.]+)\b/g
+const PII_RE =
+  /\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2}|\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|[\w.+-]+@[\w-]+\.[\w-.]+)\b/g
 
 export default class ClientErrorsController {
   async store(ctx: HttpContext) {
     const data = await ctx.request.validateUsing(validator)
-    const sanitize = (s: string | undefined) => s ? s.replace(PII_RE, '<REDACTED>') : null
+    const sanitize = (s: string | undefined) => (s ? s.replace(PII_RE, '<REDACTED>') : null)
     await db.from('client_errors').insert({
       tenant_id: ctx.tenant?.id ?? null,
       user_id: ctx.auth?.user?.id ?? null,
@@ -7017,7 +8286,8 @@ export default class ClientErrorsController {
 Add to `start/routes.ts`:
 
 ```typescript
-const ClientErrorsController = () => import('#modules/client_errors/controllers/client_errors_controller')
+const ClientErrorsController = () =>
+  import('#modules/client_errors/controllers/client_errors_controller')
 router.post('/api/client-errors', [ClientErrorsController, 'store']).as('client_errors.store')
 ```
 
@@ -7025,36 +8295,61 @@ router.post('/api/client-errors', [ClientErrorsController, 'store']).as('client_
 
 ```typescript
 // inertia/pages/errors/show.tsx
-import { Head, router } from '@inertiajs/react'
+import {Head, router} from '@inertiajs/react'
 
-interface Props { status: number; code?: string; message?: string; requestId?: string }
+interface Props {
+  status: number;
+  code?: string;
+  message?: string;
+  requestId?: string
+}
 
-export default function ErrorShow({ status, code, message, requestId }: Props) {
+export default function ErrorShow({status, code, message, requestId}: Props) {
   const titles: Record<number, string> = {
     401: 'Sessão necessária', 403: 'Acesso negado',
     404: 'Não encontrado', 419: 'Sessão expirou', 500: 'Erro interno',
   }
   const actions: Record<number, { label: string; onClick: () => void }> = {
-    401: { label: 'Entrar novamente', onClick: () => router.visit('/auth/login') },
-    403: { label: 'Voltar', onClick: () => history.back() },
-    404: { label: 'Ir ao dashboard', onClick: () => router.visit('/dashboard') },
-    500: { label: 'Tentar novamente', onClick: () => location.reload() },
+    401: {label: 'Entrar novamente', onClick: () => router.visit('/auth/login')},
+    403: {label: 'Voltar', onClick: () => history.back()},
+    404: {label: 'Ir ao dashboard', onClick: () => router.visit('/dashboard')},
+    500: {label: 'Tentar novamente', onClick: () => location.reload()},
   }
   const action = actions[status] ?? actions[500]
 
   return (
     <>
-      <Head title={`${status} — ${titles[status] ?? 'Erro'}`} />
-      <main>
-        <h1>{status} — {titles[status] ?? 'Erro'}</h1>
-        <p>{message ?? 'Algo deu errado.'}</p>
-        {code && <p><small>code: {code}</small></p>}
-        {requestId && <p><small>request: <code>{requestId}</code></small></p>}
-        <button onClick={action.onClick}>{action.label}</button>
-      </main>
-    </>
-  )
+      <Head title = {`${status} — ${titles[status] ?? 'Erro'}`
 }
+  />
+  < main >
+  <h1>{status} — {
+    titles[status] ?? 'Erro'
+  }
+  </h1>
+  < p > {message ?? 'Algo deu errado.'
+}
+  </p>
+  {
+    code && <p><small>code
+  :
+    {
+      code
+    }
+    </small></
+    p >
+  }
+  {
+    requestId && <p><small>request
+  :
+    <code>{requestId} < /code></sm
+    all > </p>}
+    < button
+    onClick = {action.onClick} > {action.label} < /button>
+      < /main>
+      < />
+  )
+  }
 ```
 
 - [ ] **Step 5: Atualizar exception handler**
@@ -7073,16 +8368,25 @@ export default class HttpExceptionHandler2 extends HttpExceptionHandler {
 
   async handle(error: any, ctx: any) {
     const requestId = ctx.requestId ?? null
-    logger.error({
-      requestId, tenantId: ctx.tenant?.id, userId: ctx.auth?.user?.id,
-      url: ctx.request.url(), method: ctx.request.method(),
-      err: sanitizeError(error, { mode: app.inProduction ? 'prod' : 'dev' }),
-      code: error?.code, status: error?.status,
-    }, 'http.request.failed')
+    logger.error(
+      {
+        requestId,
+        tenantId: ctx.tenant?.id,
+        userId: ctx.auth?.user?.id,
+        url: ctx.request.url(),
+        method: ctx.request.method(),
+        err: sanitizeError(error, { mode: app.inProduction ? 'prod' : 'dev' }),
+        code: error?.code,
+        status: error?.status,
+      },
+      'http.request.failed'
+    )
 
     const status = error?.status ?? 500
     const code = error?.code ?? 'E_INTERNAL'
-    const message = app.inProduction ? mapCodeToMessage(code) : (error?.message ?? mapCodeToMessage(code))
+    const message = app.inProduction
+      ? mapCodeToMessage(code)
+      : (error?.message ?? mapCodeToMessage(code))
 
     if (ctx.request.header('x-inertia')) {
       return ctx.inertia.render('errors/show', { status, code, message, requestId })
@@ -7109,6 +8413,7 @@ git commit -m "🚀 feat(errors): ErrorBoundary, /api/client-errors with PII str
 ### Task 53: Tenant settings + Users management
 
 **Files:**
+
 - Create: `app/modules/admin/controllers/settings_controller.ts`
 - Create: `app/modules/admin/controllers/users_controller.ts`
 - Modify: `app/modules/admin/routes.ts`
@@ -7145,9 +8450,11 @@ const updateRolesValidator = vine.compile(
 
 export default class UsersController {
   async index(ctx: HttpContext) {
-    const memberships = await db.from('tenant_memberships as tm')
+    const memberships = await db
+      .from('tenant_memberships as tm')
       .join('users as u', 'u.id', 'tm.user_id')
-      .where('tm.tenant_id', ctx.tenant.id).andWhere('tm.status', 'active')
+      .where('tm.tenant_id', ctx.tenant.id)
+      .andWhere('tm.status', 'active')
       .select('u.id', 'u.name', 'u.email', 'tm.id as membership_id')
     const roles = await db.from('roles').select()
     return ctx.inertia.render('settings/users', { memberships, roles })
@@ -7156,14 +8463,22 @@ export default class UsersController {
   async updateRoles(ctx: HttpContext) {
     const { role_ids } = await ctx.request.validateUsing(updateRolesValidator)
     const userId = ctx.params.userId
-    await db.from('user_roles').where('tenant_id', ctx.tenant.id).andWhere('user_id', userId).delete()
+    await db
+      .from('user_roles')
+      .where('tenant_id', ctx.tenant.id)
+      .andWhere('user_id', userId)
+      .delete()
     for (const rid of role_ids) {
-      await db.from('user_roles').insert({ tenant_id: ctx.tenant.id, user_id: userId, role_id: rid })
+      await db
+        .from('user_roles')
+        .insert({ tenant_id: ctx.tenant.id, user_id: userId, role_id: rid })
     }
     await permissionCacheService.invalidate(ctx.tenant.id)
     await auditService.record({
-      tenantId: ctx.tenant.id, actorUserId: ctx.auth.user!.id,
-      entityType: 'user', entityId: userId,
+      tenantId: ctx.tenant.id,
+      actorUserId: ctx.auth.user!.id,
+      entityType: 'user',
+      entityId: userId,
       action: 'roles_updated',
       payload: { role_ids },
       requestId: ctx.requestId,
@@ -7179,77 +8494,124 @@ export default class UsersController {
 const SettingsController = () => import('#modules/admin/controllers/settings_controller')
 const UsersController = () => import('#modules/admin/controllers/users_controller')
 
-router.get('/settings/tenant', [SettingsController, 'tenant']).as('settings.tenant').use(middleware.permission({ permission: 'tenants.settings' }))
-router.get('/settings/users', [UsersController, 'index']).as('settings.users.index').use(middleware.permission({ permission: 'users.manage_roles' }))
-router.post('/settings/users/:userId/roles', [UsersController, 'updateRoles']).as('settings.users.update_roles').use(middleware.permission({ permission: 'users.manage_roles' }))
+router
+  .get('/settings/tenant', [SettingsController, 'tenant'])
+  .as('settings.tenant')
+  .use(middleware.permission({ permission: 'tenants.settings' }))
+router
+  .get('/settings/users', [UsersController, 'index'])
+  .as('settings.users.index')
+  .use(middleware.permission({ permission: 'users.manage_roles' }))
+router
+  .post('/settings/users/:userId/roles', [UsersController, 'updateRoles'])
+  .as('settings.users.update_roles')
+  .use(middleware.permission({ permission: 'users.manage_roles' }))
 ```
 
 - [ ] **Step 4: Pages mínimas**
 
 ```typescript
 // inertia/pages/settings/tenant.tsx
-import { Head } from '@inertiajs/react'
-export default function TenantSettings({ tenant }: { tenant: any }) {
+import {Head} from '@inertiajs/react'
+
+export default function TenantSettings({tenant}: { tenant: any }) {
   return (
     <>
-      <Head title="Configurações do tenant" />
-      <main><h1>{tenant.name}</h1><p>Slug: {tenant.slug}</p><p>Status: {tenant.status}</p></main>
-    </>
-  )
+      <Head title = "Configurações do tenant" / >
+      <main><h1>{tenant.name} < /h1><p>Slug: {tenant.slug}</
+  p > <p>Status
+:
+  {
+    tenant.status
+  }
+  </p></m
+  ain >
+  </>
+)
 }
 ```
 
 ```typescript
 // inertia/pages/settings/users.tsx
-import { Head, router } from '@inertiajs/react'
-import { useState } from 'react'
+import {Head, router} from '@inertiajs/react'
+import {useState} from 'react'
 
-interface User { id: string; name: string; email: string }
-interface Role { id: string; slug: string; name: string }
-interface Props { memberships: User[]; roles: Role[] }
+interface User {
+  id: string;
+  name: string;
+  email: string
+}
 
-export default function UsersSettings({ memberships, roles }: Props) {
+interface Role {
+  id: string;
+  slug: string;
+  name: string
+}
+
+interface Props {
+  memberships: User[];
+  roles: Role[]
+}
+
+export default function UsersSettings({memberships, roles}: Props) {
   const [selected, setSelected] = useState<Record<string, string[]>>({})
 
   function toggleRole(userId: string, roleId: string) {
     setSelected((s) => {
       const current = s[userId] ?? []
       const next = current.includes(roleId) ? current.filter(r => r !== roleId) : [...current, roleId]
-      return { ...s, [userId]: next }
+      return {...s, [userId]: next}
     })
   }
 
   function save(userId: string) {
-    router.post(`/settings/users/${userId}/roles`, { role_ids: selected[userId] ?? [] })
+    router.post(`/settings/users/${userId}/roles`, {role_ids: selected[userId] ?? []})
   }
 
   return (
     <>
-      <Head title="Users" />
+      <Head title = "Users" / >
       <main>
-        <h1>Users</h1>
-        <table>
-          <thead><tr><th>Nome</th><th>Email</th><th>Roles</th><th></th></tr></thead>
-          <tbody>
-            {memberships.map((u) => (
-              <tr key={u.id}>
-                <td>{u.name}</td><td>{u.email}</td>
-                <td>
-                  {roles.map((r) => (
-                    <label key={r.id}>
-                      <input type="checkbox" checked={(selected[u.id] ?? []).includes(r.id)}
-                        onChange={() => toggleRole(u.id, r.id)} /> {r.slug}
-                    </label>
-                  ))}
-                </td>
-                <td><button onClick={() => save(u.id)}>Salvar</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
-    </>
-  )
+        <h1>Users < /h1>
+      < table >
+      <thead><tr><th>Nome < /th><th>Email</
+  th > <th>Roles < /th><th></
+  th > </tr></
+  thead >
+  <tbody>
+    {
+      memberships.map((u) => (
+        <tr key = {u.id} >
+          <td>{u.name} < /td><td>{u.email}</td >
+  <td>
+    {
+      roles.map((r) => (
+        <label key = {r.id} >
+        <input type = "checkbox" checked = {(selected[u.id] ?? []).includes(r.id)
+    }
+  onChange = {()
+=>
+  toggleRole(u.id, r.id)
+}
+  /> {r.slug}
+  < /label>
+))
+}
+  </td>
+  < td > <button onClick = {()
+=>
+  save(u.id)
+}>
+  Salvar < /button></
+  td >
+  </tr>
+))
+}
+  </tbody>
+  < /table>
+  < /main>
+  < />
+)
 }
 ```
 
@@ -7267,6 +8629,7 @@ git commit -m "🚀 feat(settings): tenant info and users role management"
 ### Task 54: Test setup, factories, fixtures
 
 **Files:**
+
 - Modify: `tests/bootstrap.ts`
 - Create: `tests/factories/{tenant,user,precatorio_asset}_factory.ts`
 - Create: `scripts/generate_fixture_siop.ts`
@@ -7285,16 +8648,17 @@ import app from '@adonisjs/core/services/app'
 processCLIArgs(process.argv.splice(2))
 
 configure({
-  files: ['tests/unit/**/*.spec.ts', 'tests/integration/**/*.spec.ts', 'tests/functional/**/*.spec.ts', 'tests/e2e/**/*.spec.ts'],
-  plugins: [
-    assert(),
-    browserClient({ runInSuites: ['e2e'] }),
-    pluginAdonisJS(app),
+  files: [
+    'tests/unit/**/*.spec.ts',
+    'tests/integration/**/*.spec.ts',
+    'tests/functional/**/*.spec.ts',
+    'tests/e2e/**/*.spec.ts',
   ],
+  plugins: [assert(), browserClient({ runInSuites: ['e2e'] }), pluginAdonisJS(app)],
   setup: [
     async () => {
       const db = (await import('@adonisjs/lucid/services/db')).default
-      await db.connection().rawQuery('select 1')  // garante conexão
+      await db.connection().rawQuery('select 1') // garante conexão
     },
   ],
   teardown: [
@@ -7315,13 +8679,18 @@ run()
 import factory from '@adonisjs/lucid/factories'
 import Tenant from '#models/tenant'
 
-export const TenantFactory = factory.define(Tenant, ({ faker }) => ({
-  id: faker.string.uuid(),
-  name: faker.company.name(),
-  slug: faker.helpers.slugify(faker.company.name()).toLowerCase() + '-' + faker.string.alphanumeric(4),
-  status: 'active' as const,
-  rbacVersion: 1,
-})).build()
+export const TenantFactory = factory
+  .define(Tenant, ({ faker }) => ({
+    id: faker.string.uuid(),
+    name: faker.company.name(),
+    slug:
+      faker.helpers.slugify(faker.company.name()).toLowerCase() +
+      '-' +
+      faker.string.alphanumeric(4),
+    status: 'active' as const,
+    rbacVersion: 1,
+  }))
+  .build()
 ```
 
 - [ ] **Step 3: Script generate fixture XLSX**
@@ -7345,6 +8714,7 @@ async function main() {
   await wb.xlsx.writeFile(resolve('tests/fixtures/siop/valid_2024_small.xlsx'))
   console.log('fixture gerada')
 }
+
 main().catch(console.error)
 ```
 
@@ -7375,6 +8745,7 @@ git commit -m "✅ test: bootstrap setup, factories, SIOP fixture generator"
 ### Task 55: Tenant isolation suite (must-pass)
 
 **Files:**
+
 - Create: `tests/integration/tenant_isolation.spec.ts`
 
 - [ ] **Step 1: Spec**
@@ -7389,12 +8760,47 @@ test.group('Tenant isolation', (group) => {
   let tenantA: string, tenantB: string
 
   group.each.setup(async () => {
-    const [a] = await db.from('tenants').insert({ name: 'A', slug: `a-${Date.now()}-${Math.random()}`, status: 'active', rbac_version: 1 }).returning('id')
-    const [b] = await db.from('tenants').insert({ name: 'B', slug: `b-${Date.now()}-${Math.random()}`, status: 'active', rbac_version: 1 }).returning('id')
-    tenantA = a.id; tenantB = b.id
+    const [a] = await db
+      .from('tenants')
+      .insert({
+        name: 'A',
+        slug: `a-${Date.now()}-${Math.random()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
+    const [b] = await db
+      .from('tenants')
+      .insert({
+        name: 'B',
+        slug: `b-${Date.now()}-${Math.random()}`,
+        status: 'active',
+        rbac_version: 1,
+      })
+      .returning('id')
+    tenantA = a.id
+    tenantB = b.id
     await db.from('precatorio_assets').insert([
-      { tenant_id: tenantA, source: 'siop', cnj_number: 'A-CNJ', face_value: 100, lifecycle_status: 'expedited', nature: 'alimentar', pii_status: 'none', compliance_status: 'pending' },
-      { tenant_id: tenantB, source: 'siop', cnj_number: 'B-CNJ', face_value: 100, lifecycle_status: 'expedited', nature: 'alimentar', pii_status: 'none', compliance_status: 'pending' },
+      {
+        tenant_id: tenantA,
+        source: 'siop',
+        cnj_number: 'A-CNJ',
+        face_value: 100,
+        lifecycle_status: 'expedited',
+        nature: 'alimentar',
+        pii_status: 'none',
+        compliance_status: 'pending',
+      },
+      {
+        tenant_id: tenantB,
+        source: 'siop',
+        cnj_number: 'B-CNJ',
+        face_value: 100,
+        lifecycle_status: 'expedited',
+        nature: 'alimentar',
+        pii_status: 'none',
+        compliance_status: 'pending',
+      },
     ])
   })
 
@@ -7412,8 +8818,14 @@ test.group('Tenant isolation', (group) => {
 
   test('unique constraints scoped per tenant', async ({ assert }) => {
     await db.from('precatorio_assets').insert({
-      tenant_id: tenantA, source: 'siop', cnj_number: 'B-CNJ',  // mesmo CNJ que tenant B
-      face_value: 100, lifecycle_status: 'expedited', nature: 'alimentar', pii_status: 'none', compliance_status: 'pending'
+      tenant_id: tenantA,
+      source: 'siop',
+      cnj_number: 'B-CNJ', // mesmo CNJ que tenant B
+      face_value: 100,
+      lifecycle_status: 'expedited',
+      nature: 'alimentar',
+      pii_status: 'none',
+      compliance_status: 'pending',
     })
     const a = await db.from('precatorio_assets').where('tenant_id', tenantA).count('* as c')
     assert.equal(Number(a[0].c), 2)
@@ -7434,6 +8846,7 @@ git commit -m "✅ test(security): tenant isolation suite (must-pass on CI)"
 ### Task 56: E2E golden path (Playwright via Japa browser-client)
 
 **Files:**
+
 - Create: `tests/e2e/golden_path.spec.ts`
 
 - [ ] **Step 1: Spec**
@@ -7452,7 +8865,7 @@ test.group('E2E — golden path', (group) => {
     await page.click('button[type="submit"]')
     await page.waitForURL(/\/dashboard|\/tenants\/select/)
     if (page.url().includes('/tenants/select')) {
-      await page.click('button')  // primeiro tenant
+      await page.click('button') // primeiro tenant
       await page.waitForURL('/dashboard')
     }
     await assert.equal(new URL(page.url()).pathname, '/dashboard')
@@ -7477,9 +8890,10 @@ git commit -m "✅ test(e2e): golden path login → dashboard → precatorios"
 
 ## Phase 26 — Documentação
 
-### Task 57: README + AGENTS.md + docs/*
+### Task 57: README + AGENTS.md + docs/\*
 
 **Files:**
+
 - Modify: `README.md`
 - Create: `AGENTS.md`
 - Create: `docs/{schema-overview,pii-bunker-policy,rbac-roles,testing-guide,import-runbook}.md`
@@ -7488,7 +8902,7 @@ git commit -m "✅ test(e2e): golden path login → dashboard → precatorios"
 
 Substituir `README.md`:
 
-```markdown
+````markdown
 # juridicai
 
 Sistema de Originação e Qualificação de Precatórios (Spec 1 — Radar Federal Base).
@@ -7505,6 +8919,7 @@ node ace db:seed --files="./database/seeders/index_seeder.ts"
 pnpm dev          # HTTP em http://localhost:3333
 pnpm start:worker # worker BullMQ separado
 ```
+````
 
 Login dev: `admin@benicio.local` / `admin1234`.
 
@@ -7532,9 +8947,12 @@ node ace migration:fresh --seed
 
 ## Spec & Plan
 
-- Spec: [`docs/superpowers/specs/2026-04-28-radar-federal-base-design.md`](docs/superpowers/specs/2026-04-28-radar-federal-base-design.md)
-- Plan: [`docs/superpowers/plans/2026-04-28-radar-federal-base-plan.md`](docs/superpowers/plans/2026-04-28-radar-federal-base-plan.md)
-```
+- Spec: [
+  `docs/superpowers/specs/2026-04-28-radar-federal-base-design.md`](docs/superpowers/specs/2026-04-28-radar-federal-base-design.md)
+- Plan: [
+  `docs/superpowers/plans/2026-04-28-radar-federal-base-plan.md`](docs/superpowers/plans/2026-04-28-radar-federal-base-plan.md)
+
+````
 
 - [ ] **Step 2: AGENTS.md (regras críticas)**
 
@@ -7567,7 +8985,7 @@ Sistema multi-tenant Adonis 7 + Inertia + React + PostgreSQL + Redis.
 ## Commit messages
 gitmoji prefix, concise, "why" not "what":
 - 🚀 feat, 🐛 fix, 💄 style, 🔧 chore, 🌱 seed, 🗃️ refactor(db), ♻️ refactor, ✅ test, 📝 docs, 🔒 security
-```
+````
 
 - [ ] **Step 3: Doc files mínimos**
 
@@ -7704,11 +9122,14 @@ git commit -m "📝 docs: README, AGENTS.md, and 5 domain docs"
 
 ## Phase 27 — Polish (post-v0 nice-to-have)
 
-> **Nota:** itens nessa phase não são must-have para SPEC-001. Implementar apenas se houver tempo após critérios de aceite cumpridos.
+> **Nota:** itens nessa phase não são must-have para SPEC-001. Implementar apenas se houver tempo após critérios de
+> aceite cumpridos.
 
 ### Task 58: Layout Metronic adaptado
 
-Importar componentes do template `~/Documents/metronic-v9.4.10/metronic-tailwind-react-starter-kit/typescript/vite/` selecionando apenas: `Sidebar`, `Topbar`, `Card`, `KPI`, `Badge`, `Button`, `DataTable`, `ApexChartCard`, `Toaster`. Adaptar pra usar Inertia routing em vez de react-router. Aplicar nas pages de imports, precatorios, debtors, dashboard.
+Importar componentes do template `~/Documents/metronic-v9.4.10/metronic-tailwind-react-starter-kit/typescript/vite/`
+selecionando apenas: `Sidebar`, `Topbar`, `Card`, `KPI`, `Badge`, `Button`, `DataTable`, `ApexChartCard`, `Toaster`.
+Adaptar pra usar Inertia routing em vez de react-router. Aplicar nas pages de imports, precatorios, debtors, dashboard.
 
 ### Task 59: ApexCharts no Dashboard
 
@@ -7720,7 +9141,8 @@ Refatorar `precatorios/index.tsx` pra usar TanStack Table com filtros server-sid
 
 ### Task 61: Tailwind v4 + radix-ui setup
 
-`pnpm add -D @tailwindcss/vite tailwind-merge clsx class-variance-authority`. Configurar `vite.config.ts` com plugin Tailwind v4. Importar primitives radix conforme necessidade.
+`pnpm add -D @tailwindcss/vite tailwind-merge clsx class-variance-authority`. Configurar `vite.config.ts` com plugin
+Tailwind v4. Importar primitives radix conforme necessidade.
 
 ---
 
@@ -7730,24 +9152,25 @@ Plan completo escrito. Vou re-verificar contra o spec.
 
 **1. Spec coverage:**
 
-| Spec section | Plan task |
-|---|---|
-| §3 Decisões arquiteturais | Tasks 1-9 (setup, helpers, models) |
-| §5 Estrutura de diretório | Task 1 (paths) + estrutura inline |
-| §6 Modelo de dados | Tasks 10-32 (todas migrations) |
-| §6 Crypto setup | Task 32 |
-| §7 Pipeline SIOP | Tasks 36-39 |
-| §8 Auth/RBAC/Tenant | Tasks 14-17, 33-35 |
-| §8 PII bunker operacional | Tasks 23-25, 32, 47 |
-| §9 UI/Dashboard | Tasks 41, 44, 45, 46 |
-| §10 Jobs/Scheduler | Tasks 28-30, 51 |
-| §11 Erros/observabilidade | Tasks 4, 17, 27, 48, 52 |
-| §12 Testing | Tasks 54-56 |
-| §14 Critérios de aceite | Cobertura distribuída ao longo das phases |
+| Spec section              | Plan task                                 |
+| ------------------------- | ----------------------------------------- |
+| §3 Decisões arquiteturais | Tasks 1-9 (setup, helpers, models)        |
+| §5 Estrutura de diretório | Task 1 (paths) + estrutura inline         |
+| §6 Modelo de dados        | Tasks 10-32 (todas migrations)            |
+| §6 Crypto setup           | Task 32                                   |
+| §7 Pipeline SIOP          | Tasks 36-39                               |
+| §8 Auth/RBAC/Tenant       | Tasks 14-17, 33-35                        |
+| §8 PII bunker operacional | Tasks 23-25, 32, 47                       |
+| §9 UI/Dashboard           | Tasks 41, 44, 45, 46                      |
+| §10 Jobs/Scheduler        | Tasks 28-30, 51                           |
+| §11 Erros/observabilidade | Tasks 4, 17, 27, 48, 52                   |
+| §12 Testing               | Tasks 54-56                               |
+| §14 Critérios de aceite   | Cobertura distribuída ao longo das phases |
 
 **2. Placeholder scan:**
 
-Não detectei "TBD", "TODO", "fill in details". Itens marcados como Phase 27 (polish) são explicitamente fora do escopo SPEC-001 mas listados pra continuidade.
+Não detectei "TBD", "TODO", "fill in details". Itens marcados como Phase 27 (polish) são explicitamente fora do escopo
+SPEC-001 mas listados pra continuidade.
 
 **3. Type consistency:**
 
@@ -7765,9 +9188,14 @@ Não detectei "TBD", "TODO", "fill in details". Itens marcados como Phase 27 (po
 Todos batem.
 
 **4. Itens reforçados pra fase de execução:**
-- Worker heartbeat update precisa ser implementado dentro do worker (loop a cada 10s atualizando `worker_heartbeats`). Acrescentar como sub-task quando rodar Task 30 ou 51 — anotado em comentário do `bin/worker.ts`.
-- Inertia shared props (`auth.user`, `tenant.current`, `permissions[]`, `requestId`) precisam ser configuradas em `app/middleware/inertia_middleware.ts` (já existe do starter — modificar). Anotado em Task 17 implicitamente; pode virar Task adicional 17.5.
-- Coluna `tenant_id` em alguns lookups da função `pii.reveal_beneficiary` referencia `current_setting('app.current_tenant_id')` que é setado pelo `withTenantRls`. Coerente.
+
+- Worker heartbeat update precisa ser implementado dentro do worker (loop a cada 10s atualizando `worker_heartbeats`).
+  Acrescentar como sub-task quando rodar Task 30 ou 51 — anotado em comentário do `bin/worker.ts`.
+- Inertia shared props (`auth.user`, `tenant.current`, `permissions[]`, `requestId`) precisam ser configuradas em
+  `app/middleware/inertia_middleware.ts` (já existe do starter — modificar). Anotado em Task 17 implicitamente; pode
+  virar Task adicional 17.5.
+- Coluna `tenant_id` em alguns lookups da função `pii.reveal_beneficiary` referencia
+  `current_setting('app.current_tenant_id')` que é setado pelo `withTenantRls`. Coerente.
 
 **Spec items que deveria virar task explícita ainda:**
 
@@ -7776,6 +9204,7 @@ Adiciono uma task curta:
 ### Task 17.5: Inertia shared middleware (props globais)
 
 **Files:**
+
 - Modify: `app/middleware/inertia_middleware.ts`
 
 - [ ] **Step 1: Editar o middleware existente**
@@ -7791,7 +9220,7 @@ export default Inertia.handle({
       const user = ctx.auth?.user
       return user ? { id: user.id, name: user.name, email: user.email } : null
     },
-    tenant: async (ctx) => ctx.tenant ? { id: ctx.tenant.id } : null,
+    tenant: async (ctx) => (ctx.tenant ? { id: ctx.tenant.id } : null),
     permissions: async (ctx) => {
       if (!ctx.auth?.user || !ctx.tenant) return []
       return permissionCacheService.loadPermissions(ctx.auth.user.id, ctx.tenant.id)
@@ -7819,4 +9248,5 @@ git commit -m "🚀 feat(inertia): share auth/tenant/permissions/requestId/csrf 
 **Critical commits:** 50+ commits granulares
 **Test coverage:** unit + integration + functional + E2E + tenant isolation must-pass
 
-Pode executar incrementalmente. Cada task é commit-friendly e self-contained (TDD onde aplicável, write+verify+commit nos demais).
+Pode executar incrementalmente. Cada task é commit-friendly e self-contained (TDD onde aplicável, write+verify+commit
+nos demais).

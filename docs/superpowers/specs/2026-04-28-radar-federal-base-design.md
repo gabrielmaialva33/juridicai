@@ -17,9 +17,13 @@ related_specs:
 
 ## Sumário executivo
 
-Monolito **AdonisJS v7 + Inertia 4 + React 19 (Metronic v9.4.10) + Lucid 22 + PostgreSQL + BullMQ + Redis** que ingere todo o histórico de precatórios federais do **SIOP** (~2010-2025) num modelo **multi-tenant** com **PII bunker** isolada (schema `pii.*` + RLS) e expõe um **dashboard read-only** pra inspeção. Estabelece a fundação arquitetural pras Specs 2 (DataJud) e 3 (DJEN).
+Monolito **AdonisJS v7 + Inertia 4 + React 19 (Metronic v9.4.10) + Lucid 22 + PostgreSQL + BullMQ + Redis** que ingere
+todo o histórico de precatórios federais do **SIOP** (~2010-2025) num modelo **multi-tenant** com **PII bunker**
+isolada (schema `pii.*` + RLS) e expõe um **dashboard read-only** pra inspeção. Estabelece a fundação arquitetural pras
+Specs 2 (DataJud) e 3 (DJEN).
 
-**One-liner para o produto:** "Não vendemos lista de pessoas. Qualificamos ativos judiciais com dados públicos, scoring jurídico-financeiro e governança comercial."
+**One-liner para o produto:** "Não vendemos lista de pessoas. Qualificamos ativos judiciais com dados públicos, scoring
+jurídico-financeiro e governança comercial."
 
 ## Posicionamento e escopo
 
@@ -38,14 +42,16 @@ juridicai = sistema multi-tenant de originação e qualificação de precatório
 
 ### Escopo deste spec (Spec 1)
 
-Spec 1 = **Radar Federal Base — somente SIOP**. É o primeiro tijolo do módulo Radar. Não inclui DataJud, DJEN, scoring, CRM, pricing ou tribunais estaduais.
+Spec 1 = **Radar Federal Base — somente SIOP**. É o primeiro tijolo do módulo Radar. Não inclui DataJud, DJEN, scoring,
+CRM, pricing ou tribunais estaduais.
 
 #### Inclui
 
 - Importador idempotente XLSX/CSV do SIOP com staging + normalização + dedup
 - Modelagem multi-tenant (`tenant_id` em todas tabelas de negócio + RLS Postgres em `pii.*` e `audit_logs`)
 - Bunker PII em schema `pii.*` (mesmo que SIOP federal não traga PII direta — fontes futuras virão)
-- Auth (Adonis Auth session-based) + RBAC dinâmico via tabelas (`roles`, `permissions`, `role_permissions`, `user_roles`)
+- Auth (Adonis Auth session-based) + RBAC dinâmico via tabelas (`roles`, `permissions`, `role_permissions`,
+  `user_roles`)
 - Dashboard read-only Inertia (login, tenant select, dashboard, imports, precatórios, devedores, admin/health, settings)
 - Jobs via BullMQ + Redis com worker process separado
 - Audit log universal (append-only via PG RULES)
@@ -56,68 +62,82 @@ Spec 1 = **Radar Federal Base — somente SIOP**. É o primeiro tijolo do módul
 
 #### Fora deste spec
 
-| Item | Vai para |
-|------|----------|
-| DataJud enrichment | Spec 2 |
-| DJEN publications + NLP | Spec 3 |
-| Scoring rule-based completo | Spec 2 (depois do DataJud enriquecer) |
-| Fila de revisão humana | Spec 2 |
-| CRM/Sales pipeline | Spec do módulo Sales |
-| Pricing engine (IPCA+2%, TIR, deságio) | Spec dedicado |
-| Crawlers TJ/TRF/municipais | Spec por tribunal |
-| Deploy/produção | Spec 2 |
-| Real-time (Adonis Transmit/SSE) | Spec 2 |
-| TanStack Query | Spec 2 |
-| APM externo (Sentry, Datadog) | Spec 2+ |
-| Prometheus/Grafana | Infra dedicada |
-| OpenTelemetry | Infra dedicada |
-| Bull Board UI | Não implementar — `/admin/jobs` próprio é tenant-scoped |
+| Item                                   | Vai para                                                |
+| -------------------------------------- | ------------------------------------------------------- |
+| DataJud enrichment                     | Spec 2                                                  |
+| DJEN publications + NLP                | Spec 3                                                  |
+| Scoring rule-based completo            | Spec 2 (depois do DataJud enriquecer)                   |
+| Fila de revisão humana                 | Spec 2                                                  |
+| CRM/Sales pipeline                     | Spec do módulo Sales                                    |
+| Pricing engine (IPCA+2%, TIR, deságio) | Spec dedicado                                           |
+| Crawlers TJ/TRF/municipais             | Spec por tribunal                                       |
+| Deploy/produção                        | Spec 2                                                  |
+| Real-time (Adonis Transmit/SSE)        | Spec 2                                                  |
+| TanStack Query                         | Spec 2                                                  |
+| APM externo (Sentry, Datadog)          | Spec 2+                                                 |
+| Prometheus/Grafana                     | Infra dedicada                                          |
+| OpenTelemetry                          | Infra dedicada                                          |
+| Bull Board UI                          | Não implementar — `/admin/jobs` próprio é tenant-scoped |
 
 ### Critério de aceite (visão geral)
 
-Banco populado com `precatorio_assets` de todo histórico SIOP federal disponível, dashboard mostra lista paginada/filtrável, página de imports lista cada exercício com status/erros, healthcheck verde, RLS testado com pelo menos 2 tenants em fixture, suite de testes com cobertura mínima dos paths críticos do importador. **Checklist completo na seção 14.**
+Banco populado com `precatorio_assets` de todo histórico SIOP federal disponível, dashboard mostra lista
+paginada/filtrável, página de imports lista cada exercício com status/erros, healthcheck verde, RLS testado com pelo
+menos 2 tenants em fixture, suite de testes com cobertura mínima dos paths críticos do importador. **Checklist completo
+na seção 14.**
 
 ## Decisões arquiteturais consolidadas
 
 ### Stack técnico
 
-| Camada | Escolha | Justificativa |
-|--------|---------|---------------|
-| Linguagem backend | TypeScript (Node 24) | Stack do eduguard, ecossistema rico pra ETL/Adonis |
-| Framework | AdonisJS v7 | Convergência total com eduguard; Inertia + Lucid + Auth + Bouncer integrados |
-| Frontend bundler | Vite (via @adonisjs/vite) | First-class no Adonis 7 |
-| Frontend framework | React 19 + Inertia 4 | Template Metronic v9.4.10 React Vite TS já licenciado |
-| UI Kit | Metronic v9.4.10 (camadas) | Layout/cards base · Radix primitives · TanStack Table engine · ApexCharts · Sonner toast · cmdk · lucide-react |
-| Forms | RHF + Zod (frontend) | Padrão Metronic |
-| Validators backend | VineJS | Padrão eduguard; PG enum = TS type = Vine enum (idênticos) |
-| ORM | Lucid 22 | Padrão Adonis |
-| Banco | PostgreSQL 15+ | Multi-tenant via tenant_id + RLS seletivo |
-| Cache & Queue | Redis 7 | Padrão eduguard (BullMQ) |
-| Queue runner | BullMQ ^5 | Padrão eduguard; mesma instância Redis com namespaces separados |
-| Storage de arquivos | @adonisjs/drive (S3 ou FS local) | XLSX brutos do SIOP |
-| Scheduler | adonisjs-scheduler | Comandos ace que enfileiram BullMQ |
-| Logger | pino via @adonisjs/logger | Estruturado, com redaction |
-| Testes | Japa (Adonis) + Playwright (E2E) | Padrão Adonis 7 |
-| Dependências | pnpm (workspace) | Padrão eduguard |
+| Camada              | Escolha                          | Justificativa                                                                                                  |
+| ------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Linguagem backend   | TypeScript (Node 24)             | Stack do eduguard, ecossistema rico pra ETL/Adonis                                                             |
+| Framework           | AdonisJS v7                      | Convergência total com eduguard; Inertia + Lucid + Auth + Bouncer integrados                                   |
+| Frontend bundler    | Vite (via @adonisjs/vite)        | First-class no Adonis 7                                                                                        |
+| Frontend framework  | React 19 + Inertia 4             | Template Metronic v9.4.10 React Vite TS já licenciado                                                          |
+| UI Kit              | Metronic v9.4.10 (camadas)       | Layout/cards base · Radix primitives · TanStack Table engine · ApexCharts · Sonner toast · cmdk · lucide-react |
+| Forms               | RHF + Zod (frontend)             | Padrão Metronic                                                                                                |
+| Validators backend  | VineJS                           | Padrão eduguard; PG enum = TS type = Vine enum (idênticos)                                                     |
+| ORM                 | Lucid 22                         | Padrão Adonis                                                                                                  |
+| Banco               | PostgreSQL 15+                   | Multi-tenant via tenant_id + RLS seletivo                                                                      |
+| Cache & Queue       | Redis 7                          | Padrão eduguard (BullMQ)                                                                                       |
+| Queue runner        | BullMQ ^5                        | Padrão eduguard; mesma instância Redis com namespaces separados                                                |
+| Storage de arquivos | @adonisjs/drive (S3 ou FS local) | XLSX brutos do SIOP                                                                                            |
+| Scheduler           | adonisjs-scheduler               | Comandos ace que enfileiram BullMQ                                                                             |
+| Logger              | pino via @adonisjs/logger        | Estruturado, com redaction                                                                                     |
+| Testes              | Japa (Adonis) + Playwright (E2E) | Padrão Adonis 7                                                                                                |
+| Dependências        | pnpm (workspace)                 | Padrão eduguard                                                                                                |
 
 ### Decisões transversais
 
-1. **Multi-tenant shared schema com `tenant_id`** em todas as tabelas de negócio. RLS Postgres em schemas sensíveis (`pii.*`, `audit_logs`, `security_audit_logs`).
-2. **`tenant_memberships` many-to-many.** No v0, sessão = um tenant ativo, mas modelagem é N-to-N pra suportar consultoria/multi-org no futuro.
-3. **Caches públicos podem ser globais (sem `tenant_id`)** — tipo `public_datajud_cache` no Spec 2. Já modelar essa distinção mentalmente.
-4. **PII Bunker Architecture** — schema `pii.*` isolado, criptografia at-rest (pgcrypto + bytea), funções `SECURITY DEFINER` controladas, audit log de cada acesso.
+1. **Multi-tenant shared schema com `tenant_id`** em todas as tabelas de negócio. RLS Postgres em schemas sensíveis (
+   `pii.*`, `audit_logs`, `security_audit_logs`).
+2. **`tenant_memberships` many-to-many.** No v0, sessão = um tenant ativo, mas modelagem é N-to-N pra suportar
+   consultoria/multi-org no futuro.
+3. **Caches públicos podem ser globais (sem `tenant_id`)** — tipo `public_datajud_cache` no Spec 2. Já modelar essa
+   distinção mentalmente.
+4. **PII Bunker Architecture** — schema `pii.*` isolado, criptografia at-rest (pgcrypto + bytea), funções
+   `SECURITY DEFINER` controladas, audit log de cada acesso.
 5. **`HMAC-SHA256(pepper, normalized_key)` no `beneficiary_hash`** — não SHA puro (CPF tem espaço pequeno).
-6. **Audit append-only** via PG RULES (`audit_logs`, `pii.access_logs` bloqueiam UPDATE/DELETE). Retenção via job `apply_retention_policy` (renomeado de `purge_audit_logs`).
-7. **Backfill todo histórico SIOP disponível (~2010-2025).** Implica `lifecycle_status` distinguindo expedido/pago/cancelado, importer batch idempotente, índices cuidados.
-8. **`source_records` table genérica** — toda staging/asset/process/publication aponta pra um registro de origem imutável.
-9. **`asset_scores` separado** com versionamento (`score_version`); `precatorio_assets` guarda só `current_score` + `current_score_id`.
-10. **`radar_job_runs` como histórico persistente do produto** — BullMQ é volátil/operacional; `audit_logs` é compliance.
+6. **Audit append-only** via PG RULES (`audit_logs`, `pii.access_logs` bloqueiam UPDATE/DELETE). Retenção via job
+   `apply_retention_policy` (renomeado de `purge_audit_logs`).
+7. **Backfill todo histórico SIOP disponível (~2010-2025).** Implica `lifecycle_status` distinguindo
+   expedido/pago/cancelado, importer batch idempotente, índices cuidados.
+8. **`source_records` table genérica** — toda staging/asset/process/publication aponta pra um registro de origem
+   imutável.
+9. **`asset_scores` separado** com versionamento (`score_version`); `precatorio_assets` guarda só `current_score` +
+   `current_score_id`.
+10. **`radar_job_runs` como histórico persistente do produto** — BullMQ é volátil/operacional; `audit_logs` é
+    compliance.
 
 ### Decisões frontend específicas
 
 1. **Inertia faz routing server-driven** — sem react-router. Páginas vivem em `inertia/pages/{feature}/{file}.tsx`.
-2. **Templates Metronic adaptados, não copiados.** Removidos: react-router, auth mock, fetching mock. Mantidos: layouts, componentes base, theme, charts.
-3. **TanStack Query NÃO no v0.** Estado server-of-truth via Inertia + `router.reload({ only: [...] })` para refresh parcial.
+2. **Templates Metronic adaptados, não copiados.** Removidos: react-router, auth mock, fetching mock. Mantidos: layouts,
+   componentes base, theme, charts.
+3. **TanStack Query NÃO no v0.** Estado server-of-truth via Inertia + `router.reload({ only: [...] })` para refresh
+   parcial.
 4. **PII reveal usa axios JSON puro** — sai do ciclo Inertia. Resposta efêmera no body, **nunca** em page props.
 5. **Permissões na UI são cosméticas** — backend revalida com Bouncer em todo controller.
 
@@ -376,37 +396,40 @@ juridicai/
 
 ### Convenção de enums
 
-Todo campo grafado como `text not null` com lista de valores em comentário (`-- a|b|c`) é enum **nativo PostgreSQL** criado em `0001_create_enums_table.ts` via raw SQL (única migration onde raw é justificado). Schema final usa `<enum_type_name>` mas para legibilidade do design o spec lista valores inline.
+Todo campo grafado como `text not null` com lista de valores em comentário (`-- a|b|c`) é enum **nativo PostgreSQL**
+criado em `0001_create_enums_table.ts` via raw SQL (única migration onde raw é justificado). Schema final usa
+`<enum_type_name>` mas para legibilidade do design o spec lista valores inline.
 
-**Regra:** PG enum value = TS model union type = Vine enum validator — idênticos. Mudança em qualquer um requer migration + atualização nos outros dois (validador de drift na CI).
+**Regra:** PG enum value = TS model union type = Vine enum validator — idênticos. Mudança em qualquer um requer
+migration + atualização nos outros dois (validador de drift na CI).
 
 Exemplos de enums:
 
 ```sql
 create type lifecycle_status as enum (
   'unknown','discovered','expedited','pending','in_payment','paid','cancelled','suspended'
-);
+  );
 create type pii_status as enum (
   'none','pseudonymous','bunker_available','materialized','blocked'
-);
+  );
 create type compliance_status as enum (
   'pending','approved_for_analysis','approved_for_sales','blocked','opt_out'
-);
+  );
 create type debtor_type as enum (
   'union','state','municipality','autarchy','foundation'
-);
+  );
 create type import_status as enum (
   'pending','running','completed','partial','failed'
-);
+  );
 create type job_run_status as enum (
   'pending','running','completed','failed','skipped','cancelled'
-);
+  );
 create type job_run_origin as enum (
   'scheduler','http','manual_retry','system'
-);
+  );
 create type pii_action as enum (
   'attempt_reveal','reveal_denied','reveal_success','export','contact','update','delete'
-);
+  );
 -- + outros conforme necessário
 ```
 
@@ -414,70 +437,70 @@ create type pii_action as enum (
 
 ```sql
 -- ── Tenancy & Auth ──────────────────────────────
-tenants(
-  id uuid pk default gen_random_uuid(),
+tenants
+( id uuid pk default gen_random_uuid(),
   name text not null,
   slug text not null unique,
-  document text,                      -- CNPJ
+  document text, -- CNPJ
   status text not null default 'active', -- active|suspended|inactive
   plan text,
   rbac_version int not null default 1, -- bump invalida cache de permissões
-  timestamps
-)
+  timestamps)
 
-users(
-  id uuid pk default gen_random_uuid(),
+users
+( id uuid pk default gen_random_uuid(),
   name text not null,
   email text not null unique,
   password_hash text not null,
   status text not null default 'active', -- active|disabled
-  timestamps
-)
+  timestamps)
 
-tenant_memberships(
-  id uuid pk default gen_random_uuid(),
+tenant_memberships
+( id uuid pk default gen_random_uuid(),
   tenant_id uuid not null references tenants(id),
   user_id uuid not null references users(id),
   status text not null default 'active', -- active|inactive
   timestamps,
-  unique(tenant_id, user_id)
-)
+  unique (tenant_id, user_id))
 
-auth_tokens(...)  -- Adonis padrão (remember-me)
+auth_tokens
+  (...)
+  -- Adonis padrão (remember-me)
 
 -- ── RBAC dinâmico (pattern eduguard) ────────────
-permissions(id, name, slug unique, description, timestamps)
-roles(id, name, slug unique, description, timestamps)
-role_permissions(role_id, permission_id, primary key(role_id, permission_id))
-user_roles(
-  id uuid pk,
+  permissions
+  (id, name, slug unique, description, timestamps)
+  roles
+  (id, name, slug unique, description, timestamps)
+  role_permissions
+  (role_id, permission_id, primary key (role_id, permission_id))
+  user_roles
+( id uuid pk,
   tenant_id uuid not null,
   user_id uuid not null,
   role_id uuid not null,
   timestamps,
-  unique(tenant_id, user_id, role_id)
-)
+  unique (tenant_id, user_id, role_id))
 
 -- ── Source records (procedência genérica) ────────
-source_records(
-  id uuid pk,
+source_records
+( id uuid pk,
   tenant_id uuid not null,
-  source text not null,                -- siop|datajud|djen|tribunal|api_private|manual
+  source text not null, -- siop|datajud|djen|tribunal|api_private|manual
   source_url text,
-  source_file_path text,               -- Drive path
-  source_checksum text,                -- sha256 pra arquivos
-  original_filename text,              -- nome original do arquivo (UI/suporte)
-  mime_type text,                      -- ex: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  source_file_path text, -- Drive path
+  source_checksum text, -- sha256 pra arquivos
+  original_filename text, -- nome original do arquivo (UI/suporte)
+  mime_type text, -- ex: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
   file_size_bytes bigint,
   collected_at timestamptz not null,
   raw_data jsonb,
   created_at timestamptz not null default now(),
-  unique(tenant_id, source, source_checksum) where source_checksum is not null
-)
+  unique (tenant_id, source, source_checksum) where source_checksum is not null)
 
 -- ── SIOP Ingestion ──────────────────────────────
-siop_imports(
-  id uuid pk,
+siop_imports
+( id uuid pk,
   tenant_id uuid not null,
   exercise_year int not null,
   source_record_id uuid not null references source_records(id),
@@ -494,93 +517,88 @@ siop_imports(
   uploaded_by_user_id uuid,
   timestamps,
   deleted_at timestamptz,
-  unique(tenant_id, source, exercise_year, source_record_id)
-)
+  unique (tenant_id, source, exercise_year, source_record_id))
 
-siop_staging_rows(
-  id uuid pk,
+siop_staging_rows
+( id uuid pk,
   import_id uuid not null references siop_imports(id) on delete cascade,
   raw_data jsonb not null,
   normalized_cnj text,
   normalized_debtor_key text,
-  normalized_value numeric(18,2),
+  normalized_value numeric (18,2),
   normalized_year int,
   validation_status text not null default 'pending', -- pending|valid|invalid|warning
   errors jsonb,
   processed_at timestamptz,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
 -- ── Domínio: Devedores ──────────────────────────
-debtors(
-  id uuid pk,
+debtors
+( id uuid pk,
   tenant_id uuid not null,
   name text not null,
   normalized_name text not null,
-  normalized_key text not null,         -- ex: "municipio_sao_paulo"
-  debtor_type text not null,            -- union|state|municipality|autarchy|foundation
+  normalized_key text not null, -- ex: "municipio_sao_paulo"
+  debtor_type text not null, -- union|state|municipality|autarchy|foundation
   cnpj text,
-  state_code char(2),
-  payment_regime text,                  -- none|special|federal_unique|...
-  rcl_estimate numeric(18,2),
-  debt_stock_estimate numeric(18,2),
+  state_code char (2),
+  payment_regime text, -- none|special|federal_unique|...
+  rcl_estimate numeric (18,2),
+  debt_stock_estimate numeric (18,2),
   payment_reliability_score smallint,
   timestamps,
   deleted_at timestamptz,
-  unique(tenant_id, debtor_type, cnpj) where cnpj is not null,
-  unique(tenant_id, debtor_type, state_code, normalized_key) where cnpj is null
-)
+  unique (tenant_id, debtor_type, cnpj) where cnpj is not null,
+  unique (tenant_id, debtor_type, state_code, normalized_key) where cnpj is null)
 
 -- ── Domínio: Precatório (entidade central) ──────
-precatorio_assets(
-  id uuid pk,
+precatorio_assets
+( id uuid pk,
   tenant_id uuid not null,
   source_record_id uuid references source_records(id),
-  source text not null,                 -- siop|datajud|djen|manual
-  external_id text,                     -- id no SIOP
+  source text not null, -- siop|datajud|djen|manual
+  external_id text, -- id no SIOP
   cnj_number text,
   origin_process_number text,
   debtor_id uuid references debtors(id),
-  asset_number text,                    -- número do precatório quando expedido
+  asset_number text, -- número do precatório quando expedido
   exercise_year int,
   budget_year int,
   nature text not null default 'unknown', -- alimentar|comum|tributario|unknown
-  face_value numeric(18,2),
-  estimated_updated_value numeric(18,2),
+  face_value numeric (18,2),
+  estimated_updated_value numeric (18,2),
   base_date date,
   queue_position int,
   lifecycle_status text not null default 'unknown',
-    -- unknown|discovered|expedited|pending|in_payment|paid|cancelled|suspended
+  -- unknown|discovered|expedited|pending|in_payment|paid|cancelled|suspended
   pii_status text not null default 'none',
-    -- none|pseudonymous|bunker_available|materialized|blocked
+  -- none|pseudonymous|bunker_available|materialized|blocked
   compliance_status text not null default 'pending',
-    -- pending|approved_for_analysis|approved_for_sales|blocked|opt_out
+  -- pending|approved_for_analysis|approved_for_sales|blocked|opt_out
   current_score smallint,
-  current_score_id uuid,                -- FK pra asset_scores adicionada via ALTER (ciclo)
+  current_score_id uuid, -- FK pra asset_scores adicionada via ALTER (ciclo)
   raw_data jsonb,
-  row_fingerprint text,                 -- hash de fallback
+  row_fingerprint text, -- hash de fallback
   timestamps,
   deleted_at timestamptz,
-  unique(tenant_id, source, external_id) where external_id is not null,
-  unique(tenant_id, cnj_number) where cnj_number is not null
-)
+  unique (tenant_id, source, external_id) where external_id is not null,
+  unique (tenant_id, cnj_number) where cnj_number is not null)
 
-asset_events(
-  id uuid pk,
+asset_events
+( id uuid pk,
   tenant_id uuid not null,
   asset_id uuid not null references precatorio_assets(id) on delete cascade,
-  event_type text not null,             -- siop_imported|siop_updated|score_recomputed|...
+  event_type text not null, -- siop_imported|siop_updated|score_recomputed|...
   event_date timestamptz not null default now(),
   source text,
   payload jsonb,
-  idempotency_key text not null,        -- import_id + staging_row_id + raw_row_hash
+  idempotency_key text not null, -- import_id + staging_row_id + raw_row_hash
   created_at timestamptz not null default now(),
-  unique(tenant_id, asset_id, event_type, idempotency_key)
-)
+  unique (tenant_id, asset_id, event_type, idempotency_key))
 
 -- ── Score versionado ────────────────────────────
-asset_scores(
-  id uuid pk,
+asset_scores
+( id uuid pk,
   tenant_id uuid not null,
   asset_id uuid not null references precatorio_assets(id),
   score_version text not null,
@@ -593,8 +611,7 @@ asset_scores(
   final_score smallint,
   explanation jsonb,
   computed_at timestamptz not null default now(),
-  index(tenant_id, asset_id, computed_at desc)
-)
+  index (tenant_id, asset_id, computed_at desc))
 
 -- FK circular adicionada via ALTER após ambas as tabelas existirem
 -- (migration dedicada 9999_create_views_and_triggers_table.ts ou similar):
@@ -604,8 +621,8 @@ asset_scores(
 --     ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED;
 
 -- ── Schemas preparados (v0 cria, Spec 2/3 popula) ─
-judicial_processes(
-  id uuid pk,
+judicial_processes
+( id uuid pk,
   tenant_id uuid not null,
   cnj_number text,
   court text,
@@ -620,11 +637,10 @@ judicial_processes(
   raw_data jsonb,
   timestamps,
   deleted_at timestamptz,
-  unique(tenant_id, cnj_number) where cnj_number is not null
-)
+  unique (tenant_id, cnj_number) where cnj_number is not null)
 
-publications(
-  id uuid pk,
+publications
+( id uuid pk,
   tenant_id uuid not null,
   process_id uuid references judicial_processes(id),
   source_record_id uuid references source_records(id),
@@ -636,103 +652,96 @@ publications(
   summary text,
   raw_data jsonb,
   created_at timestamptz not null default now(),
-  unique(tenant_id, source, text_hash, publication_date) where text_hash is not null
-)
+  unique (tenant_id, source, text_hash, publication_date) where text_hash is not null)
 
-publication_events(
-  id uuid pk,
+publication_events
+( id uuid pk,
   tenant_id uuid not null,
   publication_id uuid not null references publications(id),
   event_type text not null,
   payload jsonb,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
 -- ── Audit (append-only via PG RULES) ────────────
-audit_logs(
-  id uuid pk,
-  tenant_id uuid,                       -- nullable! eventos pré-tenant resolution
+audit_logs
+( id uuid pk,
+  tenant_id uuid, -- nullable! eventos pré-tenant resolution
   actor_user_id uuid,
   entity_type text not null,
   entity_id text,
   action text not null,
-  payload jsonb,                        -- VALIDADOR runtime rejeita PII
+  payload jsonb, -- VALIDADOR runtime rejeita PII
   ip_address inet,
   user_agent text,
   request_id uuid,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
-security_audit_logs(
-  id uuid pk,
+security_audit_logs
+( id uuid pk,
   ip_address inet,
   user_agent text,
   request_id uuid,
-  action text not null,                 -- login.failed|csrf.mismatch|tenant.unauthorized|...
+  action text not null, -- login.failed|csrf.mismatch|tenant.unauthorized|...
   code text,
-  email_hash text,                      -- nunca email plain
+  email_hash text, -- nunca email plain
   payload jsonb,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
 -- ── Job tracking (produto, não BullMQ) ──────────
-radar_job_runs(
-  id uuid pk,
-  tenant_id uuid,                       -- nullable pra jobs system
+radar_job_runs
+( id uuid pk,
+  tenant_id uuid, -- nullable pra jobs system
   job_name text not null,
   queue_name text not null,
   bullmq_job_id text,
   bullmq_attempt int not null default 1,
   run_number int not null default 1,
   parent_run_id uuid references radar_job_runs(id),
-  origin text not null default 'http',  -- scheduler|http|manual_retry|system
+  origin text not null default 'http', -- scheduler|http|manual_retry|system
   target_type text,
   target_id uuid,
-  status text not null,                 -- pending|running|completed|failed|skipped|cancelled
+  status text not null, -- pending|running|completed|failed|skipped|cancelled
   started_at timestamptz,
   finished_at timestamptz,
   duration_ms int generated always as (
-    extract(epoch from (finished_at - started_at)) * 1000
+  extract (epoch from (finished_at - started_at)) * 1000
   ) stored,
   error_code text,
   error_message text,
-  error_stack text,                     -- prod sanitiza
-  metadata jsonb,                       -- VALIDADOR rejeita PII
+  error_stack text, -- prod sanitiza
+  metadata jsonb, -- VALIDADOR rejeita PII
   request_id uuid,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
-worker_heartbeats(
-  worker_id text primary key,
+worker_heartbeats
+( worker_id text primary key,
   hostname text not null,
   pid int not null,
-  queues text[] not null,
+  queues text [] not null,
   started_at timestamptz not null,
-  last_seen_at timestamptz not null
-)
+  last_seen_at timestamptz not null)
 
 -- ── Exports ─────────────────────────────────────
-export_jobs(
-  id uuid pk,
+export_jobs
+( id uuid pk,
   tenant_id uuid not null,
   requested_by_user_id uuid not null,
-  type text not null,                   -- precatorios_csv
+  type text not null, -- precatorios_csv
   filters jsonb,
   status text not null default 'pending', -- pending|running|completed|failed|expired
-  output_path text,                     -- Drive path
+  output_path text, -- Drive path
   signed_url_expires_at timestamptz,
   row_count int,
   started_at timestamptz,
   finished_at timestamptz,
   error_message text,
   request_id uuid,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
 -- ── Client errors / retention ───────────────────
-client_errors(
-  id uuid pk,
-  tenant_id uuid,                       -- nullable
+client_errors
+( id uuid pk,
+  tenant_id uuid, -- nullable
   user_id uuid,
   url text,
   message text,
@@ -741,19 +750,17 @@ client_errors(
   request_id uuid,
   user_agent text,
   ip_address inet,
-  created_at timestamptz not null default now()
-)
+  created_at timestamptz not null default now())
 
-retention_config(
-  log_type text primary key,            -- audit_logs|pii.access_logs|client_errors|...
+retention_config
+( log_type text primary key, -- audit_logs|pii.access_logs|client_errors|...
   retention_days int not null,
-  min_days_for_pii_access_logs int,     -- só pra log_type relevante
+  min_days_for_pii_access_logs int, -- só pra log_type relevante
   enabled boolean not null default true,
-  updated_at timestamptz not null default now()
-)
+  updated_at timestamptz not null default now())
 
-retention_manifest(
-  id uuid pk,
+retention_manifest
+( id uuid pk,
   log_type text not null,
   range_from timestamptz not null,
   range_to timestamptz not null,
@@ -761,8 +768,7 @@ retention_manifest(
   status text not null default 'pending', -- pending|confirmed|applied|aborted
   created_by text not null default 'system',
   created_at timestamptz not null default now(),
-  applied_at timestamptz
-)
+  applied_at timestamptz)
 ```
 
 ### Schema `pii.*` — bunker isolado (RLS hard)
@@ -830,15 +836,22 @@ create or replace function pii.reveal_beneficiary(
   p_ip_address inet default null,
   p_user_agent text default null,
   p_request_id uuid default null
-) returns table(name text, document text, document_type text)
-language plpgsql
-security definer
-set search_path = pii, public, pg_temp
-as $$
+)
+  returns table
+          (
+            name          text,
+            document      text,
+            document_type text
+          )
+  language plpgsql
+  security definer
+  set search_path = pii, public, pg_temp
+as
+$$
 declare
-  v_tenant_id uuid;
+  v_tenant_id   uuid;
   v_beneficiary pii.beneficiaries;
-  v_has_perm boolean;
+  v_has_perm    boolean;
 begin
   v_tenant_id := current_setting('app.current_tenant_id', true)::uuid;
   if v_tenant_id is null then
@@ -847,43 +860,47 @@ begin
 
   -- registra tentativa ANTES de qualquer validação (rastreabilidade total)
   insert into pii.access_logs(tenant_id, actor_user_id, beneficiary_id, asset_id,
-    action, purpose, justification, ip_address, user_agent, request_id)
+                              action, purpose, justification, ip_address, user_agent, request_id)
   values (v_tenant_id, p_actor_user_id, p_beneficiary_id, p_asset_id,
-    'attempt_reveal', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
+          'attempt_reveal', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
 
   -- valida actor + membership ativa
-  if not exists (
-    select 1 from public.tenant_memberships
-    where user_id = p_actor_user_id and tenant_id = v_tenant_id and status = 'active'
-  ) then
+  if not exists (select 1
+                 from public.tenant_memberships
+                 where user_id = p_actor_user_id
+                   and tenant_id = v_tenant_id
+                   and status = 'active') then
     insert into pii.access_logs(tenant_id, actor_user_id, beneficiary_id, asset_id,
-      action, purpose, justification, ip_address, user_agent, request_id)
+                                action, purpose, justification, ip_address, user_agent, request_id)
     values (v_tenant_id, p_actor_user_id, p_beneficiary_id, p_asset_id,
-      'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
+            'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
     raise exception 'E_TENANT_MEMBERSHIP_INACTIVE';
   end if;
 
   -- valida permission pii.reveal_full ou pii.reveal_masked
-  select exists (
-    select 1 from public.user_roles ur
-    join public.role_permissions rp on rp.role_id = ur.role_id
-    join public.permissions p on p.id = rp.permission_id
-    where ur.user_id = p_actor_user_id
-      and ur.tenant_id = v_tenant_id
-      and p.slug in ('pii.reveal_full', 'pii.reveal_masked')
-  ) into v_has_perm;
+  select exists (select 1
+                 from public.user_roles ur
+                        join public.role_permissions rp on rp.role_id = ur.role_id
+                        join public.permissions p on p.id = rp.permission_id
+                 where ur.user_id = p_actor_user_id
+                   and ur.tenant_id = v_tenant_id
+                   and p.slug in ('pii.reveal_full', 'pii.reveal_masked'))
+  into v_has_perm;
 
   if not v_has_perm then
     insert into pii.access_logs(tenant_id, actor_user_id, beneficiary_id, asset_id,
-      action, purpose, justification, ip_address, user_agent, request_id)
+                                action, purpose, justification, ip_address, user_agent, request_id)
     values (v_tenant_id, p_actor_user_id, p_beneficiary_id, p_asset_id,
-      'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
+            'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
     raise exception 'E_PII_REVEAL_FORBIDDEN';
   end if;
 
   -- carrega beneficiary
-  select * into v_beneficiary from pii.beneficiaries
-  where id = p_beneficiary_id and tenant_id = v_tenant_id;
+  select *
+  into v_beneficiary
+  from pii.beneficiaries
+  where id = p_beneficiary_id
+    and tenant_id = v_tenant_id;
 
   if v_beneficiary is null then
     raise exception 'E_ROW_NOT_FOUND';
@@ -891,9 +908,9 @@ begin
 
   if v_beneficiary.opt_out then
     insert into pii.access_logs(tenant_id, actor_user_id, beneficiary_id, asset_id,
-      action, purpose, justification, ip_address, user_agent, request_id)
+                                action, purpose, justification, ip_address, user_agent, request_id)
     values (v_tenant_id, p_actor_user_id, p_beneficiary_id, p_asset_id,
-      'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
+            'reveal_denied', p_purpose, p_justification, p_ip_address, p_user_agent, p_request_id);
     raise exception 'E_PII_REVEAL_FORBIDDEN';
   end if;
 
@@ -903,25 +920,25 @@ begin
 
   -- valida asset_id pertence ao tenant (se informado)
   if p_asset_id is not null then
-    if not exists (
-      select 1 from public.precatorio_assets
-      where id = p_asset_id and tenant_id = v_tenant_id
-    ) then
+    if not exists (select 1
+                   from public.precatorio_assets
+                   where id = p_asset_id
+                     and tenant_id = v_tenant_id) then
       raise exception 'E_ROW_NOT_FOUND asset';
     end if;
   end if;
 
   -- registra acesso ANTES de retornar
   insert into pii.access_logs(tenant_id, actor_user_id, beneficiary_id, asset_id,
-    action, purpose, justification, lawful_basis, ip_address, user_agent, request_id)
+                              action, purpose, justification, lawful_basis, ip_address, user_agent, request_id)
   values (v_tenant_id, p_actor_user_id, p_beneficiary_id, p_asset_id,
-    'reveal_success', p_purpose, p_justification, v_beneficiary.lawful_basis,
-    p_ip_address, p_user_agent, p_request_id);
+          'reveal_success', p_purpose, p_justification, v_beneficiary.lawful_basis,
+          p_ip_address, p_user_agent, p_request_id);
 
-  return query select
-    pgp_sym_decrypt(v_beneficiary.name_encrypted, current_setting('app.pii_encryption_key'))::text,
-    pgp_sym_decrypt(v_beneficiary.document_encrypted, current_setting('app.pii_encryption_key'))::text,
-    v_beneficiary.document_type;
+  return query select pgp_sym_decrypt(v_beneficiary.name_encrypted, current_setting('app.pii_encryption_key'))::text,
+                      pgp_sym_decrypt(v_beneficiary.document_encrypted,
+                                      current_setting('app.pii_encryption_key'))::text,
+                      v_beneficiary.document_type;
 end;
 $$;
 ```
@@ -937,7 +954,9 @@ PII_ENCRYPTION_KEY    — pgp_sym_encrypt/decrypt → name_encrypted, document_e
 
 Ambos são strings hex de 32+ bytes random, armazenados no `.env` e nunca commitados.
 
-Toda conexão Postgres precisa ter `app.pii_encryption_key` setada antes de chamar `pii.reveal_beneficiary` ou de inserir em `pii.beneficiaries.name_encrypted` / `document_encrypted`. O `app.hash_pepper` **não** precisa ir pro Postgres — o HMAC é calculado app-side em `node:crypto`.
+Toda conexão Postgres precisa ter `app.pii_encryption_key` setada antes de chamar `pii.reveal_beneficiary` ou de inserir
+em `pii.beneficiaries.name_encrypted` / `document_encrypted`. O `app.hash_pepper` **não** precisa ir pro Postgres — o
+HMAC é calculado app-side em `node:crypto`.
 
 ```
 Opção 1 (recomendada) — afterCreate hook do pool de conexão Lucid:
@@ -958,25 +977,34 @@ Recomendado v0: Opção 1 com PII_ENCRYPTION_KEY em .env.
 ```
 
 **Função `pii.reveal_beneficiary` usa:**
+
 ```sql
-pgp_sym_decrypt(name_encrypted, current_setting('app.pii_encryption_key'))
-pgp_sym_decrypt(document_encrypted, current_setting('app.pii_encryption_key'))
+pgp_sym_decrypt
+  (name_encrypted, current_setting('app.pii_encryption_key'))
+  pgp_sym_decrypt
+  (document_encrypted, current_setting('app.pii_encryption_key'))
 ```
 
 **App-side (Node) usa:**
+
 ```ts
 // app/modules/pii/services/hash_service.ts
 import { createHmac } from 'node:crypto'
+
 const pepper = env.get('PII_HASH_PEPPER')
+
 function beneficiaryHash(name: string, document?: string): string {
   const normalizedKey = `${stripAccents(name).toLowerCase()}|${onlyDigits(document ?? '')}`
   return createHmac('sha256', pepper).update(normalizedKey).digest('hex')
 }
 ```
 
-**Rotação:** rotacionar `PII_ENCRYPTION_KEY` exige re-encrypt em batch de `pii.beneficiaries`. Rotacionar `PII_HASH_PEPPER` invalida todos os `beneficiary_hash` (re-hash em batch). Ambos viram operações dedicadas, fora do v0; documentar em `docs/pii-bunker-policy.md`.
+**Rotação:** rotacionar `PII_ENCRYPTION_KEY` exige re-encrypt em batch de `pii.beneficiaries`. Rotacionar
+`PII_HASH_PEPPER` invalida todos os `beneficiary_hash` (re-hash em batch). Ambos viram operações dedicadas, fora do v0;
+documentar em `docs/pii-bunker-policy.md`.
 
 **`beneficiary_hash`:**
+
 - `HMAC-SHA256(PII_HASH_PEPPER, normalized_key)`
 - `normalized_key = lowercase(strip_accents(name)) || '|' || only_digits(document)`
 - calculado app-side antes de inserir (não na função reveal)
@@ -985,10 +1013,14 @@ function beneficiaryHash(name: string, document?: string): string {
 ### RLS habilitado (β — só sensíveis)
 
 ```sql
-alter table pii.beneficiaries enable row level security;
-alter table pii.asset_beneficiaries enable row level security;
-alter table pii.access_logs enable row level security;
-alter table public.audit_logs enable row level security;
+alter table pii.beneficiaries
+  enable row level security;
+alter table pii.asset_beneficiaries
+  enable row level security;
+alter table pii.access_logs
+  enable row level security;
+alter table public.audit_logs
+  enable row level security;
 
 create policy tenant_isolation on pii.beneficiaries
   using (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
@@ -1015,65 +1047,65 @@ create rule no_delete_security_audit_logs as on delete to public.security_audit_
 
 ```sql
 create materialized view v_dashboard_metrics as
-select
-  tenant_id,
-  count(*) as total_assets,
-  count(distinct debtor_id) as debtors_count,
-  sum(face_value) as total_face_value,
-  count(*) filter (where lifecycle_status = 'expedited') as expedited_count,
-  count(*) filter (where lifecycle_status = 'paid') as paid_count,
-  count(*) filter (where created_at > now() - interval '30 days') as new_30d
+select tenant_id,
+       count(*)                                                        as total_assets,
+       count(distinct debtor_id)                                       as debtors_count,
+       sum(face_value)                                                 as total_face_value,
+       count(*) filter (where lifecycle_status = 'expedited')          as expedited_count,
+       count(*) filter (where lifecycle_status = 'paid')               as paid_count,
+       count(*) filter (where created_at > now() - interval '30 days') as new_30d
 from public.precatorio_assets
 where deleted_at is null
 group by tenant_id;
-create unique index on v_dashboard_metrics(tenant_id);
+create unique index on v_dashboard_metrics (tenant_id);
 
 create materialized view v_debtor_aggregates as
-select
-  pa.tenant_id, pa.debtor_id, d.name as debtor_name,
-  count(*) as asset_count,
-  sum(pa.face_value) as total_face_value,
-  sum(pa.estimated_updated_value) as total_estimated_value
+select pa.tenant_id,
+       pa.debtor_id,
+       d.name                          as debtor_name,
+       count(*)                        as asset_count,
+       sum(pa.face_value)              as total_face_value,
+       sum(pa.estimated_updated_value) as total_estimated_value
 from public.precatorio_assets pa
-join public.debtors d on d.id = pa.debtor_id
+       join public.debtors d on d.id = pa.debtor_id
 where pa.deleted_at is null
 group by pa.tenant_id, pa.debtor_id, d.name;
-create unique index on v_debtor_aggregates(tenant_id, debtor_id);
+create unique index on v_debtor_aggregates (tenant_id, debtor_id);
 
 create materialized view v_asset_yearly_stats as
 select tenant_id, exercise_year, count(*) as count, sum(face_value) as total
 from public.precatorio_assets
 where deleted_at is null
 group by tenant_id, exercise_year;
-create unique index on v_asset_yearly_stats(tenant_id, exercise_year);
+create unique index on v_asset_yearly_stats (tenant_id, exercise_year);
 ```
 
 ### Índices críticos
 
 ```sql
 -- Hot paths do dashboard
-create index on precatorio_assets(tenant_id, lifecycle_status, created_at desc);
-create index on precatorio_assets(tenant_id, debtor_id, lifecycle_status);
-create index on precatorio_assets(tenant_id, exercise_year, lifecycle_status);
-create index on precatorio_assets(tenant_id, face_value desc) where lifecycle_status = 'expedited';
+create index on precatorio_assets (tenant_id, lifecycle_status, created_at desc);
+create index on precatorio_assets (tenant_id, debtor_id, lifecycle_status);
+create index on precatorio_assets (tenant_id, exercise_year, lifecycle_status);
+create index on precatorio_assets (tenant_id, face_value desc) where lifecycle_status = 'expedited';
 
 -- Imports
-create index on siop_imports(tenant_id, exercise_year, status);
-create index on siop_staging_rows(import_id, validation_status);
+create index on siop_imports (tenant_id, exercise_year, status);
+create index on siop_staging_rows (import_id, validation_status);
 
 -- Audit/jobs
-create index on audit_logs(tenant_id, entity_type, entity_id, created_at desc);
-create index on audit_logs(tenant_id, actor_user_id, created_at desc);
-create index on radar_job_runs(tenant_id, status, created_at desc);
-create index on radar_job_runs(tenant_id, target_type, target_id);
-create index on radar_job_runs(parent_run_id);
+create index on audit_logs (tenant_id, entity_type, entity_id, created_at desc);
+create index on audit_logs (tenant_id, actor_user_id, created_at desc);
+create index on radar_job_runs (tenant_id, status, created_at desc);
+create index on radar_job_runs (tenant_id, target_type, target_id);
+create index on radar_job_runs (parent_run_id);
 
 -- PII
-create index on pii.asset_beneficiaries(tenant_id, asset_id);
-create index on pii.access_logs(tenant_id, actor_user_id, created_at desc);
+create index on pii.asset_beneficiaries (tenant_id, asset_id);
+create index on pii.access_logs (tenant_id, actor_user_id, created_at desc);
 
 -- Source records
-create index on source_records(tenant_id, source, collected_at desc);
+create index on source_records (tenant_id, source, collected_at desc);
 ```
 
 ## Pipeline SIOP — data flow
@@ -1247,10 +1279,7 @@ export async function withTenantRls<T>(
   cb: (trx: TransactionClientContract) => Promise<T>
 ): Promise<T> {
   return db.transaction(async (trx) => {
-    await trx.rawQuery(
-      `select set_config('app.current_tenant_id', ?, true)`,
-      [tenantId]
-    )
+    await trx.rawQuery(`select set_config('app.current_tenant_id', ?, true)`, [tenantId])
     return cb(trx)
   })
 }
@@ -1308,7 +1337,7 @@ invalidação: tenants.rbac_version++ em qualquer mudança de role/permission/me
 
 [2] POST /pii/beneficiaries/{id}/reveal { purpose, justification, asset_id }
     Headers: X-CSRF-Token, X-Request-Id
-    
+
     Controller:
     ── Bouncer.authorize('PiiPolicy', 'reveal')   // pii.reveal_masked ou pii.reveal_full
     ── valida purpose, justification.length >= 20
@@ -1321,7 +1350,7 @@ invalidação: tenants.rbac_version++ em qualquer mudança de role/permission/me
          return result.rows[0]
        })
     ── response.json({ name, document, document_type })   // NÃO Inertia
-    
+
     A função SECURITY DEFINER faz TUDO server-side:
     ── valida tenant atual via current_setting
     ── valida actor membership ativa
@@ -1425,15 +1454,15 @@ errors:
 
 ### Papéis dos componentes
 
-| Camada | Pacote | Função |
-|--------|--------|--------|
-| Layout/cards | Metronic | Sidebar, Topbar, KPI cards, theme |
-| Primitives | radix-ui | Dialog, Dropdown, Tooltip, Popover, Tabs |
-| Tabela | @tanstack/react-table | Pagination, sort, filter, virtualization |
-| Charts | apexcharts + react-apexcharts | bar, line, donut, sparkline |
-| Toasts | sonner | Notificações |
-| Forms | react-hook-form + zod | Validação client-side |
-| Ícones | lucide-react | Único set de ícones |
+| Camada       | Pacote                        | Função                                   |
+| ------------ | ----------------------------- | ---------------------------------------- |
+| Layout/cards | Metronic                      | Sidebar, Topbar, KPI cards, theme        |
+| Primitives   | radix-ui                      | Dialog, Dropdown, Tooltip, Popover, Tabs |
+| Tabela       | @tanstack/react-table         | Pagination, sort, filter, virtualization |
+| Charts       | apexcharts + react-apexcharts | bar, line, donut, sparkline              |
+| Toasts       | sonner                        | Notificações                             |
+| Forms        | react-hook-form + zod         | Validação client-side                    |
+| Ícones       | lucide-react                  | Único set de ícones                      |
 
 ### Estado / data fetching
 
@@ -1449,6 +1478,7 @@ errors:
 ### Estados padronizados
 
 Cada página de listagem precisa de:
+
 - `<EmptyState />` — nenhum dado
 - `<LoadingState />` — primeira carga
 - `<ErrorState />` — erro inesperado, mostra requestId
@@ -1460,24 +1490,26 @@ Cada página de listagem precisa de:
 function useImportPolling(importId: string, currentStatus: string) {
   const finalStates = ['completed', 'partial', 'failed']
   const [backoff, setBackoff] = useState(3000)
-  
+
   useEffect(() => {
     if (finalStates.includes(currentStatus)) return
     if (document.hidden) return
-    
+
     const tick = async () => {
       try {
         await router.reload({ only: ['import', 'stats'] })
-        setBackoff(3000)  // reset
+        setBackoff(3000) // reset
       } catch {
-        setBackoff(prev => Math.min(prev * 2, 60000))  // exponential
+        setBackoff((prev) => Math.min(prev * 2, 60000)) // exponential
       }
     }
-    
+
     const interval = setInterval(tick, backoff)
-    const onVisibilityChange = () => { if (!document.hidden) tick() }
+    const onVisibilityChange = () => {
+      if (!document.hidden) tick()
+    }
     document.addEventListener('visibilitychange', onVisibilityChange)
-    
+
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -1504,16 +1536,16 @@ Mascaramento server-side antes de virar prop, usando lista:
 
 ### Inventário de jobs
 
-| Queue | Job | Concurrency | Attempts | Trigger |
-|-------|-----|-------------|----------|---------|
-| siop | `siop:import` | 1 | 3 | HTTP upload |
-| siop | `siop:reprocess` | 1 | 3 | HTTP retry endpoint |
-| siop | `siop:reconcile` | 1 | 3 | scheduler weekly |
-| maintenance | `maintenance:purge_staging` | 1 | 2 | scheduler weekly |
-| maintenance | `maintenance:apply_retention_policy` | 1 | 1 | scheduler monthly |
-| maintenance | `maintenance:refresh_aggregates` | 1 | 3 | scheduler 15min |
-| maintenance | `maintenance:vacuum_hint` | 1 | 1 | scheduler daily |
-| exports | `exports:precatorios_csv` | 2 | 3 | HTTP export request |
+| Queue       | Job                                  | Concurrency | Attempts | Trigger             |
+| ----------- | ------------------------------------ | ----------- | -------- | ------------------- |
+| siop        | `siop:import`                        | 1           | 3        | HTTP upload         |
+| siop        | `siop:reprocess`                     | 1           | 3        | HTTP retry endpoint |
+| siop        | `siop:reconcile`                     | 1           | 3        | scheduler weekly    |
+| maintenance | `maintenance:purge_staging`          | 1           | 2        | scheduler weekly    |
+| maintenance | `maintenance:apply_retention_policy` | 1           | 1        | scheduler monthly   |
+| maintenance | `maintenance:refresh_aggregates`     | 1           | 3        | scheduler 15min     |
+| maintenance | `maintenance:vacuum_hint`            | 1           | 1        | scheduler daily     |
+| exports     | `exports:precatorios_csv`            | 2           | 3        | HTTP export request |
 
 ### Scheduler (`adonisjs-scheduler`)
 
@@ -1526,7 +1558,8 @@ scheduler.command('queue:enqueue maintenance:refresh_aggregates').everyFifteenMi
 scheduler.command('queue:enqueue maintenance:vacuum_hint').dailyAt('02:00')
 ```
 
-**Princípio:** scheduler/comando ace **APENAS enfileira**, não executa direto. Exceção: flag `--run-inline` pra ops manual.
+**Princípio:** scheduler/comando ace **APENAS enfileira**, não executa direto. Exceção: flag `--run-inline` pra ops
+manual.
 
 ### BullMQ jobId determinístico
 
@@ -1544,9 +1577,13 @@ queue.add('siop:reprocess', payload, {
 
 // refresh_aggregates por slot de 15min
 const windowId = Math.floor(Date.now() / (15 * 60 * 1000))
-queue.add('maintenance:refresh_aggregates', {}, {
-  jobId: `refresh_aggregates:${windowId}`,
-})
+queue.add(
+  'maintenance:refresh_aggregates',
+  {},
+  {
+    jobId: `refresh_aggregates:${windowId}`,
+  }
+)
 ```
 
 **Anti-sobreposição:** antes de `queue.add`, `queue.getJob(jobId)` checa se já tem active/delayed; se sim, skip.
@@ -1559,14 +1596,14 @@ import queueService from '#shared/services/queue_service'
 // imports de handlers...
 
 export const queues = {
-  siopImport:        { name: 'siop:import',                      concurrency: 1, attempts: 3 },
-  siopReprocess:     { name: 'siop:reprocess',                   concurrency: 1, attempts: 3 },
-  siopReconcile:     { name: 'siop:reconcile',                   concurrency: 1, attempts: 3 },
-  purgeStaging:      { name: 'maintenance:purge_staging',        concurrency: 1, attempts: 2 },
-  retentionPolicy:   { name: 'maintenance:apply_retention_policy', concurrency: 1, attempts: 1 },
-  refreshAggregates: { name: 'maintenance:refresh_aggregates',   concurrency: 1, attempts: 3 },
-  vacuumHint:        { name: 'maintenance:vacuum_hint',          concurrency: 1, attempts: 1 },
-  exportPrecatorios: { name: 'exports:precatorios_csv',          concurrency: 2, attempts: 3 },
+  siopImport: { name: 'siop:import', concurrency: 1, attempts: 3 },
+  siopReprocess: { name: 'siop:reprocess', concurrency: 1, attempts: 3 },
+  siopReconcile: { name: 'siop:reconcile', concurrency: 1, attempts: 3 },
+  purgeStaging: { name: 'maintenance:purge_staging', concurrency: 1, attempts: 2 },
+  retentionPolicy: { name: 'maintenance:apply_retention_policy', concurrency: 1, attempts: 1 },
+  refreshAggregates: { name: 'maintenance:refresh_aggregates', concurrency: 1, attempts: 3 },
+  vacuumHint: { name: 'maintenance:vacuum_hint', concurrency: 1, attempts: 1 },
+  exportPrecatorios: { name: 'exports:precatorios_csv', concurrency: 2, attempts: 3 },
 } as const
 
 export function bootWorkers() {
@@ -1593,10 +1630,15 @@ import jobRunService from '#shared/services/job_run_service'
 const handler: Processor = async (job) => {
   const { importId, tenantId, requestId } = job.data
   const runId = await jobRunService.start({
-    tenantId, jobName: 'siop:import', queueName: 'siop',
-    bullmqJobId: job.id!, bullmqAttempt: job.attemptsMade + 1,
-    targetType: 'siop_import', targetId: importId,
-    origin: 'http', requestId,
+    tenantId,
+    jobName: 'siop:import',
+    queueName: 'siop',
+    bullmqJobId: job.id!,
+    bullmqAttempt: job.attemptsMade + 1,
+    targetType: 'siop_import',
+    targetId: importId,
+    origin: 'http',
+    requestId,
   })
 
   try {
@@ -1625,11 +1667,11 @@ export default handler
 
 ### Camadas de tracking
 
-| Camada | Storage | Papel | Volátil? |
-|--------|---------|-------|----------|
-| BullMQ jobs | Redis | Operacional, retry/backoff | Sim (removeOnComplete: 100) |
+| Camada           | Storage  | Papel                        | Volátil?                     |
+| ---------------- | -------- | ---------------------------- | ---------------------------- |
+| BullMQ jobs      | Redis    | Operacional, retry/backoff   | Sim (removeOnComplete: 100)  |
 | `radar_job_runs` | Postgres | Histórico do produto p/ user | Não (retention configurável) |
-| `audit_logs` | Postgres | Trilha de compliance/negócio | Não (append-only) |
+| `audit_logs`     | Postgres | Trilha de compliance/negócio | Não (append-only)            |
 
 ### Retry e dead-letter
 
@@ -1679,19 +1721,64 @@ OOM no worker:
 ### Hierarquia de exceções customizadas
 
 ```typescript
-class DomainException extends Exception { ... }
+class DomainException extends Exception {
+...
+}
 
-class TenantNotResolvedException        extends DomainException { static status = 401; static code = 'E_TENANT_NOT_RESOLVED' }
-class TenantMembershipInactiveException extends DomainException { static status = 403; static code = 'E_TENANT_MEMBERSHIP_INACTIVE' }
-class PermissionDeniedException         extends DomainException { static status = 403; static code = 'E_PERMISSION_DENIED' }
-class ImportAlreadyExistsException      extends DomainException { static status = 409; static code = 'E_IMPORT_ALREADY_EXISTS' }
-class ImportConcurrentRunException      extends DomainException { static status = 423; static code = 'E_IMPORT_CONCURRENT' }
-class SiopParseException                extends DomainException { static status = 422; static code = 'E_SIOP_PARSE' }
-class PiiRevealForbiddenException       extends DomainException { static status = 403; static code = 'E_PII_REVEAL_FORBIDDEN' }
-class PiiRateLimitExceededException     extends DomainException { static status = 429; static code = 'E_PII_RATE_LIMIT' }
-class ExportInProgressException         extends DomainException { static status = 202; static code = 'E_EXPORT_IN_PROGRESS' }
-class FileTooLargeException             extends DomainException { static status = 413; static code = 'E_FILE_TOO_LARGE' }
-class ChecksumConflictException         extends DomainException { static status = 409; static code = 'E_CHECKSUM_CONFLICT' }
+class TenantNotResolvedException extends DomainException {
+  static status = 401;
+  static code = 'E_TENANT_NOT_RESOLVED'
+}
+
+class TenantMembershipInactiveException extends DomainException {
+  static status = 403;
+  static code = 'E_TENANT_MEMBERSHIP_INACTIVE'
+}
+
+class PermissionDeniedException extends DomainException {
+  static status = 403;
+  static code = 'E_PERMISSION_DENIED'
+}
+
+class ImportAlreadyExistsException extends DomainException {
+  static status = 409;
+  static code = 'E_IMPORT_ALREADY_EXISTS'
+}
+
+class ImportConcurrentRunException extends DomainException {
+  static status = 423;
+  static code = 'E_IMPORT_CONCURRENT'
+}
+
+class SiopParseException extends DomainException {
+  static status = 422;
+  static code = 'E_SIOP_PARSE'
+}
+
+class PiiRevealForbiddenException extends DomainException {
+  static status = 403;
+  static code = 'E_PII_REVEAL_FORBIDDEN'
+}
+
+class PiiRateLimitExceededException extends DomainException {
+  static status = 429;
+  static code = 'E_PII_RATE_LIMIT'
+}
+
+class ExportInProgressException extends DomainException {
+  static status = 202;
+  static code = 'E_EXPORT_IN_PROGRESS'
+}
+
+class FileTooLargeException extends DomainException {
+  static status = 413;
+  static code = 'E_FILE_TOO_LARGE'
+}
+
+class ChecksumConflictException extends DomainException {
+  static status = 409;
+  static code = 'E_CHECKSUM_CONFLICT'
+}
 ```
 
 ### `mapCodeToMessage` (oficial)
@@ -1699,20 +1786,20 @@ class ChecksumConflictException         extends DomainException { static status 
 ```typescript
 // app/shared/helpers/error_messages.ts
 export const errorMessages: Record<string, string> = {
-  E_VALIDATION_ERROR:           'Dados inválidos. Verifique os campos.',
-  E_ROW_NOT_FOUND:              'Registro não encontrado.',
-  E_PERMISSION_DENIED:          'Você não tem permissão para executar esta ação.',
-  E_TENANT_NOT_RESOLVED:        'Sessão sem organização ativa. Selecione uma.',
+  E_VALIDATION_ERROR: 'Dados inválidos. Verifique os campos.',
+  E_ROW_NOT_FOUND: 'Registro não encontrado.',
+  E_PERMISSION_DENIED: 'Você não tem permissão para executar esta ação.',
+  E_TENANT_NOT_RESOLVED: 'Sessão sem organização ativa. Selecione uma.',
   E_TENANT_MEMBERSHIP_INACTIVE: 'Sua participação nesta organização está inativa.',
-  E_IMPORT_ALREADY_EXISTS:      'Este arquivo já foi importado.',
-  E_IMPORT_CONCURRENT:          'Este import já está em execução.',
-  E_CHECKSUM_CONFLICT:          'Já existe importação com esse checksum.',
-  E_SIOP_PARSE:                 'Não foi possível ler o arquivo enviado.',
-  E_PII_REVEAL_FORBIDDEN:       'Acesso a dados pessoais não autorizado.',
-  E_PII_RATE_LIMIT:             'Limite de visualizações sensíveis atingido. Tente novamente em breve.',
-  E_FILE_TOO_LARGE:             'Arquivo excede o tamanho máximo permitido.',
-  E_CSRF_TOKEN_MISMATCH:        'Sessão expirou. Recarregue a página.',
-  E_INTERNAL:                   'Erro interno. Informe o código de suporte.',
+  E_IMPORT_ALREADY_EXISTS: 'Este arquivo já foi importado.',
+  E_IMPORT_CONCURRENT: 'Este import já está em execução.',
+  E_CHECKSUM_CONFLICT: 'Já existe importação com esse checksum.',
+  E_SIOP_PARSE: 'Não foi possível ler o arquivo enviado.',
+  E_PII_REVEAL_FORBIDDEN: 'Acesso a dados pessoais não autorizado.',
+  E_PII_RATE_LIMIT: 'Limite de visualizações sensíveis atingido. Tente novamente em breve.',
+  E_FILE_TOO_LARGE: 'Arquivo excede o tamanho máximo permitido.',
+  E_CSRF_TOKEN_MISMATCH: 'Sessão expirou. Recarregue a página.',
+  E_INTERNAL: 'Erro interno. Informe o código de suporte.',
 }
 ```
 
@@ -1733,15 +1820,40 @@ export default defineConfig({
       },
       redact: {
         paths: [
-          'password', 'secret', 'token',
-          '*.password', '*.secret', '*.token',
-          'cpf', 'cnpj', 'document', '*.cpf', '*.cnpj', '*.document',
-          'email', 'phone', 'telefone', '*.email', '*.phone', '*.telefone',
-          'name_encrypted', 'document_encrypted',
-          'beneficiary.*', 'beneficiaries.*', 'beneficiario.*', 'beneficiarios.*',
-          'pii.*', 'raw_data.beneficiarios', 'raw_data.beneficiaries',
-          'headers.authorization', 'headers.cookie', 'headers.set-cookie',
-          'headers.x-api-key', 'apiKey', 'access_token', 'refresh_token',
+          'password',
+          'secret',
+          'token',
+          '*.password',
+          '*.secret',
+          '*.token',
+          'cpf',
+          'cnpj',
+          'document',
+          '*.cpf',
+          '*.cnpj',
+          '*.document',
+          'email',
+          'phone',
+          'telefone',
+          '*.email',
+          '*.phone',
+          '*.telefone',
+          'name_encrypted',
+          'document_encrypted',
+          'beneficiary.*',
+          'beneficiaries.*',
+          'beneficiario.*',
+          'beneficiarios.*',
+          'pii.*',
+          'raw_data.beneficiarios',
+          'raw_data.beneficiaries',
+          'headers.authorization',
+          'headers.cookie',
+          'headers.set-cookie',
+          'headers.x-api-key',
+          'apiKey',
+          'access_token',
+          'refresh_token',
         ],
         remove: true,
       },
@@ -1824,6 +1936,7 @@ GET /admin/health/ready           → 200 se db ok, redis recomendado; 503 se do
 - overall: ≥ 70%
 
 Crítico (must-pass na CI, zero tolerância):
+
 - `app/modules/siop/parsers/`
 - `app/modules/siop/normalizers/`
 - `app/modules/pii/`
@@ -1834,8 +1947,10 @@ Crítico (must-pass na CI, zero tolerância):
 ### Suites principais
 
 - **Unit:** parsers (CNJ, valor BR, debtor normalizer), helpers (sanitizeError), validators
-- **Integration (DB + Redis real):** siop_import idempotência, match cascade, multi-tenant isolation, RLS PII bunker, queue handlers
-- **Functional (HTTP + Inertia):** auth flow, tenant_select, imports flow, precatorios list, pii_reveal, exports flow, admin/jobs
+- **Integration (DB + Redis real):** siop_import idempotência, match cascade, multi-tenant isolation, RLS PII bunker,
+  queue handlers
+- **Functional (HTTP + Inertia):** auth flow, tenant_select, imports flow, precatorios list, pii_reveal, exports flow,
+  admin/jobs
 - **E2E (Playwright):** golden_path (login → upload → ver lista), multi_tenant_switch, error_pages
 - **Performance:** import 100k rows em < 10min, list query p95 < 500ms
 
@@ -1848,15 +1963,15 @@ jobs:
     - pnpm lint
     - pnpm typecheck
   test:
-    services: [postgres, redis]
-    - pnpm ace migration:run --connection=test
-    - pnpm test:unit
-    - pnpm test:functional
-    - pnpm test:integration
+    services: [ postgres, redis ]
+      - pnpm ace migration:run --connection=test
+      - pnpm test:unit
+      - pnpm test:functional
+      - pnpm test:integration
   e2e:
-    services: [postgres, redis]
-    - pnpm exec playwright install
-    - pnpm test:e2e
+    services: [ postgres, redis ]
+      - pnpm exec playwright install
+      - pnpm test:e2e
   security:
     - pnpm audit --production
 ```
@@ -1864,6 +1979,7 @@ jobs:
 ## Critérios objetivos de aceite — Spec 1 entregue
 
 ### INFRA & SETUP
+
 - [ ] `docker-compose up` sobe app + worker + postgres + redis
 - [ ] `pnpm dev` funciona com HMR
 - [ ] `pnpm build` conclui sem erros TS/lint
@@ -1873,6 +1989,7 @@ jobs:
 - [ ] seeders criam: 1 tenant Benício, roles padrão, permissions, 1 admin user
 
 ### DATABASE
+
 - [ ] schema `public.*` completo (35+ tabelas conforme migrations)
 - [ ] schema `pii.*` completo (3 tabelas + função `reveal_beneficiary`)
 - [ ] RLS habilitado em `pii.*` + `audit_logs` + `security_audit_logs`
@@ -1882,6 +1999,7 @@ jobs:
 - [ ] `retention_config` populada com defaults
 
 ### INGESTÃO SIOP
+
 - [ ] importer XLSX/CSV streaming funciona com fixtures
 - [ ] todo histórico SIOP federal disponível populado em ambiente local
 - [ ] `siop:import` idempotente (mesmo checksum + status completed → 409)
@@ -1894,6 +2012,7 @@ jobs:
 - [ ] transações por chunk de 1k-5k (não por row, não em volta de job inteiro)
 
 ### DASHBOARD UI
+
 - [ ] `/auth/login` funcional com session.regenerate
 - [ ] `/tenants/select` funciona pra users com N memberships
 - [ ] `/dashboard` com KPIs e charts (ApexCharts)
@@ -1909,6 +2028,7 @@ jobs:
 - [ ] `useImportPolling` com pause/backoff/visibility
 
 ### PII & SECURITY
+
 - [ ] `pii.reveal_beneficiary` SECURITY DEFINER + search_path lock funcional
 - [ ] valida: actor membership, permission, beneficiary tenant, asset tenant, opt_out, purpose, justification
 - [ ] `RevealDialog` one-shot, JSON efêmero, auto-clear 90s
@@ -1920,6 +2040,7 @@ jobs:
 - [ ] `client_errors` truncamento + regex strip + rate limit
 
 ### JOBS & QUEUE
+
 - [ ] BullMQ + Redis configurados (namespace separados: sess/queue/perm/rl)
 - [ ] worker process separado funcional (`pnpm start:worker`)
 - [ ] todos os 8 handlers registrados em `bootWorkers()`
@@ -1933,6 +2054,7 @@ jobs:
 - [ ] `refresh_aggregates` anti-sobreposição via jobId por slot
 
 ### OBSERVABILITY
+
 - [ ] logs estruturados pino com redaction expandido
 - [ ] eventos padronizados emitidos
 - [ ] `/healthz` (público) e `/admin/health` (privado, sanitizado) funcionais
@@ -1943,6 +2065,7 @@ jobs:
 - [ ] `security_audit_logs` recebe eventos pré-tenant resolution
 
 ### TESTES
+
 - [ ] suite unit ≥ 85% coverage
 - [ ] suite integration ≥ 70%
 - [ ] suite functional ≥ 60%
@@ -1953,6 +2076,7 @@ jobs:
 - [ ] CI verde
 
 ### DOCUMENTAÇÃO
+
 - [ ] `README.md` com setup local
 - [ ] `AGENTS.md` ou `CLAUDE.md` no padrão eduguard (regras críticas)
 - [ ] `docs/schema-overview.md` (entidades + relações)
@@ -1966,37 +2090,38 @@ jobs:
 
 ### Operacional
 
-| Risco | Mitigação |
-|-------|-----------|
+| Risco                                                       | Mitigação                                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Volume real do SIOP histórico maior que estimado (>2M rows) | Particionamento de `precatorio_assets` por `exercise_year` em Spec 2; índices preparados |
-| Memory leak no exceljs em arquivos grandes | Streaming reader + chunks; teste de OOM em CI |
-| RLS performance degradação em queries grandes | RLS apenas em `pii.*` + `audit_logs`; queries hot-path no `public.*` usam BaseRepository |
-| Cache Redis perde durante deploy | Permission cache versionado; perda apenas degrada UX, não quebra |
+| Memory leak no exceljs em arquivos grandes                  | Streaming reader + chunks; teste de OOM em CI                                            |
+| RLS performance degradação em queries grandes               | RLS apenas em `pii.*` + `audit_logs`; queries hot-path no `public.*` usam BaseRepository |
+| Cache Redis perde durante deploy                            | Permission cache versionado; perda apenas degrada UX, não quebra                         |
 
 ### Compliance/LGPD
 
-| Risco | Mitigação |
-|-------|-----------|
-| PII vaza em logs | Redaction extensiva configurada + validator runtime no AuditService |
-| Reveal sem audit | Função SECURITY DEFINER faz INSERT antes de retornar — não confia no app |
-| Stack trace em prod expõe paths/PII | `sanitizeError` em prod, `error_stack` salvo apenas em dev |
-| Bulk export indevido | Apenas `privacy_admin` com double-confirmation; rate limit; signed URL TTL 24h |
+| Risco                                | Mitigação                                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| PII vaza em logs                     | Redaction extensiva configurada + validator runtime no AuditService                          |
+| Reveal sem audit                     | Função SECURITY DEFINER faz INSERT antes de retornar — não confia no app                     |
+| Stack trace em prod expõe paths/PII  | `sanitizeError` em prod, `error_stack` salvo apenas em dev                                   |
+| Bulk export indevido                 | Apenas `privacy_admin` com double-confirmation; rate limit; signed URL TTL 24h               |
 | Right-to-be-forgotten (LGPD art. 18) | `pii.beneficiaries.opt_out=true` bloqueia reveal; `retention_until` permite purga programada |
 
 ### Negócio
 
-| Risco | Mitigação |
-|-------|-----------|
-| Fonte SIOP muda formato/colunas | Parser desacoplado em `siop/parsers/`, fácil refactor; staging preserva raw_data |
-| `external_id` SIOP não estável | Match cascade com 3 estratégias |
-| Re-import sobrescreve campo manual | Upsert preserva `compliance_status`, `pii_status`; raw_data atualiza |
-| Score futuro recalcula tudo | `asset_scores` versionado; `precatorio_assets.current_score_id` aponta pro snapshot atual |
+| Risco                              | Mitigação                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| Fonte SIOP muda formato/colunas    | Parser desacoplado em `siop/parsers/`, fácil refactor; staging preserva raw_data          |
+| `external_id` SIOP não estável     | Match cascade com 3 estratégias                                                           |
+| Re-import sobrescreve campo manual | Upsert preserva `compliance_status`, `pii_status`; raw_data atualiza                      |
+| Score futuro recalcula tudo        | `asset_scores` versionado; `precatorio_assets.current_score_id` aponta pro snapshot atual |
 
 ## Próximos passos (após Spec 1)
 
 ### Spec 2 — DataJud Enrichment
 
 Recebe assets do Radar Federal e enriquece com metadados/movimentos do DataJud. Inclui:
+
 - Cliente DataJud com rate limiting respeitado (TRF1-6, STJ)
 - Cache global em `public_datajud_cache` (sem `tenant_id`)
 - Job `datajud:enrich` por asset (concurrency=5)
@@ -2009,6 +2134,7 @@ Recebe assets do Radar Federal e enriquece com metadados/movimentos do DataJud. 
 ### Spec 3 — DJEN Publications + NLP
 
 Adiciona pipeline em tempo real:
+
 - Cliente DJEN API
 - Parser de publicações (texto livre)
 - NLP jurídico (extrai eventos: expedição, suspensão, cessão, pagamento)
@@ -2045,6 +2171,7 @@ Conforme decomposição na seção 4.
 
 ---
 
-**Status:** spec aprovado pelo product owner em 2026-04-28 após 9 seções de iteração com ajustes incorporados (10+7+12+10+10+13+ajustes adicionais por seção).
+**Status:** spec aprovado pelo product owner em 2026-04-28 após 9 seções de iteração com ajustes incorporados (
+10+7+12+10+10+13+ajustes adicionais por seção).
 
 **Próximo passo:** invocar `superpowers:writing-plans` para gerar o plano de implementação executável.
