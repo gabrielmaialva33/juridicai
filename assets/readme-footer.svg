@@ -1,0 +1,51 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1400"
+  height="170"
+  viewBox="0 0 1400 170"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Built for governed legal intelligence</title>
+  <desc id="desc">Footer banner for the JuridicAI README.</desc>
+  <defs>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#42d392" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#f5c451" />
+    </linearGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" fill-opacity="0.09" />
+    </pattern>
+  </defs>
+  <rect width="1400" height="170" fill="#08111f" />
+  <rect width="1400" height="170" fill="url(#dots)" />
+  <path
+    d="M0 28 C210 78 345 26 526 72 S868 126 1044 78 S1260 22 1400 60"
+    fill="none"
+    stroke="url(#line)"
+    stroke-width="4"
+    stroke-opacity="0.75"
+  />
+  <text
+    x="700"
+    y="98"
+    text-anchor="middle"
+    fill="#f8fafc"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="28"
+    font-weight="750"
+  >
+    Built for evidence, governance, and tenant-safe legal intelligence.
+  </text>
+  <text
+    x="700"
+    y="130"
+    text-anchor="middle"
+    fill="#94a3b8"
+    font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="16"
+  >
+    public data in - auditable decisions out
+  </text>
+</svg>
