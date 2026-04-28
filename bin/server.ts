@@ -9,8 +9,8 @@
 |
 */
 
-import 'reflect-metadata'
-import { Ignitor, prettyPrintError } from '@adonisjs/core'
+await import('reflect-metadata')
+const { Ignitor, prettyPrintError } = await import('@adonisjs/core')
 
 /**
  * URL to the application root. AdonisJS need it to resolve
@@ -33,12 +33,6 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
   .tap((app) => {
     app.booting(async () => {
       await import('#start/env')
-      // Importing the BaseModel and SnakeCaseNamingStrategy classes from the Lucid ORM
-      const { BaseModel, SnakeCaseNamingStrategy } = await import('@adonisjs/lucid/orm')
-      BaseModel.namingStrategy = new SnakeCaseNamingStrategy()
-
-      const { SimplePaginator } = await import('@adonisjs/lucid/database')
-      SimplePaginator.namingStrategy = new SnakeCaseNamingStrategy()
     })
     app.listen('SIGTERM', () => app.terminate())
     app.listenIf(app.managedByPm2, 'SIGINT', () => app.terminate())

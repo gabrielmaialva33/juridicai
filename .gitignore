@@ -1,7 +1,8 @@
 # Dependencies and AdonisJS build
 node_modules
 build
-tmp
+tmp/*
+!tmp/.gitkeep
 
 # Secrets
 .env
@@ -24,11 +25,5 @@ yarn-error.log
 # Platform specific
 .DS_Store
 
-# Claude Code
-.claude
-
-# AdonisJS specific
-storage/uploads/*
-
-.playwright-mcp
-firebase-adminsdk.json
+# Superpowers
+.superpowers/

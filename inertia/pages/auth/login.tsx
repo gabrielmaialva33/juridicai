@@ -1,14 +1,49 @@
-import { Head } from '@inertiajs/react'
-import { AuthCard } from '@/components/auth/auth-card'
-import { LoginForm } from '@/components/auth/login-form'
+import { Form } from '@adonisjs/inertia/react'
 
 export default function Login() {
   return (
-    <>
-      <Head title="Login - JuridicAI" />
-      <AuthCard title="Bem-vindo de volta" description="Entre na sua conta para continuar">
-        <LoginForm />
-      </AuthCard>
-    </>
+    <div className="form-container">
+      <div>
+        <h1> Login </h1>
+        <p>Enter your details below to login to your account</p>
+      </div>
+
+      <div>
+        <Form route="session.store">
+          {({ errors }) => (
+            <>
+              <div>
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  autoComplete="username"
+                  data-invalid={errors.email ? 'true' : undefined}
+                />
+                {errors.email && <div>{errors.email}</div>}
+              </div>
+
+              <div>
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  id="password"
+                  autoComplete="current-password"
+                />
+                {errors.password ? <span>{errors.password}</span> : ''}
+              </div>
+
+              <div>
+                <button type="submit" className="button">
+                  Login
+                </button>
+              </div>
+            </>
+          )}
+        </Form>
+      </div>
+    </div>
   )
 }

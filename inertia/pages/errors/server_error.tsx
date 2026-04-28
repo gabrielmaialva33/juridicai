@@ -1,11 +1,7 @@
-export default function ServerError(props: { error: any }) {
+export default function ServerError() {
   return (
     <>
-      <div className="container">
-        <div className="title">Server Error</div>
-
-        <span>{props.error.message}</span>
-      </div>
+      <h1>Something went wrong</h1>
     </>
   )
 }

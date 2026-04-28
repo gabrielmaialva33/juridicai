@@ -13,7 +13,7 @@ import server from '@adonisjs/core/services/server'
 
 /**
  * The error handler is used to convert an exception
- * to an HTTP response.
+ * to a HTTP response.
  */
 server.errorHandler(() => import('#exceptions/handler'))
 
@@ -26,8 +26,8 @@ server.use([
   () => import('#middleware/container_bindings_middleware'),
   () => import('@adonisjs/static/static_middleware'),
   () => import('@adonisjs/cors/cors_middleware'),
-  () => import('@adonisjs/inertia/inertia_middleware'),
   () => import('@adonisjs/vite/vite_middleware'),
+  () => import('#middleware/inertia_middleware'),
 ])
 
 /**
@@ -39,7 +39,7 @@ router.use([
   () => import('@adonisjs/session/session_middleware'),
   () => import('@adonisjs/shield/shield_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
-  () => import('#middleware/detect_user_locale_middleware'),
+  () => import('#middleware/silent_auth_middleware'),
 ])
 
 /**
@@ -47,10 +47,6 @@ router.use([
  * the routes or the routes group.
  */
 export const middleware = router.named({
-  auth: () => import('#middleware/auth_middleware'),
   guest: () => import('#middleware/guest_middleware'),
-  acl: () => import('#middleware/acl_middleware'),
-  permission: () => import('#middleware/permission_middleware'),
-  ownership: () => import('#middleware/ownership_middleware'),
-  tenant: () => import('#middleware/tenant_resolver_middleware'),
+  auth: () => import('#middleware/auth_middleware'),
 })
