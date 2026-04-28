@@ -23,5 +23,24 @@ export default await Env.create(new URL('../', import.meta.url), {
   APP_URL: Env.schema.string({ format: 'url', tld: false }),
 
   // Session
-  SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
+  SESSION_DRIVER: Env.schema.enum(['cookie', 'redis', 'memory'] as const),
+
+  // Database
+  DB_HOST: Env.schema.string({ format: 'host' }),
+  DB_PORT: Env.schema.number(),
+  DB_USER: Env.schema.string(),
+  DB_PASSWORD: Env.schema.string.optional(),
+  DB_DATABASE: Env.schema.string(),
+
+  // Redis
+  REDIS_HOST: Env.schema.string({ format: 'host' }),
+  REDIS_PORT: Env.schema.number(),
+  REDIS_PASSWORD: Env.schema.secret.optional(),
+
+  // PII bunker
+  PII_HASH_PEPPER: Env.schema.string(),
+  PII_ENCRYPTION_KEY: Env.schema.string(),
+
+  // Drive
+  DRIVE_DISK: Env.schema.enum(['fs'] as const),
 })

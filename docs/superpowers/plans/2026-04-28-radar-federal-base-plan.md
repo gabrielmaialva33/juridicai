@@ -1706,7 +1706,7 @@ import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import TenantMembership from './tenant_membership.js'
 
-const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
+const AuthFinder = withAuthFinder(() => hash.use('argon'), {
   uids: ['email'],
   passwordColumnName: 'passwordHash',
 })
@@ -4691,7 +4691,7 @@ export default class extends BaseSeeder {
       .merge(['updated_at'])
       .returning(['id'])
 
-    const passwordHash = await hash.use('scrypt').make('admin1234')
+    const passwordHash = await hash.use('argon').make('admin1234')
     const [user] = await db
       .from('users')
       .insert({

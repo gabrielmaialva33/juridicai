@@ -69,9 +69,12 @@ const sessionConfig = defineConfig({
     cookie: stores.cookie(),
 
     /**
-     * Store session data inside the configured database.
+     * Store session data inside Redis.
+     *
+     * The main Redis connection is also reused by queues and cache-like
+     * services, with namespacing handled at those layers.
      */
-    database: stores.database(),
+    redis: stores.redis({ connection: 'main' }),
   },
 })
 
