@@ -7,14 +7,20 @@ export interface ApiDefinition {
       serve: typeof routes['drive.fs.serve']
     }
   }
+  healthz: typeof routes['healthz']
+  auth: {
+    signup: {
+      create: typeof routes['auth.signup.create']
+      store: typeof routes['auth.signup.store']
+    }
+    login: {
+      create: typeof routes['auth.login.create']
+      store: typeof routes['auth.login.store']
+    }
+    logout: typeof routes['auth.logout']
+  }
+  tenants: {
+    select: typeof routes['tenants.select']
+  }
   home: typeof routes['home']
-  newAccount: {
-    create: typeof routes['new_account.create']
-    store: typeof routes['new_account.store']
-  }
-  session: {
-    create: typeof routes['session.create']
-    store: typeof routes['session.store']
-    destroy: typeof routes['session.destroy']
-  }
 }
