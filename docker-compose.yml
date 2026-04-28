@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    environment:
+      POSTGRES_USER: juridicai
+      POSTGRES_PASSWORD: juridicai
+      POSTGRES_DB: juridicai_dev
+      TIMESCALEDB_TELEMETRY: 'off'
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # The HA image stores PostgreSQL data under the postgres home directory.
+      - juridicai_pgdata:/home/postgres/pgdata/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U juridicai -d juridicai_dev']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - juridicai_redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  juridicai_pgdata:
+  juridicai_redisdata:

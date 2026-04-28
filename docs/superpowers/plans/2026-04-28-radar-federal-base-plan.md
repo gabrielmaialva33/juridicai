@@ -524,17 +524,18 @@ git commit -m "🔧 chore: switch to PostgreSQL + Redis, install core deps (bull
 ```yaml
 services:
   postgres:
-    image: postgres:16-alpine
+    image: timescale/timescaledb-ha:pg17
     environment:
       POSTGRES_USER: juridicai
       POSTGRES_PASSWORD: juridicai
       POSTGRES_DB: juridicai_dev
+      TIMESCALEDB_TELEMETRY: 'off'
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
-      - juridicai_pgdata:/var/lib/postgresql/data
+      - juridicai_pgdata:/home/postgres/pgdata/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U juridicai']
+      test: ['CMD-SHELL', 'pg_isready -U juridicai -d juridicai_dev']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -543,7 +544,7 @@ services:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - juridicai_redisdata:/data
     healthcheck:
@@ -586,6 +587,9 @@ docker compose exec redis redis-cli ping
 ```
 
 Expected: versão Postgres + `PONG`.
+
+Extra check for this project: `select extname, extversion from pg_extension where extname = 'timescaledb';` should
+return `timescaledb`.
 
 - [ ] **Step 5: Commit**
 
