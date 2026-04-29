@@ -9,7 +9,7 @@ export const TenantFactory = factory
       name,
       slug: `${faker.helpers.slugify(name).toLowerCase()}-${faker.string.uuid()}`,
       document: faker.string.numeric(14),
-      status: 'active',
+      status: 'active' as const,
       plan: 'standard',
       rbacVersion: 1,
     }

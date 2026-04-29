@@ -1,14 +1,12 @@
-import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
+import { belongsTo, column } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import TenantModel from '#shared/models/tenant_model'
+import Beneficiary from '#modules/pii/models/beneficiary'
+import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 
-export default class AssetBeneficiary extends BaseModel {
+export default class AssetBeneficiary extends TenantModel {
   static table = 'pii.asset_beneficiaries'
-
-  @column({ isPrimary: true })
-  declare id: string
-
-  @column()
-  declare tenantId: string
 
   @column()
   declare assetId: string
@@ -16,9 +14,20 @@ export default class AssetBeneficiary extends BaseModel {
   @column()
   declare beneficiaryId: string
 
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
+  @column()
+  declare relationshipType: string
+
+  @column()
+  declare sharePercent: string | null
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  @belongsTo(() => PrecatorioAsset, {
+    foreignKey: 'assetId',
+  })
+  declare asset: BelongsTo<typeof PrecatorioAsset>
+
+  @belongsTo(() => Beneficiary)
+  declare beneficiary: BelongsTo<typeof Beneficiary>
 }

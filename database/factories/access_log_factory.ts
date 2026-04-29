@@ -8,7 +8,7 @@ export const AccessLogFactory = factory
 
     return {
       tenantId: tenant.id,
-      action: 'reveal_success',
+      action: 'reveal_success' as const,
       allowed: true,
       reason: faker.lorem.sentence(),
       metadata: {},

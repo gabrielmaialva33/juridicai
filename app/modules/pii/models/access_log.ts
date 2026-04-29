@@ -1,5 +1,6 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
+import type { JsonRecord, PiiAction } from '#shared/types/model_enums'
 
 export default class AccessLog extends BaseModel {
   static table = 'pii.access_logs'
@@ -20,10 +21,25 @@ export default class AccessLog extends BaseModel {
   declare assetId: string | null
 
   @column()
-  declare action: string
+  declare action: PiiAction
+
+  @column()
+  declare reason: string | null
 
   @column()
   declare allowed: boolean
+
+  @column()
+  declare metadata: JsonRecord | null
+
+  @column()
+  declare requestId: string | null
+
+  @column()
+  declare ipAddress: string | null
+
+  @column()
+  declare userAgent: string | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

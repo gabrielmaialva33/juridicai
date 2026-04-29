@@ -9,7 +9,7 @@ export const BeneficiaryFactory = factory
     return {
       tenantId: tenant.id,
       beneficiaryHash: faker.string.hexadecimal({ length: 64, prefix: '' }),
-      status: 'bunker_available',
+      status: 'bunker_available' as const,
     }
   })
   .build()

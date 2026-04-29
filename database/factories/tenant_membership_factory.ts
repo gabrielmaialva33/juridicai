@@ -11,7 +11,7 @@ export const TenantMembershipFactory = factory
     return {
       tenantId: tenant.id,
       userId: user.id,
-      status: 'active',
+      status: 'active' as const,
     }
   })
   .build()

@@ -10,7 +10,7 @@ export const PublicationFactory = factory
     return {
       tenantId: asset.tenantId,
       assetId: asset.id,
-      source: 'siop',
+      source: 'siop' as const,
       publicationDate: DateTime.now(),
       title: faker.lorem.sentence(),
       body: faker.lorem.paragraphs({ min: 1, max: 3 }),

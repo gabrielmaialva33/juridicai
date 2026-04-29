@@ -11,7 +11,7 @@ export const ExportJobFactory = factory
     return {
       tenantId: tenant.id,
       requestedByUserId: user.id,
-      status: 'pending',
+      status: 'pending' as const,
       exportType: 'precatorios_csv',
       filters: {},
       filePath: null,

@@ -11,8 +11,8 @@ export const SiopStagingRowFactory = factory
       rawData: {
         row: faker.number.int({ min: 1, max: 100_000 }),
       },
-      validationStatus: 'pending',
-      errors: [],
+      validationStatus: 'pending' as const,
+      errors: { messages: [] },
     }
   })
   .build()

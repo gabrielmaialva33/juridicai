@@ -12,7 +12,7 @@ export const AssetEventFactory = factory
       assetId: asset.id,
       eventType: 'imported',
       eventDate: DateTime.now(),
-      source: 'siop',
+      source: 'siop' as const,
       payload: {},
       idempotencyKey: faker.string.uuid(),
     }

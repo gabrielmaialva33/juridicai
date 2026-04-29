@@ -9,7 +9,7 @@ export const SourceRecordFactory = factory
 
     return {
       tenantId: tenant.id,
-      source: 'siop',
+      source: 'siop' as const,
       sourceUrl: faker.internet.url(),
       originalFilename: `siop-${faker.date.past().getFullYear()}.xlsx`,
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

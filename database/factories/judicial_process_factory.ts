@@ -10,7 +10,7 @@ export const JudicialProcessFactory = factory
     return {
       tenantId: asset.tenantId,
       assetId: asset.id,
-      source: 'siop',
+      source: 'siop' as const,
       cnjNumber: asset.cnjNumber ?? faker.string.uuid(),
       filedAt: DateTime.now(),
       subject: faker.lorem.words({ min: 3, max: 8 }),

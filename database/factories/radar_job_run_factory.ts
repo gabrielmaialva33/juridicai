@@ -7,8 +7,8 @@ export const RadarJobRunFactory = factory
     return {
       jobName: `job:${faker.string.uuid()}`,
       queueName: 'default',
-      status: 'pending',
-      origin: 'system',
+      status: 'pending' as const,
+      origin: 'system' as const,
       attempts: 0,
       metadata: {},
       metrics: {},

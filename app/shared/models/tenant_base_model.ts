@@ -6,6 +6,8 @@ import TenantModel from '#shared/models/tenant_model'
  * Base model for tenant-scoped records with soft delete.
  */
 export default class TenantBaseModel extends TenantModel {
+  static softDeletes = true
+
   @column.dateTime()
   declare deletedAt: DateTime | null
 

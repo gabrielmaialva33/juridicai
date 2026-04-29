@@ -7,7 +7,7 @@ export const UserFactory = factory
       fullName: faker.person.fullName(),
       email: faker.internet.email().toLowerCase(),
       password: 'secret123',
-      status: 'active',
+      status: 'active' as const,
     }
   })
   .build()

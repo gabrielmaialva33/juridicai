@@ -13,8 +13,8 @@ export const DebtorFactory = factory
       name,
       normalizedName,
       normalizedKey: `${faker.helpers.slugify(normalizedName)}-${faker.string.uuid()}`,
-      debtorType: 'union',
-      paymentRegime: 'federal_unique',
+      debtorType: 'union' as const,
+      paymentRegime: 'federal_unique' as const,
       cnpj: faker.string.numeric(14),
       stateCode: 'DF',
     }
