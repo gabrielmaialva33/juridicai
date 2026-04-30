@@ -18,11 +18,19 @@ export function bootWorkers() {
   }
 
   queueService.registerWorker<SiopImportJobPayload>(SIOP_IMPORT_QUEUE, async (job) => {
-    await handleSiopImport(job.data)
+    await handleSiopImport({
+      ...job.data,
+      bullmqJobId: job.id ? String(job.id) : null,
+      attempts: job.attemptsMade + 1,
+    })
   })
 
   queueService.registerWorker<ExportPrecatoriosPayload>(EXPORT_PRECATORIOS_QUEUE, async (job) => {
-    await handleExportPrecatorios(job.data)
+    await handleExportPrecatorios({
+      ...job.data,
+      bullmqJobId: job.id ? String(job.id) : null,
+      attempts: job.attemptsMade + 1,
+    })
   })
 
   booted = true

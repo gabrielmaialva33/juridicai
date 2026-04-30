@@ -11,4 +11,12 @@ export default class PrecatoriosController {
       assets: assets.serialize(),
     })
   }
+
+  async show({ params, response }: HttpContext) {
+    const asset = await precatorioService.show(tenantContext.requireTenantId(), params.id)
+
+    return response.ok({
+      asset: asset.serialize(),
+    })
+  }
 }

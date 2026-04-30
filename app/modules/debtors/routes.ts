@@ -6,6 +6,7 @@ const DebtorsController = () => import('#modules/debtors/controllers/debtors_con
 router
   .group(() => {
     router.get('debtors', [DebtorsController, 'index']).as('index')
+    router.get('debtors/:id', [DebtorsController, 'show']).as('show')
   })
   .as('debtors')
   .use(middleware.auth())

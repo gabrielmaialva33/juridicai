@@ -6,6 +6,9 @@ const ExportsController = () => import('#modules/exports/controllers/exports_con
 router
   .group(() => {
     router.get('exports', [ExportsController, 'index']).as('index')
+    router.post('exports', [ExportsController, 'store']).as('store')
+    router.get('exports/:id', [ExportsController, 'show']).as('show')
+    router.get('exports/:id/download', [ExportsController, 'download']).as('download')
   })
   .as('exports')
   .use(middleware.auth())

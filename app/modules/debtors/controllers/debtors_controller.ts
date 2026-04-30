@@ -10,4 +10,12 @@ export default class DebtorsController {
       debtors: debtors.map((debtor) => debtor.serialize()),
     })
   }
+
+  async show({ params, response }: HttpContext) {
+    const debtor = await debtorService.show(tenantContext.requireTenantId(), params.id)
+
+    return response.ok({
+      debtor: debtor.serialize(),
+    })
+  }
 }

@@ -6,7 +6,7 @@ class PrecatorioService {
   }
 
   show(tenantId: string, id: string) {
-    return precatorioRepository.findByIdOrFail(tenantId, id)
+    return precatorioRepository.showWithDetails(tenantId, id)
   }
 }
 

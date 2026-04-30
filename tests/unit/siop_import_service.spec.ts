@@ -1,0 +1,239 @@
+import { test } from '@japa/runner'
+import db from '@adonisjs/lucid/services/db'
+import { handleSiopImport } from '#modules/siop/jobs/siop_import_handler'
+import siopImportService from '#modules/siop/services/siop_import_service'
+import AssetEvent from '#modules/precatorios/models/asset_event'
+import AssetScore from '#modules/precatorios/models/asset_score'
+import Debtor from '#modules/debtors/models/debtor'
+import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import SiopImport from '#modules/siop/models/siop_import'
+import SiopStagingRow from '#modules/siop/models/siop_staging_row'
+import SourceRecord from '#modules/siop/models/source_record'
+import { TenantFactory } from '#database/factories/tenant_factory'
+import type Tenant from '#modules/tenant/models/tenant'
+import type { LucidModel, LucidRow } from '@adonisjs/lucid/types/model'
+import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+
+const VALID_ROWS = [
+  {
+    external_id: 'SIOP-2024-0001',
+    cnj: '0001234-94.2024.4.01.3400',
+    devedor: 'União Federal / Ministério da Saúde',
+    valor: 'R$ 1.234.567,89',
+    exercicio: 2024,
+    natureza: 'Alimentar',
+  },
+  {
+    external_id: 'SIOP-2024-0002',
+    cnj: '0000001-47.2010.4.03.6100',
+    devedor: 'Instituto Nacional do Seguro Social - INSS',
+    valor: '250.000,00',
+    exercicio: 2024,
+    natureza: 'Comum',
+  },
+]
+
+test.group('SIOP import service', () => {
+  test('imports valid SIOP rows into staging and domain tables idempotently', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+
+    const firstRun = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: {
+        checksum: `siop-import-service-${tenant.id}`,
+        originalFilename: 'siop-2024.xlsx',
+      },
+    })
+
+    assert.deepEqual(firstRun.stats, {
+      totalRows: 2,
+      inserted: 2,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    })
+    assert.equal(firstRun.import.status, 'completed')
+    assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(Debtor.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(SiopStagingRow.query().where('import_id', firstRun.import.id)), 2)
+
+    const asset = await PrecatorioAsset.query()
+      .where('tenant_id', tenant.id)
+      .where('external_id', 'SIOP-2024-0001')
+      .firstOrFail()
+    assert.equal(asset.faceValue, '1234567.89')
+    assert.equal(asset.currentScore, 100)
+    assert.isNotNull(asset.currentScoreId)
+
+    const secondRun = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: {
+        checksum: `siop-import-service-${tenant.id}`,
+        originalFilename: 'siop-2024.xlsx',
+      },
+    })
+
+    assert.deepEqual(secondRun.stats, {
+      totalRows: 2,
+      inserted: 0,
+      updated: 2,
+      skipped: 0,
+      errors: 0,
+    })
+    assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(AssetEvent.query().where('tenant_id', tenant.id)), 2)
+
+    await cleanupTenantImportData(tenant)
+  })
+
+  test('keeps imported assets isolated by tenant', async ({ assert }) => {
+    const tenantA = await TenantFactory.create()
+    const tenantB = await TenantFactory.create()
+
+    await siopImportService.importRows({
+      tenantId: tenantA.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: { checksum: `siop-tenant-a-${tenantA.id}` },
+    })
+    await siopImportService.importRows({
+      tenantId: tenantB.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: { checksum: `siop-tenant-b-${tenantB.id}` },
+    })
+
+    assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenantA.id)), 2)
+    assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenantB.id)), 2)
+
+    await cleanupTenantImportData(tenantA)
+    await cleanupTenantImportData(tenantB)
+  })
+
+  test('marks rows with invalid required fields as partial import errors', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+
+    const result = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: [
+        VALID_ROWS[0],
+        {
+          external_id: 'SIOP-2024-BAD',
+          cnj: '0001234-00.2024.4.01.3400',
+          devedor: '',
+          valor: 'sem valor',
+        },
+      ],
+      source: { checksum: `siop-partial-${tenant.id}` },
+    })
+
+    assert.deepEqual(result.stats, {
+      totalRows: 2,
+      inserted: 1,
+      updated: 0,
+      skipped: 1,
+      errors: 1,
+    })
+    assert.equal(result.import.status, 'partial')
+    assert.equal(
+      await countRows(
+        SiopStagingRow.query()
+          .where('import_id', result.import.id)
+          .where('validation_status', 'invalid')
+      ),
+      1
+    )
+
+    await cleanupTenantImportData(tenant)
+  })
+
+  test('processes pending CSV imports through the job handler', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const csv = Buffer.from(
+      [
+        'external_id;cnj;devedor;valor;exercicio;natureza',
+        'SIOP-CSV-0001;0001234-94.2024.4.01.3400;União Federal;R$ 1.234,56;2024;Comum',
+      ].join('\n')
+    )
+
+    const pending = await siopImportService.createPendingFileImport({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      buffer: csv,
+      originalFilename: 'siop-2024.csv',
+      mimeType: 'text/csv',
+      fileSizeBytes: csv.byteLength,
+    })
+
+    assert.equal(pending.import.status, 'pending')
+
+    const stats = await handleSiopImport({
+      tenantId: tenant.id,
+      importId: pending.import.id,
+      requestId: 'siop-import-test',
+      bullmqJobId: `siop-import-${tenant.id}-${pending.import.id}`,
+      attempts: 1,
+    })
+
+    assert.deepEqual(stats, {
+      totalRows: 1,
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    })
+
+    const processedImport = await SiopImport.findOrFail(pending.import.id)
+    assert.equal(processedImport.status, 'completed')
+    assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenant.id)), 1)
+
+    const [jobRun] = await db
+      .from('radar_job_runs')
+      .where('tenant_id', tenant.id)
+      .where('job_name', 'siop-import')
+      .select('*')
+
+    assert.equal(jobRun.status, 'completed')
+    assert.equal(jobRun.metrics.inserted, 1)
+    assert.equal(jobRun.metadata.requestId, 'siop-import-test')
+
+    await cleanupTenantImportData(tenant)
+  })
+})
+
+async function cleanupTenantImportData(tenant: Tenant) {
+  const imports = await SiopImport.query().where('tenant_id', tenant.id).select('id')
+  const importIds = imports.map((row) => row.id)
+  const assets = await PrecatorioAsset.query().where('tenant_id', tenant.id).select('id')
+  const assetIds = assets.map((row) => row.id)
+
+  if (importIds.length > 0) {
+    await SiopStagingRow.query().whereIn('import_id', importIds).delete()
+  }
+
+  if (assetIds.length > 0) {
+    await AssetScore.query().whereIn('asset_id', assetIds).delete()
+    await AssetEvent.query().whereIn('asset_id', assetIds).delete()
+  }
+
+  await db.from('radar_job_runs').where('tenant_id', tenant.id).delete()
+  await PrecatorioAsset.query().where('tenant_id', tenant.id).delete()
+  await Debtor.query().where('tenant_id', tenant.id).delete()
+  await SiopImport.query().where('tenant_id', tenant.id).delete()
+  await SourceRecord.query().where('tenant_id', tenant.id).delete()
+  await tenant.delete()
+}
+
+async function countRows<Model extends LucidModel>(
+  query: ModelQueryBuilderContract<Model, InstanceType<Model> & LucidRow>
+) {
+  const [result] = await query.count('* as total')
+  return Number(result.$extras.total)
+}

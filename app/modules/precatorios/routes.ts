@@ -7,6 +7,7 @@ const PrecatoriosController = () =>
 router
   .group(() => {
     router.get('precatorios', [PrecatoriosController, 'index']).as('index')
+    router.get('precatorios/:id', [PrecatoriosController, 'show']).as('show')
   })
   .as('precatorios')
   .use(middleware.auth())

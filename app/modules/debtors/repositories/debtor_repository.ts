@@ -10,6 +10,15 @@ class DebtorRepository extends BaseRepository<typeof Debtor> {
     return this.query(tenantId).orderBy('name', 'asc').limit(limit)
   }
 
+  showWithAssets(tenantId: string, id: string) {
+    return this.query(tenantId)
+      .where('id', id)
+      .preload('assets', (query) => {
+        query.orderBy('created_at', 'desc').limit(50)
+      })
+      .firstOrFail()
+  }
+
   findByNormalizedKey(tenantId: string, normalizedKey: string) {
     return this.query(tenantId).where('normalized_key', normalizedKey).first()
   }
