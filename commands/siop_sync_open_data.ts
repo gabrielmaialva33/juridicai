@@ -62,6 +62,7 @@ export default class SiopSyncOpenData extends BaseCommand {
 
     if (this.enqueue) {
       await this.enqueueImports(result.items)
+      await queueService.shutdown()
     }
 
     this.logger.info(

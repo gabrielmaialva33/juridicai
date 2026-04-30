@@ -12,6 +12,8 @@ tmp/*
 
 # Frontend assets compiled code
 public/assets
+storage/*
+!storage/.gitkeep
 
 # Build tools specific
 npm-debug.log
