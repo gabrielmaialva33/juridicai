@@ -24,5 +24,7 @@ export default class QueueStatus extends BaseCommand {
     for (const row of rows) {
       this.logger.info(`Queue status: ${JSON.stringify(row)}`)
     }
+
+    await queueService.shutdown()
   }
 }
