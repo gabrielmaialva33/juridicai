@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
+import { createReadStream } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
+import { createInterface } from 'node:readline'
 import { DateTime } from 'luxon'
 import ExcelJS from 'exceljs'
 import app from '@adonisjs/core/services/app'
@@ -150,41 +152,17 @@ class SiopImportService {
 
     await this.persistImportProgress(siopImport, stats)
 
-    for (const rows of chunkRows(payload.rows, IMPORT_CHUNK_SIZE)) {
-      await db.transaction(async (trx) => {
-        for (const row of rows) {
-          await this.processRow({
-            row,
-            payload,
-            siopImport,
-            sourceRecordId: sourceRecord.id,
-            stats,
-            trx,
-          })
-        }
-      })
-      await this.persistImportProgress(siopImport, stats)
-    }
-
-    siopImport.merge({
-      status:
-        stats.errors > 0
-          ? stats.inserted + stats.updated > 0
-            ? 'partial'
-            : 'failed'
-          : 'completed',
-      finishedAt: DateTime.now(),
-      totalRows: stats.totalRows,
-      inserted: stats.inserted,
-      updated: stats.updated,
-      skipped: stats.skipped,
-      errors: stats.errors,
-      rawMetadata: {
-        ...(payload.source?.metadata ?? {}),
-        checksum,
-      },
+    await this.processRowChunks({
+      chunks: chunkRows(payload.rows, IMPORT_CHUNK_SIZE),
+      payload,
+      siopImport,
+      sourceRecordId: sourceRecord.id,
+      stats,
     })
-    await siopImport.save()
+    await this.finishImport(siopImport, stats, {
+      ...(payload.source?.metadata ?? {}),
+      checksum,
+    })
 
     return { import: siopImport, stats }
   }
@@ -227,14 +205,16 @@ class SiopImportService {
       throw new Error('SIOP import source file is missing.')
     }
 
+    const filename = siopImport.sourceRecord.originalFilename ?? `siop-${siopImport.id}.xlsx`
+
+    if (isCsv(filename)) {
+      return this.processCsvImportFile(siopImport)
+    }
+
     const buffer = await readFile(siopImport.sourceRecord.sourceFilePath)
     const checksum =
       siopImport.sourceRecord.sourceChecksum ?? createHash('sha256').update(buffer).digest('hex')
-    const rows = await parseSiopRows(
-      buffer,
-      siopImport.sourceRecord.originalFilename ?? `siop-${siopImport.id}.xlsx`
-    )
-
+    const rows = await parseSiopRows(buffer, filename)
     return this.importRows({
       tenantId: siopImport.tenantId,
       exerciseYear: siopImport.exerciseYear,
@@ -252,6 +232,63 @@ class SiopImportService {
         },
       },
     })
+  }
+
+  private async processCsvImportFile(siopImport: SiopImport): Promise<SiopImportResult> {
+    const sourceFilePath = siopImport.sourceRecord.sourceFilePath!
+    const checksum = siopImport.sourceRecord.sourceChecksum ?? (await checksumFile(sourceFilePath))
+    const payload: SiopImportRowsPayload = {
+      tenantId: siopImport.tenantId,
+      exerciseYear: siopImport.exerciseYear,
+      uploadedByUserId: siopImport.uploadedByUserId,
+      rows: [],
+      source: {
+        checksum,
+        originalFilename: siopImport.sourceRecord.originalFilename,
+        mimeType: siopImport.sourceRecord.mimeType,
+        fileSizeBytes: siopImport.sourceRecord.fileSizeBytes,
+        filePath: sourceFilePath,
+        metadata: {
+          ...(siopImport.sourceRecord.rawData ?? {}),
+          parser: 'csv',
+        },
+      },
+    }
+    const stats: ImportStats = {
+      totalRows: await countCsvDataRows(sourceFilePath),
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    }
+    const started = await this.tryStartImport(siopImport)
+
+    if (!started) {
+      return {
+        import: siopImport,
+        stats: {
+          ...stats,
+          skipped: stats.totalRows,
+        },
+        skipped: true,
+        reason: 'already_running',
+      }
+    }
+
+    await this.persistImportProgress(siopImport, stats)
+    await this.processRowChunks({
+      chunks: streamCsvRowChunks(sourceFilePath, IMPORT_CHUNK_SIZE),
+      payload,
+      siopImport,
+      sourceRecordId: siopImport.sourceRecordId,
+      stats,
+    })
+    await this.finishImport(siopImport, stats, {
+      ...(payload.source?.metadata ?? {}),
+      checksum,
+    })
+
+    return { import: siopImport, stats }
   }
 
   private async processRow(input: {
@@ -530,6 +567,49 @@ class SiopImportService {
       updated: stats.updated,
       skipped: stats.skipped,
       errors: stats.errors,
+    })
+    await siopImport.save()
+  }
+
+  private async processRowChunks(input: {
+    chunks: Iterable<JsonRecord[]> | AsyncIterable<JsonRecord[]>
+    payload: SiopImportRowsPayload
+    siopImport: SiopImport
+    sourceRecordId: string
+    stats: ImportStats
+  }) {
+    for await (const rows of input.chunks) {
+      await db.transaction(async (trx) => {
+        for (const row of rows) {
+          await this.processRow({
+            row,
+            payload: input.payload,
+            siopImport: input.siopImport,
+            sourceRecordId: input.sourceRecordId,
+            stats: input.stats,
+            trx,
+          })
+        }
+      })
+      await this.persistImportProgress(input.siopImport, input.stats)
+    }
+  }
+
+  private async finishImport(siopImport: SiopImport, stats: ImportStats, metadata: JsonRecord) {
+    siopImport.merge({
+      status:
+        stats.errors > 0
+          ? stats.inserted + stats.updated > 0
+            ? 'partial'
+            : 'failed'
+          : 'completed',
+      finishedAt: DateTime.now(),
+      totalRows: stats.totalRows,
+      inserted: stats.inserted,
+      updated: stats.updated,
+      skipped: stats.skipped,
+      errors: stats.errors,
+      rawMetadata: metadata,
     })
     await siopImport.save()
   }
@@ -815,6 +895,96 @@ function parseCsv(contents: string): JsonRecord[] {
       return row
     }, {})
   })
+}
+
+async function countCsvDataRows(filePath: string) {
+  let totalRows = 0
+  let hasHeader = false
+
+  for await (const rawLine of readLines(filePath)) {
+    const line = rawLine.trim()
+    if (!line) {
+      continue
+    }
+
+    if (!hasHeader) {
+      hasHeader = true
+      continue
+    }
+
+    totalRows += 1
+  }
+
+  return totalRows
+}
+
+async function* streamCsvRowChunks(filePath: string, chunkSize: number) {
+  let headers: string[] | null = null
+  let delimiter = ','
+  let rows: JsonRecord[] = []
+
+  for await (const rawLine of readLines(filePath)) {
+    const line = rawLine.trim()
+    if (!line) {
+      continue
+    }
+
+    if (!headers) {
+      delimiter = detectDelimiter(line)
+      headers = splitDelimitedLine(line, delimiter).map(normalizeHeader)
+      continue
+    }
+
+    const values = splitDelimitedLine(line, delimiter)
+    const row = headers.reduce<JsonRecord>((payload, header, index) => {
+      payload[header] = values[index] ?? null
+      return payload
+    }, {})
+
+    if (!Object.values(row).some((value) => value !== null && value !== '')) {
+      continue
+    }
+
+    rows.push(row)
+
+    if (rows.length >= chunkSize) {
+      yield rows
+      rows = []
+    }
+  }
+
+  if (rows.length > 0) {
+    yield rows
+  }
+}
+
+async function* readLines(filePath: string) {
+  const reader = createInterface({
+    input: createReadStream(filePath, { encoding: 'utf8' }),
+    crlfDelay: Infinity,
+  })
+
+  try {
+    for await (const line of reader) {
+      yield line
+    }
+  } finally {
+    reader.close()
+  }
+}
+
+async function checksumFile(filePath: string) {
+  const hash = createHash('sha256')
+
+  for await (const chunk of createReadStream(filePath)) {
+    hash.update(chunk)
+  }
+
+  return hash.digest('hex')
+}
+
+function detectDelimiter(line: string) {
+  return line.includes(';') ? ';' : ','
 }
 
 function splitDelimitedLine(line: string, delimiter: string) {
