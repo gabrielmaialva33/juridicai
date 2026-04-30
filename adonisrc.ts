@@ -32,6 +32,7 @@ export default defineConfig({
     () => import('@adonisjs/session/commands'),
     () => import('@adonisjs/inertia/commands'),
     () => import('@adonisjs/bouncer/commands'),
+    () => import('adonisjs-scheduler/commands'),
   ],
 
   /*
@@ -64,6 +65,7 @@ export default defineConfig({
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@adonisjs/bouncer/bouncer_provider'),
     () => import('@adonisjs/drive/drive_provider'),
+    () => import('adonisjs-scheduler/scheduler_provider'),
   ],
 
   /*
@@ -78,6 +80,7 @@ export default defineConfig({
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
+    () => import('#start/scheduler'),
   ],
 
   /*
