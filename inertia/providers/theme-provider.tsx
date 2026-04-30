@@ -2,9 +2,7 @@ import * as React from 'react'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export function ThemeProvider({
-  children,
-}: React.ComponentProps<typeof NextThemesProvider>) {
+export function ThemeProvider({ children }: React.ComponentProps<typeof NextThemesProvider>) {
   return (
     <NextThemesProvider
       attribute="class"

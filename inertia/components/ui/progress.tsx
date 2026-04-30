@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Progress as ProgressPrimitive } from 'radix-ui';
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import { Progress as ProgressPrimitive } from 'radix-ui'
 
 function Progress({
   className,
@@ -10,7 +10,7 @@ function Progress({
   value,
   ...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root> & {
-  indicatorClassName?: string;
+  indicatorClassName?: string
 }) {
   return (
     <ProgressPrimitive.Root
@@ -24,7 +24,7 @@ function Progress({
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>
-  );
+  )
 }
 
 function ProgressCircle({
@@ -40,31 +40,31 @@ function ProgressCircle({
   /**
    * Progress value from 0 to 100
    */
-  value?: number;
+  value?: number
   /**
    * Size of the circle in pixels
    */
-  size?: number;
+  size?: number
   /**
    * Width of the progress stroke
    */
-  strokeWidth?: number;
+  strokeWidth?: number
   /**
    * Additional className for the progress stroke
    */
-  indicatorClassName?: string;
+  indicatorClassName?: string
   /**
    * Additional className for the progress track
    */
-  trackClassName?: string;
+  trackClassName?: string
   /**
    * Content to display in the center of the circle
    */
-  children?: React.ReactNode;
+  children?: React.ReactNode
 }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (value / 100) * circumference;
+  const radius = (size - strokeWidth) / 2
+  const circumference = radius * 2 * Math.PI
+  const offset = circumference - (value / 100) * circumference
 
   return (
     <div
@@ -73,7 +73,12 @@ function ProgressCircle({
       style={{ width: size, height: size }}
       {...props}
     >
-      <svg className="absolute inset-0 -rotate-90" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg
+        className="absolute inset-0 -rotate-90"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+      >
         <circle
           data-slot="progress-circle-track"
           cx={size / 2}
@@ -107,7 +112,7 @@ function ProgressCircle({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function ProgressRadial({
@@ -126,54 +131,54 @@ function ProgressRadial({
   /**
    * Progress value from 0 to 100
    */
-  value?: number;
+  value?: number
   /**
    * Size of the radial in pixels
    */
-  size?: number;
+  size?: number
   /**
    * Width of the progress stroke
    */
-  strokeWidth?: number;
+  strokeWidth?: number
   /**
    * Start angle in degrees
    */
-  startAngle?: number;
+  startAngle?: number
   /**
    * Additional className for the progress stroke
    */
-  indicatorClassName?: string;
+  indicatorClassName?: string
   /**
    * Additional className for the progress track
    */
-  trackClassName?: string;
+  trackClassName?: string
   /**
    * End angle in degrees
    */
-  endAngle?: number;
+  endAngle?: number
   /**
    * Whether to show percentage label
    */
-  showLabel?: boolean;
+  showLabel?: boolean
   /**
    * Custom content to display
    */
-  children?: React.ReactNode;
+  children?: React.ReactNode
 }) {
-  const radius = (size - strokeWidth) / 2;
-  const angleRange = endAngle - startAngle;
-  const progressAngle = (value / 100) * angleRange;
+  const radius = (size - strokeWidth) / 2
+  const angleRange = endAngle - startAngle
+  const progressAngle = (value / 100) * angleRange
 
-  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180
 
-  const startX = size / 2 + radius * Math.cos(toRadians(startAngle));
-  const startY = size / 2 + radius * Math.sin(toRadians(startAngle));
-  const endX = size / 2 + radius * Math.cos(toRadians(startAngle + progressAngle));
-  const endY = size / 2 + radius * Math.sin(toRadians(startAngle + progressAngle));
+  const startX = size / 2 + radius * Math.cos(toRadians(startAngle))
+  const startY = size / 2 + radius * Math.sin(toRadians(startAngle))
+  const endX = size / 2 + radius * Math.cos(toRadians(startAngle + progressAngle))
+  const endY = size / 2 + radius * Math.sin(toRadians(startAngle + progressAngle))
 
-  const largeArc = progressAngle > 180 ? 1 : 0;
+  const largeArc = progressAngle > 180 ? 1 : 0
 
-  const pathData = ['M', startX, startY, 'A', radius, radius, 0, largeArc, 1, endX, endY].join(' ');
+  const pathData = ['M', startX, startY, 'A', radius, radius, 0, largeArc, 1, endX, endY].join(' ')
 
   return (
     <div
@@ -218,7 +223,7 @@ function ProgressRadial({
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export { Progress, ProgressCircle, ProgressRadial };
+export { Progress, ProgressCircle, ProgressRadial }

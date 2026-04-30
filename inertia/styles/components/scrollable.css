@@ -69,8 +69,7 @@
   .kt-scrollable-hover:hover,
   .kt-scrollable-y-hover:hover,
   .kt-scrollable-x-hover:hover {
-    scrollbar-color: var(--scrollbar-thumb-color, var(--color-input))
-      transparent;
+    scrollbar-color: var(--scrollbar-thumb-color, var(--color-input)) transparent;
 
     &::-webkit-scrollbar-thumb {
       background-color: var(--scrollbar-thumb-color, var(--color-input));

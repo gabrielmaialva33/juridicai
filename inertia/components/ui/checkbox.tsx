@@ -1,10 +1,10 @@
-'use client';
+'use client'
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { cva, VariantProps } from 'class-variance-authority';
-import { Check, Minus } from 'lucide-react';
-import { Checkbox as CheckboxPrimitive } from 'radix-ui';
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import { cva, VariantProps } from 'class-variance-authority'
+import { Check, Minus } from 'lucide-react'
+import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 
 // Define the variants for the Checkbox using cva.
 const checkboxVariants = cva(
@@ -26,8 +26,8 @@ const checkboxVariants = cva(
     defaultVariants: {
       size: 'md',
     },
-  },
-);
+  }
+)
 
 function Checkbox({
   className,
@@ -35,13 +35,17 @@ function Checkbox({
   ...props
 }: React.ComponentProps<typeof CheckboxPrimitive.Root> & VariantProps<typeof checkboxVariants>) {
   return (
-    <CheckboxPrimitive.Root data-slot="checkbox" className={cn(checkboxVariants({ size }), className)} {...props}>
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(checkboxVariants({ size }), className)}
+      {...props}
+    >
       <CheckboxPrimitive.Indicator className={cn('flex items-center justify-center text-current')}>
         <Check className="group-data-[state=indeterminate]:hidden" />
         <Minus className="hidden group-data-[state=indeterminate]:block" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
-  );
+  )
 }
 
-export { Checkbox };
+export { Checkbox }

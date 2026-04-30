@@ -30,9 +30,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <aside className="hidden md:flex md:w-64 shrink-0 flex-col border-r bg-card">
-        <div className="h-16 px-6 flex items-center font-semibold tracking-tight">
-          JuridicAI
-        </div>
+        <div className="h-16 px-6 flex items-center font-semibold tracking-tight">JuridicAI</div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV.map((item) => (
             <Link

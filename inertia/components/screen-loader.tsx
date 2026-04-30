@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { toAbsoluteUrl } from '@/lib/helpers';
+import { toAbsoluteUrl } from '@/lib/helpers'
 
 export function ScreenLoader() {
   return (
@@ -10,9 +10,7 @@ export function ScreenLoader() {
         src={toAbsoluteUrl('/media/app/mini-logo.svg')}
         alt="logo"
       />
-      <div className="text-muted-foreground font-medium text-sm">
-        Loading...
-      </div>
+      <div className="text-muted-foreground font-medium text-sm">Loading...</div>
     </div>
-  );
+  )
 }
