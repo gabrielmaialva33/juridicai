@@ -1,4 +1,4 @@
-export const SIOP_IMPORT_QUEUE = 'siop:imports'
+export const SIOP_IMPORT_QUEUE = 'siop-imports'
 
 export type SiopImportJobPayload = {
   tenantId: string

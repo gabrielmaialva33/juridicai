@@ -1,4 +1,4 @@
-export const EXPORT_PRECATORIOS_QUEUE = 'exports:precatorios'
+export const EXPORT_PRECATORIOS_QUEUE = 'exports-precatorios'
 
 export type ExportPrecatoriosPayload = {
   tenantId: string

@@ -1,1 +1,1 @@
-export const PURGE_STAGING_QUEUE = 'maintenance:purge-staging'
+export const PURGE_STAGING_QUEUE = 'maintenance-purge-staging'
