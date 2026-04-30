@@ -1,8 +1,9 @@
 import debtorRepository from '#modules/debtors/repositories/debtor_repository'
+import type { DebtorListFilters } from '#modules/debtors/repositories/debtor_repository'
 
 class DebtorService {
-  listForDashboard(tenantId: string) {
-    return debtorRepository.listForDashboard(tenantId)
+  list(tenantId: string, filters: DebtorListFilters) {
+    return debtorRepository.list(tenantId, filters)
   }
 
   show(tenantId: string, id: string) {
