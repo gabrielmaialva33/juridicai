@@ -1,5 +1,6 @@
 import { EXPORT_PRECATORIOS_QUEUE } from '#modules/exports/jobs/export_precatorios_handler'
 import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
+import { DATAJUD_MATCH_CANDIDATES_QUEUE } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import queueService from '#shared/services/queue_service'
 import type RadarJobRun from '#modules/admin/models/radar_job_run'
@@ -97,6 +98,22 @@ class JobRetryService {
             missingOnly: booleanMetadata(run.metadata, 'missingOnly') ?? true,
             courtAliases: stringArrayMetadata(run.metadata, 'courtAliases'),
             dryRun: booleanMetadata(run.metadata, 'dryRun') ?? false,
+            origin: 'manual_retry' as const,
+          },
+        }
+      }
+
+      case 'datajud-match-candidates': {
+        return {
+          queueName: DATAJUD_MATCH_CANDIDATES_QUEUE,
+          jobName: 'datajud-match-candidates',
+          payload: {
+            tenantId: run.tenantId!,
+            requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            source: stringMetadata(run.metadata, 'source'),
+            limit: numberMetadata(run.metadata, 'limit'),
+            candidatesPerAsset: numberMetadata(run.metadata, 'candidatesPerAsset'),
+            persist: booleanMetadata(run.metadata, 'persist') ?? true,
             origin: 'manual_retry' as const,
           },
         }

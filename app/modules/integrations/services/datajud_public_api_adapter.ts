@@ -10,14 +10,14 @@ import type { JsonRecord } from '#shared/types/model_enums'
 
 export const DATAJUD_PUBLIC_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=='
 
-type DataJudHit = {
+export type DataJudHit = {
   _id: string
   _index: string
   _source: JsonRecord
   sort?: unknown[]
 }
 
-type DataJudSearchResponse = {
+export type DataJudSearchResponse = {
   took: number
   timed_out: boolean
   hits: {
