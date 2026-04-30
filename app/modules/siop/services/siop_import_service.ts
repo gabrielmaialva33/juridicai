@@ -291,7 +291,8 @@ class SiopImportService {
     )
     const fingerprint = rowFingerprint(input.row)
     const externalId =
-      extractString(input.row, ['external_id', 'externalId', 'id', 'asset_id']) ?? fingerprint
+      extractString(input.row, ['chave', 'external_id', 'externalId', 'id', 'asset_id']) ??
+      fingerprint
     const existingAsset = await this.findExistingAsset(
       input.payload.tenantId,
       normalized.cnjNumber,
@@ -306,11 +307,17 @@ class SiopImportService {
         debtorId: debtor.id,
         externalId,
         originProcessNumber: normalized.cnjNumber,
+        assetNumber: extractString(input.row, [
+          'chave',
+          'asset_number',
+          'numero_precatorio',
+          'precatorio',
+        ]),
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
         faceValue: normalized.faceValue,
-        estimatedUpdatedValue: normalized.faceValue,
+        estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
         lifecycleStatus: 'discovered',
         complianceStatus: 'approved_for_analysis',
         rawData: input.row,
@@ -338,12 +345,17 @@ class SiopImportService {
         cnjNumber: normalized.cnjNumber,
         originProcessNumber: normalized.cnjNumber,
         debtorId: debtor.id,
-        assetNumber: extractString(input.row, ['asset_number', 'numero_precatorio', 'precatorio']),
+        assetNumber: extractString(input.row, [
+          'chave',
+          'asset_number',
+          'numero_precatorio',
+          'precatorio',
+        ]),
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
         faceValue: normalized.faceValue,
-        estimatedUpdatedValue: normalized.faceValue,
+        estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
         lifecycleStatus: 'discovered',
         piiStatus: 'none',
         complianceStatus: 'approved_for_analysis',
@@ -369,7 +381,6 @@ class SiopImportService {
   private validateNormalizedRow(normalized: ReturnType<typeof siopNormalizeService.normalizeRow>) {
     const errors: string[] = []
 
-    if (!normalized.cnjNumber) errors.push('cnj_number_invalid')
     if (!normalized.debtorName) errors.push('debtor_missing')
     if (!normalized.faceValue) errors.push('face_value_invalid')
 
@@ -527,7 +538,9 @@ class SiopImportService {
     return Debtor.create(
       {
         tenantId,
-        name: extractString(row, ['devedor', 'debtor', 'debtor_name']) ?? normalizedName,
+        name:
+          extractString(row, ['nome_da_uo_executada', 'devedor', 'debtor', 'debtor_name']) ??
+          normalizedName,
         normalizedName,
         normalizedKey: normalizedName,
         debtorType: detectDebtorType(normalizedName),
@@ -644,7 +657,9 @@ function detectDebtorType(normalizedName: string): DebtorType {
 }
 
 function detectAssetNature(row: JsonRecord): AssetNature {
-  const rawNature = String(row.nature ?? row.natureza ?? '').toLowerCase()
+  const rawNature = String(
+    row.nature ?? row.natureza ?? row.tributario ?? row.tipo_de_causa ?? ''
+  ).toLowerCase()
 
   if (rawNature.includes('aliment')) return 'alimentar'
   if (rawNature.includes('tribut')) return 'tributario'

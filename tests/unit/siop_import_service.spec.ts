@@ -154,6 +154,53 @@ test.group('SIOP import service', () => {
     await cleanupTenantImportData(tenant)
   })
 
+  test('imports official SIOP open-data rows without CNJ numbers', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+
+    const result = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: [
+        {
+          chave: '1116122',
+          exercicio: '2024',
+          codigo_do_tribunal: '12105',
+          nome_do_tribunal: 'Tribunal Regional Federal da 4a. Região',
+          tipo_de_despesa: '12',
+          nome_da_uo_executada: 'Fundo do Regime Geral de Previdência Social',
+          natureza_de_despesa: '33909100',
+          tipo_de_causa: 'Aposentadoria por Tempo de Contribuição (Art. 55/6)',
+          valor_original_do_precatorio: '401540,95',
+          valor_atualizado: '454035,83505015308',
+          faixavalor: 'Até R$ 1 milhão',
+        },
+      ],
+      source: { checksum: `siop-open-data-official-${tenant.id}` },
+    })
+
+    assert.deepEqual(result.stats, {
+      totalRows: 1,
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    })
+
+    const asset = await PrecatorioAsset.query()
+      .where('tenant_id', tenant.id)
+      .where('external_id', '1116122')
+      .firstOrFail()
+    const debtor = await Debtor.findOrFail(asset.debtorId!)
+
+    assert.isNull(asset.cnjNumber)
+    assert.equal(asset.faceValue, '401540.95')
+    assert.equal(asset.estimatedUpdatedValue, '454035.83')
+    assert.equal(asset.assetNumber, '1116122')
+    assert.equal(debtor.normalizedKey, 'FUNDO DO REGIME GERAL DE PREVIDENCIA SOCIAL')
+
+    await cleanupTenantImportData(tenant)
+  })
+
   test('skips an import that is already running', async ({ assert }) => {
     const tenant = await TenantFactory.create()
 

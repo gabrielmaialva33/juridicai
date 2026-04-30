@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
+import siopNormalizeService from '#modules/siop/services/siop_normalize_service'
 
 test.group('SIOP parsers / CNJ numbers', () => {
   test('normalizes formatted and digit-only valid CNJ numbers', ({ assert }) => {
@@ -27,10 +28,40 @@ test.group('SIOP parsers / BRL values', () => {
 
   test('parses numeric inputs and rejects ambiguous text', ({ assert }) => {
     assert.equal(parseBrazilianMoney(1250.5), '1250.50')
+    assert.equal(parseBrazilianMoney('401540,95'), '401540.95')
     assert.isNull(parseBrazilianMoney(null))
     assert.isNull(parseBrazilianMoney(''))
     assert.isNull(parseBrazilianMoney('sem valor'))
     assert.isNull(parseBrazilianMoney('1,234.56'))
+  })
+})
+
+test.group('SIOP normalizer / official open-data rows', () => {
+  test('maps real SIOP open-data CSV headers into canonical fields', ({ assert }) => {
+    const normalized = siopNormalizeService.normalizeRow({
+      chave: '1116122',
+      exercicio: '2024',
+      codigo_do_tribunal: '12105',
+      nome_do_tribunal: 'Tribunal Regional Federal da 4a. Região',
+      tipo_de_despesa: '12',
+      nome_da_uo_executada: 'Fundo do Regime Geral de Previdência Social',
+      natureza_de_despesa: '33909100',
+      tipo_de_causa: 'Aposentadoria por Tempo de Contribuição (Art. 55/6)',
+      valor_original_do_precatorio: '401540,95',
+      valor_atualizado: '454035,83505015308',
+      faixavalor: 'Até R$ 1 milhão',
+    })
+
+    assert.isNull(normalized.cnjNumber)
+    assert.equal(normalized.debtorName, 'FUNDO DO REGIME GERAL DE PREVIDENCIA SOCIAL')
+    assert.equal(normalized.faceValue, '401540.95')
+    assert.equal(normalized.updatedValue, '454035.83')
+    assert.equal(normalized.exerciseYear, 2024)
+    assert.equal(normalized.courtCode, '12105')
+    assert.equal(normalized.courtName, 'Tribunal Regional Federal da 4a. Região')
+    assert.equal(normalized.budgetUnitName, 'Fundo do Regime Geral de Previdência Social')
+    assert.equal(normalized.natureExpenseCode, '33909100')
+    assert.equal(normalized.valueRange, 'Até R$ 1 milhão')
   })
 })
 
