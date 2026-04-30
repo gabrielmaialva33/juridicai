@@ -1,36 +1,10 @@
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import dataJudPublicApiAdapter from '#modules/integrations/services/datajud_public_api_adapter'
+import {
+  inferDataJudCourtAliases,
+  normalizeAliases,
+} from '#modules/integrations/services/datajud_asset_enrichment_service'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
-
-const STATE_COURT_ALIASES: Record<string, string> = {
-  '01': 'tjac',
-  '02': 'tjal',
-  '03': 'tjam',
-  '04': 'tjap',
-  '05': 'tjba',
-  '06': 'tjce',
-  '07': 'tjdft',
-  '08': 'tjes',
-  '09': 'tjgo',
-  '10': 'tjma',
-  '13': 'tjmg',
-  '12': 'tjms',
-  '11': 'tjmt',
-  '14': 'tjpa',
-  '15': 'tjpb',
-  '17': 'tjpe',
-  '18': 'tjpi',
-  '16': 'tjpr',
-  '19': 'tjrj',
-  '20': 'tjrn',
-  '22': 'tjro',
-  '23': 'tjrr',
-  '21': 'tjrs',
-  '24': 'tjsc',
-  '25': 'tjse',
-  '26': 'tjsp',
-  '27': 'tjto',
-}
 
 export default class DataJudSyncProcess extends BaseCommand {
   static commandName = 'datajud:sync-process'
@@ -69,7 +43,7 @@ export default class DataJudSyncProcess extends BaseCommand {
       return
     }
 
-    const courtAliases = parseCourtAliases(this.courts) ?? inferCourtAliases(cnjNumber)
+    const courtAliases = parseCourtAliases(this.courts) ?? inferDataJudCourtAliases(cnjNumber)
 
     if (courtAliases.length === 0) {
       this.logger.error(
@@ -135,28 +109,5 @@ function parseCourtAliases(value?: string) {
     return null
   }
 
-  return value
-    .split(',')
-    .map((alias) => alias.trim().toLowerCase())
-    .filter(Boolean)
-}
-
-function inferCourtAliases(cnjNumber: string) {
-  const digits = cnjNumber.replace(/\D/g, '')
-  const segment = digits.slice(13, 14)
-  const court = digits.slice(14, 16)
-
-  if (segment === '4') {
-    return [`trf${Number(court)}`]
-  }
-
-  if (segment === '5') {
-    return [`trt${Number(court)}`]
-  }
-
-  if (segment === '8') {
-    return STATE_COURT_ALIASES[court] ? [STATE_COURT_ALIASES[court]] : []
-  }
-
-  return []
+  return normalizeAliases(value.split(','))
 }
