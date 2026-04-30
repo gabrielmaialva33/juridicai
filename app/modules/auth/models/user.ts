@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, beforeSave, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { UserStatus } from '#shared/types/model_enums'
@@ -35,6 +35,13 @@ export default class User extends compose(BaseModel, withAuthFinder(hash)) {
 
   @hasMany(() => UserRole)
   declare roles: HasMany<typeof UserRole>
+
+  @beforeSave()
+  static async hashPasswordBeforeSave(user: User) {
+    if (user.$dirty.password && !hash.isValidHash(user.password)) {
+      user.password = await hash.make(user.password)
+    }
+  }
 
   get initials() {
     const [first, last] = this.fullName ? this.fullName.split(' ') : this.email.split('@')
