@@ -125,6 +125,9 @@ function createTenantContext(options: {
       header(name: string) {
         return name === 'x-tenant-id' ? options.sessionValues.headerTenantId : undefined
       },
+      accepts(types: string[]) {
+        return types.includes('json') ? 'json' : false
+      },
       input(name: string) {
         return name === 'tenant_id' ? options.sessionValues.queryTenantId : undefined
       },

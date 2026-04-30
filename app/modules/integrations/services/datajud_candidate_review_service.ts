@@ -8,6 +8,12 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 const DEFAULT_MIN_ACCEPT_SCORE = 85
 
+type DataJudCandidateReviewOptions = {
+  tenantId?: string
+  force?: boolean
+  minScore?: number
+}
+
 class DataJudCandidateReviewError extends Error {
   constructor(
     public code: 'candidate_not_acceptable' | 'invalid_decision',
@@ -18,12 +24,9 @@ class DataJudCandidateReviewError extends Error {
 }
 
 class DataJudCandidateReviewService {
-  async accept(candidateId: string, options: { force?: boolean; minScore?: number } = {}) {
+  async accept(candidateId: string, options: DataJudCandidateReviewOptions = {}) {
     return db.transaction(async (trx) => {
-      const candidate = await ProcessMatchCandidate.query({ client: trx })
-        .where('id', candidateId)
-        .forUpdate()
-        .firstOrFail()
+      const candidate = await this.findCandidateForReview(candidateId, options.tenantId, trx)
       const minScore = options.minScore ?? DEFAULT_MIN_ACCEPT_SCORE
 
       if (!options.force && candidate.score < minScore) {
@@ -51,12 +54,9 @@ class DataJudCandidateReviewService {
     })
   }
 
-  async reject(candidateId: string) {
+  async reject(candidateId: string, options: { tenantId?: string } = {}) {
     return db.transaction(async (trx) => {
-      const candidate = await ProcessMatchCandidate.query({ client: trx })
-        .where('id', candidateId)
-        .forUpdate()
-        .firstOrFail()
+      const candidate = await this.findCandidateForReview(candidateId, options.tenantId, trx)
 
       candidate.status = 'rejected'
       candidate.useTransaction(trx)
@@ -65,6 +65,33 @@ class DataJudCandidateReviewService {
 
       return candidate
     })
+  }
+
+  async markAmbiguous(candidateId: string, options: { tenantId?: string } = {}) {
+    return db.transaction(async (trx) => {
+      const candidate = await this.findCandidateForReview(candidateId, options.tenantId, trx)
+
+      candidate.status = 'ambiguous'
+      candidate.useTransaction(trx)
+      await candidate.save()
+      await this.createReviewEvent(candidate, 'datajud_candidate_marked_ambiguous', trx)
+
+      return candidate
+    })
+  }
+
+  private findCandidateForReview(
+    candidateId: string,
+    tenantId: string | undefined,
+    trx: TransactionClientContract
+  ) {
+    const query = ProcessMatchCandidate.query({ client: trx }).where('id', candidateId).forUpdate()
+
+    if (tenantId) {
+      query.where('tenant_id', tenantId)
+    }
+
+    return query.firstOrFail()
   }
 
   private async upsertJudicialProcess(
@@ -106,7 +133,10 @@ class DataJudCandidateReviewService {
 
   private async createReviewEvent(
     candidate: ProcessMatchCandidate,
-    eventType: 'datajud_candidate_accepted' | 'datajud_candidate_rejected',
+    eventType:
+      | 'datajud_candidate_accepted'
+      | 'datajud_candidate_rejected'
+      | 'datajud_candidate_marked_ambiguous',
     trx: TransactionClientContract
   ) {
     const idempotencyKey = `${eventType}:${candidate.id}`

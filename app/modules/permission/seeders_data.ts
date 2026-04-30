@@ -6,6 +6,8 @@ export const PERMISSIONS = [
   'debtors.read',
   'pii.reveal',
   'exports.manage',
+  'integrations.datajud.read',
+  'integrations.datajud.manage',
   'admin.health.read',
   'admin.jobs.read',
 ] as const
@@ -21,6 +23,12 @@ export const ROLES = [
   {
     slug: 'analyst',
     name: 'Analyst',
-    permissions: ['dashboard.read', 'imports.read', 'precatorios.read', 'debtors.read'],
+    permissions: [
+      'dashboard.read',
+      'imports.read',
+      'precatorios.read',
+      'debtors.read',
+      'integrations.datajud.read',
+    ],
   },
 ] as const

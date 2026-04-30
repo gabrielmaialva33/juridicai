@@ -89,6 +89,33 @@ test.group('DataJud candidate review service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('marks a candidate as ambiguous within the tenant review scope', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const otherTenant = await TenantFactory.create()
+    const asset = await PrecatorioAssetFactory.merge({
+      tenantId: tenant.id,
+      source: 'tribunal',
+      cnjNumber: '5004648-37.2022.4.02.9388',
+    }).create()
+    const candidate = await createCandidate(tenant, asset.id, {
+      candidateCnj: '5004648-77.2021.4.02.5118',
+      score: 65,
+    })
+
+    await assert.rejects(() =>
+      dataJudCandidateReviewService.markAmbiguous(candidate.id, { tenantId: otherTenant.id })
+    )
+    const ambiguous = await dataJudCandidateReviewService.markAmbiguous(candidate.id, {
+      tenantId: tenant.id,
+    })
+
+    assert.equal(ambiguous.status, 'ambiguous')
+    assert.equal(await countEvents(tenant.id, 'datajud_candidate_marked_ambiguous'), 1)
+
+    await cleanupTenantData(tenant)
+    await cleanupTenantData(otherTenant)
+  })
 })
 
 async function createCandidate(

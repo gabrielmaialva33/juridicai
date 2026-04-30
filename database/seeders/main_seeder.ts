@@ -37,6 +37,8 @@ const permissionDescriptions: Record<(typeof PERMISSIONS)[number], string> = {
   'debtors.read': 'View debtor profiles and payment context.',
   'pii.reveal': 'Reveal protected beneficiary data through the audited PII flow.',
   'exports.manage': 'Create and inspect export jobs.',
+  'integrations.datajud.read': 'View DataJud enrichment and candidate matching data.',
+  'integrations.datajud.manage': 'Review and promote DataJud process match candidates.',
   'admin.health.read': 'View healthcheck and service status.',
   'admin.jobs.read': 'View Radar job runs and worker activity.',
 }
