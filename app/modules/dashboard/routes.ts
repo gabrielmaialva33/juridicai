@@ -10,3 +10,4 @@ router
   .as('dashboard')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('dashboard.read'))

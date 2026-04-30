@@ -10,6 +10,8 @@ export const PERMISSIONS = [
   'admin.jobs.read',
 ] as const
 
+export type PermissionSlug = (typeof PERMISSIONS)[number]
+
 export const ROLES = [
   {
     slug: 'owner',

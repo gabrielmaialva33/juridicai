@@ -12,3 +12,4 @@ router
   .as('pii')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('pii.reveal'))

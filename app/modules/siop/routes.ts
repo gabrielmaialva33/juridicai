@@ -10,3 +10,4 @@ router
   .as('siop')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('imports.read'))

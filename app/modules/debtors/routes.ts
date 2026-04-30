@@ -10,3 +10,4 @@ router
   .as('debtors')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('debtors.read'))

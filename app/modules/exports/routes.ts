@@ -10,3 +10,4 @@ router
   .as('exports')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('exports.manage'))

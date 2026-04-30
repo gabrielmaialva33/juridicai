@@ -11,3 +11,4 @@ router
   .as('precatorios')
   .use(middleware.auth())
   .use(middleware.tenant())
+  .use(middleware.permission('precatorios.read'))
