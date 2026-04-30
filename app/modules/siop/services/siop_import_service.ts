@@ -148,6 +148,8 @@ class SiopImportService {
       }
     }
 
+    await this.persistImportProgress(siopImport, stats)
+
     for (const rows of chunkRows(payload.rows, IMPORT_CHUNK_SIZE)) {
       await db.transaction(async (trx) => {
         for (const row of rows) {
@@ -161,6 +163,7 @@ class SiopImportService {
           })
         }
       })
+      await this.persistImportProgress(siopImport, stats)
     }
 
     siopImport.merge({
@@ -518,6 +521,17 @@ class SiopImportService {
 
       return true
     })
+  }
+
+  private async persistImportProgress(siopImport: SiopImport, stats: ImportStats) {
+    siopImport.merge({
+      totalRows: stats.totalRows,
+      inserted: stats.inserted,
+      updated: stats.updated,
+      skipped: stats.skipped,
+      errors: stats.errors,
+    })
+    await siopImport.save()
   }
 
   private async findOrCreateDebtor(
