@@ -1,11 +1,13 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
+import { handleDataJudEnrichAssets } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { handleApplyRetentionPolicy } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { handleSiopReconcile } from '#modules/siop/jobs/siop_reconcile_handler'
 import ClientError from '#modules/client_errors/models/client_error'
 import SiopImport from '#modules/siop/models/siop_import'
 import SourceRecord from '#modules/siop/models/source_record'
 import { ClientErrorFactory } from '#database/factories/client_error_factory'
+import { PrecatorioAssetFactory } from '#database/factories/precatorio_asset_factory'
 import { SiopImportFactory } from '#database/factories/siop_import_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import type Tenant from '#modules/tenant/models/tenant'
@@ -88,6 +90,43 @@ test.group('operational jobs', () => {
       await cleanupTenantOperationalData(tenant)
     }
   })
+
+  test('records DataJud enrichment dry-run metrics', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+
+    try {
+      await PrecatorioAssetFactory.merge({
+        tenantId: tenant.id,
+        source: 'siop',
+        cnjNumber: '0702042-05.2020.8.07.0003',
+      }).create()
+
+      const metrics = await handleDataJudEnrichAssets({
+        tenantId: tenant.id,
+        dryRun: true,
+        origin: 'manual_retry',
+      })
+
+      assert.include(metrics, {
+        selected: 1,
+        attempted: 1,
+        synced: 0,
+        dryRun: true,
+      })
+
+      const [jobRun] = await db
+        .from('radar_job_runs')
+        .where('job_name', 'datajud-enrich-assets')
+        .orderBy('created_at', 'desc')
+        .select('*')
+
+      assert.equal(jobRun.status, 'completed')
+      assert.equal(jobRun.origin, 'manual_retry')
+      assert.equal(jobRun.metrics.selected, 1)
+    } finally {
+      await cleanupTenantOperationalData(tenant)
+    }
+  })
 })
 
 async function cleanupTenantOperationalData(tenant: Tenant) {
@@ -98,7 +137,11 @@ async function cleanupTenantOperationalData(tenant: Tenant) {
 
   await db
     .from('radar_job_runs')
-    .whereIn('job_name', ['siop-reconcile', 'maintenance-apply-retention-policy'])
+    .whereIn('job_name', [
+      'siop-reconcile',
+      'maintenance-apply-retention-policy',
+      'datajud-enrich-assets',
+    ])
     .delete()
   await db.from('retention_manifest').where('tenant_id', tenant.id).delete()
   await db.from('retention_config').where('tenant_id', tenant.id).delete()

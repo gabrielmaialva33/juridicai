@@ -16,6 +16,11 @@ import {
   type ExportPrecatoriosPayload,
 } from '#modules/exports/jobs/export_precatorios_handler'
 import {
+  DATAJUD_ENRICH_ASSETS_QUEUE,
+  handleDataJudEnrichAssets,
+  type DataJudEnrichAssetsPayload,
+} from '#modules/integrations/jobs/datajud_enrich_assets_handler'
+import {
   APPLY_RETENTION_POLICY_QUEUE,
   handleApplyRetentionPolicy,
   type ApplyRetentionPolicyPayload,
@@ -44,6 +49,7 @@ export const queues = {
   refreshAggregates: { name: REFRESH_AGGREGATES_QUEUE, concurrency: 1 },
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
+  dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
 } as const
 
 export const queueNames = Object.values(queues).map((queue) => queue.name)
@@ -138,6 +144,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.exportPrecatorios.concurrency }
+  )
+
+  queueService.registerWorker<DataJudEnrichAssetsPayload>(
+    queues.dataJudEnrichAssets.name,
+    async (job) => {
+      await handleDataJudEnrichAssets({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.dataJudEnrichAssets.concurrency }
   )
 
   heartbeatInterval = setInterval(() => {

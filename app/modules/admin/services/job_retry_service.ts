@@ -1,4 +1,5 @@
 import { EXPORT_PRECATORIOS_QUEUE } from '#modules/exports/jobs/export_precatorios_handler'
+import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import queueService from '#shared/services/queue_service'
 import type RadarJobRun from '#modules/admin/models/radar_job_run'
@@ -84,6 +85,23 @@ class JobRetryService {
         }
       }
 
+      case 'datajud-enrich-assets': {
+        return {
+          queueName: DATAJUD_ENRICH_ASSETS_QUEUE,
+          jobName: 'datajud-enrich-assets',
+          payload: {
+            tenantId: run.tenantId!,
+            requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            limit: numberMetadata(run.metadata, 'limit'),
+            source: stringMetadata(run.metadata, 'source'),
+            missingOnly: booleanMetadata(run.metadata, 'missingOnly') ?? true,
+            courtAliases: stringArrayMetadata(run.metadata, 'courtAliases'),
+            dryRun: booleanMetadata(run.metadata, 'dryRun') ?? false,
+            origin: 'manual_retry' as const,
+          },
+        }
+      }
+
       default:
         throw new JobRetryError('unsupported_job', `Job '${run.jobName}' does not support retry.`)
     }
@@ -93,6 +111,21 @@ class JobRetryService {
 function stringMetadata(metadata: JsonRecord | null, key: string) {
   const value = metadata?.[key]
   return typeof value === 'string' && value.trim() !== '' ? value : null
+}
+
+function numberMetadata(metadata: JsonRecord | null, key: string) {
+  const value = metadata?.[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function booleanMetadata(metadata: JsonRecord | null, key: string) {
+  const value = metadata?.[key]
+  return typeof value === 'boolean' ? value : null
+}
+
+function stringArrayMetadata(metadata: JsonRecord | null, key: string) {
+  const value = metadata?.[key]
+  return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : null
 }
 
 export { JobRetryError }
