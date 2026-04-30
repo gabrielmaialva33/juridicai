@@ -36,6 +36,42 @@ const STATE_COURT_ALIASES: Record<string, string> = {
   '27': 'tjto',
 }
 
+const ELECTORAL_COURT_ALIASES: Record<string, string> = {
+  '01': 'tre-ac',
+  '02': 'tre-al',
+  '03': 'tre-am',
+  '04': 'tre-ap',
+  '05': 'tre-ba',
+  '06': 'tre-ce',
+  '07': 'tre-dft',
+  '08': 'tre-es',
+  '09': 'tre-go',
+  '10': 'tre-ma',
+  '13': 'tre-mg',
+  '12': 'tre-ms',
+  '11': 'tre-mt',
+  '14': 'tre-pa',
+  '15': 'tre-pb',
+  '17': 'tre-pe',
+  '18': 'tre-pi',
+  '16': 'tre-pr',
+  '19': 'tre-rj',
+  '20': 'tre-rn',
+  '22': 'tre-ro',
+  '23': 'tre-rr',
+  '21': 'tre-rs',
+  '24': 'tre-sc',
+  '25': 'tre-se',
+  '26': 'tre-sp',
+  '27': 'tre-to',
+}
+
+const STATE_MILITARY_COURT_ALIASES: Record<string, string> = {
+  '13': 'tjmmg',
+  '21': 'tjmrs',
+  '26': 'tjmsp',
+}
+
 type CandidateRow = {
   id: string
   cnj_number: string | null
@@ -171,6 +207,10 @@ export function inferDataJudCourtAliases(cnjNumber: string) {
   const segment = digits.slice(13, 14)
   const court = digits.slice(14, 16)
 
+  if (segment === '3') {
+    return ['stj']
+  }
+
   if (segment === '4') {
     return [`trf${Number(court)}`]
   }
@@ -179,8 +219,20 @@ export function inferDataJudCourtAliases(cnjNumber: string) {
     return [`trt${Number(court)}`]
   }
 
+  if (segment === '6') {
+    return ELECTORAL_COURT_ALIASES[court] ? [ELECTORAL_COURT_ALIASES[court]] : []
+  }
+
+  if (segment === '7') {
+    return ['stm']
+  }
+
   if (segment === '8') {
     return STATE_COURT_ALIASES[court] ? [STATE_COURT_ALIASES[court]] : []
+  }
+
+  if (segment === '9') {
+    return STATE_MILITARY_COURT_ALIASES[court] ? [STATE_MILITARY_COURT_ALIASES[court]] : []
   }
 
   return []

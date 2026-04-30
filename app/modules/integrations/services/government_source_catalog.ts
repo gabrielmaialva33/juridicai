@@ -23,6 +23,8 @@ export type GovernmentSourceRecord = {
   courtAliases?: string[]
 }
 
+const DATAJUD_SUPERIOR_ALIASES = ['tst', 'tse', 'stj', 'stm'] as const
+
 const DATAJUD_TRF_ALIASES = ['trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6'] as const
 
 const DATAJUD_TJ_ALIASES = [
@@ -82,6 +84,38 @@ const DATAJUD_TRT_ALIASES = [
   'trt24',
 ] as const
 
+const DATAJUD_TRE_ALIASES = [
+  'tre-ac',
+  'tre-al',
+  'tre-am',
+  'tre-ap',
+  'tre-ba',
+  'tre-ce',
+  'tre-dft',
+  'tre-es',
+  'tre-go',
+  'tre-ma',
+  'tre-mg',
+  'tre-ms',
+  'tre-mt',
+  'tre-pa',
+  'tre-pb',
+  'tre-pe',
+  'tre-pi',
+  'tre-pr',
+  'tre-rj',
+  'tre-rn',
+  'tre-ro',
+  'tre-rr',
+  'tre-rs',
+  'tre-sc',
+  'tre-se',
+  'tre-sp',
+  'tre-to',
+] as const
+
+const DATAJUD_STATE_MILITARY_ALIASES = ['tjmmg', 'tjmrs', 'tjmsp'] as const
+
 export const governmentSourceCatalog: GovernmentSourceRecord[] = [
   {
     id: 'siop-open-data-precatorios',
@@ -137,7 +171,14 @@ export const governmentSourceCatalog: GovernmentSourceRecord[] = [
       'Responses protect confidential cases and party-sensitive information.',
       'Store raw payloads separately from normalized precatorio asset fields.',
     ],
-    courtAliases: [...DATAJUD_TRF_ALIASES, ...DATAJUD_TJ_ALIASES, ...DATAJUD_TRT_ALIASES],
+    courtAliases: [
+      ...DATAJUD_SUPERIOR_ALIASES,
+      ...DATAJUD_TRF_ALIASES,
+      ...DATAJUD_TJ_ALIASES,
+      ...DATAJUD_TRT_ALIASES,
+      ...DATAJUD_TRE_ALIASES,
+      ...DATAJUD_STATE_MILITARY_ALIASES,
+    ],
   },
   {
     id: 'cnj-annual-precatorios-map',

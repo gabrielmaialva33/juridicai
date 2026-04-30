@@ -32,6 +32,18 @@ test.group('Government source catalog', () => {
       governmentSourceCatalog.dataJudEndpoint('tjsp'),
       'https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search'
     )
+    assert.equal(
+      governmentSourceCatalog.dataJudEndpoint('stj'),
+      'https://api-publica.datajud.cnj.jus.br/api_publica_stj/_search'
+    )
+    assert.equal(
+      governmentSourceCatalog.dataJudEndpoint('tre-sp'),
+      'https://api-publica.datajud.cnj.jus.br/api_publica_tre-sp/_search'
+    )
+    assert.equal(
+      governmentSourceCatalog.dataJudEndpoint('tjmmg'),
+      'https://api-publica.datajud.cnj.jus.br/api_publica_tjmmg/_search'
+    )
     assert.isNull(governmentSourceCatalog.dataJudEndpoint('unknown-court'))
   })
 })

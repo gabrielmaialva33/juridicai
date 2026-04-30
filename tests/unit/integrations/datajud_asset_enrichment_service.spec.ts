@@ -139,6 +139,10 @@ test.group('DataJud asset enrichment service', () => {
   test('infers DataJud court aliases from CNJ numbers', ({ assert }) => {
     assert.deepEqual(inferDataJudCourtAliases('0702042-05.2020.8.07.0003'), ['tjdft'])
     assert.deepEqual(inferDataJudCourtAliases('0001234-94.2024.4.01.3400'), ['trf1'])
+    assert.deepEqual(inferDataJudCourtAliases('0000001-47.2024.3.00.0000'), ['stj'])
+    assert.deepEqual(inferDataJudCourtAliases('0000001-44.2024.6.26.0000'), ['tre-sp'])
+    assert.deepEqual(inferDataJudCourtAliases('0000001-02.2024.7.00.0000'), ['stm'])
+    assert.deepEqual(inferDataJudCourtAliases('0000001-88.2024.9.13.0000'), ['tjmmg'])
   })
 })
 
