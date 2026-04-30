@@ -1,14 +1,11 @@
 import factory from '@adonisjs/lucid/factories'
 import SourceRecord from '#modules/siop/models/source_record'
 import { DateTime } from 'luxon'
-import { TenantFactory } from '#database/factories/tenant_factory'
+import { ensureTenantId } from '#database/factories/factory_helpers'
 
 export const SourceRecordFactory = factory
   .define(SourceRecord, async ({ faker }) => {
-    const tenant = await TenantFactory.create()
-
     return {
-      tenantId: tenant.id,
       source: 'siop' as const,
       sourceUrl: faker.internet.url(),
       originalFilename: `siop-${faker.date.past().getFullYear()}.xlsx`,
@@ -17,5 +14,8 @@ export const SourceRecordFactory = factory
       rawData: {},
       collectedAt: DateTime.now(),
     }
+  })
+  .before('create', async (_, row) => {
+    await ensureTenantId(row)
   })
   .build()

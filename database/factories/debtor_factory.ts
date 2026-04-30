@@ -1,15 +1,13 @@
 import factory from '@adonisjs/lucid/factories'
 import Debtor from '#modules/debtors/models/debtor'
-import { TenantFactory } from '#database/factories/tenant_factory'
+import { ensureTenantId } from '#database/factories/factory_helpers'
 
 export const DebtorFactory = factory
   .define(Debtor, async ({ faker }) => {
-    const tenant = await TenantFactory.create()
     const name = faker.company.name()
     const normalizedName = name.toUpperCase()
 
     return {
-      tenantId: tenant.id,
       name,
       normalizedName,
       normalizedKey: `${faker.helpers.slugify(normalizedName)}-${faker.string.uuid()}`,
@@ -18,5 +16,8 @@ export const DebtorFactory = factory
       cnpj: faker.string.numeric(14),
       stateCode: 'DF',
     }
+  })
+  .before('create', async (_, row) => {
+    await ensureTenantId(row)
   })
   .build()

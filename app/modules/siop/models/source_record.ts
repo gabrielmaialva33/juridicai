@@ -1,12 +1,17 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
-import TenantModel from '#shared/models/tenant_model'
 import type { JsonRecord, SourceType } from '#shared/types/model_enums'
 import Tenant from '#modules/tenant/models/tenant'
 import SiopImport from '#modules/siop/models/siop_import'
 
-export default class SourceRecord extends TenantModel {
+export default class SourceRecord extends BaseModel {
+  @column({ isPrimary: true })
+  declare id: string
+
+  @column()
+  declare tenantId: string
+
   @column()
   declare source: SourceType
 
@@ -33,6 +38,9 @@ export default class SourceRecord extends TenantModel {
 
   @column()
   declare rawData: JsonRecord | null
+
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
 
   @belongsTo(() => Tenant)
   declare tenant: BelongsTo<typeof Tenant>

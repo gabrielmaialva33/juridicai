@@ -1,17 +1,17 @@
 import factory from '@adonisjs/lucid/factories'
 import AccessLog from '#modules/pii/models/access_log'
-import { TenantFactory } from '#database/factories/tenant_factory'
+import { ensureTenantId } from '#database/factories/factory_helpers'
 
 export const AccessLogFactory = factory
   .define(AccessLog, async ({ faker }) => {
-    const tenant = await TenantFactory.create()
-
     return {
-      tenantId: tenant.id,
       action: 'reveal_success' as const,
       allowed: true,
       reason: faker.lorem.sentence(),
       metadata: {},
     }
+  })
+  .before('create', async (_, row) => {
+    await ensureTenantId(row)
   })
   .build()

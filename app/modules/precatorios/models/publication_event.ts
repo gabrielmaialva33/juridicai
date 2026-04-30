@@ -1,12 +1,17 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import TenantModel from '#shared/models/tenant_model'
 import type { JsonRecord } from '#shared/types/model_enums'
 import Publication from '#modules/precatorios/models/publication'
 import Tenant from '#modules/tenant/models/tenant'
 
-export default class PublicationEvent extends TenantModel {
+export default class PublicationEvent extends BaseModel {
+  @column({ isPrimary: true })
+  declare id: string
+
+  @column()
+  declare tenantId: string
+
   @column()
   declare publicationId: string
 
@@ -18,6 +23,9 @@ export default class PublicationEvent extends TenantModel {
 
   @column()
   declare payload: JsonRecord | null
+
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
 
   @belongsTo(() => Tenant)
   declare tenant: BelongsTo<typeof Tenant>

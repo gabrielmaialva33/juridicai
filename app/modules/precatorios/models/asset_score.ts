@@ -1,12 +1,17 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import TenantModel from '#shared/models/tenant_model'
 import type { JsonRecord } from '#shared/types/model_enums'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Tenant from '#modules/tenant/models/tenant'
 
-export default class AssetScore extends TenantModel {
+export default class AssetScore extends BaseModel {
+  @column({ isPrimary: true })
+  declare id: string
+
+  @column()
+  declare tenantId: string
+
   @column()
   declare assetId: string
 

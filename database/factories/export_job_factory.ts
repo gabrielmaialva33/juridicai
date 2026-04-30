@@ -1,21 +1,19 @@
 import factory from '@adonisjs/lucid/factories'
 import ExportJob from '#modules/exports/models/export_job'
-import { TenantFactory } from '#database/factories/tenant_factory'
-import { UserFactory } from '#database/factories/user_factory'
+import { ensureRequestedByUserId, ensureTenantId } from '#database/factories/factory_helpers'
 
 export const ExportJobFactory = factory
   .define(ExportJob, async () => {
-    const tenant = await TenantFactory.create()
-    const user = await UserFactory.create()
-
     return {
-      tenantId: tenant.id,
-      requestedByUserId: user.id,
       status: 'pending' as const,
       exportType: 'precatorios_csv',
       filters: {},
       filePath: null,
       expiresAt: null,
     }
+  })
+  .before('create', async (_, row) => {
+    await ensureTenantId(row)
+    await ensureRequestedByUserId(row)
   })
   .build()
