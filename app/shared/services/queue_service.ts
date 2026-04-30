@@ -1,4 +1,4 @@
-import type { JobsOptions, Processor } from 'bullmq'
+import type { JobsOptions, Processor, WorkerOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
 import logger from '@adonisjs/core/services/logger'
 import env from '#start/env'
@@ -6,12 +6,14 @@ import env from '#start/env'
 class QueueService {
   #queues = new Map<string, Queue>()
   #workers = new Map<string, Worker>()
+  #prefix = 'radar-queue'
 
   getQueue(name: string) {
     let queue = this.#queues.get(name)
 
     if (!queue) {
       queue = new Queue(name, {
+        prefix: this.#prefix,
         connection: this.getConnection(),
         defaultJobOptions: {
           removeOnComplete: 100,
@@ -30,9 +32,15 @@ class QueueService {
     return this.getQueue(queueName).add(jobName, payload, options)
   }
 
-  registerWorker<T>(queueName: string, processor: Processor<T>) {
+  registerWorker<T>(
+    queueName: string,
+    processor: Processor<T>,
+    options?: Pick<WorkerOptions, 'concurrency'>
+  ) {
     const worker = new Worker(queueName, processor, {
+      prefix: this.#prefix,
       connection: this.getConnection(),
+      concurrency: options?.concurrency ?? 1,
     })
 
     worker.on('failed', (job, error) => {
@@ -41,6 +49,23 @@ class QueueService {
 
     this.#workers.set(queueName, worker)
     return worker
+  }
+
+  async getQueueSnapshot(name: string) {
+    const queue = this.getQueue(name)
+    const counts = await queue.getJobCounts('waiting', 'active', 'delayed', 'completed', 'failed')
+
+    return {
+      name,
+      counts,
+      worker: {
+        registered: this.#workers.has(name),
+      },
+    }
+  }
+
+  async getSnapshots(names: string[]) {
+    return Promise.all(names.map((name) => this.getQueueSnapshot(name)))
   }
 
   async shutdown() {

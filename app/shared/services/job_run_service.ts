@@ -1,4 +1,5 @@
 import db from '@adonisjs/lucid/services/db'
+import type { JobRunOrigin } from '#shared/types/model_enums'
 
 type StartJobRunPayload = {
   tenantId?: string | null
@@ -6,6 +7,7 @@ type StartJobRunPayload = {
   queueName?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
+  origin?: JobRunOrigin
   metadata?: Record<string, unknown> | null
 }
 
@@ -19,6 +21,7 @@ class JobRunService {
         queue_name: payload.queueName ?? null,
         bullmq_job_id: payload.bullmqJobId ?? null,
         attempts: payload.attempts ?? 0,
+        origin: payload.origin ?? 'http',
         metadata: payload.metadata ?? null,
         status: 'running',
         started_at: new Date(),
@@ -49,6 +52,19 @@ class JobRunService {
         duration_ms: db.raw('extract(epoch from (?::timestamptz - started_at)) * 1000', [
           finishedAt.toISOString(),
         ]),
+      })
+  }
+
+  skip(id: string, reason: string, metrics?: Record<string, unknown> | null) {
+    return db
+      .from('radar_job_runs')
+      .where('id', id)
+      .update({
+        status: 'skipped',
+        metrics: metrics ?? null,
+        error_code: 'E_JOB_SKIPPED',
+        error_message: reason,
+        finished_at: new Date(),
       })
   }
 
