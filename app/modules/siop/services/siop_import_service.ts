@@ -4,6 +4,7 @@ import { basename } from 'node:path'
 import { DateTime } from 'luxon'
 import ExcelJS from 'exceljs'
 import app from '@adonisjs/core/services/app'
+import db from '@adonisjs/lucid/services/db'
 import siopImportRepository from '#modules/siop/repositories/siop_import_repository'
 import siopNormalizeService from '#modules/siop/services/siop_normalize_service'
 import AssetEvent from '#modules/precatorios/models/asset_event'
@@ -14,6 +15,9 @@ import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import SourceRecord from '#modules/siop/models/source_record'
 import type { AssetNature, DebtorType, ImportStatus, JsonRecord } from '#shared/types/model_enums'
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
+
+const IMPORT_CHUNK_SIZE = 1_000
 
 type SiopImportRowsPayload = {
   tenantId: string
@@ -47,6 +51,13 @@ export type ImportStats = {
   updated: number
   skipped: number
   errors: number
+}
+
+export type SiopImportResult = {
+  import: SiopImport
+  stats: ImportStats
+  skipped?: boolean
+  reason?: 'already_running'
 }
 
 class SiopImportService {
@@ -111,13 +122,10 @@ class SiopImportService {
     }
   }
 
-  async importRows(payload: SiopImportRowsPayload) {
+  async importRows(payload: SiopImportRowsPayload): Promise<SiopImportResult> {
     const checksum = payload.source?.checksum ?? checksumRows(payload.rows)
     const sourceRecord = await this.findOrCreateSourceRecord(payload, checksum)
     const siopImport = await this.findOrCreateImport(payload, sourceRecord.id)
-
-    await this.markImportRunning(siopImport)
-    await SiopStagingRow.query().where('import_id', siopImport.id).delete()
 
     const stats: ImportStats = {
       totalRows: payload.rows.length,
@@ -127,13 +135,31 @@ class SiopImportService {
       errors: 0,
     }
 
-    for (const row of payload.rows) {
-      await this.processRow({
-        row,
-        payload,
-        siopImport,
-        sourceRecordId: sourceRecord.id,
-        stats,
+    const started = await this.tryStartImport(siopImport)
+    if (!started) {
+      return {
+        import: siopImport,
+        stats: {
+          ...stats,
+          skipped: payload.rows.length,
+        },
+        skipped: true,
+        reason: 'already_running',
+      }
+    }
+
+    for (const rows of chunkRows(payload.rows, IMPORT_CHUNK_SIZE)) {
+      await db.transaction(async (trx) => {
+        for (const row of rows) {
+          await this.processRow({
+            row,
+            payload,
+            siopImport,
+            sourceRecordId: sourceRecord.id,
+            stats,
+            trx,
+          })
+        }
       })
     }
 
@@ -231,21 +257,25 @@ class SiopImportService {
     siopImport: SiopImport
     sourceRecordId: string
     stats: ImportStats
+    trx: TransactionClientContract
   }) {
     const normalized = siopNormalizeService.normalizeRow(input.row)
     const errors = this.validateNormalizedRow(normalized)
 
-    const stagingRow = await SiopStagingRow.create({
-      importId: input.siopImport.id,
-      rawData: input.row,
-      normalizedCnj: normalized.cnjNumber,
-      normalizedDebtorKey: normalized.debtorName,
-      normalizedValue: normalized.faceValue,
-      normalizedYear: normalized.exerciseYear ?? input.payload.exerciseYear,
-      validationStatus: errors.length > 0 ? 'invalid' : 'valid',
-      errors: errors.length > 0 ? { messages: errors } : null,
-      processedAt: DateTime.now(),
-    })
+    const stagingRow = await SiopStagingRow.create(
+      {
+        importId: input.siopImport.id,
+        rawData: input.row,
+        normalizedCnj: normalized.cnjNumber,
+        normalizedDebtorKey: normalized.debtorName,
+        normalizedValue: normalized.faceValue,
+        normalizedYear: normalized.exerciseYear ?? input.payload.exerciseYear,
+        validationStatus: errors.length > 0 ? 'invalid' : 'valid',
+        errors: errors.length > 0 ? { messages: errors } : null,
+        processedAt: DateTime.now(),
+      },
+      { client: input.trx }
+    )
 
     if (errors.length > 0) {
       input.stats.errors += 1
@@ -256,7 +286,8 @@ class SiopImportService {
     const debtor = await this.findOrCreateDebtor(
       input.payload.tenantId,
       input.row,
-      normalized.debtorName!
+      normalized.debtorName!,
+      input.trx
     )
     const fingerprint = rowFingerprint(input.row)
     const externalId =
@@ -264,10 +295,12 @@ class SiopImportService {
     const existingAsset = await this.findExistingAsset(
       input.payload.tenantId,
       normalized.cnjNumber,
-      externalId
+      externalId,
+      input.trx
     )
 
     if (existingAsset) {
+      existingAsset.useTransaction(input.trx)
       existingAsset.merge({
         sourceRecordId: input.sourceRecordId,
         debtorId: debtor.id,
@@ -285,35 +318,50 @@ class SiopImportService {
       })
       await existingAsset.save()
       input.stats.updated += 1
-      await this.createImportEvent(input.payload.tenantId, existingAsset.id, fingerprint, input.row)
-      await this.refreshScore(input.payload.tenantId, existingAsset, normalized)
+      await this.createImportEvent(
+        input.payload.tenantId,
+        existingAsset.id,
+        fingerprint,
+        input.row,
+        input.trx
+      )
+      await this.refreshScore(input.payload.tenantId, existingAsset, normalized, input.trx)
       return stagingRow
     }
 
-    const asset = await PrecatorioAsset.create({
-      tenantId: input.payload.tenantId,
-      sourceRecordId: input.sourceRecordId,
-      source: 'siop',
-      externalId,
-      cnjNumber: normalized.cnjNumber,
-      originProcessNumber: normalized.cnjNumber,
-      debtorId: debtor.id,
-      assetNumber: extractString(input.row, ['asset_number', 'numero_precatorio', 'precatorio']),
-      exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
-      budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
-      nature: detectAssetNature(input.row),
-      faceValue: normalized.faceValue,
-      estimatedUpdatedValue: normalized.faceValue,
-      lifecycleStatus: 'discovered',
-      piiStatus: 'none',
-      complianceStatus: 'approved_for_analysis',
-      rawData: input.row,
-      rowFingerprint: fingerprint,
-    })
+    const asset = await PrecatorioAsset.create(
+      {
+        tenantId: input.payload.tenantId,
+        sourceRecordId: input.sourceRecordId,
+        source: 'siop',
+        externalId,
+        cnjNumber: normalized.cnjNumber,
+        originProcessNumber: normalized.cnjNumber,
+        debtorId: debtor.id,
+        assetNumber: extractString(input.row, ['asset_number', 'numero_precatorio', 'precatorio']),
+        exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
+        budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
+        nature: detectAssetNature(input.row),
+        faceValue: normalized.faceValue,
+        estimatedUpdatedValue: normalized.faceValue,
+        lifecycleStatus: 'discovered',
+        piiStatus: 'none',
+        complianceStatus: 'approved_for_analysis',
+        rawData: input.row,
+        rowFingerprint: fingerprint,
+      },
+      { client: input.trx }
+    )
 
     input.stats.inserted += 1
-    await this.createImportEvent(input.payload.tenantId, asset.id, fingerprint, input.row)
-    await this.refreshScore(input.payload.tenantId, asset, normalized)
+    await this.createImportEvent(
+      input.payload.tenantId,
+      asset.id,
+      fingerprint,
+      input.row,
+      input.trx
+    )
+    await this.refreshScore(input.payload.tenantId, asset, normalized, input.trx)
 
     return stagingRow
   }
@@ -412,22 +460,62 @@ class SiopImportService {
     })
   }
 
-  private async markImportRunning(siopImport: SiopImport) {
-    siopImport.merge({
-      status: 'running' as ImportStatus,
-      startedAt: DateTime.now(),
-      finishedAt: null,
-      totalRows: 0,
-      inserted: 0,
-      updated: 0,
-      skipped: 0,
-      errors: 0,
+  private async tryStartImport(siopImport: SiopImport) {
+    return db.transaction(async (trx) => {
+      const lock = await trx.rawQuery(
+        `select pg_try_advisory_xact_lock(hashtextextended(?, 0)) as locked`,
+        [`siop_import:${siopImport.id}`]
+      )
+      const locked = Boolean(lock.rows?.[0]?.locked)
+      if (!locked) {
+        return false
+      }
+
+      const currentImport = await SiopImport.query({ client: trx })
+        .where('id', siopImport.id)
+        .forUpdate()
+        .firstOrFail()
+
+      if (currentImport.status === 'running') {
+        return false
+      }
+
+      currentImport.merge({
+        status: 'running' as ImportStatus,
+        startedAt: DateTime.now(),
+        finishedAt: null,
+        totalRows: 0,
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        errors: 0,
+      })
+      currentImport.useTransaction(trx)
+      await currentImport.save()
+
+      siopImport.merge({
+        status: currentImport.status,
+        startedAt: currentImport.startedAt,
+        finishedAt: currentImport.finishedAt,
+        totalRows: currentImport.totalRows,
+        inserted: currentImport.inserted,
+        updated: currentImport.updated,
+        skipped: currentImport.skipped,
+        errors: currentImport.errors,
+      })
+      await SiopStagingRow.query({ client: trx }).where('import_id', siopImport.id).delete()
+
+      return true
     })
-    await siopImport.save()
   }
 
-  private async findOrCreateDebtor(tenantId: string, row: JsonRecord, normalizedName: string) {
-    const existing = await Debtor.query()
+  private async findOrCreateDebtor(
+    tenantId: string,
+    row: JsonRecord,
+    normalizedName: string,
+    trx: TransactionClientContract
+  ) {
+    const existing = await Debtor.query({ client: trx })
       .where('tenant_id', tenantId)
       .where('normalized_key', normalizedName)
       .first()
@@ -436,20 +524,28 @@ class SiopImportService {
       return existing
     }
 
-    return Debtor.create({
-      tenantId,
-      name: extractString(row, ['devedor', 'debtor', 'debtor_name']) ?? normalizedName,
-      normalizedName,
-      normalizedKey: normalizedName,
-      debtorType: detectDebtorType(normalizedName),
-      cnpj: onlyDigits(extractString(row, ['cnpj', 'document'])) || null,
-      stateCode: extractStateCode(row) ?? 'BR',
-      paymentRegime: 'federal_unique',
-    })
+    return Debtor.create(
+      {
+        tenantId,
+        name: extractString(row, ['devedor', 'debtor', 'debtor_name']) ?? normalizedName,
+        normalizedName,
+        normalizedKey: normalizedName,
+        debtorType: detectDebtorType(normalizedName),
+        cnpj: onlyDigits(extractString(row, ['cnpj', 'document'])) || null,
+        stateCode: extractStateCode(row) ?? 'BR',
+        paymentRegime: 'federal_unique',
+      },
+      { client: trx }
+    )
   }
 
-  private findExistingAsset(tenantId: string, cnjNumber: string | null, externalId: string) {
-    const query = PrecatorioAsset.query().where('tenant_id', tenantId)
+  private findExistingAsset(
+    tenantId: string,
+    cnjNumber: string | null,
+    externalId: string,
+    trx: TransactionClientContract
+  ) {
+    const query = PrecatorioAsset.query({ client: trx }).where('tenant_id', tenantId)
 
     if (cnjNumber) {
       query.where((builder) => {
@@ -466,10 +562,11 @@ class SiopImportService {
     tenantId: string,
     assetId: string,
     fingerprint: string,
-    row: JsonRecord
+    row: JsonRecord,
+    trx: TransactionClientContract
   ) {
     const idempotencyKey = `siop:${fingerprint}`
-    const existing = await AssetEvent.query()
+    const existing = await AssetEvent.query({ client: trx })
       .where('tenant_id', tenantId)
       .where('asset_id', assetId)
       .where('event_type', 'siop_imported')
@@ -480,47 +577,57 @@ class SiopImportService {
       return existing
     }
 
-    return AssetEvent.create({
-      tenantId,
-      assetId,
-      eventType: 'siop_imported',
-      eventDate: DateTime.now(),
-      source: 'siop',
-      payload: row,
-      idempotencyKey,
-    })
+    return AssetEvent.create(
+      {
+        tenantId,
+        assetId,
+        eventType: 'siop_imported',
+        eventDate: DateTime.now(),
+        source: 'siop',
+        payload: row,
+        idempotencyKey,
+      },
+      { client: trx }
+    )
   }
 
   private async refreshScore(
     tenantId: string,
     asset: PrecatorioAsset,
-    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    trx: TransactionClientContract
   ) {
     const dataQualityScore =
       [normalized.cnjNumber, normalized.debtorName, normalized.faceValue].filter(Boolean).length *
       30
     const finalScore = Math.min(100, dataQualityScore + 10)
-    const score = await AssetScore.create({
-      tenantId,
-      assetId: asset.id,
-      scoreVersion: 'siop-v1',
-      dataQualityScore,
-      maturityScore: normalized.exerciseYear ? Math.min(100, normalized.exerciseYear - 2000) : null,
-      liquidityScore: null,
-      legalSignalScore: null,
-      economicScore: null,
-      riskScore: null,
-      finalScore,
-      explanation: {
-        source: 'siop',
-        hasCnj: Boolean(normalized.cnjNumber),
-        hasDebtor: Boolean(normalized.debtorName),
-        hasFaceValue: Boolean(normalized.faceValue),
+    const score = await AssetScore.create(
+      {
+        tenantId,
+        assetId: asset.id,
+        scoreVersion: 'siop-v1',
+        dataQualityScore,
+        maturityScore: normalized.exerciseYear
+          ? Math.min(100, normalized.exerciseYear - 2000)
+          : null,
+        liquidityScore: null,
+        legalSignalScore: null,
+        economicScore: null,
+        riskScore: null,
+        finalScore,
+        explanation: {
+          source: 'siop',
+          hasCnj: Boolean(normalized.cnjNumber),
+          hasDebtor: Boolean(normalized.debtorName),
+          hasFaceValue: Boolean(normalized.faceValue),
+        },
       },
-    })
+      { client: trx }
+    )
 
     asset.currentScore = finalScore
     asset.currentScoreId = score.id
+    asset.useTransaction(trx)
     await asset.save()
 
     return score
@@ -575,6 +682,16 @@ function checksumRows(rows: JsonRecord[]) {
 
 function rowFingerprint(row: JsonRecord) {
   return createHash('sha256').update(stableStringify(row)).digest('hex')
+}
+
+function chunkRows<T>(rows: T[], size: number) {
+  const chunks: T[][] = []
+
+  for (let index = 0; index < rows.length; index += size) {
+    chunks.push(rows.slice(index, index + size))
+  }
+
+  return chunks
 }
 
 function stableStringify(value: unknown): string {

@@ -10,6 +10,7 @@ export type SiopImportJobPayload = {
   requestId?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
+  origin?: 'http' | 'manual_retry' | 'system'
 }
 
 export async function handleSiopImport(payload: SiopImportJobPayload) {
@@ -19,6 +20,7 @@ export async function handleSiopImport(payload: SiopImportJobPayload) {
     queueName: SIOP_IMPORT_QUEUE,
     bullmqJobId: payload.bullmqJobId ?? null,
     attempts: payload.attempts ?? null,
+    origin: payload.origin ?? 'http',
     metadata: {
       importId: payload.importId,
       requestId: payload.requestId ?? null,
@@ -33,6 +35,11 @@ export async function handleSiopImport(payload: SiopImportJobPayload) {
       },
       () => siopImportService.processImportFile(payload.importId)
     )
+
+    if (result.skipped) {
+      await jobRunService.skip(run.id, result.reason ?? 'skipped', result.stats)
+      return result.stats
+    }
 
     await jobRunService.finish(run.id, 'completed', result.stats)
 

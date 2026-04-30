@@ -154,6 +154,40 @@ test.group('SIOP import service', () => {
     await cleanupTenantImportData(tenant)
   })
 
+  test('skips an import that is already running', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+
+    const firstRun = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: { checksum: `siop-running-${tenant.id}` },
+    })
+
+    firstRun.import.merge({ status: 'running' })
+    await firstRun.import.save()
+
+    const secondRun = await siopImportService.importRows({
+      tenantId: tenant.id,
+      exerciseYear: 2024,
+      rows: VALID_ROWS,
+      source: { checksum: `siop-running-${tenant.id}` },
+    })
+
+    assert.isTrue(secondRun.skipped)
+    assert.equal(secondRun.reason, 'already_running')
+    assert.deepEqual(secondRun.stats, {
+      totalRows: 2,
+      inserted: 0,
+      updated: 0,
+      skipped: 2,
+      errors: 0,
+    })
+    assert.equal(await countRows(SiopStagingRow.query().where('import_id', firstRun.import.id)), 2)
+
+    await cleanupTenantImportData(tenant)
+  })
+
   test('processes pending CSV imports through the job handler', async ({ assert }) => {
     const tenant = await TenantFactory.create()
     const csv = Buffer.from(

@@ -14,6 +14,10 @@ router
       .get('admin/jobs', [JobsController, 'index'])
       .as('jobs.index')
       .use(middleware.permission('admin.jobs.read'))
+    router
+      .post('admin/jobs/:id/retry', [JobsController, 'retry'])
+      .as('jobs.retry')
+      .use(middleware.permission('admin.jobs.read'))
   })
   .as('admin')
   .use(middleware.auth())

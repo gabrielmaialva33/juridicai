@@ -16,6 +16,7 @@ export type ExportPrecatoriosPayload = {
   requestId?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
+  origin?: 'http' | 'manual_retry' | 'system'
 }
 
 export async function handleExportPrecatorios(payload: ExportPrecatoriosPayload) {
@@ -25,6 +26,7 @@ export async function handleExportPrecatorios(payload: ExportPrecatoriosPayload)
     queueName: EXPORT_PRECATORIOS_QUEUE,
     bullmqJobId: payload.bullmqJobId ?? null,
     attempts: payload.attempts ?? null,
+    origin: payload.origin ?? 'http',
     metadata: {
       exportJobId: payload.exportJobId,
       requestId: payload.requestId ?? null,
