@@ -42,6 +42,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   PII_HASH_PEPPER: Env.schema.string(),
   PII_ENCRYPTION_KEY: Env.schema.string(),
 
+  // Government integrations
+  DATAJUD_API_KEY: Env.schema.string.optional(),
+
   // Drive
   DRIVE_DISK: Env.schema.enum(['fs'] as const),
 })
