@@ -41,6 +41,7 @@ router.use([
   () => import('@adonisjs/auth/initialize_auth_middleware'),
   () => import('#middleware/silent_auth_middleware'),
   () => import('#middleware/initialize_bouncer_middleware'),
+  () => import('#middleware/request_id_middleware'),
 ])
 
 /**
@@ -48,6 +49,7 @@ router.use([
  * the routes or the routes group.
  */
 export const middleware = router.named({
+  tenant: () => import('#middleware/tenant_middleware'),
   guest: () => import('#middleware/guest_middleware'),
   auth: () => import('#middleware/auth_middleware'),
 })

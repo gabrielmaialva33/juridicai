@@ -1,6 +1,7 @@
 const ERROR_MESSAGES: Record<string, string> = {
   E_FORBIDDEN: 'You do not have permission to perform this action.',
   E_TENANT_REQUIRED: 'A tenant context is required for this action.',
+  E_TENANT_FORBIDDEN: 'The selected tenant is not available for this user.',
   E_VALIDATION_FAILED: 'The submitted data is invalid.',
   E_IMPORT_FAILED: 'The import could not be completed.',
   E_PII_REVEAL_DENIED: 'PII reveal was denied.',

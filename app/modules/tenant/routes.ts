@@ -6,6 +6,7 @@ const TenantSelectController = () => import('#modules/tenant/controllers/tenant_
 router
   .group(() => {
     router.get('tenants/select', [TenantSelectController, 'index']).as('select')
+    router.post('tenants/select', [TenantSelectController, 'store']).as('select.store')
   })
   .as('tenants')
   .use(middleware.auth())
