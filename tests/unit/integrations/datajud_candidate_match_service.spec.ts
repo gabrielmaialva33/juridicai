@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import dataJudCandidateMatchService from '#modules/integrations/services/datajud_candidate_match_service'
 import ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
@@ -87,12 +88,61 @@ test.group('DataJud candidate match service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('builds review candidates for SIOP assets without CNJ using court and date metadata', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+    const asset = await PrecatorioAssetFactory.merge({
+      tenantId: tenant.id,
+      source: 'siop',
+      cnjNumber: null,
+      exerciseYear: 2026,
+      courtName: 'Tribunal Regional Federal da 2a. Região',
+      causeType: 'Aposentadoria por Idade',
+      autuatedAt: DateTime.fromISO('2024-08-07'),
+    }).create()
+
+    const result = await dataJudCandidateMatchService.match({
+      tenantId: tenant.id,
+      source: 'siop',
+      limit: 1,
+      candidatesPerAsset: 2,
+      persist: true,
+      apiKey: 'test-key',
+      fetcher: fakeDataJudFetch,
+    })
+
+    assert.include(result.stats, {
+      selected: 1,
+      attempted: 1,
+      candidates: 2,
+      upserted: 2,
+      errors: 0,
+    })
+    assert.equal(result.matches[0].assetId, asset.id)
+    assert.isNull(result.matches[0].requestedCnj)
+    assert.equal(result.matches[0].courtAlias, 'trf2')
+    assert.isAtLeast(result.matches[0].score, 50)
+
+    const persisted = await ProcessMatchCandidate.query()
+      .where('tenant_id', tenant.id)
+      .orderBy('score', 'desc')
+
+    assert.lengthOf(persisted, 2)
+    assert.equal(persisted[0].assetId, asset.id)
+
+    await cleanupTenantData(tenant)
+  })
 })
 
 async function fakeDataJudFetch(_input: string | URL | Request, init?: RequestInit) {
   const body = JSON.parse(String(init?.body ?? '{}'))
+  const response = body.query?.bool
+    ? metadataDataJudResponse(body.size ?? 2)
+    : dataJudResponse(body.size ?? 2)
 
-  return new Response(JSON.stringify(dataJudResponse(body.size ?? 2)), {
+  return new Response(JSON.stringify(response), {
     status: 200,
     headers: { 'content-type': 'application/json' },
   })
@@ -114,14 +164,30 @@ function dataJudResponse(size: number) {
   }
 }
 
-function dataJudHit(numeroProcesso: string, className: string) {
+function metadataDataJudResponse(size: number) {
+  const hits = [
+    dataJudHit('50046489120244025005', 'Precatório', '20240807134016'),
+    dataJudHit('50046488020244025104', 'Requisição de Pequeno Valor', '20240815134016'),
+  ].slice(0, size)
+
+  return {
+    took: 10,
+    timed_out: false,
+    hits: {
+      total: { value: hits.length, relation: 'eq' },
+      hits,
+    },
+  }
+}
+
+function dataJudHit(numeroProcesso: string, className: string, dataAjuizamento = '20221230134016') {
   return {
     _index: 'api_publica_trf2',
     _id: `TRF2_JE_${numeroProcesso}`,
     _source: {
       numeroProcesso,
       tribunal: 'TRF2',
-      dataAjuizamento: '20221230134016',
+      dataAjuizamento,
       classe: { codigo: 12078, nome: className },
       orgaoJulgador: { codigo: 12658, nome: 'Vara Federal de Colatina' },
       assuntos: [{ codigo: 6096, nome: 'Aposentadoria por Idade' }],
