@@ -2,7 +2,43 @@
 
 This checklist keeps the beta focused on the legal office workflow, not internal tooling.
 
-## Demo Workspace
+## Production Bootstrap
+
+Production runs migrations only. Do not depend on seeders for beta data.
+
+```bash
+node ace migration:run --force
+pnpm build
+pnpm start
+pnpm worker
+```
+
+Create the first account through `/signup`. The signup flow creates the user, workspace tenant,
+owner role assignment, permissions catalog, and active tenant session. Real data population then
+comes from scheduled jobs.
+
+Required runtime services:
+
+- PostgreSQL/TimescaleDB 17
+- Redis for BullMQ queues
+- `pnpm worker` running continuously
+- Scheduler process enabled with the HTTP app
+
+## Real Data Jobs
+
+The beta must rely on public source ingestion:
+
+- `siop-open-data-sync`: discovers SIOP open-data files, downloads official annual files, creates
+  pending imports, and enqueues SIOP processing jobs.
+- `siop-imports`: parses downloaded SIOP files into source records, debtors, assets, scores, and
+  events.
+- `datajud-enrich-assets`: enriches assets through CNJ DataJud per inferred court alias.
+- `siop-reconcile`: marks stale imports as failed for operator visibility.
+
+Federal data starts from SIOP open data. State and municipal coverage is incremental per tribunal
+adapter because each court publishes lists in a different format.
+
+## Development Demo Workspace
 
 Run a clean local beta database with:
 
