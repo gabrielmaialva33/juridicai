@@ -21,7 +21,7 @@ test.group('liquidity advisory service', () => {
     assert.equal(advisory.channels.find((channel) => channel.recommended)?.key, 'private_cession')
     assert.equal(advisory.clientAdvisory.posture, 'prepare_offer')
     assert.equal(advisory.clientAdvisory.revenueOpportunity.key, 'success_fee')
-    assert.include(advisory.insights.join(' '), 'TIR ajustada')
+    assert.include(advisory.insights.join(' '), 'retorno estimado')
     assert.equal(dossier.pricing.grade, 'A+')
     assert.include(dossier.markdown, 'Dossiê de liquidez')
   })

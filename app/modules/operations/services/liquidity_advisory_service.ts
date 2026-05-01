@@ -295,7 +295,7 @@ function buildInsights(
   }
 
   if (opportunity.pricing.riskAdjustedIrr >= 0.25 && readiness.status !== 'blocked') {
-    insights.push('A TIR ajustada sustenta abordagem comercial prioritária.')
+    insights.push('O retorno estimado sustenta abordagem prioritária com o cliente.')
   }
 
   if (hasSignal(opportunity.signals.positive, 'payment_available')) {

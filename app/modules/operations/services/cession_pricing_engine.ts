@@ -305,8 +305,8 @@ class CessionPricingEngine {
     const estimatedTax = grossGain * taxRate
     const netProceeds = expectedPayment - operationalCost - estimatedTax
     const netProfit = netProceeds - acquisitionCost
-    // TIR anualizada com proteção: prazos curtos (<6m) usam anualização linear
-    // pra evitar explosão exponencial. Cap superior em 200% a.a. (defensivo).
+    // Annualized IRR guard: short terms (<6m) use linear annualization to avoid
+    // exponential blowups. The upper cap is defensive at 200% a.a.
     const rawIrr =
       acquisitionCost > 0
         ? termMonths >= 6

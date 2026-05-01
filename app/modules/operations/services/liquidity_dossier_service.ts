@@ -124,7 +124,7 @@ function buyerThesis(opportunity: OpportunityProjection, liquidity: LiquidityAdv
   const recommendedChannel = liquidity.channels.find((channel) => channel.recommended)
 
   return [
-    `Score ${opportunity.pricing.grade} com TIR ajustada de ${formatPercent(
+    `Classe ${opportunity.pricing.grade} com retorno estimado de ${formatPercent(
       opportunity.pricing.riskAdjustedIrr
     )}.`,
     `Probabilidade de pagamento estimada em ${formatPercent(
@@ -159,10 +159,10 @@ function buildMarkdown(dossier: Omit<LiquidityDossier, 'markdown'>) {
     '',
     '## Precificação',
     '',
-    `- Oferta/base: ${formatMoney(dossier.pricing.offerValue)}`,
+    `- Base da proposta: ${formatMoney(dossier.pricing.offerValue)}`,
     `- Recebimento esperado: ${formatMoney(dossier.pricing.expectedPayment)}`,
-    `- TIR ajustada: ${formatPercent(dossier.pricing.riskAdjustedIrr)}`,
-    `- Prazo estimado: ${dossier.pricing.termMonths} meses`,
+    `- Retorno estimado: ${formatPercent(dossier.pricing.riskAdjustedIrr)}`,
+    `- Prazo provável: ${dossier.pricing.termMonths} meses`,
     `- Probabilidade de pagamento: ${formatPercent(dossier.pricing.paymentProbability)}`,
     '',
     '## Diligência',
