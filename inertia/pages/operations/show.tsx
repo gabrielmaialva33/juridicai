@@ -1,19 +1,31 @@
 import { Head } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   AlertTriangle,
   ArrowLeft,
   Briefcase,
   Calendar,
   CheckCircle2,
+  ClipboardCheck,
+  FileText,
   Loader2,
+  MessageSquareText,
   Save,
   Sparkles,
   Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageHeader } from '~/components/shared/page-header'
@@ -132,6 +144,50 @@ type LiquidityAdvisory = {
   checklist: LiquidityChecklistItem[]
   channels: LiquidityChannel[]
   insights: string[]
+  clientAdvisory: {
+    posture: 'prepare_offer' | 'complete_diligence' | 'hold' | 'blocked'
+    headline: string
+    clientMessage: string
+    operatorNextSteps: string[]
+    requiredDocuments: string[]
+    revenueOpportunity: {
+      key: 'success_fee' | 'diligence_package' | 'monitoring_retainer' | 'legal_cleanup'
+      label: string
+      rationale: string
+    }
+  }
+}
+
+type LiquidityDossier = {
+  generatedAt: string
+  title: string
+  executiveSummary: {
+    recommendation: string
+    clientMessage: string
+    buyerThesis: string
+  }
+  pricing: {
+    offerValue: number
+    expectedPayment: number
+    netProfit: number
+    termMonths: number
+    riskAdjustedIrr: number
+    paymentProbability: number
+    grade: string
+  }
+  liquidity: {
+    readinessLabel: string
+    readinessScore: number
+    recommendedChannel: string | null
+    revenueOpportunity: string
+  }
+  diligence: {
+    blocked: Array<{ label: string; reason: string; action: string }>
+    review: Array<{ label: string; reason: string; action: string }>
+    requiredDocuments: string[]
+  }
+  nextSteps: string[]
+  markdown: string
 }
 
 type Props = {
@@ -145,6 +201,10 @@ type Props = {
 type OpportunityResponse = {
   opportunity: Opportunity
   liquidity: LiquidityAdvisory
+}
+
+type DossierResponse = {
+  dossier: LiquidityDossier
 }
 
 type PersistenceFeedback = {
@@ -210,6 +270,9 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
   const [recomputing, setRecomputing] = useState(false)
   const [savingAction, setSavingAction] = useState<'save' | 'pipeline' | null>(null)
   const [persistenceFeedback, setPersistenceFeedback] = useState<PersistenceFeedback | null>(null)
+  const [dossierOpen, setDossierOpen] = useState(false)
+  const [dossierLoading, setDossierLoading] = useState(false)
+  const [dossier, setDossier] = useState<LiquidityDossier | null>(null)
 
   // Recompute pricing on slider change.
   useEffect(() => {
@@ -295,6 +358,22 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
       )
     } finally {
       setSavingAction(null)
+    }
+  }
+
+  async function generateDossier() {
+    setDossierOpen(true)
+    setDossierLoading(true)
+
+    try {
+      const data = await jsonRequest<DossierResponse>(
+        `/operations/opportunities/${opportunity.asset.id}/dossier`
+      )
+      setDossier(data.dossier)
+    } catch {
+      toast.error('Não foi possível gerar o dossiê.')
+    } finally {
+      setDossierLoading(false)
     }
   }
 
@@ -425,6 +504,57 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 {liquidityAdvisory.channels.map((channel) => (
                   <LiquidityChannelCard key={channel.key} channel={channel} />
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="items-stretch py-4">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    <MessageSquareText className="size-4 text-primary" />
+                    Orientação para atendimento
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {liquidityAdvisory.clientAdvisory.headline}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={generateDossier}>
+                  {dossierLoading ? (
+                    <Loader2 className="me-1 size-3.5 animate-spin" />
+                  ) : (
+                    <FileText className="me-1 size-3.5" />
+                  )}
+                  Gerar dossiê
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+                {liquidityAdvisory.clientAdvisory.clientMessage}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AdvisoryList
+                  title="Próximos passos"
+                  icon={<ClipboardCheck className="size-4 text-primary" />}
+                  items={liquidityAdvisory.clientAdvisory.operatorNextSteps}
+                />
+                <AdvisoryList
+                  title="Documentos para pedir"
+                  icon={<FileText className="size-4 text-primary" />}
+                  items={liquidityAdvisory.clientAdvisory.requiredDocuments}
+                />
+              </div>
+
+              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                <div className="font-medium">
+                  Produto sugerido: {liquidityAdvisory.clientAdvisory.revenueOpportunity.label}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {liquidityAdvisory.clientAdvisory.revenueOpportunity.rationale}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -730,6 +860,31 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
           </Card>
         </div>
       </div>
+
+      <Dialog open={dossierOpen} onOpenChange={setDossierOpen}>
+        <DialogContent variant="fullscreen" className="overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Dossiê de liquidez</DialogTitle>
+            <DialogDescription>
+              Resumo operacional para cliente, comprador e organização interna.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="overflow-y-auto pr-1">
+            {dossierLoading ? (
+              <div className="flex min-h-[320px] items-center justify-center text-sm text-muted-foreground">
+                <Loader2 className="me-2 size-4 animate-spin" />
+                Gerando dossiê...
+              </div>
+            ) : dossier ? (
+              <DossierPreview dossier={dossier} />
+            ) : (
+              <div className="rounded-md border border-border p-6 text-sm text-muted-foreground">
+                Nenhum dossiê carregado.
+              </div>
+            )}
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -797,6 +952,141 @@ function LiquidityChannelCard({ channel }: { channel: LiquidityChannel }) {
         <div className="mt-2 inline-flex rounded bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
           Recomendado
         </div>
+      )}
+    </div>
+  )
+}
+
+function AdvisoryList({ title, icon, items }: { title: string; icon: ReactNode; items: string[] }) {
+  return (
+    <div className="rounded-md border border-border p-3">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        {icon}
+        {title}
+      </div>
+      <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function DossierPreview({ dossier }: { dossier: LiquidityDossier }) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-border p-4">
+        <div className="text-xs text-muted-foreground tabular-nums">
+          Gerado em {fmtRelative(dossier.generatedAt)}
+        </div>
+        <h3 className="mt-1 text-lg font-semibold">{dossier.title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {dossier.executiveSummary.clientMessage}
+        </p>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        <DossierMetric label="Oferta/base" value={fmtBRL(dossier.pricing.offerValue)} />
+        <DossierMetric label="TIR ajustada" value={fmtPct(dossier.pricing.riskAdjustedIrr)} />
+        <DossierMetric
+          label="Prontidão"
+          value={`${dossier.liquidity.readinessScore}/100`}
+          hint={dossier.liquidity.readinessLabel}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-md border border-border p-4">
+          <h4 className="font-semibold">Tese para comprador</h4>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {dossier.executiveSummary.buyerThesis}
+          </p>
+          <div className="mt-3 text-sm">
+            Canal recomendado:{' '}
+            <span className="font-medium">
+              {dossier.liquidity.recommendedChannel ?? 'Sem recomendação'}
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border p-4">
+          <h4 className="font-semibold">Próximos passos</h4>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            {dossier.nextSteps.map((step) => (
+              <li key={step} className="flex gap-2">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{step}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DossierIssueList title="Bloqueios" items={dossier.diligence.blocked} empty="Nenhum" />
+        <DossierIssueList
+          title="Pendências de revisão"
+          items={dossier.diligence.review}
+          empty="Nenhuma"
+        />
+      </div>
+
+      <div className="rounded-md border border-border p-4">
+        <h4 className="font-semibold">Markdown exportável</h4>
+        <pre className="mt-3 max-h-[360px] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+          {dossier.markdown}
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+function DossierMetric({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string | null
+}) {
+  return (
+    <div className="rounded-md border border-border p-4">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-semibold tabular-nums">{value}</div>
+      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
+    </div>
+  )
+}
+
+function DossierIssueList({
+  title,
+  items,
+  empty,
+}: {
+  title: string
+  items: Array<{ label: string; reason: string; action: string }>
+  empty: string
+}) {
+  return (
+    <div className="rounded-md border border-border p-4">
+      <h4 className="font-semibold">{title}</h4>
+      {items.length === 0 ? (
+        <div className="mt-3 text-sm text-muted-foreground">{empty}</div>
+      ) : (
+        <ul className="mt-3 space-y-3 text-sm">
+          {items.map((item) => (
+            <li key={`${item.label}:${item.reason}`}>
+              <div className="font-medium">{item.label}</div>
+              <div className="text-muted-foreground">{item.reason}</div>
+              <div className="mt-1 text-xs">{item.action}</div>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )
