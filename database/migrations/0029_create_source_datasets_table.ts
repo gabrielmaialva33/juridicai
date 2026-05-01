@@ -73,6 +73,21 @@ export default class extends BaseSchema {
             '{"levels":["federal","state","municipal","multi_level"],"coverage":"process_metadata"}'::jsonb
           ),
           (
+            'djen-public-communications',
+            'DJEN Comunicações Processuais API Pública',
+            'Conselho Nacional de Justiça',
+            'djen',
+            'multi_level',
+            'tribunal_publication',
+            'public',
+            'enrichment',
+            'https://comunicaapi.pje.jus.br/api/v1/comunicacao',
+            null,
+            'json',
+            'Official public API for Diário de Justiça Eletrônico Nacional communications and edital publications.',
+            '{"levels":["federal","state","municipal","multi_level"],"coverage":"procedural_publications"}'::jsonb
+          ),
+          (
             'trf2-chronological-precatorios',
             'TRF2 ordem cronológica de precatórios',
             'Tribunal Regional Federal da 2ª Região',

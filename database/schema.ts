@@ -1426,6 +1426,7 @@ export class PublicationEventSchema extends BaseModel {
     'eventDate',
     'eventType',
     'id',
+    'idempotencyKey',
     'payload',
     'publicationId',
     'tenantId',
@@ -1439,6 +1440,8 @@ export class PublicationEventSchema extends BaseModel {
   declare eventType: string
   @column({ isPrimary: true })
   declare id: string
+  @column()
+  declare idempotencyKey: string
   @column()
   declare payload: any | null
   @column()

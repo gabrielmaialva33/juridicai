@@ -11,9 +11,14 @@ export type GovernmentDataSyncOrchestratorPayload = {
   dataJudCourtAliases?: string[] | null
   dataJudPageSize?: number | null
   dataJudMaxPagesPerCourt?: number | null
+  djenCourtAliases?: string[] | null
+  djenStartDate?: string | null
+  djenEndDate?: string | null
+  djenMaxPagesPerCourt?: number | null
   enrichLimit?: number | null
   linkLimit?: number | null
   signalLimit?: number | null
+  publicationLimit?: number | null
   matchLimit?: number | null
   candidatesPerAsset?: number | null
   source?: SourceType | null
@@ -40,9 +45,14 @@ export async function handleGovernmentDataSyncOrchestrator(
       dataJudCourtAliases: payload.dataJudCourtAliases ?? null,
       dataJudPageSize: payload.dataJudPageSize ?? null,
       dataJudMaxPagesPerCourt: payload.dataJudMaxPagesPerCourt ?? null,
+      djenCourtAliases: payload.djenCourtAliases ?? null,
+      djenStartDate: payload.djenStartDate ?? null,
+      djenEndDate: payload.djenEndDate ?? null,
+      djenMaxPagesPerCourt: payload.djenMaxPagesPerCourt ?? null,
       enrichLimit: payload.enrichLimit ?? null,
       linkLimit: payload.linkLimit ?? null,
       signalLimit: payload.signalLimit ?? null,
+      publicationLimit: payload.publicationLimit ?? null,
       matchLimit: payload.matchLimit ?? null,
       candidatesPerAsset: payload.candidatesPerAsset ?? null,
       source: payload.source ?? null,

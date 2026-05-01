@@ -13,7 +13,7 @@ export type GovernmentSourceRecord = {
   name: string
   owner: string
   levels: FederativeLevel[]
-  source: 'siop' | 'datajud' | 'tribunal'
+  source: 'siop' | 'datajud' | 'djen' | 'tribunal'
   kind: GovernmentSourceKind
   access: GovernmentSourceAccess
   priority: 'primary' | 'enrichment' | 'cross_check'
@@ -178,6 +178,24 @@ export const governmentSourceCatalog: GovernmentSourceRecord[] = [
       ...DATAJUD_TRT_ALIASES,
       ...DATAJUD_TRE_ALIASES,
       ...DATAJUD_STATE_MILITARY_ALIASES,
+    ],
+  },
+  {
+    id: 'djen-public-communications',
+    name: 'DJEN Comunicações Processuais API Pública',
+    owner: 'Conselho Nacional de Justiça',
+    levels: ['federal', 'state', 'municipal', 'multi_level'],
+    source: 'djen',
+    kind: 'tribunal_publication',
+    access: 'public',
+    priority: 'enrichment',
+    baseUrl: 'https://comunicaapi.pje.jus.br/api/v1/comunicacao',
+    notes:
+      'Official public API for Diário de Justiça Eletrônico Nacional communications. Use it to detect publications that move legal risk and liquidity.',
+    constraints: [
+      'The public endpoint is rate-limited by IP and returns x-ratelimit headers.',
+      'Queries must include a search parameter or use itensPorPagina=5.',
+      'Textual, OAB, date-range, and process-number searches are capped at 10000 results by the API.',
     ],
   },
   {

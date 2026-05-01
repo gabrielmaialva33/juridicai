@@ -16,9 +16,11 @@ export default class extends BaseSchema {
       table.text('event_type').notNullable()
       table.timestamp('event_date', { useTz: true }).notNullable().defaultTo(this.now())
       table.jsonb('payload').nullable()
+      table.text('idempotency_key').notNullable()
       table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'publication_id', 'event_date'])
+      table.unique(['tenant_id', 'idempotency_key'])
     })
 
     this.defer((db) =>

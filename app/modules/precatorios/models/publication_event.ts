@@ -24,6 +24,9 @@ export default class PublicationEvent extends BaseModel {
   @column()
   declare payload: JsonRecord | null
 
+  @column()
+  declare idempotencyKey: string
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

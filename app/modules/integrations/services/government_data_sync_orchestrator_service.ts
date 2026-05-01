@@ -4,7 +4,9 @@ import dataJudCandidateMatchService from '#modules/integrations/services/datajud
 import dataJudLegalSignalClassifierService from '#modules/integrations/services/datajud_legal_signal_classifier_service'
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import dataJudProcessAssetLinkService from '#modules/integrations/services/datajud_process_asset_link_service'
+import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
+import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
@@ -14,9 +16,14 @@ export type GovernmentDataSyncOptions = {
   dataJudCourtAliases?: string[] | null
   dataJudPageSize?: number | null
   dataJudMaxPagesPerCourt?: number | null
+  djenCourtAliases?: string[] | null
+  djenStartDate?: string | null
+  djenEndDate?: string | null
+  djenMaxPagesPerCourt?: number | null
   enrichLimit?: number | null
   linkLimit?: number | null
   signalLimit?: number | null
+  publicationLimit?: number | null
   matchLimit?: number | null
   candidatesPerAsset?: number | null
   source?: SourceType | null
@@ -52,6 +59,14 @@ class GovernmentDataSyncOrchestratorService {
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
       origin: options.origin ?? 'scheduler',
     })
+    const djenPublicationDiscovery = await djenPublicationSyncService.sync({
+      tenantId: options.tenantId,
+      courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases,
+      startDate: options.djenStartDate,
+      endDate: options.djenEndDate,
+      maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+      origin: options.origin ?? 'scheduler',
+    })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
       tenantId: options.tenantId,
       limit: options.enrichLimit ?? 500,
@@ -67,6 +82,11 @@ class GovernmentDataSyncOrchestratorService {
     const dataJudLegalSignalClassification = await dataJudLegalSignalClassifierService.classify({
       tenantId: options.tenantId,
       limit: options.signalLimit ?? 2_000,
+      projectAssetEvents: true,
+    })
+    const publicationSignalClassification = await publicationSignalClassifierService.classify({
+      tenantId: options.tenantId,
+      limit: options.publicationLimit ?? 2_000,
       projectAssetEvents: true,
     })
     const dataJudCandidateMatching = await dataJudCandidateMatchService.match({
@@ -85,9 +105,11 @@ class GovernmentDataSyncOrchestratorService {
       phases: {
         siopOpenData,
         dataJudNationalDiscovery,
+        djenPublicationDiscovery,
         dataJudAssetEnrichment,
         dataJudExactAssetLinking,
         dataJudLegalSignalClassification,
+        publicationSignalClassification,
         dataJudCandidateMatching: dataJudCandidateMatching.stats,
       },
     }
@@ -114,6 +136,12 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
     },
+    djenPublicationDiscovery: {
+      courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases ?? 'all',
+      startDate: options.djenStartDate ?? null,
+      endDate: options.djenEndDate ?? null,
+      maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+    },
     dataJudAssetEnrichment: {
       limit: options.enrichLimit ?? 500,
       source: options.source ?? null,
@@ -125,6 +153,10 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
     },
     dataJudLegalSignalClassification: {
       limit: options.signalLimit ?? 2_000,
+      projectAssetEvents: true,
+    },
+    publicationSignalClassification: {
+      limit: options.publicationLimit ?? 2_000,
       projectAssetEvents: true,
     },
     dataJudCandidateMatching: {

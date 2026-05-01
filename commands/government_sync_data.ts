@@ -10,7 +10,7 @@ import queueService from '#shared/services/queue_service'
 
 export default class GovernmentSyncData extends BaseCommand {
   static commandName = 'government:sync-data'
-  static description = 'Run the government data sync pipeline for SIOP, DataJud, and matching'
+  static description = 'Run the government data sync pipeline for SIOP, DataJud, DJEN, and matching'
   static options = {
     startApp: true,
   }
@@ -40,6 +40,26 @@ export default class GovernmentSyncData extends BaseCommand {
   })
   declare datajudMaxPagesPerCourt?: number
 
+  @flags.string({
+    description: 'Comma-separated DJEN court aliases. Defaults to the DataJud court aliases',
+  })
+  declare djenCourts?: string
+
+  @flags.string({
+    description: 'DJEN availability start date in ISO format',
+  })
+  declare djenStartDate?: string
+
+  @flags.string({
+    description: 'DJEN availability end date in ISO format',
+  })
+  declare djenEndDate?: string
+
+  @flags.number({
+    description: 'Maximum DJEN pages to read per court',
+  })
+  declare djenMaxPagesPerCourt?: number
+
   @flags.number({
     description: 'Maximum assets to enrich from DataJud after discovery',
   })
@@ -54,6 +74,11 @@ export default class GovernmentSyncData extends BaseCommand {
     description: 'Maximum DataJud movements to classify into legal signals',
   })
   declare signalLimit?: number
+
+  @flags.number({
+    description: 'Maximum publications to classify into operational legal signals',
+  })
+  declare publicationLimit?: number
 
   @flags.number({
     description: 'Maximum assets to match against DataJud candidates',
@@ -83,9 +108,14 @@ export default class GovernmentSyncData extends BaseCommand {
       dataJudCourtAliases: normalizeAliases(this.courts?.split(',')),
       dataJudPageSize: this.datajudPageSize,
       dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
+      djenCourtAliases: normalizeAliases(this.djenCourts?.split(',')),
+      djenStartDate: this.djenStartDate,
+      djenEndDate: this.djenEndDate,
+      djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
       enrichLimit: this.enrichLimit,
       linkLimit: this.linkLimit,
       signalLimit: this.signalLimit,
+      publicationLimit: this.publicationLimit,
       matchLimit: this.matchLimit,
       dryRun: this.dryRun,
       origin: 'manual_retry',
