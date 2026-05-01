@@ -751,26 +751,50 @@ class SiopImportService {
     row: JsonRecord,
     trx: TransactionClientContract
   ) {
-    return AssetBudgetFact.create(
-      {
-        tenantId,
-        assetId,
-        exerciseYear: normalized.exerciseYear,
-        budgetYear: normalized.exerciseYear,
-        budgetUnitId,
-        expenseType: normalized.expenseType,
-        causeType: normalized.causeType,
-        natureExpenseCode: normalized.natureExpenseCode,
-        valueRange: normalized.valueRange,
-        taxClaim: normalized.taxClaim,
-        fundef: normalized.fundef,
-        elapsedYears: normalized.elapsedYears,
-        elapsedYearsClass: normalized.elapsedYearsClass,
-        sourceRecordId,
-        rawData: row,
-      },
-      { client: trx }
-    )
+    const query = AssetBudgetFact.query({ client: trx })
+      .where('tenant_id', tenantId)
+      .where('asset_id', assetId)
+      .where('source_record_id', sourceRecordId)
+
+    if (normalized.exerciseYear) {
+      query.where('exercise_year', normalized.exerciseYear)
+    } else {
+      query.whereNull('exercise_year')
+    }
+
+    if (normalized.exerciseYear) {
+      query.where('budget_year', normalized.exerciseYear)
+    } else {
+      query.whereNull('budget_year')
+    }
+
+    const existing = await query.first()
+    const payload = {
+      tenantId,
+      assetId,
+      exerciseYear: normalized.exerciseYear,
+      budgetYear: normalized.exerciseYear,
+      budgetUnitId,
+      expenseType: normalized.expenseType,
+      causeType: normalized.causeType,
+      natureExpenseCode: normalized.natureExpenseCode,
+      valueRange: normalized.valueRange,
+      taxClaim: normalized.taxClaim,
+      fundef: normalized.fundef,
+      elapsedYears: normalized.elapsedYears,
+      elapsedYearsClass: normalized.elapsedYearsClass,
+      sourceRecordId,
+      rawData: row,
+    }
+
+    if (existing) {
+      existing.useTransaction(trx)
+      existing.merge(payload)
+      await existing.save()
+      return existing
+    }
+
+    return AssetBudgetFact.create(payload, { client: trx })
   }
 
   private async createValuation(

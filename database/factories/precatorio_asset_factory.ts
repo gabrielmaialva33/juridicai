@@ -84,21 +84,26 @@ export const PrecatorioAssetFactory = factory
     delete assetRow.causeType
   })
   .after('create', async (_, model) => {
+    const trx = (model as unknown as { $trx?: unknown }).$trx
+    const options = trx ? ({ client: trx } as never) : undefined
     const valuation = model.$extras.factoryValuation as {
       faceValue: string | null
       estimatedUpdatedValue: string | null
       baseDate: DateTime | null
       queuePosition: number | null
     }
-    await AssetValuation.create({
-      tenantId: model.tenantId,
-      assetId: model.id,
-      faceValue: valuation.faceValue,
-      estimatedUpdatedValue: valuation.estimatedUpdatedValue,
-      baseDate: valuation.baseDate,
-      queuePosition: valuation.queuePosition,
-      rawData: { factory: true },
-    })
+    await AssetValuation.create(
+      {
+        tenantId: model.tenantId,
+        assetId: model.id,
+        faceValue: valuation.faceValue,
+        estimatedUpdatedValue: valuation.estimatedUpdatedValue,
+        baseDate: valuation.baseDate,
+        queuePosition: valuation.queuePosition,
+        rawData: { factory: true },
+      },
+      options
+    )
 
     const budgetFact = model.$extras.factoryBudgetFact as {
       budgetUnitCode: string | null
@@ -114,15 +119,18 @@ export const PrecatorioAssetFactory = factory
         : null
 
     if (budgetUnit || budgetFact.causeType) {
-      await AssetBudgetFact.create({
-        tenantId: model.tenantId,
-        assetId: model.id,
-        exerciseYear: model.exerciseYear,
-        budgetYear: model.budgetYear,
-        budgetUnitId: budgetUnit?.id ?? null,
-        causeType: budgetFact.causeType,
-        rawData: { factory: true },
-      })
+      await AssetBudgetFact.create(
+        {
+          tenantId: model.tenantId,
+          assetId: model.id,
+          exerciseYear: model.exerciseYear,
+          budgetYear: model.budgetYear,
+          budgetUnitId: budgetUnit?.id ?? null,
+          causeType: budgetFact.causeType,
+          rawData: { factory: true },
+        },
+        options
+      )
     }
   })
   .build()
