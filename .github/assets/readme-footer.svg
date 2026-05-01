@@ -6,46 +6,36 @@
   role="img"
   aria-labelledby="title desc"
 >
-  <title id="title">Built for governed legal intelligence</title>
+  <title id="title">Built for auditable opportunity decisions</title>
   <desc id="desc">Footer banner for the JuridicAI README.</desc>
   <defs>
-    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#42d392" />
-      <stop offset="50%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#f5c451" />
-    </linearGradient>
-    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
-      <circle cx="2" cy="2" r="1.4" fill="#ffffff" fill-opacity="0.09" />
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M 38 0 L 0 0 0 38" fill="none" stroke="#FFFFFF" stroke-opacity="0.04" />
     </pattern>
   </defs>
-  <rect width="1400" height="170" fill="#08111f" />
-  <rect width="1400" height="170" fill="url(#dots)" />
-  <path
-    d="M0 28 C210 78 345 26 526 72 S868 126 1044 78 S1260 22 1400 60"
-    fill="none"
-    stroke="url(#line)"
-    stroke-width="4"
-    stroke-opacity="0.75"
-  />
+  <rect width="1400" height="170" fill="#101214" />
+  <rect width="1400" height="170" fill="url(#grid)" />
+  <rect x="76" y="44" width="1248" height="82" rx="14" fill="#181A1D" stroke="#2D3136" />
+  <rect x="76" y="44" width="7" height="82" rx="3.5" fill="#F97316" />
   <text
     x="700"
-    y="98"
+    y="78"
     text-anchor="middle"
-    fill="#f8fafc"
+    fill="#F8FAFC"
     font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    font-size="28"
-    font-weight="750"
+    font-size="26"
+    font-weight="800"
   >
-    Built for evidence, governance, and tenant-safe legal intelligence.
+    Public records in. Governed opportunity decisions out.
   </text>
   <text
     x="700"
-    y="130"
+    y="108"
     text-anchor="middle"
-    fill="#94a3b8"
+    fill="#A1A5B7"
     font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-    font-size="16"
+    font-size="15"
   >
-    public data in - auditable decisions out
+    SIOP + tribunals + DataJud + market rates -> pricing -> pipeline -> audit
   </text>
 </svg>

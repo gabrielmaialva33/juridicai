@@ -1,143 +1,94 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="1400"
-  height="420"
-  viewBox="0 0 1400 420"
+  height="440"
+  viewBox="0 0 1400 440"
   role="img"
   aria-labelledby="title desc"
 >
-  <title id="title">JuridicAI - Radar Federal Base</title>
-  <desc id="desc">A governed legal intelligence platform for federal precatorio assets.</desc>
+  <title id="title">JuridicAI - Precatório Operations Desk</title>
+  <desc id="desc">A dark operations desk for sourcing, pricing, and governing precatório opportunities.</desc>
   <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#07111f" />
-      <stop offset="48%" stop-color="#11283a" />
-      <stop offset="100%" stop-color="#17221d" />
+    <linearGradient id="panelShade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#181A1D" />
+      <stop offset="100%" stop-color="#101214" />
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#42d392" />
-      <stop offset="45%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#f5c451" />
-    </linearGradient>
-    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-      <path
-        d="M 44 0 L 0 0 0 44"
-        fill="none"
-        stroke="#ffffff"
-        stroke-opacity="0.055"
-        stroke-width="1"
-      />
-    </pattern>
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="10" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000000" flood-opacity="0.32" />
     </filter>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M 42 0 L 0 0 0 42" fill="none" stroke="#FFFFFF" stroke-opacity="0.045" />
+    </pattern>
   </defs>
 
-  <rect width="1400" height="420" rx="0" fill="url(#background)" />
-  <rect width="1400" height="420" fill="url(#grid)" />
+  <rect width="1400" height="440" fill="#101214" />
+  <rect width="1400" height="440" fill="url(#grid)" />
 
-  <g opacity="0.7">
-    <path
-      d="M82 320 C240 190 330 360 480 225 S780 175 910 92 S1150 110 1296 42"
-      fill="none"
-      stroke="#38bdf8"
-      stroke-opacity="0.24"
-      stroke-width="3"
-    />
-    <path
-      d="M120 356 C288 270 370 302 530 230 S760 92 940 166 S1150 260 1320 116"
-      fill="none"
-      stroke="#42d392"
-      stroke-opacity="0.28"
-      stroke-width="2"
-    />
-    <path
-      d="M176 93 C350 132 410 86 590 142 S810 308 1000 214 S1170 76 1308 188"
-      fill="none"
-      stroke="#f5c451"
-      stroke-opacity="0.22"
-      stroke-width="2"
-    />
-  </g>
+  <g transform="translate(46 42)" filter="url(#shadow)">
+    <rect width="1308" height="356" rx="18" fill="url(#panelShade)" stroke="#2D3136" />
+    <rect width="232" height="356" rx="18" fill="#252525" />
+    <path d="M232 0 V356" stroke="#373737" />
 
-  <g filter="url(#softGlow)">
-    <circle cx="975" cy="96" r="8" fill="#42d392" />
-    <circle cx="1114" cy="252" r="7" fill="#38bdf8" />
-    <circle cx="1260" cy="154" r="9" fill="#f5c451" />
-    <circle cx="834" cy="294" r="6" fill="#42d392" />
-  </g>
+    <g transform="translate(26 28)">
+      <rect width="34" height="34" rx="8" fill="#F97316" />
+      <path d="M17 8 L25 25 H21 L19 21 H15 L13 25 H9 L17 8 Z M16 18 H18 L17 15 Z" fill="#FFFFFF" />
+      <text x="46" y="23" fill="#FFFFFF" font-family="Inter, ui-sans-serif, system-ui" font-size="16" font-weight="700">JuridicAI</text>
+    </g>
 
-  <g transform="translate(80 78)">
-    <rect
-      x="0"
-      y="0"
-      width="86"
-      height="86"
-      rx="18"
-      fill="#0f1f2d"
-      stroke="#42d392"
-      stroke-opacity="0.48"
-    />
-    <path d="M43 17 L65 58 H54 L49 49 H35 L30 58 H20 L43 17 Z M39 41 H45 L42 34 Z" fill="#42d392" />
-    <path d="M74 22 V64" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" />
-    <text
-      x="0"
-      y="140"
-      fill="#f8fafc"
-      font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-      font-size="78"
-      font-weight="800"
-      letter-spacing="0"
-    >
-      juridicai
-    </text>
-    <text
-      x="4"
-      y="184"
-      fill="#b9c8d6"
-      font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-      font-size="28"
-      font-weight="600"
-    >
-      Radar Federal Base
-    </text>
-    <text
-      x="4"
-      y="232"
-      fill="#e6edf3"
-      font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-      font-size="24"
-    >
-      SIOP history - tenant-safe governance - legal asset intelligence
-    </text>
-    <rect x="4" y="266" width="440" height="6" rx="3" fill="url(#accent)" />
-  </g>
+    <g transform="translate(24 94)" font-family="Inter, ui-sans-serif, system-ui" font-size="13">
+      <text x="0" y="0" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.8">OPERATION</text>
+      <rect x="0" y="20" width="184" height="34" rx="7" fill="#F97316" />
+      <text x="38" y="42" fill="#FFFFFF" font-weight="700">Operations Desk</text>
+      <text x="38" y="86" fill="#CBD5E1">A+ Inbox</text>
+      <text x="38" y="126" fill="#CBD5E1">Pipeline</text>
+      <text x="0" y="174" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.8">INTELLIGENCE</text>
+      <text x="38" y="216" fill="#CBD5E1">Asset Base</text>
+    </g>
 
-  <g
-    transform="translate(860 270)"
-    font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-    font-size="20"
-  >
-    <rect
-      x="0"
-      y="0"
-      width="420"
-      height="82"
-      rx="14"
-      fill="#08111f"
-      fill-opacity="0.72"
-      stroke="#ffffff"
-      stroke-opacity="0.1"
-    />
-    <text x="26" y="34" fill="#42d392">source_records</text>
-    <text x="205" y="34" fill="#94a3b8">-&gt;</text>
-    <text x="244" y="34" fill="#38bdf8">assets</text>
-    <text x="26" y="62" fill="#f5c451">pii.bunker</text>
-    <text x="159" y="62" fill="#94a3b8">+</text>
-    <text x="188" y="62" fill="#f8fafc">append-only audit</text>
+    <g transform="translate(272 50)" font-family="Inter, ui-sans-serif, system-ui">
+      <text x="0" y="22" fill="#FFFFFF" font-size="34" font-weight="800">Precatório Operations Desk</text>
+      <text x="0" y="56" fill="#A1A5B7" font-size="16">Source public data. Price risk. Move opportunities through a governed pipeline.</text>
+
+      <g transform="translate(0 94)">
+        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
+        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">A+ INBOX</text>
+        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">R$ 12.4M</text>
+        <text x="134" y="56" fill="#2FAC68" font-size="14" font-weight="700">31.2% IRR</text>
+      </g>
+
+      <g transform="translate(256 94)">
+        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
+        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">ACTIVE PIPELINE</text>
+        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">18 ops</text>
+        <text x="120" y="56" fill="#1CD6F4" font-size="14" font-weight="700">28.0% IRR</text>
+      </g>
+
+      <g transform="translate(512 94)">
+        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
+        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">PORTFOLIO</text>
+        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">224% CDI</text>
+      </g>
+
+      <g transform="translate(0 204)">
+        <rect width="744" height="86" rx="12" fill="#1C1F23" stroke="#2D3136" />
+        <text x="20" y="31" fill="#F97316" font-size="15" font-weight="800">INSS payment signal</text>
+        <text x="20" y="58" fill="#CBD5E1" font-size="14">A+ opportunity detected from public records and market-rate pricing snapshot.</text>
+        <rect x="594" y="24" width="112" height="30" rx="7" fill="#123326" />
+        <text x="621" y="44" fill="#45D487" font-size="13" font-weight="800">BUY</text>
+      </g>
+    </g>
+
+    <g transform="translate(1060 78)" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+      <rect width="236" height="242" rx="14" fill="#14171A" stroke="#2D3136" />
+      <text x="22" y="38" fill="#F97316" font-size="14" font-weight="700">pricing snapshot</text>
+      <text x="22" y="76" fill="#A1A5B7" font-size="13">EC136 correction</text>
+      <text x="166" y="76" fill="#FFFFFF" font-size="13">13.0%</text>
+      <text x="22" y="112" fill="#A1A5B7" font-size="13">payment prob.</text>
+      <text x="166" y="112" fill="#2FAC68" font-size="13">0.92</text>
+      <text x="22" y="148" fill="#A1A5B7" font-size="13">risk adj. IRR</text>
+      <text x="166" y="148" fill="#F7C000" font-size="13">36.9%</text>
+      <path d="M22 178 H214" stroke="#2D3136" />
+      <text x="22" y="212" fill="#FFFFFF" font-size="16" font-weight="800">A+ decision</text>
+    </g>
   </g>
 </svg>

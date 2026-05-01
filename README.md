@@ -1,31 +1,31 @@
 <div align="center">
 
-<img src=".github/assets/readme-hero.svg" alt="JuridicAI - Radar Federal Base" width="100%"/>
+<img src=".github/assets/readme-hero.svg" alt="JuridicAI - Precatório Operations Desk" width="100%"/>
 
-**Public records become governed legal intelligence.**
+**Public records become priced, governed precatório opportunities.**
 
 <p>
-  <a href="https://adonisjs.com/"><img src="https://img.shields.io/badge/AdonisJS-7.3-5a45ff?style=flat-square&labelColor=08111f" alt="AdonisJS 7.3"/></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-38bdf8?style=flat-square&labelColor=08111f" alt="React 19"/></a>
-  <a href="https://docs.timescale.com/"><img src="https://img.shields.io/badge/TimescaleDB-PG17-42d392?style=flat-square&labelColor=08111f" alt="TimescaleDB PG17"/></a>
-  <a href="https://docs.bullmq.io/"><img src="https://img.shields.io/badge/BullMQ-Redis-f5c451?style=flat-square&labelColor=08111f" alt="BullMQ and Redis"/></a>
-  <a href="./docs/superpowers/specs/2026-04-28-radar-federal-base-design.md"><img src="https://img.shields.io/badge/spec-SPEC--001-9d7cff?style=flat-square&labelColor=08111f" alt="SPEC-001"/></a>
-  <a href="./package.json"><img src="https://img.shields.io/badge/license-UNLICENSED-e879f9?style=flat-square&labelColor=08111f" alt="UNLICENSED"/></a>
+  <a href="https://adonisjs.com/"><img src="https://img.shields.io/badge/AdonisJS-7.3-F97316?style=flat-square&labelColor=101214" alt="AdonisJS 7.3"/></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-1CD6F4?style=flat-square&labelColor=101214" alt="React 19"/></a>
+  <a href="https://docs.timescale.com/"><img src="https://img.shields.io/badge/TimescaleDB-PG17-2FAC68?style=flat-square&labelColor=101214" alt="TimescaleDB PG17"/></a>
+  <a href="https://docs.bullmq.io/"><img src="https://img.shields.io/badge/BullMQ-Redis-F7C000?style=flat-square&labelColor=101214" alt="BullMQ and Redis"/></a>
+  <a href="./docs/superpowers/specs/2026-04-28-radar-federal-base-design.md"><img src="https://img.shields.io/badge/product-operations%20desk-008980?style=flat-square&labelColor=101214" alt="Operations desk"/></a>
+  <a href="./package.json"><img src="https://img.shields.io/badge/license-UNLICENSED-A1A5B7?style=flat-square&labelColor=101214" alt="UNLICENSED"/></a>
 </p>
 
 ---
 
-_"We do not sell lists of people. We qualify judicial assets with public data, legal-financial scoring, and commercial governance."_
+_"The operator should know in seconds: buy, negotiate, monitor, block, or discard."_
 
 </div>
 
 ---
 
 > [!IMPORTANT]
-> **Tenant-safe by default.** Domain data is modeled around `tenant_id`, shared access goes through repository boundaries, and sensitive surfaces use PostgreSQL RLS. PII is isolated under `pii.*`, encrypted at rest, revealed through controlled database functions, and audited on every access.
+> **Operations-first architecture.** JuridicAI is not a generic admin panel. It is an origination desk for precatório opportunities: public source ingestion, legal asset normalization, debtor intelligence, pricing snapshots, pipeline movement, and auditable decisions.
 
 > [!NOTE]
-> **SPEC-001 scope.** This foundation is SIOP-only: import, normalize, deduplicate, inspect, and audit federal precatorio history. DataJud, DJEN, CRM, pricing, court crawlers, production deployment, and full scoring engines are future specs.
+> **Tenant-safe by default.** Domain data is modeled around `tenant_id`, shared access goes through repository boundaries, and sensitive surfaces use PostgreSQL RLS. PII is isolated under `pii.*`, encrypted at rest, revealed through controlled database functions, and audited on every access.
 
 ---
 
@@ -64,23 +64,31 @@ The default app URL is `http://localhost:3333`. Local services bind to `127.0.0.
   'clusterBorder': '#94a3b8'
 }}}%%
 flowchart LR
-    subgraph Sources["Public Sources"]
-        SIOP["SIOP XLSX / CSV"]
+    subgraph Sources["Public Data Sources"]
+        SIOP["SIOP / open data"]
+        TRF["Tribunal files"]
+        DATAJUD["DataJud API"]
+        BCB["BCB SGS rates"]
     end
 
-    subgraph Radar["Radar Module"]
+    subgraph Ingestion["Ingestion & Provenance"]
         SOURCE["source_records<br/>immutable provenance"]
-        IMPORTS["siop_imports<br/>batch control"]
-        STAGING["siop_staging_rows<br/>raw rows + errors"]
-        NORMALIZE["normalizers<br/>CNJ, value, debtor"]
+        STAGING["staging rows<br/>row-level errors"]
+        NORMALIZE["normalizers<br/>CNJ, debtor, values"]
+        JOBS["BullMQ jobs<br/>retry + audit"]
     end
 
-    subgraph Domain["Legal Asset Model"]
-        DEBTORS["debtors"]
+    subgraph Domain["Legal Asset Intelligence"]
+        DEBTORS["debtors<br/>payment stats"]
         ASSETS["precatorio_assets"]
         EVENTS["asset_events"]
-        SCORES["asset_scores"]
-        JUDICIAL["judicial_processes<br/>publications"]
+        MATCHES["process candidates"]
+    end
+
+    subgraph Pricing["Financial Decision Engine"]
+        MARKET["market_rates<br/>CDI, SELIC, IPCA"]
+        PRICING["cession_pricing_engine<br/>IRR + P_pay + grade"]
+        PIPELINE["cession_opportunities<br/>kanban stages"]
     end
 
     subgraph Governance["Governance Layer"]
@@ -91,58 +99,66 @@ flowchart LR
     end
 
     subgraph Product["Product Surfaces"]
-        VIEWS["materialized views"]
-        DASHBOARD["Inertia dashboard"]
-        EXPORTS["exports"]
-        JOBS["radar_job_runs<br/>worker heartbeats"]
+        DESK["operations desk"]
+        INBOX["A+ inbox"]
+        KANBAN["cession pipeline"]
+        BASE["asset base"]
     end
 
-    SIOP --> SOURCE --> IMPORTS --> STAGING --> NORMALIZE
+    SIOP --> SOURCE
+    TRF --> SOURCE
+    DATAJUD --> MATCHES
+    BCB --> MARKET
+    SOURCE --> STAGING --> NORMALIZE --> ASSETS
     NORMALIZE --> DEBTORS
-    NORMALIZE --> ASSETS
     ASSETS --> EVENTS
-    ASSETS --> SCORES
-    ASSETS --> JUDICIAL
-    TENANTS -.-> DEBTORS
+    DEBTORS --> PRICING
+    ASSETS --> PRICING
+    MARKET --> PRICING --> PIPELINE
     TENANTS -.-> ASSETS
-    RBAC -.-> DASHBOARD
+    RBAC -.-> DESK
     PII -.-> ASSETS
-    AUDIT -.-> PII
-    ASSETS --> VIEWS --> DASHBOARD
-    ASSETS --> EXPORTS
-    IMPORTS --> JOBS
+    AUDIT -.-> PIPELINE
+    PIPELINE --> DESK
+    PIPELINE --> INBOX
+    PIPELINE --> KANBAN
+    ASSETS --> BASE
 
-    classDef source fill:#e7edff,stroke:#4f46e5,color:#151a33,stroke-width:2px;
-    classDef domain fill:#dff7ea,stroke:#0b7a3b,color:#102015,stroke-width:2px;
-    classDef governance fill:#ffe5e8,stroke:#be123c,color:#3b1015,stroke-width:2px;
-    classDef product fill:#fff3cc,stroke:#b45309,color:#332400,stroke-width:2px;
+    classDef source fill:#FFF7ED,stroke:#F97316,color:#161C24,stroke-width:2px;
+    classDef domain fill:#E5F6F5,stroke:#008980,color:#102015,stroke-width:2px;
+    classDef pricing fill:#EAF7F0,stroke:#2FAC68,color:#102015,stroke-width:2px;
+    classDef governance fill:#FEEEEE,stroke:#EC6553,color:#3B1015,stroke-width:2px;
+    classDef product fill:#E6FBFF,stroke:#1CD6F4,color:#031B20,stroke-width:2px;
 
-    class SIOP,SOURCE,IMPORTS,STAGING,NORMALIZE source;
-    class DEBTORS,ASSETS,EVENTS,SCORES,JUDICIAL domain;
+    class SIOP,TRF,DATAJUD,BCB,SOURCE,STAGING,NORMALIZE,JOBS source;
+    class DEBTORS,ASSETS,EVENTS,MATCHES domain;
+    class MARKET,PRICING,PIPELINE pricing;
     class TENANTS,RBAC,PII,AUDIT governance;
-    class VIEWS,DASHBOARD,EXPORTS,JOBS product;
+    class DESK,INBOX,KANBAN,BASE product;
 ```
 
 ---
 
 ## Components
 
-| Component                     | Role                                                | Key Constraint                                   |
-| :---------------------------- | :-------------------------------------------------- | :----------------------------------------------- |
-| **`app/modules/siop`**        | SIOP import pipeline, parsers, jobs, staging        | Idempotent imports with immutable source records |
-| **`app/modules/precatorios`** | Legal asset domain model and repositories           | Tenant-scoped reads and writes                   |
-| **`app/modules/debtors`**     | Debtor normalization and lookup                     | Shared debtor identity per tenant                |
-| **`app/modules/pii`**         | PII bunker models, reveal services, policies        | No PII in page props or logs                     |
-| **`app/modules/auth`**        | Session auth, users, tokens                         | Argon2id password hashing                        |
-| **`app/modules/tenant`**      | Tenants and memberships                             | One active tenant per session in v0              |
-| **`app/modules/permission`**  | RBAC tables and permission services                 | Backend enforcement with Bouncer                 |
-| **`app/modules/dashboard`**   | Read-only aggregates and dashboard services         | Materialized views for heavy metrics             |
-| **`app/modules/exports`**     | Export jobs and export records                      | Queue-backed, audited output                     |
-| **`app/shared`**              | Base models, repositories, helpers, shared services | Cross-domain code only                           |
+| Component                      | Role                                                 | Key Constraint                              |
+| :----------------------------- | :--------------------------------------------------- | :------------------------------------------ |
+| **`app/modules/operations`**   | Desk, A+ inbox, pipeline, and cession pricing        | Decisions are snapshot-based and auditable  |
+| **`app/modules/market`**       | BCB SGS rates and EC 136 correction snapshots        | Pricing must use current market inputs      |
+| **`app/modules/integrations`** | DataJud, SIOP open data, and tribunal adapters       | External payloads keep provenance           |
+| **`app/modules/siop`**         | SIOP import pipeline, parsers, jobs, staging         | Idempotent imports with immutable sources   |
+| **`app/modules/precatorios`**  | Legal asset domain model and repositories            | Tenant-scoped reads and writes              |
+| **`app/modules/debtors`**      | Debtor identity and historical payment statistics    | Risk scoring depends on debtor behavior     |
+| **`app/modules/pii`**          | PII bunker models, reveal services, policies         | No raw PII in page props or logs            |
+| **`app/modules/auth`**         | Session auth, users, tokens                          | Argon2id password hashing                   |
+| **`app/modules/tenant`**       | Tenants, memberships, profile, organization settings | One active tenant per session in v0         |
+| **`app/modules/permission`**   | RBAC tables and permission services                  | Backend enforcement with Bouncer            |
+| **`app/modules/admin`**        | Operational health and job controls                  | Kept out of the primary operator navigation |
+| **`app/shared`**               | Base models, repositories, helpers, shared services  | Cross-domain code only                      |
 
 ---
 
-## Ingestion Pipeline
+## Source-To-Decision Pipeline
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {
@@ -151,37 +167,38 @@ flowchart LR
   'primaryTextColor': '#111827'
 }}}%%
 flowchart LR
-    UPLOAD["1. Upload SIOP file"] --> STORE["2. Store raw file<br/>Drive"]
+    UPLOAD["1. Collect public source"] --> STORE["2. Store raw file<br/>Drive"]
     STORE --> PROVENANCE["3. Create source_record"]
     PROVENANCE --> STAGE["4. Insert staging rows"]
     STAGE --> VALIDATE["5. Validate row shape"]
     VALIDATE --> NORMALIZE["6. Normalize CNJ, debtor, values"]
     NORMALIZE --> UPSERT["7. Deduplicate and upsert assets"]
-    UPSERT --> EVENTS["8. Record events and job run"]
-    EVENTS --> AGGREGATE["9. Refresh dashboard aggregates"]
+    UPSERT --> PRICE["8. Price opportunity<br/>IRR + P_pay + grade"]
+    PRICE --> PIPELINE["9. Move through desk pipeline"]
 
     ERRORS["Row errors"] -.-> STAGE
     AUDIT["Audit trail"] -.-> PROVENANCE
-    AUDIT -.-> UPSERT
+    AUDIT -.-> PIPELINE
     WORKER["BullMQ worker"] -.-> VALIDATE
     WORKER -.-> NORMALIZE
-    WORKER -.-> AGGREGATE
+    RATES["BCB market rates"] -.-> PRICE
 
-    classDef step fill:#dff7ea,stroke:#0b7a3b,color:#102015,stroke-width:2px;
-    classDef side fill:#e7edff,stroke:#4f46e5,color:#151a33,stroke-width:2px;
-    classDef audit fill:#fff3cc,stroke:#b45309,color:#332400,stroke-width:2px;
+    classDef step fill:#EAF7F0,stroke:#2FAC68,color:#102015,stroke-width:2px;
+    classDef side fill:#E6FBFF,stroke:#1CD6F4,color:#031B20,stroke-width:2px;
+    classDef audit fill:#FFF7ED,stroke:#F97316,color:#3F3000,stroke-width:2px;
 
-    class UPLOAD,STORE,PROVENANCE,STAGE,VALIDATE,NORMALIZE,UPSERT,EVENTS,AGGREGATE step;
-    class ERRORS,WORKER side;
+    class UPLOAD,STORE,PROVENANCE,STAGE,VALIDATE,NORMALIZE,UPSERT,PRICE,PIPELINE step;
+    class ERRORS,WORKER,RATES side;
     class AUDIT audit;
 ```
 
 **Pipeline rules:**
 
 - Raw source rows stay traceable through `source_records`.
-- Import runs are product history, not only queue metadata.
+- Import and enrichment runs are product history, not only queue metadata.
 - Staging can fail per row without losing the batch.
 - Domain writes must preserve tenant isolation.
+- Pricing stores decision inputs instead of recalculating history in place.
 - PII reveal is an explicit, audited action.
 
 ---
@@ -208,6 +225,9 @@ juridicai/
 │   │   ├── auth/                 # Session auth, users, tokens
 │   │   ├── tenant/               # Tenant and membership flows
 │   │   ├── permission/           # RBAC models and services
+│   │   ├── operations/           # Desk, A+ inbox, cession pipeline, pricing
+│   │   ├── market/               # BCB rates and EC 136 correction snapshots
+│   │   ├── integrations/         # DataJud, SIOP open data, tribunal adapters
 │   │   ├── siop/                 # Import controllers, jobs, parsers, services
 │   │   ├── precatorios/          # Legal asset models and repositories
 │   │   ├── debtors/              # Debtor models and services
@@ -226,7 +246,7 @@ juridicai/
 │       └── types/                # Shared TypeScript contracts
 ├── config/                       # Adonis, database, Redis, Drive, logger config
 ├── database/
-│   ├── migrations/               # Ordered Radar Federal schema migrations
+│   ├── migrations/               # Ordered operations, radar, PII, audit migrations
 │   └── factories/                # Japa/Lucid factories for domain models
 ├── docs/superpowers/
 │   ├── specs/                    # Product and architecture specs
@@ -298,14 +318,17 @@ Start from `.env.example`. The required local variables are:
 
 ## Current Foundation
 
-| Area              | Status                                                                                                  |
-| :---------------- | :------------------------------------------------------------------------------------------------------ |
-| **Runtime stack** | AdonisJS 7, Inertia 4, React 19, Lucid 22, PostgreSQL, Redis, Drive, Bouncer                            |
-| **Security**      | Argon2id hashing, logger redaction, tenant context helpers, RLS helpers                                 |
-| **Database**      | Ordered schema migrations for tenancy, RBAC, SIOP, assets, PII, audit, jobs, exports, views             |
-| **TimescaleDB**   | Hypertables for audit logs, security logs, PII access logs, job runs, and worker heartbeats             |
-| **Modules**       | Domain folders under `app/modules/*` with controllers, models, repositories, services, jobs, validators |
-| **Factories**     | Lucid factories for tenants, users, RBAC, SIOP, assets, PII, audit, jobs, and exports                   |
+| Area              | Status                                                                                                     |
+| :---------------- | :--------------------------------------------------------------------------------------------------------- |
+| **Runtime stack** | AdonisJS 7, Inertia 4, React 19, Lucid 22, PostgreSQL, Redis, Drive, Bouncer                               |
+| **Operations**    | A+ inbox, operations desk, cession pipeline, persisted opportunity snapshots, pricing calculator           |
+| **Market data**   | BCB SGS adapter for CDI, SELIC, IPCA, and EC 136 correction snapshots                                      |
+| **Integrations**  | SIOP import/open data, TRF adapters, DataJud enrichment and candidate review services                      |
+| **Security**      | Argon2id hashing, logger redaction, tenant context helpers, RLS helpers                                    |
+| **Database**      | Ordered migrations for tenancy, RBAC, sources, assets, debtors, pricing, PII, audit, jobs, exports, views  |
+| **TimescaleDB**   | Hypertables for audit logs, security logs, PII access logs, job runs, and worker heartbeats                |
+| **Modules**       | Domain folders under `app/modules/*` with controllers, models, repositories, services, jobs, validators    |
+| **Factories**     | Lucid factories for tenants, users, RBAC, SIOP, assets, PII, market data, operations, audit, jobs, exports |
 
 ---
 
@@ -322,12 +345,13 @@ Start from `.env.example`. The required local variables are:
 
 ## Roadmap
 
-| Spec          | Scope                                                                     |
-| :------------ | :------------------------------------------------------------------------ |
-| **SPEC-001**  | Radar Federal Base: SIOP import, dashboard, tenant foundation, PII bunker |
-| **SPEC-002**  | DataJud enrichment and deeper legal intelligence                          |
-| **SPEC-003**  | DJEN publications and NLP extraction                                      |
-| **SPEC-004+** | Scoring, CRM/Sales, pricing, tribunal crawlers, production observability  |
+| Track               | Scope                                                                 |
+| :------------------ | :-------------------------------------------------------------------- |
+| **Operations desk** | Sharper operator UX, bulk actions, SLA alerts, and opportunity review |
+| **Source coverage** | More tribunal feeds, DJEN publications, municipal and state sources   |
+| **Pricing quality** | Deeper debtor history, EC 136 edge cases, tax/cost modeling           |
+| **Commercial flow** | Contact tasks, offers, due diligence checklist, assignment tracking   |
+| **Observability**   | Worker health, retry controls, source freshness, data quality scores  |
 
 ---
 
@@ -339,6 +363,6 @@ This repository is currently private and marked `UNLICENSED` in `package.json`.
 
 <div align="center">
 
-<img src=".github/assets/readme-footer.svg" alt="Built for evidence, governance, and tenant-safe legal intelligence." width="100%"/>
+<img src=".github/assets/readme-footer.svg" alt="Built for auditable opportunity decisions." width="100%"/>
 
 </div>
