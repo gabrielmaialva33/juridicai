@@ -1,11 +1,13 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column } from '@adonisjs/lucid/orm'
-import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import TenantModel from '#shared/models/tenant_model'
 import type { JsonRecord } from '#shared/types/model_enums'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Tenant from '#modules/tenant/models/tenant'
 import User from '#modules/auth/models/user'
+import CessionPricing from '#modules/operations/models/cession_pricing'
+import CessionStageHistory from '#modules/operations/models/cession_stage_history'
 
 export type CessionPipelineStage =
   | 'inbox'
@@ -91,4 +93,14 @@ export default class CessionOpportunity extends TenantModel {
     foreignKey: 'updatedByUserId',
   })
   declare updatedByUser: BelongsTo<typeof User>
+
+  @hasMany(() => CessionPricing, {
+    foreignKey: 'opportunityId',
+  })
+  declare pricings: HasMany<typeof CessionPricing>
+
+  @hasMany(() => CessionStageHistory, {
+    foreignKey: 'opportunityId',
+  })
+  declare stageHistory: HasMany<typeof CessionStageHistory>
 }
