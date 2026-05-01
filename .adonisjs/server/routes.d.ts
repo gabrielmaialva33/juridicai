@@ -42,6 +42,7 @@ export type ScannedRoutes = {
     'operations.opportunities.index': { paramsTuple?: []; params?: {} }
     'operations.opportunities.bulk_pipeline': { paramsTuple?: []; params?: {} }
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
@@ -79,6 +80,7 @@ export type ScannedRoutes = {
     'operations.desk': { paramsTuple?: []; params?: {} }
     'operations.opportunities.index': { paramsTuple?: []; params?: {} }
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
     'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
@@ -112,6 +114,7 @@ export type ScannedRoutes = {
     'operations.desk': { paramsTuple?: []; params?: {} }
     'operations.opportunities.index': { paramsTuple?: []; params?: {} }
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
     'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }

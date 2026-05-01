@@ -22,6 +22,10 @@ router
       .as('opportunities.show')
       .use(middleware.permission('operations.read'))
     router
+      .get('operations/opportunities/:id/liquidity', [OperationsController, 'liquidity'])
+      .as('opportunities.liquidity')
+      .use(middleware.permission('operations.read'))
+    router
       .post('operations/opportunities/:id/pricing', [OperationsController, 'pricing'])
       .as('opportunities.pricing')
       .use(middleware.permission('operations.read'))

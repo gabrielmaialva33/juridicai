@@ -48,6 +48,11 @@ export default class OperationsController {
     return inertia.render('operations/show', data as any)
   }
 
+  async liquidity({ params, response }: HttpContext) {
+    const data = await operationsService.show(tenantContext.requireTenantId(), params.id)
+    return response.ok({ liquidity: data.liquidity })
+  }
+
   async pricing({ params, request, response }: HttpContext) {
     return response.ok(
       await operationsService.show(

@@ -79,6 +79,7 @@ export interface ApiDefinition {
       index: typeof routes['operations.opportunities.index']
       bulkPipeline: typeof routes['operations.opportunities.bulk_pipeline']
       show: typeof routes['operations.opportunities.show']
+      liquidity: typeof routes['operations.opportunities.liquidity']
       pricing: typeof routes['operations.opportunities.pricing']
       pipeline: typeof routes['operations.opportunities.pipeline']
     }

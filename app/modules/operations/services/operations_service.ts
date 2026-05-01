@@ -9,6 +9,7 @@ import cessionPricingEngine, {
   type OpportunityProjection,
   type PricingInput,
 } from '#modules/operations/services/cession_pricing_engine'
+import liquidityAdvisoryService from '#modules/operations/services/liquidity_advisory_service'
 import marketRateService from '#modules/market/services/market_rate_service'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
@@ -135,6 +136,7 @@ class OperationsService {
 
     return {
       opportunity,
+      liquidity: liquidityAdvisoryService.evaluate(opportunity),
       judicialProcesses: asset.judicialProcesses.map((process) => process.serialize()),
       publications: asset.publications.map((publication) => publication.serialize()),
       events: asset.events.map((event) => event.serialize()),
