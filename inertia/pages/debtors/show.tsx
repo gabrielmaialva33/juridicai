@@ -105,13 +105,13 @@ export default function DebtorShow({ debtor }: Props) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="items-stretch py-4">
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-base font-semibold flex items-center gap-2 min-w-0">
                   <FileSearch className="size-4" />
                   Precatórios deste devedor
                 </h2>
-                <span className="text-xs text-muted-foreground tabular-nums">
+                <span className="w-fit rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground tabular-nums">
                   {assets.length} mais recentes
                 </span>
               </div>

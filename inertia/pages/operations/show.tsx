@@ -389,9 +389,9 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
           </Card>
 
           <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+            <CardHeader className="items-stretch py-4">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <Briefcase className="size-4 text-primary" />
                     Liquidez e próximos caminhos
@@ -401,7 +401,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                   </p>
                 </div>
                 <div
-                  className={`rounded-md border px-3 py-2 text-sm font-semibold tabular-nums ${READINESS_COLOR[liquidityAdvisory.readiness.status]}`}
+                  className={`w-fit shrink-0 rounded-md border px-3.5 py-2 text-sm font-semibold tabular-nums sm:self-center ${READINESS_COLOR[liquidityAdvisory.readiness.status]}`}
                 >
                   {liquidityAdvisory.readiness.score}/100 · {liquidityAdvisory.readiness.label}
                 </div>
@@ -428,6 +428,115 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               </div>
             </CardContent>
           </Card>
+
+          <Tabs defaultValue="events" className="space-y-3">
+            <div className="overflow-x-auto pb-1">
+              <TabsList size="sm" className="w-max min-w-full justify-start">
+                <TabsTrigger value="events">Eventos ({events.length})</TabsTrigger>
+                <TabsTrigger value="checklist">Diligência</TabsTrigger>
+                <TabsTrigger value="comparison">Comparativo</TabsTrigger>
+                <TabsTrigger value="assumptions">Premissas</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="events" className="mt-0">
+              <Card>
+                <CardContent className="p-0">
+                  {recentEvents.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-muted-foreground">
+                      Sem eventos registrados.
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {recentEvents.map((ev: any) => (
+                        <li key={ev.id} className="px-5 py-3 flex items-start gap-3">
+                          <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <span className="text-sm font-mono">{ev.eventType}</span>
+                              <span className="text-xs text-muted-foreground tabular-nums">
+                                {fmtRelative(ev.eventDate ?? ev.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="checklist" className="mt-0">
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  {liquidityAdvisory.checklist.map((item) => (
+                    <ChecklistRow key={item.key} item={item} />
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="comparison" className="mt-0">
+              <Card>
+                <CardContent className="p-5 space-y-4">
+                  <ComparisonRow
+                    label="Esta oportunidade"
+                    value={fmtPct(pricing.riskAdjustedIrr)}
+                    pct={(pricing.riskAdjustedIrr / 0.6) * 100}
+                    accent="primary"
+                  />
+                  <ComparisonRow
+                    label="FIDC top decil (Hurst/Precato)"
+                    value="20% a.a."
+                    pct={(0.2 / 0.6) * 100}
+                    accent="info"
+                  />
+                  <ComparisonRow
+                    label="CDI 2026"
+                    value={fmtPct(cdiRate, 2)}
+                    pct={(cdiRate / 0.6) * 100}
+                    accent="muted"
+                  />
+                  <div className="text-xs text-muted-foreground border-t border-border pt-3">
+                    Esta oferta entrega{' '}
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      +{((pricing.riskAdjustedIrr - cdiRate) * 100).toFixed(1)}pp
+                    </span>{' '}
+                    sobre o CDI atual.
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="assumptions" className="mt-0">
+              <Card>
+                <CardContent className="p-5 space-y-3 text-sm">
+                  <SummaryRow
+                    label="Modelo de correção"
+                    value="EC 136/2025 — min(IPCA+2%, Selic)"
+                  />
+                  <SummaryRow
+                    label="Modelo tributário"
+                    value={`Ganho de capital flat ${fmtPct(pricing.taxRate)}`}
+                  />
+                  <SummaryRow label="Custo operacional" value={fmtBRL(pricing.operationalCost)} />
+                  <SummaryRow
+                    label="Correção anual estimada"
+                    value={fmtPct(pricing.annualCorrectionRate)}
+                  />
+                  <SummaryRow
+                    label="Snapshot de mercado"
+                    value={
+                      pricing.assumptions?.marketRatesAsOf
+                        ? fmtRelative(pricing.assumptions.marketRatesAsOf)
+                        : '—'
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           <Card>
             <CardHeader>
@@ -477,113 +586,6 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               </CardContent>
             </Card>
           )}
-
-          <Tabs defaultValue="events">
-            <TabsList>
-              <TabsTrigger value="events">Eventos ({events.length})</TabsTrigger>
-              <TabsTrigger value="checklist">Diligência</TabsTrigger>
-              <TabsTrigger value="comparison">Comparativo</TabsTrigger>
-              <TabsTrigger value="assumptions">Premissas</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="events" className="mt-3">
-              <Card>
-                <CardContent className="p-0">
-                  {recentEvents.length === 0 ? (
-                    <div className="p-8 text-center text-sm text-muted-foreground">
-                      Sem eventos registrados.
-                    </div>
-                  ) : (
-                    <ul className="divide-y divide-border">
-                      {recentEvents.map((ev: any) => (
-                        <li key={ev.id} className="px-5 py-3 flex items-start gap-3">
-                          <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-sm font-mono">{ev.eventType}</span>
-                              <span className="text-xs text-muted-foreground tabular-nums">
-                                {fmtRelative(ev.eventDate ?? ev.createdAt)}
-                              </span>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="checklist" className="mt-3">
-              <Card>
-                <CardContent className="p-5 space-y-3">
-                  {liquidityAdvisory.checklist.map((item) => (
-                    <ChecklistRow key={item.key} item={item} />
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="comparison" className="mt-3">
-              <Card>
-                <CardContent className="p-5 space-y-4">
-                  <ComparisonRow
-                    label="Esta oportunidade"
-                    value={fmtPct(pricing.riskAdjustedIrr)}
-                    pct={(pricing.riskAdjustedIrr / 0.6) * 100}
-                    accent="primary"
-                  />
-                  <ComparisonRow
-                    label="FIDC top decil (Hurst/Precato)"
-                    value="20% a.a."
-                    pct={(0.2 / 0.6) * 100}
-                    accent="info"
-                  />
-                  <ComparisonRow
-                    label="CDI 2026"
-                    value={fmtPct(cdiRate, 2)}
-                    pct={(cdiRate / 0.6) * 100}
-                    accent="muted"
-                  />
-                  <div className="text-xs text-muted-foreground border-t border-border pt-3">
-                    Esta oferta entrega{' '}
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                      +{((pricing.riskAdjustedIrr - cdiRate) * 100).toFixed(1)}pp
-                    </span>{' '}
-                    sobre o CDI atual.
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="assumptions" className="mt-3">
-              <Card>
-                <CardContent className="p-5 space-y-3 text-sm">
-                  <SummaryRow
-                    label="Modelo de correção"
-                    value="EC 136/2025 — min(IPCA+2%, Selic)"
-                  />
-                  <SummaryRow
-                    label="Modelo tributário"
-                    value={`Ganho de capital flat ${fmtPct(pricing.taxRate)}`}
-                  />
-                  <SummaryRow label="Custo operacional" value={fmtBRL(pricing.operationalCost)} />
-                  <SummaryRow
-                    label="Correção anual estimada"
-                    value={fmtPct(pricing.annualCorrectionRate)}
-                  />
-                  <SummaryRow
-                    label="Snapshot de mercado"
-                    value={
-                      pricing.assumptions?.marketRatesAsOf
-                        ? fmtRelative(pricing.assumptions.marketRatesAsOf)
-                        : '—'
-                    }
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
         </div>
 
         <div className="lg:col-span-2 lg:sticky lg:top-20 lg:self-start">
