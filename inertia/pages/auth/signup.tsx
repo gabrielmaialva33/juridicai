@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react'
 import { Form, Link } from '@adonisjs/inertia/react'
-import { ArrowRight, AtSign, KeyRound, User } from 'lucide-react'
+import { ArrowRight, AtSign, Building2, KeyRound, User } from 'lucide-react'
 import { AuthLayout } from '~/components/layouts/auth-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,30 @@ export default function Signup() {
         <Form route="auth.signup.store" className="space-y-5">
           {({ errors, processing }) => (
             <>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="organizationName"
+                  className="text-xs font-medium uppercase tracking-wider"
+                >
+                  Escritório
+                </Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    id="organizationName"
+                    name="organizationName"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Nome do escritório"
+                    className="pl-9"
+                    aria-invalid={!!errors.organizationName}
+                  />
+                </div>
+                {errors.organizationName && (
+                  <p className="text-xs text-destructive">{errors.organizationName}</p>
+                )}
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="fullName" className="text-xs font-medium uppercase tracking-wider">
                   Nome completo

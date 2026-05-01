@@ -7,11 +7,12 @@ export default class SignupController {
     return inertia.render('auth/signup', {})
   }
 
-  async store({ request, response, auth }: HttpContext) {
+  async store({ request, response, auth, session }: HttpContext) {
     const payload = await request.validateUsing(signupValidator)
-    const user = await authService.createUser(payload)
+    const { user, tenant } = await authService.createWorkspaceOwner(payload)
 
     await auth.use('web').login(user)
+    session.put('active_tenant_id', tenant.id)
     response.redirect().toRoute('home')
   }
 }
