@@ -12,7 +12,7 @@ export default class extends BaseSchema {
         .nullable()
         .references('id')
         .inTable('precatorio_assets')
-        .onDelete('SET NULL')
+        .onDelete('CASCADE')
       table
         .uuid('source_record_id')
         .nullable()
@@ -78,7 +78,7 @@ export default class extends BaseSchema {
         add constraint judicial_processes_asset_same_tenant_fk
         foreign key (tenant_id, asset_id)
         references precatorio_assets (tenant_id, id)
-        on delete set null (asset_id);
+        on delete cascade;
       `)
     )
   }

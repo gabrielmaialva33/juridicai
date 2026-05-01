@@ -25,6 +25,7 @@ export default class extends BaseSchema {
       table.timestamp('computed_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'asset_id', 'computed_at'])
+      table.unique(['tenant_id', 'asset_id', 'id'])
     })
 
     this.defer((db) =>
@@ -36,10 +37,10 @@ export default class extends BaseSchema {
         on delete cascade;
 
         alter table precatorio_assets
-        add constraint precatorio_assets_current_score_id_foreign
-        foreign key (current_score_id)
-        references asset_scores (id)
-        on delete set null
+        add constraint precatorio_assets_current_score_same_asset_fk
+        foreign key (tenant_id, id, current_score_id)
+        references asset_scores (tenant_id, asset_id, id)
+        on delete set null (current_score_id)
       `)
     )
   }
@@ -48,7 +49,7 @@ export default class extends BaseSchema {
     this.defer((db) =>
       db.rawQuery(`
         alter table if exists precatorio_assets
-        drop constraint if exists precatorio_assets_current_score_id_foreign
+        drop constraint if exists precatorio_assets_current_score_same_asset_fk
       `)
     )
     this.schema.dropTable(this.tableName)

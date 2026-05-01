@@ -113,6 +113,7 @@ export default class extends BaseSchema {
 
       table.index(['tenant_id', 'opportunity_id', 'computed_at'])
       table.index(['tenant_id', 'risk_adjusted_irr'])
+      table.unique(['tenant_id', 'opportunity_id', 'id'])
     })
 
     this.defer((db) =>
@@ -136,10 +137,10 @@ export default class extends BaseSchema {
         on delete cascade;
 
         alter table cession_opportunities
-        add constraint cession_opportunities_current_pricing_id_foreign
-        foreign key (current_pricing_id)
-        references cession_pricings (id)
-        on delete set null;
+        add constraint cession_opportunities_current_pricing_same_opportunity_fk
+        foreign key (tenant_id, id, current_pricing_id)
+        references cession_pricings (tenant_id, opportunity_id, id)
+        on delete set null (current_pricing_id);
       `)
     )
   }
@@ -148,7 +149,7 @@ export default class extends BaseSchema {
     this.defer((db) =>
       db.rawQuery(`
         alter table if exists cession_opportunities
-        drop constraint if exists cession_opportunities_current_pricing_id_foreign
+        drop constraint if exists cession_opportunities_current_pricing_same_opportunity_fk
       `)
     )
     this.schema.dropTable('cession_pricings')

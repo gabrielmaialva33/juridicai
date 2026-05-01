@@ -18,7 +18,7 @@ export default class extends BaseSchema {
         .nullable()
         .references('id')
         .inTable('judicial_process_movements')
-        .onDelete('SET NULL')
+        .onDelete('CASCADE')
       table.text('signal_code').notNullable()
       table.text('polarity').notNullable()
       table.smallint('confidence').notNullable()
@@ -49,7 +49,7 @@ export default class extends BaseSchema {
         add constraint judicial_process_signals_movement_same_tenant_fk
         foreign key (tenant_id, movement_id)
         references judicial_process_movements (tenant_id, id)
-        on delete set null (movement_id);
+        on delete cascade;
       `)
     )
   }

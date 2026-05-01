@@ -12,13 +12,13 @@ export default class extends BaseSchema {
         .nullable()
         .references('id')
         .inTable('precatorio_assets')
-        .onDelete('SET NULL')
+        .onDelete('CASCADE')
       table
         .uuid('process_id')
         .nullable()
         .references('id')
         .inTable('judicial_processes')
-        .onDelete('SET NULL')
+        .onDelete('CASCADE')
       table
         .uuid('source_record_id')
         .nullable()
@@ -48,13 +48,13 @@ export default class extends BaseSchema {
         add constraint publications_asset_same_tenant_fk
         foreign key (tenant_id, asset_id)
         references precatorio_assets (tenant_id, id)
-        on delete set null (asset_id);
+        on delete cascade;
 
         alter table publications
         add constraint publications_process_same_tenant_fk
         foreign key (tenant_id, process_id)
         references judicial_processes (tenant_id, id)
-        on delete set null (process_id);
+        on delete cascade;
 
         create unique index publications_tenant_source_hash_date_uq
         on publications (tenant_id, source, text_hash, publication_date)
