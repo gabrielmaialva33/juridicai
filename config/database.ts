@@ -13,6 +13,7 @@ const dbConfig = defineConfig({
      */
     postgres: {
       client: 'pg',
+      searchPath: ['public'],
       connection: {
         host: env.get('DB_HOST'),
         port: env.get('DB_PORT'),
