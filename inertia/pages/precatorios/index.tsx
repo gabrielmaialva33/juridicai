@@ -19,10 +19,10 @@ import { StatusBadge } from '~/components/status-badge'
 import { fmtBRL, fmtNum, fmtRelative } from '~/lib/helpers'
 
 const LIFECYCLE_OPTIONS = [
-  { value: 'unknown', label: 'Desconhecido' },
-  { value: 'discovered', label: 'Descoberto' },
+  { value: 'unknown', label: 'Sem sinal' },
+  { value: 'discovered', label: 'Novo' },
   { value: 'expedited', label: 'Expedido' },
-  { value: 'pending', label: 'Pendente' },
+  { value: 'pending', label: 'Em fila' },
   { value: 'in_payment', label: 'Em pagamento' },
   { value: 'paid', label: 'Pago' },
   { value: 'cancelled', label: 'Cancelado' },
@@ -30,9 +30,9 @@ const LIFECYCLE_OPTIONS = [
 ]
 
 const COMPLIANCE_OPTIONS = [
-  { value: 'pending', label: 'Pendente' },
-  { value: 'approved_for_analysis', label: 'Aprovado para análise' },
-  { value: 'approved_for_sales', label: 'Aprovado para venda' },
+  { value: 'pending', label: 'Sem revisão' },
+  { value: 'approved_for_analysis', label: 'Elegível' },
+  { value: 'approved_for_sales', label: 'Negociável' },
   { value: 'blocked', label: 'Bloqueado' },
   { value: 'opt_out', label: 'Opt-out' },
 ]
@@ -165,12 +165,12 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
 
   return (
     <>
-      <Head title="Precatórios" />
+      <Head title="Base de Ativos" />
 
       <PageHeader
-        title="Precatórios"
-        description={`${fmtNum(assets.meta.total)} ativos no radar federal.`}
-        breadcrumbs={[{ label: 'Precatórios' }]}
+        title="Base de Ativos"
+        description={`${fmtNum(assets.meta.total)} precatórios monitorados para originação.`}
+        breadcrumbs={[{ label: 'Base de Ativos' }]}
       >
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -186,16 +186,16 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
             value={search}
             onChange={setSearch}
             onCommit={commitSearch}
-            placeholder="CNJ, número externo ou devedor"
+            placeholder="CNJ, devedor ou identificador de origem"
           />
           <SelectFilter
-            label="Lifecycle"
+            label="Etapa"
             value={filters.lifecycleStatus}
             onChange={(value) => applyFilter({ lifecycleStatus: value })}
             options={LIFECYCLE_OPTIONS}
           />
           <SelectFilter
-            label="Compliance"
+            label="Revisão"
             value={filters.complianceStatus}
             onChange={(value) => applyFilter({ complianceStatus: value })}
             options={COMPLIANCE_OPTIONS}
@@ -219,11 +219,11 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
         <CardContent className="p-0">
           {assets.data.length === 0 ? (
             <EmptyState
-              message="Sem precatórios"
+              message="Sem ativos"
               description={
                 hasFilters
                   ? 'Ajuste os filtros pra ver mais resultados.'
-                  : 'Importe um arquivo SIOP para popular o radar.'
+                  : 'Conecte uma fonte pública ou importe um arquivo SIOP para popular a base.'
               }
             >
               {hasFilters && (
@@ -237,8 +237,8 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
               <Table className="min-w-[1060px] table-fixed">
                 <TableHeader className="bg-muted/40">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[180px]">CNJ</TableHead>
-                    <TableHead className="w-[180px]">Devedor</TableHead>
+                    <TableHead className="w-[180px]">Ativo</TableHead>
+                    <TableHead className="w-[180px]">Ente/devedor</TableHead>
                     <TableHead className="w-[60px]">
                       <SortHead
                         col="exercise_year"
@@ -247,19 +247,19 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         onClick={toggleSort}
                       />
                     </TableHead>
-                    <TableHead className="w-[88px]">Natureza</TableHead>
+                    <TableHead className="w-[88px]">Classe</TableHead>
                     <TableHead className="w-[126px] text-end">
                       <SortHead
                         col="face_value"
-                        label="Valor face"
+                        label="Face"
                         filters={filters}
                         onClick={toggleSort}
                         align="end"
                       />
                     </TableHead>
-                    <TableHead className="w-[86px]">Lifecycle</TableHead>
-                    <TableHead className="w-[94px]">Compliance</TableHead>
-                    <TableHead className="w-[104px]">PII</TableHead>
+                    <TableHead className="w-[86px]">Etapa</TableHead>
+                    <TableHead className="w-[94px]">Revisão</TableHead>
+                    <TableHead className="w-[118px]">Dados sensíveis</TableHead>
                     <TableHead className="w-[62px] text-end">
                       <SortHead
                         col="current_score"
@@ -276,7 +276,7 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                   {assets.data.map((asset) => (
                     <TableRow
                       key={asset.id}
-                      className="cursor-pointer hover:bg-orange-50/60"
+                      className="cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
                       onClick={() => router.visit(`/precatorios/${asset.id}`)}
                     >
                       <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">

@@ -70,10 +70,10 @@ const JOB_RUN_VARIANT: Record<JobRunStatus, Variant> = {
 }
 
 const LIFECYCLE_LABEL: Record<LifecycleStatus, string> = {
-  unknown: 'Desconhecido',
-  discovered: 'Descoberto',
+  unknown: 'Sem sinal',
+  discovered: 'Novo',
   expedited: 'Expedido',
-  pending: 'Pendente',
+  pending: 'Em fila',
   in_payment: 'Em pagamento',
   paid: 'Pago',
   cancelled: 'Cancelado',
@@ -81,18 +81,18 @@ const LIFECYCLE_LABEL: Record<LifecycleStatus, string> = {
 }
 
 const COMPLIANCE_LABEL: Record<ComplianceStatus, string> = {
-  pending: 'Pendente',
-  approved_for_analysis: 'Análise',
-  approved_for_sales: 'Venda',
+  pending: 'Sem revisão',
+  approved_for_analysis: 'Elegível',
+  approved_for_sales: 'Negociável',
   blocked: 'Bloqueado',
   opt_out: 'Opt-out',
 }
 
 const PII_LABEL: Record<PiiStatus, string> = {
-  none: 'Sem PII',
-  pseudonymous: 'Pseudônimo',
+  none: 'Sem dados',
+  pseudonymous: 'Pseudonimizado',
   bunker_available: 'No bunker',
-  materialized: 'Materializado',
+  materialized: 'Revelado',
   blocked: 'Bloqueado',
 }
 
