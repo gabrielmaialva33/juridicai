@@ -224,19 +224,19 @@ const GRADE_COLOR: Record<string, string> = {
 
 const DECISION_LABEL: Record<string, { label: string; color: string }> = {
   aggressive_buy: {
-    label: 'COMPRA AGRESSIVA',
+    label: 'Alta atratividade',
     color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   },
   buy: {
-    label: 'COMPRAR',
+    label: 'Viável',
     color: 'bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/30',
   },
   watch: {
-    label: 'MONITORAR',
+    label: 'Acompanhar',
     color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
   },
   avoid: {
-    label: 'EVITAR',
+    label: 'Não recomendado agora',
     color: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
   },
 }
@@ -245,14 +245,14 @@ const fmtPct = (value: number | null | undefined, digits = 1) =>
   value === null || value === undefined ? '—' : `${(value * 100).toFixed(digits)}%`
 
 const PIPELINE_STAGE_LABEL: Record<PipelineStage, string> = {
-  inbox: 'Inbox',
-  qualified: 'Qualificada',
+  inbox: 'Triagem',
+  qualified: 'Pronto para contato',
   contact: 'Contato',
-  offer: 'Oferta',
+  offer: 'Proposta',
   due_diligence: 'Diligência',
-  cession: 'Cessão',
-  paid: 'Pago',
-  lost: 'Perdido',
+  cession: 'Formalização',
+  paid: 'Concluído',
+  lost: 'Encerrado',
 }
 
 const READINESS_COLOR: Record<LiquidityReadiness['status'], string> = {
@@ -349,12 +349,12 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
           minute: '2-digit',
         }).format(new Date()),
       })
-      toast.success(action === 'save' ? 'Oferta salva.' : 'Pipeline atualizado.')
+      toast.success(action === 'save' ? 'Cálculo salvo.' : 'Acompanhamento atualizado.')
     } catch {
       toast.error(
         action === 'save'
-          ? 'Não foi possível salvar a oferta.'
-          : 'Não foi possível atualizar o pipeline.'
+          ? 'Não foi possível salvar o cálculo.'
+          : 'Não foi possível atualizar o acompanhamento.'
       )
     } finally {
       setSavingAction(null)
@@ -379,9 +379,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
 
   return (
     <>
-      <Head
-        title={`${opportunity.asset.cnjNumber ?? opportunity.asset.id.slice(0, 8)} · Calculadora`}
-      />
+      <Head title={`${opportunity.asset.cnjNumber ?? opportunity.asset.id.slice(0, 8)} · Dossiê`} />
 
       <PageHeader
         title={
@@ -392,11 +390,11 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
         description={
           opportunity.asset.debtorName
             ? `${opportunity.asset.debtorName} · ${opportunity.asset.nature} · Exec. ${opportunity.asset.exerciseYear ?? '—'}`
-            : 'Detalhe da oportunidade'
+            : 'Dossiê do crédito'
         }
         breadcrumbs={[
-          { label: 'Mesa', href: '/operations/desk' },
-          { label: 'Inbox', href: '/operations/opportunities' },
+          { label: 'Painel', href: '/operations/desk' },
+          { label: 'Triagem', href: '/operations/opportunities' },
           { label: `#${opportunity.asset.id.slice(0, 8)}` },
         ]}
       >
@@ -419,7 +417,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                   }`}
                 >
                   <span className="text-2xl font-bold leading-none">{pricing.grade}</span>
-                  <span className="text-[9px] font-medium opacity-80 mt-0.5">SCORE</span>
+                  <span className="text-[9px] font-medium opacity-80 mt-0.5">CLASSE</span>
                 </div>
                 <div className="flex-1">
                   <div
@@ -430,7 +428,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                   <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
                     <div>
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        TIR ajustada
+                        Retorno estimado
                       </div>
                       <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                         {fmtPct(pricing.riskAdjustedIrr)}
@@ -441,7 +439,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                     </div>
                     <div>
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Múltiplo
+                        Múltiplo financeiro
                       </div>
                       <div className="text-2xl font-bold tabular-nums">
                         {multiplier.toFixed(2)}x
@@ -473,7 +471,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <Briefcase className="size-4 text-primary" />
-                    Liquidez e próximos caminhos
+                    Cenários para o cliente
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {liquidityAdvisory.readiness.summary}
@@ -514,7 +512,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <MessageSquareText className="size-4 text-primary" />
-                    Orientação para atendimento
+                    Recomendação ao cliente
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {liquidityAdvisory.clientAdvisory.headline}
@@ -550,7 +548,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
 
               <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                 <div className="font-medium">
-                  Produto sugerido: {liquidityAdvisory.clientAdvisory.revenueOpportunity.label}
+                  Serviço sugerido: {liquidityAdvisory.clientAdvisory.revenueOpportunity.label}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
                   {liquidityAdvisory.clientAdvisory.revenueOpportunity.rationale}
@@ -562,10 +560,10 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
           <Tabs defaultValue="events" className="space-y-3">
             <div className="overflow-x-auto pb-1">
               <TabsList size="sm" className="w-max min-w-full justify-start">
-                <TabsTrigger value="events">Eventos ({events.length})</TabsTrigger>
+                <TabsTrigger value="events">Movimentações ({events.length})</TabsTrigger>
                 <TabsTrigger value="checklist">Diligência</TabsTrigger>
-                <TabsTrigger value="comparison">Comparativo</TabsTrigger>
-                <TabsTrigger value="assumptions">Premissas</TabsTrigger>
+                <TabsTrigger value="comparison">Comparativo financeiro</TabsTrigger>
+                <TabsTrigger value="assumptions">Premissas do cálculo</TabsTrigger>
               </TabsList>
             </div>
 
@@ -704,7 +702,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
           {(opportunity.signals.positive.length > 0 || opportunity.signals.negative.length > 0) && (
             <Card>
               <CardHeader>
-                <h2 className="text-base font-semibold">Sinais detectados</h2>
+                <h2 className="text-base font-semibold">Sinais processuais</h2>
               </CardHeader>
               <CardContent className="space-y-2.5">
                 {opportunity.signals.positive.map((s, i) => (
@@ -724,7 +722,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold flex items-center gap-2">
                   <Sparkles className="size-4 text-primary" />
-                  Calculadora de Cessão
+                  Cálculo de referência
                 </h2>
                 {recomputing && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
               </div>
@@ -735,7 +733,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                    Sua oferta (% do face)
+                    Valor de referência (% do crédito)
                   </label>
                   <span className="font-mono text-sm font-bold tabular-nums">
                     {(offerRate * 100).toFixed(1)}%
@@ -749,14 +747,14 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                   step={0.01}
                 />
                 <div className="text-sm tabular-nums font-medium">
-                  Custo: {fmtBRL(pricing.acquisitionCost)}
+                  Base da proposta: {fmtBRL(pricing.acquisitionCost)}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                    Prazo estimado
+                    Prazo provável
                   </label>
                   <span className="font-mono text-sm font-bold tabular-nums">{termMonths}m</span>
                 </div>
@@ -789,7 +787,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
 
               <div className="border-t border-border pt-4 space-y-1.5">
                 <SummaryRow
-                  label="TIR ajustada"
+                  label="Retorno estimado"
                   value={fmtPct(pricing.riskAdjustedIrr)}
                   bold
                   accent="success"
@@ -810,7 +808,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                   ) : (
                     <Save className="me-1 size-3.5" />
                   )}
-                  {savingAction === 'save' ? 'Salvando...' : 'Salvar oferta'}
+                  {savingAction === 'save' ? 'Salvando...' : 'Salvar cálculo'}
                 </Button>
                 <Button
                   variant="outline"
@@ -828,15 +826,15 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                       ? 'Atualizando...'
                       : 'Adicionando...'
                     : alreadyInPipeline
-                      ? 'Atualizar Pipeline'
-                      : 'Adicionar ao Pipeline'}
+                      ? 'Atualizar acompanhamento'
+                      : 'Enviar para acompanhamento'}
                 </Button>
                 <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   {persistenceFeedback ? (
                     <>
                       {persistenceFeedback.action === 'save'
-                        ? 'Oferta salva'
-                        : 'Pipeline atualizado'}{' '}
+                        ? 'Cálculo salvo'
+                        : 'Acompanhamento atualizado'}{' '}
                       às {persistenceFeedback.time} em{' '}
                       <span className="font-medium text-foreground">
                         {PIPELINE_STAGE_LABEL[persistenceFeedback.stage]}
@@ -845,14 +843,14 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                     </>
                   ) : opportunity.pipeline.opportunityId ? (
                     <>
-                      Oferta persistida em{' '}
+                      Cálculo salvo em{' '}
                       <span className="font-medium text-foreground">
                         {PIPELINE_STAGE_LABEL[opportunity.pipeline.stage]}
                       </span>
                       .
                     </>
                   ) : (
-                    'A simulação ainda não foi salva nesta oportunidade.'
+                    'A simulação ainda não foi salva neste crédito.'
                   )}
                 </div>
               </div>
@@ -990,8 +988,8 @@ function DossierPreview({ dossier }: { dossier: LiquidityDossier }) {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <DossierMetric label="Oferta/base" value={fmtBRL(dossier.pricing.offerValue)} />
-        <DossierMetric label="TIR ajustada" value={fmtPct(dossier.pricing.riskAdjustedIrr)} />
+        <DossierMetric label="Base da proposta" value={fmtBRL(dossier.pricing.offerValue)} />
+        <DossierMetric label="Retorno estimado" value={fmtPct(dossier.pricing.riskAdjustedIrr)} />
         <DossierMetric
           label="Prontidão"
           value={`${dossier.liquidity.readinessScore}/100`}

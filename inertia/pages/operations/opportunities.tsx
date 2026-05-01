@@ -116,19 +116,19 @@ const GRADE_COLOR: Record<string, string> = {
 }
 
 const STAGE_LABELS: Record<string, string> = {
-  inbox: 'Inbox',
-  qualified: 'Qualificada',
+  inbox: 'Triagem',
+  qualified: 'Pronto para contato',
   contact: 'Contato',
-  offer: 'Oferta',
-  due_diligence: 'DD',
-  cession: 'Cessão',
-  paid: 'Paga',
-  lost: 'Perdida',
+  offer: 'Proposta',
+  due_diligence: 'Diligência',
+  cession: 'Formalização',
+  paid: 'Concluído',
+  lost: 'Encerrado',
 }
 
 const GRADE_OPTIONS = ['A+', 'A', 'B+', 'B', 'C', 'D'].map((grade) => ({
   value: grade,
-  label: `${grade} apenas`,
+  label: `Classe ${grade}`,
 }))
 
 const STAGE_OPTIONS = Object.entries(STAGE_LABELS).map(([value, label]) => ({ value, label }))
@@ -211,27 +211,27 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
 
   return (
     <>
-      <Head title="Oportunidades · Inbox A+" />
+      <Head title="Triagem de Créditos" />
 
       <PageHeader
-        title="Inbox A+"
-        description={`${fmtNum(meta.total)} oportunidades · Ranqueadas por TIR ajustada e score`}
-        breadcrumbs={[{ label: 'Mesa', href: '/operations/desk' }, { label: 'Inbox' }]}
+        title="Triagem de Créditos"
+        description={`${fmtNum(meta.total)} créditos para análise · Priorizados por risco, prazo e retorno estimado`}
+        breadcrumbs={[{ label: 'Painel', href: '/operations/desk' }, { label: 'Triagem' }]}
       >
         {selected.size > 0 ? (
           <>
             <span className="text-xs text-muted-foreground tabular-nums me-2">
-              {selected.size} sel · {fmtBRL(totalSelectedValue)}
+              {selected.size} selecionados · {fmtBRL(totalSelectedValue)}
             </span>
             <Button size="sm" onClick={bulkMoveToPipeline}>
               <Target className="me-1 size-3.5" />
-              Adicionar ao Pipeline
+              Enviar para acompanhamento
             </Button>
           </>
         ) : (
           <Button variant="outline" size="sm">
             <Filter className="me-1 size-3.5" />
-            Filtros avançados
+            Filtros
           </Button>
         )}
       </PageHeader>
@@ -239,23 +239,23 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
       <FilterPanel>
         <div className="grid gap-3 md:grid-cols-3 lg:max-w-2xl">
           <SelectFilter
-            label="Score"
+            label="Classificação"
             value={filters.grade}
-            allLabel="Todos os scores"
+            allLabel="Todas as classificações"
             options={GRADE_OPTIONS}
             onChange={(value) => applyFilter({ grade: value })}
           />
           <SelectFilter
-            label="Estágio"
+            label="Situação"
             value={filters.stage}
-            allLabel="Todos os estágios"
+            allLabel="Todas as situações"
             options={STAGE_OPTIONS}
             onChange={(value) => applyFilter({ stage: value })}
           />
           <SelectFilter
-            label="TIR mínima"
+            label="Retorno mínimo"
             value={filters.minRiskAdjustedIrr ? String(filters.minRiskAdjustedIrr) : null}
-            allLabel="Qualquer TIR"
+            allLabel="Qualquer retorno"
             options={IRR_OPTIONS}
             onChange={(value) =>
               applyFilter({ minRiskAdjustedIrr: value === null ? null : Number(value) })
@@ -269,7 +269,7 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
           {opportunities.length === 0 ? (
             <EmptyState
               icon={<Sparkles className="size-12" />}
-              message="Nenhuma oportunidade no filtro atual"
+              message="Nenhum crédito no filtro atual"
               description="Ajuste os filtros ou aguarde novos imports SIOP/DataJud."
             />
           ) : (
@@ -285,14 +285,14 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
                         className="size-3.5"
                       />
                     </TableHead>
-                    <TableHead className="w-[60px]">Score</TableHead>
+                    <TableHead className="w-[60px]">Classe</TableHead>
                     <TableHead>Devedor</TableHead>
-                    <TableHead className="text-end">TIR aj.</TableHead>
+                    <TableHead className="text-end">Retorno est.</TableHead>
                     <TableHead className="text-end">Face</TableHead>
-                    <TableHead className="text-end">Oferta</TableHead>
-                    <TableHead className="text-end">Prazo</TableHead>
-                    <TableHead>Eventos</TableHead>
-                    <TableHead>Estágio</TableHead>
+                    <TableHead className="text-end">Base de oferta</TableHead>
+                    <TableHead className="text-end">Prazo provável</TableHead>
+                    <TableHead>Sinais</TableHead>
+                    <TableHead>Situação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -310,8 +310,7 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
               {meta.lastPage > 1 && (
                 <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
                   <div className="tabular-nums">
-                    Página {meta.currentPage} de {meta.lastPage} · {fmtNum(meta.total)}{' '}
-                    oportunidades
+                    Página {meta.currentPage} de {meta.lastPage} · {fmtNum(meta.total)} créditos
                   </div>
                   <div className="flex items-center gap-1">
                     <Button

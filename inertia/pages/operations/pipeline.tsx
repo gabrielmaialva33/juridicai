@@ -67,16 +67,16 @@ const STAGE_META: Record<
   { label: string; color: string; bg: string; description: string }
 > = {
   inbox: {
-    label: 'Inbox',
+    label: 'Triagem',
     color: 'border-slate-400',
     bg: 'bg-slate-50 dark:bg-slate-900/40',
-    description: 'Não tocadas',
+    description: 'Aguardando primeira análise',
   },
   qualified: {
-    label: 'Qualificada',
+    label: 'Pronto para contato',
     color: 'border-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-950/40',
-    description: 'Prontas pra contato',
+    description: 'Com tese mínima formada',
   },
   contact: {
     label: 'Em contato',
@@ -85,31 +85,31 @@ const STAGE_META: Record<
     description: 'Cedente engajado',
   },
   offer: {
-    label: 'Oferta',
+    label: 'Proposta',
     color: 'border-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/40',
     description: 'Proposta enviada',
   },
   due_diligence: {
-    label: 'Due Diligence',
+    label: 'Diligência',
     color: 'border-orange-400',
     bg: 'bg-orange-50 dark:bg-orange-950/40',
     description: 'Validação documental',
   },
   cession: {
-    label: 'Cessão',
+    label: 'Formalização',
     color: 'border-fuchsia-400',
     bg: 'bg-fuchsia-50 dark:bg-fuchsia-950/40',
     description: 'Contrato assinado',
   },
   paid: {
-    label: 'Paga',
+    label: 'Concluído',
     color: 'border-emerald-500',
     bg: 'bg-emerald-50 dark:bg-emerald-950/40',
     description: 'Recebido',
   },
   lost: {
-    label: 'Perdida',
+    label: 'Encerrado',
     color: 'border-red-400',
     bg: 'bg-red-50 dark:bg-red-950/40',
     description: 'Não fechou',
@@ -202,18 +202,18 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
       toast.success(`Movido para ${STAGE_META[targetStage]?.label ?? targetStage}.`)
     } catch {
       setStages(previousStages)
-      toast.error('Não foi possível salvar a mudança no pipeline.')
+      toast.error('Não foi possível salvar a mudança no acompanhamento.')
     }
   }
 
   return (
     <>
-      <Head title="Pipeline · Mesa de Operações" />
+      <Head title="Acompanhamento · Painel do Escritório" />
 
       <PageHeader
-        title="Pipeline"
-        description={`${fmtBRL(totalActive)} em pipeline ativo · ${fmtBRL(totalAll)} total movimentado · arraste cards entre colunas`}
-        breadcrumbs={[{ label: 'Mesa', href: '/operations/desk' }, { label: 'Pipeline' }]}
+        title="Acompanhamento"
+        description={`${fmtBRL(totalActive)} em acompanhamento · ${fmtBRL(totalAll)} total movimentado · arraste os cartões conforme o atendimento evolui`}
+        breadcrumbs={[{ label: 'Painel', href: '/operations/desk' }, { label: 'Acompanhamento' }]}
       />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -282,7 +282,7 @@ function KanbanColumn({ stage }: { stage: Stage }) {
         </div>
         <div className="mt-0.5 flex items-baseline justify-between text-xs text-muted-foreground tabular-nums">
           <span>{fmtBRL(stage.faceValueTotal)}</span>
-          {stage.count > 0 && <span>TIR {fmtPct(stage.averageRiskAdjustedIrr)}</span>}
+          {stage.count > 0 && <span>Retorno {fmtPct(stage.averageRiskAdjustedIrr)}</span>}
         </div>
       </div>
       <div className="p-2 space-y-2 min-h-[180px] max-h-[calc(100vh-260px)] overflow-y-auto">

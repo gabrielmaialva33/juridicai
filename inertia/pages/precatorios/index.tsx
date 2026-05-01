@@ -165,12 +165,12 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
 
   return (
     <>
-      <Head title="Base de Ativos" />
+      <Head title="Créditos Monitorados" />
 
       <PageHeader
-        title="Base de Ativos"
+        title="Créditos Monitorados"
         description={`${fmtNum(assets.meta.total)} precatórios monitorados para originação.`}
-        breadcrumbs={[{ label: 'Base de Ativos' }]}
+        breadcrumbs={[{ label: 'Créditos Monitorados' }]}
       >
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -298,7 +298,7 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                       <TableHead className="w-[62px] text-end">
                         <SortHead
                           col="current_score"
-                          label="Score"
+                          label="Pontuação"
                           filters={filters}
                           onClick={toggleSort}
                           align="end"

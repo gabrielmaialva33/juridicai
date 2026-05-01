@@ -133,10 +133,10 @@ export default function PrecatorioShow({ asset }: Props) {
         body: { stage },
       })
 
-      toast.success('Ativo enviado para o pipeline.')
+      toast.success('Crédito enviado para acompanhamento.')
       router.visit(`/operations/opportunities/${asset.id}`)
     } catch {
-      toast.error('Não foi possível atualizar o pipeline.')
+      toast.error('Não foi possível atualizar o acompanhamento.')
     } finally {
       setMovingToStage(null)
     }
@@ -150,7 +150,7 @@ export default function PrecatorioShow({ asset }: Props) {
         title={asset.cnjNumber ?? asset.externalId ?? `Precatório #${asset.id.slice(0, 8)}`}
         description={`${asset.debtor?.name ?? 'Devedor não identificado'} · ${enumLabel(asset.nature)} · Exec. ${asset.exerciseYear ?? '—'}`}
         breadcrumbs={[
-          { label: 'Base de Ativos', href: '/precatorios' },
+          { label: 'Créditos Monitorados', href: '/precatorios' },
           { label: asset.cnjNumber ?? `#${asset.id.slice(0, 8)}` },
         ]}
       >
@@ -171,7 +171,7 @@ export default function PrecatorioShow({ asset }: Props) {
           />
           <DecisionMetric label="Valor face" value={fmtBRL(asset.faceValue)} strong />
           <DecisionMetric
-            label="Score jurídico"
+            label="Pontuação jurídica"
             value={formatScore(latestScore?.legalSignalScore ?? asset.currentScore)}
             hint={
               latestScore?.computedAt
@@ -427,7 +427,7 @@ export default function PrecatorioShow({ asset }: Props) {
                   disabled={movingToStage !== null}
                 >
                   <Target className="me-2 size-4" />
-                  Triar no pipeline
+                  Enviar para triagem
                 </Button>
               )}
               <Button
@@ -474,14 +474,14 @@ export default function PrecatorioShow({ asset }: Props) {
               />
               {opportunity && (
                 <SummaryStatusRow
-                  label="Pipeline"
+                  label="Acompanhamento"
                   badge={
                     <LabelChip variant="primary">{pipelineStageLabel(opportunity.stage)}</LabelChip>
                   }
                 />
               )}
               <SummaryStatusRow
-                label="Score"
+                label="Pontuação"
                 badge={
                   <span className="font-mono text-sm tabular-nums">
                     {asset.currentScore?.toFixed(1) ?? '—'}
@@ -729,7 +729,7 @@ function sourceLabel(source: string) {
 function eventLabel(eventType: string) {
   const labels: Record<string, string> = {
     siop_imported: 'Importado do SIOP',
-    score_computed: 'Score calculado',
+    score_computed: 'Pontuação calculada',
     lifecycle_changed: 'Status atualizado',
     compliance_changed: 'Compliance atualizado',
     datajud_enriched: 'Enriquecido via DataJud',
@@ -813,7 +813,7 @@ function buildLegalSignals(asset: Asset): Signal[] {
 
   if (score?.legalSignalScore !== null && score?.legalSignalScore !== undefined) {
     signals.push({
-      label: 'Score jurídico calculado',
+      label: 'Pontuação jurídica calculada',
       description: `Pontuação jurídica atual: ${formatScore(score.legalSignalScore)}.`,
       tone: Number(score.legalSignalScore) >= 70 ? 'positive' : 'neutral',
     })
@@ -918,7 +918,7 @@ function assetVerdict(asset: Asset): {
   if (asset.complianceStatus === 'approved_for_sales') {
     return {
       label: 'Pronto para oferta',
-      hint: 'Pode entrar no pipeline comercial',
+      hint: 'Pode seguir para acompanhamento comercial',
       variant: 'success',
     }
   }
@@ -926,7 +926,7 @@ function assetVerdict(asset: Asset): {
   if (asset.complianceStatus === 'approved_for_analysis') {
     return {
       label: 'Elegível para triagem',
-      hint: 'Priorizar análise financeira',
+      hint: 'Priorizar conferência jurídica e cálculo',
       variant: 'primary',
     }
   }
@@ -940,14 +940,14 @@ function assetVerdict(asset: Asset): {
 
 function pipelineStageLabel(stage: string) {
   const labels: Record<string, string> = {
-    inbox: 'Inbox',
-    qualified: 'Qualificada',
+    inbox: 'Triagem',
+    qualified: 'Pronto para contato',
     contact: 'Contato',
-    offer: 'Oferta',
+    offer: 'Proposta',
     due_diligence: 'Diligência',
-    cession: 'Cessão',
-    paid: 'Pago',
-    lost: 'Perdida',
+    cession: 'Formalização',
+    paid: 'Concluído',
+    lost: 'Encerrado',
   }
 
   return labels[stage] ?? enumLabel(stage)

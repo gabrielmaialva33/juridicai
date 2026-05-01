@@ -86,22 +86,22 @@ export default function OperationsDesk({
 
   return (
     <>
-      <Head title="Mesa de Operações" />
+      <Head title="Painel do Escritório" />
 
       <PageHeader
-        title="Mesa de Operações"
-        description={`Benchmark ${market.benchmark} ${cdiRate ? `(${fmtPct(cdiRate, 2)} a.a.)` : ''} · Spread alvo ${market.targetSpreadLabel}`}
+        title="Painel do Escritório"
+        description={`Créditos, prazos e atendimento em uma visão prática · Benchmark ${market.benchmark} ${cdiRate ? `(${fmtPct(cdiRate, 2)} a.a.)` : ''}`}
       >
         <Button asChild size="sm">
           <Link href="/operations/opportunities">
             <Target className="me-1 size-3.5" />
-            Inbox A+
+            Triagem
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
           <Link href="/operations/pipeline">
             <Briefcase className="me-1 size-3.5" />
-            Pipeline
+            Acompanhamento
           </Link>
         </Button>
       </PageHeader>
@@ -109,28 +109,28 @@ export default function OperationsDesk({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <BigKpiCard
           icon={<Target className="size-5" />}
-          label="Inbox A+ (24h)"
+          label="Novos para triagem"
           accent="primary"
           primary={fmtBRL(inbox.faceValueTotal)}
-          subtitle={`${fmtNum(inbox.count)} oportunidades · TIR aj. média ${fmtPct(inbox.averageRiskAdjustedIrr)}`}
+          subtitle={`${fmtNum(inbox.count)} créditos · retorno médio ${fmtPct(inbox.averageRiskAdjustedIrr)}`}
           hint={`${inboxVsCdi.toFixed(0)}% do CDI`}
           href="/operations/opportunities?grade=A%2B&stage=inbox"
         />
         <BigKpiCard
           icon={<Briefcase className="size-5" />}
-          label="Pipeline ativo"
+          label="Em acompanhamento"
           accent="info"
           primary={fmtBRL(pipeline.faceValueTotal)}
-          subtitle={`${fmtNum(pipeline.count)} ops · TIR aj. ${fmtPct(pipeline.averageRiskAdjustedIrr)}`}
+          subtitle={`${fmtNum(pipeline.count)} casos · retorno médio ${fmtPct(pipeline.averageRiskAdjustedIrr)}`}
           hint={`Probabilidade média ${fmtPct(pipeline.averagePaymentProbability)}`}
           href="/operations/pipeline"
         />
         <BigKpiCard
           icon={<CheckCircle2 className="size-5" />}
-          label="Carteira fechada"
+          label="Créditos concluídos"
           accent="success"
           primary={fmtBRL(portfolio.faceValueTotal)}
-          subtitle={`${fmtNum(portfolio.count)} pagos · TIR realizada ${fmtPct(portfolio.averageRiskAdjustedIrr)}`}
+          subtitle={`${fmtNum(portfolio.count)} pagos · retorno realizado ${fmtPct(portfolio.averageRiskAdjustedIrr)}`}
           hint={`${portfolioVsCdi.toFixed(0)}% do CDI`}
         />
       </div>
@@ -138,7 +138,7 @@ export default function OperationsDesk({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <h2 className="text-base font-semibold">Distribuição por score</h2>
+            <h2 className="text-base font-semibold">Classificação dos créditos</h2>
           </CardHeader>
           <CardContent className="p-5 space-y-2.5">
             {scoreDistribution.map((bucket) => {
@@ -159,11 +159,11 @@ export default function OperationsDesk({
                         {bucket.grade}
                       </span>
                       <span className="tabular-nums text-muted-foreground">
-                        {fmtNum(bucket.count)} ops
+                        {fmtNum(bucket.count)} créditos
                       </span>
                     </div>
                     <span className="tabular-nums text-xs text-muted-foreground">
-                      TIR {fmtPct(bucket.averageRiskAdjustedIrr)}
+                      Retorno {fmtPct(bucket.averageRiskAdjustedIrr)}
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -186,7 +186,7 @@ export default function OperationsDesk({
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold flex items-center gap-2">
                 <LineChartIcon className="size-4" />
-                Eventos críticos (últimas 24h)
+                Movimentações relevantes (últimas 24h)
               </h2>
               <Badge variant="outline" appearance="ghost" size="sm">
                 {criticalEvents.length}
@@ -196,7 +196,7 @@ export default function OperationsDesk({
           <CardContent className="p-0">
             {criticalEvents.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                Nenhum evento crítico nas últimas 24 horas.
+                Nenhuma movimentação relevante nas últimas 24 horas.
               </div>
             ) : (
               <ul className="divide-y divide-border">
@@ -226,7 +226,7 @@ export default function OperationsDesk({
                           <span className="truncate">{ev.debtorName ?? '—'}</span>
                           <span>·</span>
                           <span className="tabular-nums shrink-0">
-                            TIR aj. {fmtPct(ev.riskAdjustedIrr)}
+                            Retorno est. {fmtPct(ev.riskAdjustedIrr)}
                           </span>
                           {ev.eventDate && (
                             <>
@@ -251,7 +251,7 @@ export default function OperationsDesk({
           <TrendingUp className="size-5 text-emerald-600" />
           <div className="flex-1">
             <div className="text-sm font-medium">
-              Spread atual da carteira:{' '}
+              Comparativo financeiro da carteira:{' '}
               <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
                 +{((portfolio.averageRiskAdjustedIrr - cdiRate) * 100).toFixed(1)}pp vs CDI
               </span>
