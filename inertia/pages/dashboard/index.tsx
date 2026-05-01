@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { Activity, FileSearch, RefreshCw, Users } from 'lucide-react'
+import { FileSearch, RefreshCw, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -61,12 +61,6 @@ export default function DashboardIndex({ assetMetrics, debtorAggregates }: Props
           <Link href="/precatorios">
             <FileSearch className="me-1 size-3.5" />
             Ver precatórios
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/admin/health">
-            <Activity className="me-1 size-3.5" />
-            Health
           </Link>
         </Button>
       </PageHeader>

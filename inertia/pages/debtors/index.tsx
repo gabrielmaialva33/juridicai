@@ -1,16 +1,8 @@
 import { Head, router } from '@inertiajs/react'
 import { useState } from 'react'
-import { Building2, Search, X } from 'lucide-react'
+import { Building2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -19,8 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PageHeader } from '~/components/shared/page-header'
 import { EmptyState } from '~/components/shared/empty-state'
+import { FilterPanel, SearchFilter, SelectFilter } from '~/components/shared/filter-controls'
+import { LabelChip } from '~/components/shared/label-chip'
+import { PageHeader } from '~/components/shared/page-header'
 import { fmtNum, fmtRelative } from '~/lib/helpers'
 
 type Debtor = {
@@ -69,6 +63,18 @@ const DEBTOR_TYPE_LABEL: Record<string, string> = {
   foundation: 'Fundação',
 }
 
+const DEBTOR_TYPE_OPTIONS = Object.entries(DEBTOR_TYPE_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}))
+
+const REGIME_LABEL: Record<string, string> = {
+  federal_unique: 'Federal',
+  ordinary: 'Ordinário',
+  special: 'Especial',
+  direct_agreement: 'Acordo direto',
+}
+
 export default function DebtorsIndex({ debtors, filters }: Props) {
   const [search, setSearch] = useState(filters.q ?? '')
 
@@ -87,6 +93,12 @@ export default function DebtorsIndex({ debtors, filters }: Props) {
       { page: 1, limit: filters.limit, sortBy: 'name', sortDirection: 'asc' },
       { preserveState: false }
     )
+  }
+
+  function commitSearch() {
+    if ((filters.q ?? '') !== search) {
+      applyFilter({ q: search || null })
+    }
   }
 
   const hasFilters = !!(
@@ -113,39 +125,22 @@ export default function DebtorsIndex({ debtors, filters }: Props) {
         )}
       </PageHeader>
 
-      <Card className="mb-4">
-        <CardContent className="p-3">
-          <div className="flex flex-col lg:flex-row gap-2">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Buscar por nome ou CNPJ..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilter({ q: search || null })}
-                onBlur={() => filters.q !== search && applyFilter({ q: search || null })}
-                className="pl-9"
-              />
-            </div>
-            <Select
-              value={filters.debtorType ?? '__all'}
-              onValueChange={(v) => applyFilter({ debtorType: v === '__all' ? null : v })}
-            >
-              <SelectTrigger className="w-[180px] h-9 text-sm">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Todos</SelectItem>
-                <SelectItem value="union">União</SelectItem>
-                <SelectItem value="state">Estado</SelectItem>
-                <SelectItem value="municipality">Município</SelectItem>
-                <SelectItem value="autarchy">Autarquia</SelectItem>
-                <SelectItem value="foundation">Fundação</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <FilterPanel>
+        <div className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_minmax(10rem,12rem)]">
+          <SearchFilter
+            value={search}
+            onChange={setSearch}
+            onCommit={commitSearch}
+            placeholder="Nome ou CNPJ"
+          />
+          <SelectFilter
+            label="Tipo"
+            value={filters.debtorType}
+            options={DEBTOR_TYPE_OPTIONS}
+            onChange={(value) => applyFilter({ debtorType: value })}
+          />
+        </div>
+      </FilterPanel>
 
       <Card>
         <CardContent className="p-0">
@@ -161,16 +156,16 @@ export default function DebtorsIndex({ debtors, filters }: Props) {
             />
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>UF</TableHead>
-                    <TableHead>CNPJ</TableHead>
-                    <TableHead>Regime</TableHead>
-                    <TableHead className="text-end">Confiabilidade</TableHead>
-                    <TableHead className="text-end">Atualizado</TableHead>
+              <Table className="min-w-[880px]">
+                <TableHeader className="bg-muted/40">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[320px]">Nome</TableHead>
+                    <TableHead className="w-[120px]">Tipo</TableHead>
+                    <TableHead className="w-[72px]">UF</TableHead>
+                    <TableHead className="w-[150px]">CNPJ</TableHead>
+                    <TableHead className="w-[130px]">Regime</TableHead>
+                    <TableHead className="w-[120px] text-end">Confiabilidade</TableHead>
+                    <TableHead className="w-[110px] text-end">Atualizado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,16 +179,20 @@ export default function DebtorsIndex({ debtors, filters }: Props) {
                         <div className="truncate">{d.name}</div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs px-2 py-0.5 rounded bg-muted">
-                          {DEBTOR_TYPE_LABEL[d.debtorType] ?? d.debtorType}
-                        </span>
+                        <LabelChip>{DEBTOR_TYPE_LABEL[d.debtorType] ?? d.debtorType}</LabelChip>
                       </TableCell>
                       <TableCell className="font-mono text-xs">{d.stateCode ?? '—'}</TableCell>
                       <TableCell className="font-mono text-xs tabular-nums">
                         {d.cnpj ?? '—'}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {d.paymentRegime ?? '—'}
+                      <TableCell>
+                        {d.paymentRegime ? (
+                          <LabelChip variant={d.paymentRegime === 'special' ? 'warning' : 'info'}>
+                            {REGIME_LABEL[d.paymentRegime] ?? d.paymentRegime}
+                          </LabelChip>
+                        ) : (
+                          '—'
+                        )}
                       </TableCell>
                       <TableCell className="text-end tabular-nums">
                         {d.paymentReliabilityScore !== null &&

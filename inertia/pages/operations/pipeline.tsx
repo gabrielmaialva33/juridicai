@@ -155,7 +155,7 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
     const targetStage = String(over.id)
     if (sourceFound.stage === targetStage) return
 
-    // Optimistic update local state
+    // Apply an optimistic local update before the server round trip.
     setStages((prev) => {
       const next = prev.map((s) => ({ ...s, items: [...s.items] }))
       const src = next.find((s) => s.stage === sourceFound.stage)
@@ -167,7 +167,7 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
         pipeline: { ...sourceFound.op.pipeline, stage: targetStage },
       }
       dst.items = [moved, ...dst.items]
-      // recompute summary
+      // Recompute the column summaries from the optimistic state.
       for (const s of next) {
         s.count = s.items.length
         s.faceValueTotal = s.items.reduce((sum, o) => sum + o.asset.faceValue, 0)
@@ -179,7 +179,7 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
       return next
     })
 
-    // Persist via fetch (endpoint retorna JSON, não Inertia)
+    // Persist through the JSON endpoint.
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
     fetch(`/operations/opportunities/${active.id}/pipeline`, {
       method: 'POST',
@@ -191,7 +191,7 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
       credentials: 'same-origin',
       body: JSON.stringify({ stage: targetStage }),
     }).catch(() => {
-      // rollback se falhar
+      // Roll back the optimistic update if persistence fails.
       router.reload({ only: ['stages'] })
     })
   }

@@ -133,7 +133,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
   const [termMonths, setTermMonths] = useState<number>(initial.pricing.termMonths)
   const [recomputing, setRecomputing] = useState(false)
 
-  // Recompute pricing on slider change (debounced)
+  // Recompute pricing on slider change.
   useEffect(() => {
     if (offerRate === initial.pricing.offerRate && termMonths === initial.pricing.termMonths) {
       return
@@ -159,7 +159,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
           setOpportunity(data.opportunity)
         }
       } catch {
-        // silent fail
+        // Keep the current pricing visible if recomputation fails.
       } finally {
         setRecomputing(false)
       }
@@ -173,7 +173,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
     initial.pricing.termMonths,
   ])
 
-  const cdiRate = 0.12 // fallback se market rates não vier
+  const cdiRate = 0.12
   const irrVsCdi = cdiRate > 0 ? (pricing.riskAdjustedIrr / cdiRate) * 100 : 0
   const multiplier = pricing.netProceeds > 0 ? pricing.netProceeds / pricing.acquisitionCost : 0
   const decision = DECISION_LABEL[pricing.decision] ?? DECISION_LABEL.watch
@@ -213,9 +213,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* LEFT 60%: contexto */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Header com score grande + decisão */}
           <Card className="relative overflow-hidden">
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -273,7 +271,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
             </CardContent>
           </Card>
 
-          {/* Debtor profile */}
           <Card>
             <CardHeader>
               <h2 className="text-base font-semibold flex items-center gap-2">
@@ -307,7 +304,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
             </CardContent>
           </Card>
 
-          {/* Sinais detectados */}
           {(opportunity.signals.positive.length > 0 || opportunity.signals.negative.length > 0) && (
             <Card>
               <CardHeader>
@@ -324,7 +320,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
             </Card>
           )}
 
-          {/* Tabs com mais detalhes */}
           <Tabs defaultValue="events">
             <TabsList>
               <TabsTrigger value="events">Eventos ({events.length})</TabsTrigger>
@@ -422,7 +417,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
           </Tabs>
         </div>
 
-        {/* RIGHT 40%: calculadora sticky */}
         <div className="lg:col-span-2 lg:sticky lg:top-20 lg:self-start">
           <Card>
             <CardHeader>
@@ -437,7 +431,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
             <CardContent className="space-y-5">
               <Stat label="Valor face" value={fmtBRL(pricing.faceValue)} accent="primary" large />
 
-              {/* Slider oferta */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
@@ -459,7 +452,6 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
                 </div>
               </div>
 
-              {/* Slider prazo */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">

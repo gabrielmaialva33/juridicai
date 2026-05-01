@@ -106,7 +106,6 @@ export default function OperationsDesk({
         </Button>
       </PageHeader>
 
-      {/* 3 cartões grandes: Inbox A+ / Pipeline / Carteira */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <BigKpiCard
           icon={<Target className="size-5" />}
@@ -137,7 +136,6 @@ export default function OperationsDesk({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Score distribution */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <h2 className="text-base font-semibold">Distribuição por score</h2>
@@ -183,7 +181,6 @@ export default function OperationsDesk({
           </CardContent>
         </Card>
 
-        {/* Critical events */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -249,7 +246,6 @@ export default function OperationsDesk({
         </Card>
       </div>
 
-      {/* Spread footer */}
       <Card className="mt-4 border-emerald-500/30 bg-emerald-500/5">
         <CardContent className="p-4 flex items-center gap-3">
           <TrendingUp className="size-5 text-emerald-600" />

@@ -82,15 +82,15 @@ const LIFECYCLE_LABEL: Record<LifecycleStatus, string> = {
 
 const COMPLIANCE_LABEL: Record<ComplianceStatus, string> = {
   pending: 'Pendente',
-  approved_for_analysis: 'Aprovado análise',
-  approved_for_sales: 'Aprovado venda',
+  approved_for_analysis: 'Análise',
+  approved_for_sales: 'Venda',
   blocked: 'Bloqueado',
   opt_out: 'Opt-out',
 }
 
 const PII_LABEL: Record<PiiStatus, string> = {
   none: 'Sem PII',
-  pseudonymous: 'Pseudonimizado',
+  pseudonymous: 'Pseudônimo',
   bunker_available: 'No bunker',
   materialized: 'Materializado',
   blocked: 'Bloqueado',
@@ -146,7 +146,11 @@ export function StatusBadge({ kind, value }: Props) {
   }
 
   return (
-    <Badge variant={variant} className="px-2 py-0.5 text-xs font-medium">
+    <Badge
+      variant={variant}
+      appearance="light"
+      className="max-w-none whitespace-nowrap px-2 py-0.5 text-xs font-medium leading-none"
+    >
       {label}
     </Badge>
   )

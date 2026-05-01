@@ -1,16 +1,8 @@
 import { Head, router } from '@inertiajs/react'
 import { useState } from 'react'
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -19,10 +11,51 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PageHeader } from '~/components/shared/page-header'
 import { EmptyState } from '~/components/shared/empty-state'
+import { FilterPanel, SearchFilter, SelectFilter } from '~/components/shared/filter-controls'
+import { LabelChip } from '~/components/shared/label-chip'
+import { PageHeader } from '~/components/shared/page-header'
 import { StatusBadge } from '~/components/status-badge'
 import { fmtBRL, fmtNum, fmtRelative } from '~/lib/helpers'
+
+const LIFECYCLE_OPTIONS = [
+  { value: 'unknown', label: 'Desconhecido' },
+  { value: 'discovered', label: 'Descoberto' },
+  { value: 'expedited', label: 'Expedido' },
+  { value: 'pending', label: 'Pendente' },
+  { value: 'in_payment', label: 'Em pagamento' },
+  { value: 'paid', label: 'Pago' },
+  { value: 'cancelled', label: 'Cancelado' },
+  { value: 'suspended', label: 'Suspenso' },
+]
+
+const COMPLIANCE_OPTIONS = [
+  { value: 'pending', label: 'Pendente' },
+  { value: 'approved_for_analysis', label: 'Aprovado para análise' },
+  { value: 'approved_for_sales', label: 'Aprovado para venda' },
+  { value: 'blocked', label: 'Bloqueado' },
+  { value: 'opt_out', label: 'Opt-out' },
+]
+
+const NATURE_OPTIONS = [
+  { value: 'alimentar', label: 'Alimentar' },
+  { value: 'comum', label: 'Comum' },
+  { value: 'tributario', label: 'Tributário' },
+  { value: 'unknown', label: 'Desconhecida' },
+]
+
+const SOURCE_OPTIONS = [
+  { value: 'siop', label: 'SIOP' },
+  { value: 'datajud', label: 'DataJud' },
+  { value: 'djen', label: 'DJEN' },
+  { value: 'tribunal', label: 'Tribunal' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'api_private', label: 'API privada' },
+]
+
+const NATURE_LABELS = Object.fromEntries(
+  NATURE_OPTIONS.map((option) => [option.value, option.label])
+)
 
 type Asset = {
   id: string
@@ -85,18 +118,26 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
 
   function applyFilter(patch: Partial<Filters>) {
     const next: Record<string, any> = { ...filters, ...patch, page: patch.page ?? 1 }
-    Object.keys(next).forEach((k) => {
-      if (next[k] === null || next[k] === undefined || next[k] === '') delete next[k]
+    Object.keys(next).forEach((key) => {
+      if (next[key] === null || next[key] === undefined || next[key] === '') delete next[key]
     })
     router.get('/precatorios', next, { preserveState: true, preserveScroll: true })
   }
 
   function toggleSort(col: string) {
     if (!SORTABLE.has(col)) return
+
     if (filters.sortBy === col) {
       applyFilter({ sortDirection: filters.sortDirection === 'asc' ? 'desc' : 'asc' })
-    } else {
-      applyFilter({ sortBy: col as any, sortDirection: 'desc' })
+      return
+    }
+
+    applyFilter({ sortBy: col as Filters['sortBy'], sortDirection: 'desc' })
+  }
+
+  function commitSearch() {
+    if ((filters.q ?? '') !== search) {
+      applyFilter({ q: search || null })
     }
   }
 
@@ -139,65 +180,40 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
         )}
       </PageHeader>
 
-      <Card className="mb-4">
-        <CardContent className="p-3">
-          <div className="flex flex-col lg:flex-row gap-2">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Buscar CNJ, número externo ou devedor..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') applyFilter({ q: search || null })
-                }}
-                onBlur={() => filters.q !== search && applyFilter({ q: search || null })}
-                className="pl-9"
-              />
-            </div>
-
-            <FilterSelect
-              placeholder="Lifecycle"
-              value={filters.lifecycleStatus ?? undefined}
-              onChange={(v) => applyFilter({ lifecycleStatus: v })}
-              options={[
-                'unknown',
-                'discovered',
-                'expedited',
-                'pending',
-                'in_payment',
-                'paid',
-                'cancelled',
-                'suspended',
-              ]}
-            />
-            <FilterSelect
-              placeholder="Compliance"
-              value={filters.complianceStatus ?? undefined}
-              onChange={(v) => applyFilter({ complianceStatus: v })}
-              options={[
-                'pending',
-                'approved_for_analysis',
-                'approved_for_sales',
-                'blocked',
-                'opt_out',
-              ]}
-            />
-            <FilterSelect
-              placeholder="Natureza"
-              value={filters.nature ?? undefined}
-              onChange={(v) => applyFilter({ nature: v })}
-              options={['alimentar', 'comum', 'tributario', 'unknown']}
-            />
-            <FilterSelect
-              placeholder="Source"
-              value={filters.source ?? undefined}
-              onChange={(v) => applyFilter({ source: v })}
-              options={['siop', 'datajud', 'djen', 'tribunal', 'manual', 'api_private']}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <FilterPanel>
+        <div className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_repeat(4,minmax(9.5rem,11rem))]">
+          <SearchFilter
+            value={search}
+            onChange={setSearch}
+            onCommit={commitSearch}
+            placeholder="CNJ, número externo ou devedor"
+          />
+          <SelectFilter
+            label="Lifecycle"
+            value={filters.lifecycleStatus}
+            onChange={(value) => applyFilter({ lifecycleStatus: value })}
+            options={LIFECYCLE_OPTIONS}
+          />
+          <SelectFilter
+            label="Compliance"
+            value={filters.complianceStatus}
+            onChange={(value) => applyFilter({ complianceStatus: value })}
+            options={COMPLIANCE_OPTIONS}
+          />
+          <SelectFilter
+            label="Natureza"
+            value={filters.nature}
+            onChange={(value) => applyFilter({ nature: value })}
+            options={NATURE_OPTIONS}
+          />
+          <SelectFilter
+            label="Origem"
+            value={filters.source}
+            onChange={(value) => applyFilter({ source: value })}
+            options={SOURCE_OPTIONS}
+          />
+        </div>
+      </FilterPanel>
 
       <Card>
         <CardContent className="p-0">
@@ -218,12 +234,12 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
             </EmptyState>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">CNJ</TableHead>
-                    <TableHead>Devedor</TableHead>
-                    <TableHead>
+              <Table className="min-w-[1060px] table-fixed">
+                <TableHeader className="bg-muted/40">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[180px]">CNJ</TableHead>
+                    <TableHead className="w-[180px]">Devedor</TableHead>
+                    <TableHead className="w-[60px]">
                       <SortHead
                         col="exercise_year"
                         label="Exec"
@@ -231,8 +247,8 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         onClick={toggleSort}
                       />
                     </TableHead>
-                    <TableHead>Natureza</TableHead>
-                    <TableHead className="text-end">
+                    <TableHead className="w-[88px]">Natureza</TableHead>
+                    <TableHead className="w-[126px] text-end">
                       <SortHead
                         col="face_value"
                         label="Valor face"
@@ -241,10 +257,10 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         align="end"
                       />
                     </TableHead>
-                    <TableHead>Lifecycle</TableHead>
-                    <TableHead>Compliance</TableHead>
-                    <TableHead>PII</TableHead>
-                    <TableHead className="text-end">
+                    <TableHead className="w-[86px]">Lifecycle</TableHead>
+                    <TableHead className="w-[94px]">Compliance</TableHead>
+                    <TableHead className="w-[104px]">PII</TableHead>
+                    <TableHead className="w-[62px] text-end">
                       <SortHead
                         col="current_score"
                         label="Score"
@@ -253,50 +269,52 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         align="end"
                       />
                     </TableHead>
-                    <TableHead className="text-end">Criado</TableHead>
+                    <TableHead className="w-[90px] text-end">Criado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assets.data.map((a) => (
+                  {assets.data.map((asset) => (
                     <TableRow
-                      key={a.id}
-                      className="cursor-pointer hover:bg-muted/40"
-                      onClick={() => router.visit(`/precatorios/${a.id}`)}
+                      key={asset.id}
+                      className="cursor-pointer hover:bg-orange-50/60"
+                      onClick={() => router.visit(`/precatorios/${asset.id}`)}
                     >
-                      <TableCell className="font-mono text-xs tabular-nums">
-                        {a.cnjNumber ?? a.externalId ?? a.id.slice(0, 8)}
+                      <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">
+                        {asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}
                       </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="truncate font-medium">{a.debtor?.name ?? '—'}</div>
-                        {a.debtor?.stateCode && (
-                          <div className="text-xs text-muted-foreground">{a.debtor.stateCode}</div>
+                      <TableCell>
+                        <div className="truncate font-medium">{asset.debtor?.name ?? '—'}</div>
+                        {asset.debtor?.stateCode && (
+                          <div className="text-xs text-muted-foreground">
+                            {asset.debtor.stateCode}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="tabular-nums text-sm">
-                        {a.exerciseYear ?? '—'}
+                        {asset.exerciseYear ?? '—'}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs px-2 py-0.5 rounded bg-muted">{a.nature}</span>
+                        <LabelChip>{NATURE_LABELS[asset.nature] ?? asset.nature}</LabelChip>
                       </TableCell>
-                      <TableCell className="text-end tabular-nums font-medium">
-                        {fmtBRL(a.faceValue)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge kind="lifecycle" value={a.lifecycleStatus} />
+                      <TableCell className="text-end font-medium tabular-nums">
+                        {fmtBRL(asset.faceValue)}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge kind="compliance" value={a.complianceStatus} />
+                        <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
                       </TableCell>
                       <TableCell>
-                        <StatusBadge kind="pii" value={a.piiStatus} />
+                        <StatusBadge kind="compliance" value={asset.complianceStatus} />
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge kind="pii" value={asset.piiStatus} />
                       </TableCell>
                       <TableCell className="text-end tabular-nums">
-                        {a.currentScore !== null && a.currentScore !== undefined
-                          ? a.currentScore.toFixed(1)
+                        {asset.currentScore !== null && asset.currentScore !== undefined
+                          ? asset.currentScore.toFixed(1)
                           : '—'}
                       </TableCell>
                       <TableCell className="text-end text-xs text-muted-foreground tabular-nums">
-                        {fmtRelative(a.createdAt)}
+                        {fmtRelative(asset.createdAt)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -304,7 +322,7 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
               </Table>
 
               {assets.meta.lastPage > 1 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
+                <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
                   <div className="tabular-nums">
                     Página {assets.meta.currentPage} de {assets.meta.lastPage} ·{' '}
                     {fmtNum(assets.meta.total)} resultados
@@ -337,34 +355,6 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
   )
 }
 
-function FilterSelect({
-  placeholder,
-  value,
-  onChange,
-  options,
-}: {
-  placeholder: string
-  value?: string
-  onChange: (v: string | null) => void
-  options: string[]
-}) {
-  return (
-    <Select value={value ?? '__all'} onValueChange={(v) => onChange(v === '__all' ? null : v)}>
-      <SelectTrigger className="w-[160px] h-9 text-sm">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="__all">Todos</SelectItem>
-        {options.map((o) => (
-          <SelectItem key={o} value={o}>
-            {o}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
 function SortHead({
   col,
   label,
@@ -380,10 +370,13 @@ function SortHead({
 }) {
   const active = filters.sortBy === col
   const Icon = !active ? ArrowUpDown : filters.sortDirection === 'asc' ? ArrowUp : ArrowDown
+
   return (
     <button
       onClick={() => onClick(col)}
-      className={`inline-flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors ${active ? 'text-foreground' : 'text-muted-foreground'} ${align === 'end' ? 'justify-end' : ''}`}
+      className={`inline-flex items-center gap-1 text-xs font-medium transition-colors hover:text-foreground ${
+        active ? 'text-foreground' : 'text-muted-foreground'
+      } ${align === 'end' ? 'justify-end' : ''}`}
     >
       {label}
       <Icon className="size-3" />

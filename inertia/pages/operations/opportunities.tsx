@@ -4,13 +4,6 @@ import { Filter, Sparkles, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Table,
   TableBody,
   TableCell,
@@ -19,8 +12,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { PageHeader } from '~/components/shared/page-header'
 import { EmptyState } from '~/components/shared/empty-state'
+import { FilterPanel, SelectFilter } from '~/components/shared/filter-controls'
+import { LabelChip } from '~/components/shared/label-chip'
+import { PageHeader } from '~/components/shared/page-header'
 import { fmtBRL, fmtNum } from '~/lib/helpers'
 
 type Asset = {
@@ -130,6 +125,28 @@ const STAGE_LABELS: Record<string, string> = {
   lost: 'Perdida',
 }
 
+const GRADE_OPTIONS = ['A+', 'A', 'B+', 'B', 'C', 'D'].map((grade) => ({
+  value: grade,
+  label: `${grade} apenas`,
+}))
+
+const STAGE_OPTIONS = Object.entries(STAGE_LABELS).map(([value, label]) => ({ value, label }))
+
+const IRR_OPTIONS = [
+  { value: '0.15', label: '≥ 15% a.a.' },
+  { value: '0.20', label: '≥ 20% a.a.' },
+  { value: '0.25', label: '≥ 25% a.a.' },
+  { value: '0.30', label: '≥ 30% a.a.' },
+  { value: '0.40', label: '≥ 40% a.a.' },
+]
+
+const NATURE_LABELS: Record<string, string> = {
+  alimentar: 'Alimentar',
+  comum: 'Comum',
+  tributario: 'Tributário',
+  unknown: 'Desconhecida',
+}
+
 const SIGNAL_ICON: Record<string, string> = {
   payment_available: '⚡',
   direct_agreement_opened: '🤝',
@@ -192,7 +209,7 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
         router.reload({ only: ['opportunities', 'meta'] })
       }
     } catch {
-      // silent fail — manter seleção pro user tentar novamente
+      // Keep the selection so the operator can retry the bulk action.
     }
   }
 
@@ -227,61 +244,33 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
         )}
       </PageHeader>
 
-      <Card className="mb-4">
-        <CardContent className="p-3 flex flex-wrap gap-2 items-center">
-          <Select
-            value={filters.grade ?? '__all'}
-            onValueChange={(v) => applyFilter({ grade: v === '__all' ? null : v })}
-          >
-            <SelectTrigger className="w-[140px] h-9 text-sm">
-              <SelectValue placeholder="Grade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all">Todos os scores</SelectItem>
-              <SelectItem value="A+">A+ apenas</SelectItem>
-              <SelectItem value="A">A apenas</SelectItem>
-              <SelectItem value="B+">B+ apenas</SelectItem>
-              <SelectItem value="B">B apenas</SelectItem>
-              <SelectItem value="C">C apenas</SelectItem>
-              <SelectItem value="D">D apenas</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.stage ?? '__all'}
-            onValueChange={(v) => applyFilter({ stage: v === '__all' ? null : v })}
-          >
-            <SelectTrigger className="w-[160px] h-9 text-sm">
-              <SelectValue placeholder="Estágio" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all">Todos estágios</SelectItem>
-              {Object.entries(STAGE_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={String(filters.minRiskAdjustedIrr ?? '__any')}
-            onValueChange={(v) =>
-              applyFilter({ minRiskAdjustedIrr: v === '__any' ? null : Number(v) })
+      <FilterPanel>
+        <div className="grid gap-3 md:grid-cols-3 lg:max-w-2xl">
+          <SelectFilter
+            label="Score"
+            value={filters.grade}
+            allLabel="Todos os scores"
+            options={GRADE_OPTIONS}
+            onChange={(value) => applyFilter({ grade: value })}
+          />
+          <SelectFilter
+            label="Estágio"
+            value={filters.stage}
+            allLabel="Todos os estágios"
+            options={STAGE_OPTIONS}
+            onChange={(value) => applyFilter({ stage: value })}
+          />
+          <SelectFilter
+            label="TIR mínima"
+            value={filters.minRiskAdjustedIrr ? String(filters.minRiskAdjustedIrr) : null}
+            allLabel="Qualquer TIR"
+            options={IRR_OPTIONS}
+            onChange={(value) =>
+              applyFilter({ minRiskAdjustedIrr: value === null ? null : Number(value) })
             }
-          >
-            <SelectTrigger className="w-[160px] h-9 text-sm">
-              <SelectValue placeholder="TIR mínima" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__any">TIR qualquer</SelectItem>
-              <SelectItem value="0.15">≥ 15% a.a.</SelectItem>
-              <SelectItem value="0.20">≥ 20% a.a.</SelectItem>
-              <SelectItem value="0.25">≥ 25% a.a.</SelectItem>
-              <SelectItem value="0.30">≥ 30% a.a.</SelectItem>
-              <SelectItem value="0.40">≥ 40% a.a.</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+          />
+        </div>
+      </FilterPanel>
 
       <Card>
         <CardContent className="p-0">
@@ -293,9 +282,9 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
             />
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
+              <Table className="min-w-[1040px]">
+                <TableHeader className="bg-muted/40">
+                  <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[36px]">
                       <input
                         type="checkbox"
@@ -380,7 +369,7 @@ function OpportunityRow({
   const isHighIRR = op.pricing.riskAdjustedIrr >= 0.3
 
   return (
-    <TableRow className="cursor-pointer hover:bg-muted/40 align-top" onClick={goToDetail}>
+    <TableRow className="cursor-pointer align-top hover:bg-orange-50/60" onClick={goToDetail}>
       <TableCell>
         <input
           type="checkbox"
@@ -406,7 +395,7 @@ function OpportunityRow({
             {op.asset.cnjNumber ?? op.asset.assetNumber ?? op.asset.id.slice(0, 8)}
           </span>
           {op.asset.exerciseYear && <span>· {op.asset.exerciseYear}</span>}
-          <span className="px-1 py-0.5 rounded bg-muted text-foreground">{op.asset.nature}</span>
+          <LabelChip>{NATURE_LABELS[op.asset.nature] ?? op.asset.nature}</LabelChip>
         </div>
         {multiplier > 0 && (
           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
@@ -458,9 +447,7 @@ function OpportunityRow({
         </div>
       </TableCell>
       <TableCell>
-        <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
-          {STAGE_LABELS[op.pipeline.stage] ?? op.pipeline.stage}
-        </span>
+        <LabelChip variant="info">{STAGE_LABELS[op.pipeline.stage] ?? op.pipeline.stage}</LabelChip>
       </TableCell>
     </TableRow>
   )

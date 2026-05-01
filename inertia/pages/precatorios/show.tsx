@@ -1,9 +1,10 @@
 import { Head } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { ArrowLeft, Building2, Hash, Lock } from 'lucide-react'
+import { ArrowLeft, Building2, Clock3, Database, FileJson, Hash, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { LabelChip } from '~/components/shared/label-chip'
 import { PageHeader } from '~/components/shared/page-header'
 import { StatusBadge } from '~/components/status-badge'
 import { fmtBRL, fmtDate, fmtRelative } from '~/lib/helpers'
@@ -48,6 +49,8 @@ type Props = {
 }
 
 export default function PrecatorioShow({ asset }: Props) {
+  const eventsCount = asset.events?.length ?? 0
+
   return (
     <>
       <Head title={asset.cnjNumber ?? `Precatório ${asset.id.slice(0, 8)}`} />
@@ -69,33 +72,34 @@ export default function PrecatorioShow({ asset }: Props) {
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left: tabs com detalhes */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="overview">
-            <TabsList>
-              <TabsTrigger value="overview">Visão geral</TabsTrigger>
+            <TabsList variant="line" size="sm" className="w-full justify-start overflow-x-auto">
+              <TabsTrigger value="overview">Resumo</TabsTrigger>
               <TabsTrigger value="events">
-                Eventos {asset.events?.length ? `(${asset.events.length})` : ''}
+                Linha do tempo
+                {eventsCount > 0 && (
+                  <span className="text-[11px] tabular-nums">({eventsCount})</span>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="raw">Dados brutos</TabsTrigger>
+              <TabsTrigger value="raw">Origem e auditoria</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-3">
               <Card>
+                <CardHeader>
+                  <h2 className="text-base font-semibold">Dados do ativo</h2>
+                </CardHeader>
                 <CardContent className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                   <Field label="CNJ" value={asset.cnjNumber ?? '—'} mono />
                   <Field label="ID externo" value={asset.externalId ?? '—'} mono />
                   <Field
-                    label="Source"
-                    value={
-                      <span className="text-xs px-2 py-0.5 rounded bg-muted">{asset.source}</span>
-                    }
+                    label="Origem"
+                    value={<LabelChip variant="info">{sourceLabel(asset.source)}</LabelChip>}
                   />
                   <Field
                     label="Natureza"
-                    value={
-                      <span className="text-xs px-2 py-0.5 rounded bg-muted">{asset.nature}</span>
-                    }
+                    value={<LabelChip variant="primary">{enumLabel(asset.nature)}</LabelChip>}
                   />
                   <Field label="Exercício" value={asset.exerciseYear ?? '—'} />
                   <Field label="Ano orçamentário" value={asset.budgetYear ?? '—'} />
@@ -112,6 +116,17 @@ export default function PrecatorioShow({ asset }: Props) {
 
             <TabsContent value="events" className="mt-3">
               <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="flex items-center gap-2 text-base font-semibold">
+                      <Clock3 className="size-4 text-primary" />
+                      Eventos operacionais
+                    </h2>
+                    <LabelChip variant={eventsCount > 0 ? 'primary' : 'default'}>
+                      {`${eventsCount} registro${eventsCount === 1 ? '' : 's'}`}
+                    </LabelChip>
+                  </div>
+                </CardHeader>
                 <CardContent className="p-0">
                   {!asset.events || asset.events.length === 0 ? (
                     <div className="p-8 text-center text-sm text-muted-foreground">
@@ -120,19 +135,31 @@ export default function PrecatorioShow({ asset }: Props) {
                   ) : (
                     <ul className="divide-y divide-border">
                       {asset.events.map((ev) => (
-                        <li key={ev.id} className="px-5 py-3 flex items-start gap-3">
-                          <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <li key={ev.id} className="flex items-start gap-3 px-5 py-4">
+                          <div className="mt-1.5 size-2.5 shrink-0 rounded-full bg-primary ring-4 ring-primary/10" />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-sm font-mono">{ev.eventType}</span>
-                              <span className="text-xs text-muted-foreground tabular-nums">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium">
+                                  {eventLabel(ev.eventType)}
+                                </div>
+                                <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                                  {ev.eventType}
+                                </div>
+                              </div>
+                              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                                 {fmtRelative(ev.eventDate)}
                               </span>
                             </div>
                             {ev.payload && (
-                              <pre className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap break-all">
-                                {JSON.stringify(ev.payload, null, 0)}
-                              </pre>
+                              <details className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs">
+                                <summary className="cursor-pointer select-none font-medium text-muted-foreground">
+                                  Payload
+                                </summary>
+                                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
+                                  {JSON.stringify(ev.payload, null, 2)}
+                                </pre>
+                              </details>
                             )}
                           </div>
                         </li>
@@ -144,24 +171,53 @@ export default function PrecatorioShow({ asset }: Props) {
             </TabsContent>
 
             <TabsContent value="raw" className="mt-3">
-              <Card>
-                <CardContent className="p-0">
-                  {!asset.rawData ? (
-                    <div className="p-8 text-center text-sm text-muted-foreground">
-                      Sem dados brutos.
-                    </div>
-                  ) : (
-                    <pre className="p-5 text-xs font-mono whitespace-pre-wrap break-all max-h-[500px] overflow-auto">
-                      {JSON.stringify(asset.rawData, null, 2)}
-                    </pre>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                <Card>
+                  <CardHeader>
+                    <h2 className="flex items-center gap-2 text-base font-semibold">
+                      <Database className="size-4 text-primary" />
+                      Proveniência
+                    </h2>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    <Field
+                      label="Origem"
+                      value={<LabelChip variant="info">{sourceLabel(asset.source)}</LabelChip>}
+                    />
+                    <Field label="ID externo" value={asset.externalId ?? '—'} mono />
+                    <Field
+                      label="Fingerprint"
+                      value={asset.rowFingerprint ? asset.rowFingerprint.slice(0, 24) : '—'}
+                      mono
+                    />
+                    <Field label="Última atualização" value={fmtRelative(asset.updatedAt)} />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <h2 className="flex items-center gap-2 text-base font-semibold">
+                      <FileJson className="size-4 text-primary" />
+                      Payload de origem
+                    </h2>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {!asset.rawData ? (
+                      <div className="p-8 text-center text-sm text-muted-foreground">
+                        Sem payload de origem.
+                      </div>
+                    ) : (
+                      <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap break-all p-5 font-mono text-xs leading-relaxed text-muted-foreground">
+                        {JSON.stringify(asset.rawData, null, 2)}
+                      </pre>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Right: sticky summary */}
         <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
           <Card>
             <CardHeader>
@@ -312,4 +368,38 @@ function SummaryRow({
       <span className={`tabular-nums ${mono ? 'font-mono text-[10px]' : ''}`}>{value}</span>
     </div>
   )
+}
+
+function sourceLabel(source: string) {
+  const labels: Record<string, string> = {
+    siop: 'SIOP',
+    datajud: 'DataJud',
+    djen: 'DJEN',
+    trf2: 'TRF-2',
+  }
+
+  return labels[source.toLowerCase()] ?? enumLabel(source)
+}
+
+function eventLabel(eventType: string) {
+  const labels: Record<string, string> = {
+    siop_imported: 'Importado do SIOP',
+    score_computed: 'Score calculado',
+    lifecycle_changed: 'Status atualizado',
+    compliance_changed: 'Compliance atualizado',
+    datajud_enriched: 'Enriquecido via DataJud',
+    datajud_candidate_matched: 'Candidato DataJud encontrado',
+    publication_detected: 'Publicação detectada',
+    trf2_imported: 'Importado do TRF-2',
+  }
+
+  return labels[eventType] ?? enumLabel(eventType)
+}
+
+function enumLabel(value: string) {
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
 }
