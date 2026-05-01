@@ -58,14 +58,14 @@ The default app URL is `http://localhost:3333`. Local services bind to `127.0.0.
 
 ## What It Does
 
-| Layer | Purpose | Current sources |
-| :-- | :-- | :-- |
-| **Discovery** | Finds public precatório datasets, files, communications, and process records. | SIOP, TRF2, TJSP, DataJud, DJEN |
-| **Evidence** | Stores source files and API payloads before touching domain tables. | `source_records`, `asset_source_links`, `external_identifiers` |
-| **Normalization** | Converts messy rows into canonical assets, debtors, valuations, processes, publications, and events. | CSV, XLSX, HTML, PDF text extraction |
-| **Signals** | Detects legal and publication events that change risk or liquidity. | DataJud movements, DJEN/publication text |
-| **Pricing** | Builds offer and IRR snapshots from market rates, debtor reliability, term, costs, and legal risk. | BCB SGS CDI/SELIC/IPCA, EC 136 rules |
-| **Operations** | Turns assets into an actionable inbox and cession pipeline. | A+ inbox, Kanban pipeline, pricing calculator |
+| Layer             | Purpose                                                                                              | Current sources                                                |
+| :---------------- | :--------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- |
+| **Discovery**     | Finds public precatório datasets, files, communications, and process records.                        | SIOP, TRF2, TJSP, DataJud, DJEN                                |
+| **Evidence**      | Stores source files and API payloads before touching domain tables.                                  | `source_records`, `asset_source_links`, `external_identifiers` |
+| **Normalization** | Converts messy rows into canonical assets, debtors, valuations, processes, publications, and events. | CSV, XLSX, HTML, PDF text extraction                           |
+| **Signals**       | Detects legal and publication events that change risk or liquidity.                                  | DataJud movements, DJEN/publication text                       |
+| **Pricing**       | Builds offer and IRR snapshots from market rates, debtor reliability, term, costs, and legal risk.   | BCB SGS CDI/SELIC/IPCA, EC 136 rules                           |
+| **Operations**    | Turns assets into an actionable inbox and cession pipeline.                                          | A+ inbox, Kanban pipeline, pricing calculator                  |
 
 ---
 
@@ -207,15 +207,15 @@ flowchart LR
 
 ## Integrations
 
-| Integration | Current capability | Main commands |
-| :-- | :-- | :-- |
-| **SIOP open data** | Discovers federal open-data files, stores sources, creates pending imports. | `node ace siop:sync-open-data` |
-| **TRF2** | Discovers CSV files, parses chronological rows, imports assets/processes/events. | `node ace trf2:sync-precatorios`, `node ace trf2:import-precatorios` |
-| **TJSP** | Discovers communication pages, downloads attached files, extracts rows, imports assets. | `node ace tjsp:sync-precatorios` |
-| **DataJud** | Searches CNJ process metadata, subjects, movements, and exact/candidate asset links. | `node ace datajud:sync-precatorios`, `node ace datajud:enrich-assets` |
-| **DJEN** | Searches official publications and classifies liquidity/legal signals. | via `node ace government:sync-data` |
-| **BCB SGS** | Syncs CDI, SELIC, IPCA and feeds EC 136 correction snapshots. | market API/service |
-| **Full pipeline** | Runs SIOP, DataJud, DJEN, TJSP, enrichment, signal classification, and matching. | `node ace government:sync-data --run-inline` |
+| Integration        | Current capability                                                                      | Main commands                                                         |
+| :----------------- | :-------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| **SIOP open data** | Discovers federal open-data files, stores sources, creates pending imports.             | `node ace siop:sync-open-data`                                        |
+| **TRF2**           | Discovers CSV files, parses chronological rows, imports assets/processes/events.        | `node ace trf2:sync-precatorios`, `node ace trf2:import-precatorios`  |
+| **TJSP**           | Discovers communication pages, downloads attached files, extracts rows, imports assets. | `node ace tjsp:sync-precatorios`                                      |
+| **DataJud**        | Searches CNJ process metadata, subjects, movements, and exact/candidate asset links.    | `node ace datajud:sync-precatorios`, `node ace datajud:enrich-assets` |
+| **DJEN**           | Searches official publications and classifies liquidity/legal signals.                  | via `node ace government:sync-data`                                   |
+| **BCB SGS**        | Syncs CDI, SELIC, IPCA and feeds EC 136 correction snapshots.                           | market API/service                                                    |
+| **Full pipeline**  | Runs SIOP, DataJud, DJEN, TJSP, enrichment, signal classification, and matching.        | `node ace government:sync-data --run-inline`                          |
 
 Example local sync:
 
@@ -235,30 +235,30 @@ node ace government:sync-data --tenant-id=<tenant_id> --dry-run --run-inline
 
 ## Components
 
-| Component | Role | Constraint |
-| :-- | :-- | :-- |
-| **`app/modules/integrations`** | Government source catalog, adapters, sync services, jobs, DataJud/DJEN/TJSP/TRF2 flows. | Payloads are source-first and auditable. |
-| **`app/modules/siop`** | Federal open-data import pipeline, staging rows, parsers, jobs. | Idempotent imports with row-level validation. |
-| **`app/modules/precatorios`** | Canonical legal asset model: assets, valuations, budget facts, processes, publications, events. | Tenant-safe domain writes. |
-| **`app/modules/debtors`** | Debtor identity and payment reliability inputs. | Risk depends on debtor behavior, not only asset value. |
-| **`app/modules/operations`** | A+ inbox, opportunity detail, pricing calculator, cession pipeline. | Decisions are snapshot-based and auditable. |
-| **`app/modules/market`** | Market rates and EC 136 correction logic. | Pricing must use explicit dated inputs. |
-| **`app/modules/pii`** | PII bunker, reveal flows, audit logs. | No raw PII in page props, logs, or exports. |
-| **`app/shared`** | Base models, tenant helpers, repositories, queue/job utilities. | Cross-domain code only. |
+| Component                      | Role                                                                                            | Constraint                                             |
+| :----------------------------- | :---------------------------------------------------------------------------------------------- | :----------------------------------------------------- |
+| **`app/modules/integrations`** | Government source catalog, adapters, sync services, jobs, DataJud/DJEN/TJSP/TRF2 flows.         | Payloads are source-first and auditable.               |
+| **`app/modules/siop`**         | Federal open-data import pipeline, staging rows, parsers, jobs.                                 | Idempotent imports with row-level validation.          |
+| **`app/modules/precatorios`**  | Canonical legal asset model: assets, valuations, budget facts, processes, publications, events. | Tenant-safe domain writes.                             |
+| **`app/modules/debtors`**      | Debtor identity and payment reliability inputs.                                                 | Risk depends on debtor behavior, not only asset value. |
+| **`app/modules/operations`**   | A+ inbox, opportunity detail, pricing calculator, cession pipeline.                             | Decisions are snapshot-based and auditable.            |
+| **`app/modules/market`**       | Market rates and EC 136 correction logic.                                                       | Pricing must use explicit dated inputs.                |
+| **`app/modules/pii`**          | PII bunker, reveal flows, audit logs.                                                           | No raw PII in page props, logs, or exports.            |
+| **`app/shared`**               | Base models, tenant helpers, repositories, queue/job utilities.                                 | Cross-domain code only.                                |
 
 ---
 
 ## Data Governance
 
-| Surface | Protection |
-| :-- | :-- |
-| **Multi-tenancy** | Business tables carry `tenant_id`; services preserve same-tenant foreign-key integrity. |
-| **Provenance** | `source_records`, `asset_source_links`, and `external_identifiers` preserve source lineage. |
-| **PII bunker** | Sensitive beneficiary data lives under `pii.*`, encrypted and guarded by RLS. |
-| **Reveal flow** | Controlled reveal functions decrypt data and write access logs. |
-| **Audit** | Operational, security, PII, job, and worker logs are append-oriented and Timescale-ready. |
-| **Hashing** | User passwords use Argon2id; beneficiary lookup uses peppered hashes. |
-| **Logging** | Pino redaction masks secrets, tokens, credentials, and known PII paths. |
+| Surface           | Protection                                                                                  |
+| :---------------- | :------------------------------------------------------------------------------------------ |
+| **Multi-tenancy** | Business tables carry `tenant_id`; services preserve same-tenant foreign-key integrity.     |
+| **Provenance**    | `source_records`, `asset_source_links`, and `external_identifiers` preserve source lineage. |
+| **PII bunker**    | Sensitive beneficiary data lives under `pii.*`, encrypted and guarded by RLS.               |
+| **Reveal flow**   | Controlled reveal functions decrypt data and write access logs.                             |
+| **Audit**         | Operational, security, PII, job, and worker logs are append-oriented and Timescale-ready.   |
+| **Hashing**       | User passwords use Argon2id; beneficiary lookup uses peppered hashes.                       |
+| **Logging**       | Pino redaction masks secrets, tokens, credentials, and known PII paths.                     |
 
 ---
 
@@ -301,14 +301,14 @@ juridicai/
 <details>
 <summary><strong>Prerequisites</strong></summary>
 
-| Tool | Version |
-| :-- | :-- |
-| Node.js | `>= 24.0.0` |
-| pnpm | `>= 10.0.0` |
-| Docker | Local PostgreSQL/TimescaleDB and Redis |
-| PostgreSQL | TimescaleDB HA image on PG17 |
-| Redis | Sessions, queues, retries |
-| Poppler | Optional, enables PDF text extraction through `pdftotext` |
+| Tool       | Version                                                   |
+| :--------- | :-------------------------------------------------------- |
+| Node.js    | `>= 24.0.0`                                               |
+| pnpm       | `>= 10.0.0`                                               |
+| Docker     | Local PostgreSQL/TimescaleDB and Redis                    |
+| PostgreSQL | TimescaleDB HA image on PG17                              |
+| Redis      | Sessions, queues, retries                                 |
+| Poppler    | Optional, enables PDF text extraction through `pdftotext` |
 
 </details>
 
@@ -345,30 +345,30 @@ node ace migration:fresh
 
 Start from `.env.example`. Key variables:
 
-| Variable | Purpose |
-| :-- | :-- |
-| `APP_KEY` | Adonis encryption/session key generated by `node ace generate:key` |
-| `DB_*` | PostgreSQL/TimescaleDB connection |
-| `REDIS_*` | Redis connection for sessions and workers |
-| `DATAJUD_API_KEY` | CNJ DataJud public API key override when needed |
-| `PII_HASH_PEPPER` | Pepper for beneficiary hash generation |
-| `PII_ENCRYPTION_KEY` | Key used by PII reveal/decrypt flows |
-| `DRIVE_DISK` | Local Drive disk, defaults to `fs` |
+| Variable             | Purpose                                                            |
+| :------------------- | :----------------------------------------------------------------- |
+| `APP_KEY`            | Adonis encryption/session key generated by `node ace generate:key` |
+| `DB_*`               | PostgreSQL/TimescaleDB connection                                  |
+| `REDIS_*`            | Redis connection for sessions and workers                          |
+| `DATAJUD_API_KEY`    | CNJ DataJud public API key override when needed                    |
+| `PII_HASH_PEPPER`    | Pepper for beneficiary hash generation                             |
+| `PII_ENCRYPTION_KEY` | Key used by PII reveal/decrypt flows                               |
+| `DRIVE_DISK`         | Local Drive disk, defaults to `fs`                                 |
 
 ---
 
 ## Current Foundation
 
-| Area | Status |
-| :-- | :-- |
-| **Runtime stack** | AdonisJS 7, Inertia 4, React 19, Lucid 22, PostgreSQL/TimescaleDB, Redis, BullMQ, Drive, Bouncer |
-| **Discovery** | SIOP, TRF2, TJSP, DataJud, DJEN, BCB SGS |
-| **Document extraction** | CSV, XLSX, HTML tables, PDF text through Poppler |
-| **Domain model** | Normalized assets, valuations, budget facts, debtors, processes, publications, signals, pricing |
-| **Operations** | A+ inbox, opportunity detail, cession pipeline, pricing snapshots |
-| **Security** | Argon2id, tenant context, RLS helpers, logger redaction, PII bunker |
-| **Automation** | BullMQ workers, coverage runs, job runs, retries, scheduled payload generation |
-| **Tests** | Japa unit and functional coverage for imports, adapters, operations, tenancy, permissions |
+| Area                    | Status                                                                                           |
+| :---------------------- | :----------------------------------------------------------------------------------------------- |
+| **Runtime stack**       | AdonisJS 7, Inertia 4, React 19, Lucid 22, PostgreSQL/TimescaleDB, Redis, BullMQ, Drive, Bouncer |
+| **Discovery**           | SIOP, TRF2, TJSP, DataJud, DJEN, BCB SGS                                                         |
+| **Document extraction** | CSV, XLSX, HTML tables, PDF text through Poppler                                                 |
+| **Domain model**        | Normalized assets, valuations, budget facts, debtors, processes, publications, signals, pricing  |
+| **Operations**          | A+ inbox, opportunity detail, cession pipeline, pricing snapshots                                |
+| **Security**            | Argon2id, tenant context, RLS helpers, logger redaction, PII bunker                              |
+| **Automation**          | BullMQ workers, coverage runs, job runs, retries, scheduled payload generation                   |
+| **Tests**               | Japa unit and functional coverage for imports, adapters, operations, tenancy, permissions        |
 
 ---
 
@@ -386,15 +386,15 @@ Start from `.env.example`. Key variables:
 
 ## Roadmap
 
-| Track | Scope |
-| :-- | :-- |
-| **State coverage** | Add more TJ/TJR/TRF adapters for PDF/XLS/CSV/HTML queues and maps. |
-| **Parser quality** | Improve layout-aware PDF extraction and per-source confidence scores. |
-| **Debtor intelligence** | Build historical payment reliability by debtor and jurisdiction. |
-| **Pricing quality** | Deepen EC 136, tax, cost, term, and probability-of-payment modeling. |
-| **Commercial workflow** | Contact tasks, offer history, due diligence checklist, assignment tracking. |
-| **Operator UX** | Sharper inbox, filters, pipeline persistence, SLA alerts, review queues. |
-| **Observability** | Source freshness, worker health, retry controls, extraction quality dashboards. |
+| Track                   | Scope                                                                           |
+| :---------------------- | :------------------------------------------------------------------------------ |
+| **State coverage**      | Add more TJ/TJR/TRF adapters for PDF/XLS/CSV/HTML queues and maps.              |
+| **Parser quality**      | Improve layout-aware PDF extraction and per-source confidence scores.           |
+| **Debtor intelligence** | Build historical payment reliability by debtor and jurisdiction.                |
+| **Pricing quality**     | Deepen EC 136, tax, cost, term, and probability-of-payment modeling.            |
+| **Commercial workflow** | Contact tasks, offer history, due diligence checklist, assignment tracking.     |
+| **Operator UX**         | Sharper inbox, filters, pipeline persistence, SLA alerts, review queues.        |
+| **Observability**       | Source freshness, worker health, retry controls, extraction quality dashboards. |
 
 ---
 

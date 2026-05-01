@@ -6,89 +6,82 @@
   role="img"
   aria-labelledby="title desc"
 >
-  <title id="title">JuridicAI - Precatório Operations Desk</title>
-  <desc id="desc">A dark operations desk for sourcing, pricing, and governing precatório opportunities.</desc>
+  <title id="title">JuridicAI</title>
+  <desc id="desc">JuridicAI brand banner for precatório intelligence.</desc>
   <defs>
-    <linearGradient id="panelShade" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#181A1D" />
-      <stop offset="100%" stop-color="#101214" />
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#101214" />
+      <stop offset="54%" stop-color="#171A1D" />
+      <stop offset="100%" stop-color="#0B0D0F" />
     </linearGradient>
-    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%">
-      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000000" flood-opacity="0.32" />
-    </filter>
+    <linearGradient id="brandLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F97316" />
+      <stop offset="48%" stop-color="#1CD6F4" />
+      <stop offset="100%" stop-color="#2FAC68" />
+    </linearGradient>
+    <linearGradient id="markFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
     <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
       <path d="M 42 0 L 0 0 0 42" fill="none" stroke="#FFFFFF" stroke-opacity="0.045" />
     </pattern>
+    <filter id="shadow" x="-10%" y="-14%" width="120%" height="128%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000000" flood-opacity="0.38" />
+    </filter>
+    <style>
+      .sans {
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+    </style>
   </defs>
 
-  <rect width="1400" height="440" fill="#101214" />
+  <rect width="1400" height="440" fill="url(#background)" />
   <rect width="1400" height="440" fill="url(#grid)" />
 
-  <g transform="translate(46 42)" filter="url(#shadow)">
-    <rect width="1308" height="356" rx="18" fill="url(#panelShade)" stroke="#2D3136" />
-    <rect width="232" height="356" rx="18" fill="#252525" />
-    <path d="M232 0 V356" stroke="#373737" />
+  <g transform="translate(60 50)" filter="url(#shadow)">
+    <rect width="1280" height="340" rx="18" fill="#101214" stroke="#2D3136" />
+    <rect x="1" y="1" width="1278" height="5" rx="2.5" fill="url(#brandLine)" />
 
-    <g transform="translate(26 28)">
-      <rect width="34" height="34" rx="8" fill="#F97316" />
-      <path d="M17 8 L25 25 H21 L19 21 H15 L13 25 H9 L17 8 Z M16 18 H18 L17 15 Z" fill="#FFFFFF" />
-      <text x="46" y="23" fill="#FFFFFF" font-family="Inter, ui-sans-serif, system-ui" font-size="16" font-weight="700">JuridicAI</text>
+    <g transform="translate(92 74)">
+      <rect width="132" height="132" rx="30" fill="url(#markFill)" />
+      <path
+        d="M39 97 L66 32 L93 97 H77.5 L73.2 84.9 H58.8 L54.5 97 Z M63.4 72 H68.6 L66 64.5 Z"
+        fill="#FFFFFF"
+      />
+      <path
+        d="M35 112 H97"
+        stroke="#FFFFFF"
+        stroke-opacity="0.66"
+        stroke-width="6"
+        stroke-linecap="round"
+      />
     </g>
 
-    <g transform="translate(24 94)" font-family="Inter, ui-sans-serif, system-ui" font-size="13">
-      <text x="0" y="0" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.8">OPERATION</text>
-      <rect x="0" y="20" width="184" height="34" rx="7" fill="#F97316" />
-      <text x="38" y="42" fill="#FFFFFF" font-weight="700">Operations Desk</text>
-      <text x="38" y="86" fill="#CBD5E1">A+ Inbox</text>
-      <text x="38" y="126" fill="#CBD5E1">Pipeline</text>
-      <text x="0" y="174" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.8">INTELLIGENCE</text>
-      <text x="38" y="216" fill="#CBD5E1">Asset Base</text>
+    <g class="sans" transform="translate(262 92)">
+      <text x="0" y="74" fill="#F8FAFC" font-size="72" font-weight="900">JuridicAI</text>
+      <text x="4" y="118" fill="#CBD5E1" font-size="25" font-weight="650">
+        Precatório Intelligence Desk
+      </text>
+      <rect x="4" y="150" width="436" height="3" rx="1.5" fill="url(#brandLine)" />
     </g>
 
-    <g transform="translate(272 50)" font-family="Inter, ui-sans-serif, system-ui">
-      <text x="0" y="22" fill="#FFFFFF" font-size="34" font-weight="800">Precatório Operations Desk</text>
-      <text x="0" y="56" fill="#A1A5B7" font-size="16">Source public data. Price risk. Move opportunities through a governed pipeline.</text>
-
-      <g transform="translate(0 94)">
-        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
-        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">A+ INBOX</text>
-        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">R$ 12.4M</text>
-        <text x="134" y="56" fill="#2FAC68" font-size="14" font-weight="700">31.2% IRR</text>
-      </g>
-
-      <g transform="translate(256 94)">
-        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
-        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">ACTIVE PIPELINE</text>
-        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">18 ops</text>
-        <text x="120" y="56" fill="#1CD6F4" font-size="14" font-weight="700">28.0% IRR</text>
-      </g>
-
-      <g transform="translate(512 94)">
-        <rect width="232" height="82" rx="12" fill="#1C1F23" stroke="#2D3136" />
-        <text x="18" y="27" fill="#A1A5B7" font-size="11" font-weight="700" letter-spacing="1.3">PORTFOLIO</text>
-        <text x="18" y="56" fill="#FFFFFF" font-size="24" font-weight="800">224% CDI</text>
-      </g>
-
-      <g transform="translate(0 204)">
-        <rect width="744" height="86" rx="12" fill="#1C1F23" stroke="#2D3136" />
-        <text x="20" y="31" fill="#F97316" font-size="15" font-weight="800">INSS payment signal</text>
-        <text x="20" y="58" fill="#CBD5E1" font-size="14">A+ opportunity detected from public records and market-rate pricing snapshot.</text>
-        <rect x="594" y="24" width="112" height="30" rx="7" fill="#123326" />
-        <text x="621" y="44" fill="#45D487" font-size="13" font-weight="800">BUY</text>
-      </g>
-    </g>
-
-    <g transform="translate(1060 78)" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
-      <rect width="236" height="242" rx="14" fill="#14171A" stroke="#2D3136" />
-      <text x="22" y="38" fill="#F97316" font-size="14" font-weight="700">pricing snapshot</text>
-      <text x="22" y="76" fill="#A1A5B7" font-size="13">EC136 correction</text>
-      <text x="166" y="76" fill="#FFFFFF" font-size="13">13.0%</text>
-      <text x="22" y="112" fill="#A1A5B7" font-size="13">payment prob.</text>
-      <text x="166" y="112" fill="#2FAC68" font-size="13">0.92</text>
-      <text x="22" y="148" fill="#A1A5B7" font-size="13">risk adj. IRR</text>
-      <text x="166" y="148" fill="#F7C000" font-size="13">36.9%</text>
-      <path d="M22 178 H214" stroke="#2D3136" />
-      <text x="22" y="212" fill="#FFFFFF" font-size="16" font-weight="800">A+ decision</text>
+    <g transform="translate(875 82)">
+      <rect x="0" y="0" width="280" height="176" rx="18" fill="#171A1D" stroke="#2D3136" />
+      <circle cx="58" cy="58" r="12" fill="#F97316" />
+      <circle cx="140" cy="58" r="12" fill="#1CD6F4" />
+      <circle cx="222" cy="58" r="12" fill="#2FAC68" />
+      <path d="M70 58 H128" stroke="#64748B" stroke-width="3" stroke-linecap="round" />
+      <path d="M152 58 H210" stroke="#64748B" stroke-width="3" stroke-linecap="round" />
+      <rect x="42" y="100" width="196" height="14" rx="7" fill="#2D3136" />
+      <rect x="42" y="128" width="144" height="14" rx="7" fill="#2D3136" />
     </g>
   </g>
 </svg>
