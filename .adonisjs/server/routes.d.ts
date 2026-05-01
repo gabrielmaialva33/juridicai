@@ -15,6 +15,7 @@ export type ScannedRoutes = {
     'tenants.select': { paramsTuple?: []; params?: {} }
     'tenants.select.store': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
+    'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.store': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -29,6 +30,18 @@ export type ScannedRoutes = {
     'exports.store': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
+    'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.accept': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.reject': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.ambiguous': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.desk': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.index': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.bulk_pipeline': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.pipeline': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -42,6 +55,7 @@ export type ScannedRoutes = {
     'auth.login.create': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
+    'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.download_source': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -52,6 +66,12 @@ export type ScannedRoutes = {
     'exports.index': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
+    'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.desk': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.index': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.pipeline': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -64,6 +84,7 @@ export type ScannedRoutes = {
     'auth.login.create': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
+    'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.download_source': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -74,6 +95,12 @@ export type ScannedRoutes = {
     'exports.index': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
+    'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.desk': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.index': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.pipeline': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -89,6 +116,12 @@ export type ScannedRoutes = {
     'siop.imports.reprocess': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'pii.beneficiaries.reveal': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.store': { paramsTuple?: []; params?: {} }
+    'integrations.datajud.candidates.accept': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.reject': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.datajud.candidates.ambiguous': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.bulk_pipeline': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }

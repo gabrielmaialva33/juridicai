@@ -33,3 +33,7 @@ yarn-error.log
 # AI assistants
 .codex
 .claude
+
+# Playwright test results
+playwright-report/
+.playwright-mcp

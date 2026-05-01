@@ -139,6 +139,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['index']>>>
     }
   }
+  'siop.imports.new': {
+    methods: ["GET","HEAD"]
+    pattern: '/siop/imports/new'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['newForm']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['newForm']>>>
+    }
+  }
   'siop.imports.store': {
     methods: ["POST"]
     pattern: '/siop/imports'
@@ -305,6 +317,150 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#modules/exports/controllers/exports_controller').default['download']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/exports/controllers/exports_controller').default['download']>>>
+    }
+  }
+  'integrations.datajud.candidates.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/datajud/candidates'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['index']>>>
+    }
+  }
+  'integrations.datajud.candidates.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/datajud/candidates/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['show']>>>
+    }
+  }
+  'integrations.datajud.candidates.accept': {
+    methods: ["POST"]
+    pattern: '/admin/datajud/candidates/:id/accept'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['accept']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['accept']>>>
+    }
+  }
+  'integrations.datajud.candidates.reject': {
+    methods: ["POST"]
+    pattern: '/admin/datajud/candidates/:id/reject'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['reject']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['reject']>>>
+    }
+  }
+  'integrations.datajud.candidates.ambiguous': {
+    methods: ["POST"]
+    pattern: '/admin/datajud/candidates/:id/ambiguous'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['markAmbiguous']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/datajud_candidates_controller').default['markAmbiguous']>>>
+    }
+  }
+  'operations.desk': {
+    methods: ["GET","HEAD"]
+    pattern: '/operations/desk'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['desk']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['desk']>>>
+    }
+  }
+  'operations.opportunities.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/operations/opportunities'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['opportunities']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['opportunities']>>>
+    }
+  }
+  'operations.opportunities.bulk_pipeline': {
+    methods: ["POST"]
+    pattern: '/operations/opportunities/bulk-pipeline'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['bulkMoveToPipeline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['bulkMoveToPipeline']>>>
+    }
+  }
+  'operations.opportunities.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/operations/opportunities/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['show']>>>
+    }
+  }
+  'operations.opportunities.pricing': {
+    methods: ["POST"]
+    pattern: '/operations/opportunities/:id/pricing'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pricing']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pricing']>>>
+    }
+  }
+  'operations.opportunities.pipeline': {
+    methods: ["POST"]
+    pattern: '/operations/opportunities/:id/pipeline'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['moveToPipeline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['moveToPipeline']>>>
+    }
+  }
+  'operations.pipeline': {
+    methods: ["GET","HEAD"]
+    pattern: '/operations/pipeline'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pipeline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pipeline']>>>
     }
   }
   'dashboard.index': {

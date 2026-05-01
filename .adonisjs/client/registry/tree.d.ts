@@ -30,6 +30,7 @@ export interface ApiDefinition {
   siop: {
     imports: {
       index: typeof routes['siop.imports.index']
+      new: typeof routes['siop.imports.new']
       store: typeof routes['siop.imports.store']
       show: typeof routes['siop.imports.show']
       errors: typeof routes['siop.imports.errors']
@@ -55,6 +56,28 @@ export interface ApiDefinition {
     store: typeof routes['exports.store']
     show: typeof routes['exports.show']
     download: typeof routes['exports.download']
+  }
+  integrations: {
+    datajud: {
+      candidates: {
+        index: typeof routes['integrations.datajud.candidates.index']
+        show: typeof routes['integrations.datajud.candidates.show']
+        accept: typeof routes['integrations.datajud.candidates.accept']
+        reject: typeof routes['integrations.datajud.candidates.reject']
+        ambiguous: typeof routes['integrations.datajud.candidates.ambiguous']
+      }
+    }
+  }
+  operations: {
+    desk: typeof routes['operations.desk']
+    opportunities: {
+      index: typeof routes['operations.opportunities.index']
+      bulkPipeline: typeof routes['operations.opportunities.bulk_pipeline']
+      show: typeof routes['operations.opportunities.show']
+      pricing: typeof routes['operations.opportunities.pricing']
+      pipeline: typeof routes['operations.opportunities.pipeline']
+    }
+    pipeline: typeof routes['operations.pipeline']
   }
   dashboard: {
     index: typeof routes['dashboard.index']
