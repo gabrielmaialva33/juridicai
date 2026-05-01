@@ -39,6 +39,8 @@ const permissionDescriptions: Record<(typeof PERMISSIONS)[number], string> = {
   'exports.manage': 'Create and inspect export jobs.',
   'integrations.datajud.read': 'View DataJud enrichment and candidate matching data.',
   'integrations.datajud.manage': 'Review and promote DataJud process match candidates.',
+  'operations.read': 'View cession desk, opportunity inbox, pricing, and pipeline APIs.',
+  'operations.manage': 'Move cession opportunities through the operational pipeline.',
   'admin.health.read': 'View healthcheck and service status.',
   'admin.jobs.read': 'View Radar job runs and worker activity.',
 }
