@@ -59,11 +59,12 @@ export const PrecatorioAssetFactory = factory
       row.debtorId = debtor.id
     }
 
-    if (!row.courtId && assetRow.courtCode && assetRow.courtName) {
+    if (!row.courtId && assetRow.courtName) {
+      const courtCode = assetRow.courtCode ?? `factory:${stableCatalogCode(assetRow.courtName)}`
       const court = await Court.updateOrCreate(
-        { code: assetRow.courtCode },
+        { code: courtCode },
         {
-          code: assetRow.courtCode,
+          code: courtCode,
           alias: null,
           name: assetRow.courtName,
           courtClass: assetRow.courtClass ?? null,
@@ -134,3 +135,12 @@ export const PrecatorioAssetFactory = factory
     }
   })
   .build()
+
+function stableCatalogCode(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
