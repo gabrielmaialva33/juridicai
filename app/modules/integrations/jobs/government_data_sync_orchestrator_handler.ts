@@ -1,6 +1,7 @@
 import governmentDataSyncOrchestratorService from '#modules/integrations/services/government_data_sync_orchestrator_service'
 import tenantContext from '#shared/helpers/tenant_context'
 import jobRunService from '#shared/services/job_run_service'
+import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
 export const GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE = 'government-data-sync-orchestrator'
@@ -16,6 +17,9 @@ export type GovernmentDataSyncOrchestratorPayload = {
   djenStartDate?: string | null
   djenEndDate?: string | null
   djenMaxPagesPerCourt?: number | null
+  tjspCategories?: TjspPrecatorioCommunicationCategory[] | null
+  tjspLimit?: number | null
+  tjspImportDocuments?: boolean | null
   enrichLimit?: number | null
   linkLimit?: number | null
   signalLimit?: number | null
@@ -51,6 +55,9 @@ export async function handleGovernmentDataSyncOrchestrator(
       djenStartDate: payload.djenStartDate ?? null,
       djenEndDate: payload.djenEndDate ?? null,
       djenMaxPagesPerCourt: payload.djenMaxPagesPerCourt ?? null,
+      tjspCategories: payload.tjspCategories ?? null,
+      tjspLimit: payload.tjspLimit ?? null,
+      tjspImportDocuments: payload.tjspImportDocuments ?? true,
       enrichLimit: payload.enrichLimit ?? null,
       linkLimit: payload.linkLimit ?? null,
       signalLimit: payload.signalLimit ?? null,

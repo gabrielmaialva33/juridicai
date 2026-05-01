@@ -6,6 +6,7 @@ export const DATAJUD_SCHEDULED_COURT_BATCH_SIZE = 12
 export const DATAJUD_SCHEDULED_MAX_PAGES_PER_COURT = 25
 export const DJEN_SCHEDULED_MAX_PAGES_PER_COURT = 5
 export const DJEN_SCHEDULED_SEARCH_TEXTS = ['precatório', 'RPV'] as const
+export const TJSP_SCHEDULED_COMMUNICATION_LIMIT = 25
 
 class GovernmentDataSyncScheduleService {
   buildScheduledPayload(now: DateTime = DateTime.utc()) {
@@ -21,6 +22,8 @@ class GovernmentDataSyncScheduleService {
       djenStartDate: now.minus({ days: 1 }).toISODate(),
       djenEndDate: now.toISODate(),
       djenMaxPagesPerCourt: DJEN_SCHEDULED_MAX_PAGES_PER_COURT,
+      tjspCategories: ['state_entities', 'municipal_entities'] as const,
+      tjspLimit: TJSP_SCHEDULED_COMMUNICATION_LIMIT,
       enrichLimit: 1_000,
       linkLimit: 3_000,
       signalLimit: 5_000,

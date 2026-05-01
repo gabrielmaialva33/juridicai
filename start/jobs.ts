@@ -46,6 +46,11 @@ import {
   type SiopOpenDataSyncPayload,
 } from '#modules/integrations/jobs/siop_open_data_sync_handler'
 import {
+  TJSP_PRECATORIO_SYNC_QUEUE,
+  handleTjspPrecatorioSync,
+  type TjspPrecatorioSyncPayload,
+} from '#modules/integrations/jobs/tjsp_precatorio_sync_handler'
+import {
   GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
   handleGovernmentDataSyncOrchestrator,
   type GovernmentDataSyncOrchestratorPayload,
@@ -80,6 +85,7 @@ export const queues = {
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
   siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
+  tjspPrecatorioSync: { name: TJSP_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   governmentDataSyncOrchestrator: { name: GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE, concurrency: 1 },
   dataJudNationalPrecatorioSync: { name: DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
@@ -192,6 +198,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.siopOpenDataSync.concurrency }
+  )
+
+  queueService.registerWorker<TjspPrecatorioSyncPayload>(
+    queues.tjspPrecatorioSync.name,
+    async (job) => {
+      await handleTjspPrecatorioSync({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.tjspPrecatorioSync.concurrency }
   )
 
   queueService.registerWorker<GovernmentDataSyncOrchestratorPayload>(

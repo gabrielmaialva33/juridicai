@@ -5,8 +5,16 @@ import {
   handleGovernmentDataSyncOrchestrator,
   type GovernmentDataSyncOrchestratorPayload,
 } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
+import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import { normalizeAliases } from '#modules/integrations/services/datajud_asset_enrichment_service'
 import queueService from '#shared/services/queue_service'
+
+const TJSP_CATEGORIES = new Set<TjspPrecatorioCommunicationCategory>([
+  'state_entities',
+  'municipal_entities',
+  'inss',
+  'statistics',
+])
 
 export default class GovernmentSyncData extends BaseCommand {
   static commandName = 'government:sync-data'
@@ -65,6 +73,21 @@ export default class GovernmentSyncData extends BaseCommand {
   })
   declare djenMaxPagesPerCourt?: number
 
+  @flags.string({
+    description: 'Comma-separated TJSP categories to sync',
+  })
+  declare tjspCategories?: string
+
+  @flags.number({
+    description: 'Maximum TJSP communication pages to process',
+  })
+  declare tjspLimit?: number
+
+  @flags.boolean({
+    description: 'Skip importing extracted TJSP document rows into canonical assets',
+  })
+  declare tjspSkipImport: boolean
+
   @flags.number({
     description: 'Maximum assets to enrich from DataJud after discovery',
   })
@@ -118,6 +141,9 @@ export default class GovernmentSyncData extends BaseCommand {
       djenStartDate: this.djenStartDate,
       djenEndDate: this.djenEndDate,
       djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
+      tjspCategories: parseTjspCategories(this.tjspCategories),
+      tjspLimit: this.tjspLimit,
+      tjspImportDocuments: !this.tjspSkipImport,
       enrichLimit: this.enrichLimit,
       linkLimit: this.linkLimit,
       signalLimit: this.signalLimit,
@@ -156,6 +182,19 @@ export default class GovernmentSyncData extends BaseCommand {
 
     await queueService.shutdown()
   }
+}
+
+function parseTjspCategories(value?: string) {
+  if (!value?.trim()) {
+    return undefined
+  }
+
+  return value
+    .split(',')
+    .map((category) => category.trim())
+    .filter((category): category is TjspPrecatorioCommunicationCategory =>
+      TJSP_CATEGORIES.has(category as TjspPrecatorioCommunicationCategory)
+    )
 }
 
 function parseYears(value?: string) {

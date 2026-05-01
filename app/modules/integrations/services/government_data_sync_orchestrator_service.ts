@@ -8,6 +8,8 @@ import djenPublicationSyncService from '#modules/integrations/services/djen_publ
 import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
+import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
+import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
 export type GovernmentDataSyncOptions = {
@@ -21,6 +23,9 @@ export type GovernmentDataSyncOptions = {
   djenStartDate?: string | null
   djenEndDate?: string | null
   djenMaxPagesPerCourt?: number | null
+  tjspCategories?: TjspPrecatorioCommunicationCategory[] | null
+  tjspLimit?: number | null
+  tjspImportDocuments?: boolean | null
   enrichLimit?: number | null
   linkLimit?: number | null
   signalLimit?: number | null
@@ -69,6 +74,13 @@ class GovernmentDataSyncOrchestratorService {
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
       origin: options.origin ?? 'scheduler',
     })
+    const tjspPrecatorioDiscovery = await tjspPrecatorioSyncService.sync({
+      tenantId: options.tenantId,
+      categories: options.tjspCategories,
+      limit: options.tjspLimit ?? 25,
+      importDocuments: options.tjspImportDocuments ?? true,
+      origin: options.origin ?? 'scheduler',
+    })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
       tenantId: options.tenantId,
       limit: options.enrichLimit ?? 500,
@@ -108,6 +120,7 @@ class GovernmentDataSyncOrchestratorService {
         siopOpenData,
         dataJudNationalDiscovery,
         djenPublicationDiscovery,
+        tjspPrecatorioDiscovery,
         dataJudAssetEnrichment,
         dataJudExactAssetLinking,
         dataJudLegalSignalClassification,
@@ -144,6 +157,11 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       startDate: options.djenStartDate ?? null,
       endDate: options.djenEndDate ?? null,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+    },
+    tjspPrecatorioDiscovery: {
+      categories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
+      limit: options.tjspLimit ?? 25,
+      importDocuments: options.tjspImportDocuments ?? true,
     },
     dataJudAssetEnrichment: {
       limit: options.enrichLimit ?? 500,
