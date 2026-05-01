@@ -21,6 +21,11 @@ import {
   type DataJudEnrichAssetsPayload,
 } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import {
+  DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE,
+  handleDataJudNationalPrecatorioSync,
+  type DataJudNationalPrecatorioSyncPayload,
+} from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
+import {
   DATAJUD_MATCH_CANDIDATES_QUEUE,
   handleDataJudMatchCandidates,
   type DataJudMatchCandidatesPayload,
@@ -60,6 +65,7 @@ export const queues = {
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
   siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
+  dataJudNationalPrecatorioSync: { name: DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
   dataJudMatchCandidates: { name: DATAJUD_MATCH_CANDIDATES_QUEUE, concurrency: 1 },
 } as const
@@ -180,6 +186,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.dataJudEnrichAssets.concurrency }
+  )
+
+  queueService.registerWorker<DataJudNationalPrecatorioSyncPayload>(
+    queues.dataJudNationalPrecatorioSync.name,
+    async (job) => {
+      await handleDataJudNationalPrecatorioSync({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.dataJudNationalPrecatorioSync.concurrency }
   )
 
   queueService.registerWorker<DataJudMatchCandidatesPayload>(

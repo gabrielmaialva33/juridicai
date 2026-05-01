@@ -44,6 +44,14 @@ export type DataJudSyncByCnjOptions = {
   apiKey?: string
 }
 
+export type DataJudPersistHitOptions = {
+  tenantId: string
+  courtAlias: string
+  query: JsonRecord
+  response: DataJudSearchResponse
+  hit: DataJudHit
+}
+
 export type DataJudSyncedProcess = {
   courtAlias: string
   hit: DataJudHit
@@ -148,6 +156,32 @@ class DataJudPublicApiAdapter {
       requestedCourts: options.courtAliases.length,
       synced: synced.length,
       processes: synced,
+    }
+  }
+
+  async persistHit(options: DataJudPersistHitOptions) {
+    const sourceRecord = await this.persistSourceRecord({
+      tenantId: options.tenantId,
+      courtAlias: options.courtAlias,
+      body: options.query,
+      response: options.response,
+    })
+    const persisted = await this.upsertJudicialProcess({
+      tenantId: options.tenantId,
+      courtAlias: options.courtAlias,
+      sourceRecord,
+      hit: options.hit,
+    })
+
+    if (!persisted) {
+      return null
+    }
+
+    return {
+      courtAlias: options.courtAlias,
+      hit: options.hit,
+      sourceRecord,
+      ...persisted,
     }
   }
 

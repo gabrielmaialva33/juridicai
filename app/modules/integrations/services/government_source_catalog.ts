@@ -261,6 +261,10 @@ class GovernmentSourceCatalogService {
 
     return `${source.baseUrl}/api_publica_${normalized}/_search`
   }
+
+  dataJudCourtAliases() {
+    return [...(this.find('datajud-public-api')?.courtAliases ?? [])]
+  }
 }
 
 export default new GovernmentSourceCatalogService()

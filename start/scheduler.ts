@@ -5,6 +5,7 @@ import queueService from '#shared/services/queue_service'
 import { SIOP_RECONCILE_QUEUE } from '#modules/siop/jobs/siop_reconcile_handler'
 import { SIOP_OPEN_DATA_SYNC_QUEUE } from '#modules/integrations/jobs/siop_open_data_sync_handler'
 import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
+import { DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE } from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
 import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { PURGE_STAGING_QUEUE } from '#modules/maintenance/jobs/purge_staging_handler'
 import { REFRESH_AGGREGATES_QUEUE } from '#modules/maintenance/jobs/refresh_aggregates_handler'
@@ -18,6 +19,20 @@ scheduler
 scheduler
   .call(() => enqueueScheduledJob(SIOP_RECONCILE_QUEUE, 'siop-reconcile'))
   .weeklyOn(0, '03:00')
+  .withoutOverlapping()
+
+scheduler
+  .call(() =>
+    enqueueScheduledTenantJobs(
+      DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE,
+      'datajud-national-precatorio-sync',
+      {
+        pageSize: 100,
+        maxPagesPerCourt: 1,
+      }
+    )
+  )
+  .dailyAt('00:30')
   .withoutOverlapping()
 
 scheduler
