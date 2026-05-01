@@ -50,16 +50,17 @@ type Props = {
 
 export default function PrecatorioShow({ asset }: Props) {
   const eventsCount = asset.events?.length ?? 0
+  const verdict = assetVerdict(asset)
 
   return (
     <>
-      <Head title={asset.cnjNumber ?? `Precatório ${asset.id.slice(0, 8)}`} />
+      <Head title={asset.cnjNumber ?? `Ativo ${asset.id.slice(0, 8)}`} />
 
       <PageHeader
         title={asset.cnjNumber ?? asset.externalId ?? `Precatório #${asset.id.slice(0, 8)}`}
-        description={asset.debtor?.name ?? 'Detalhes do ativo judicial.'}
+        description={`${asset.debtor?.name ?? 'Devedor não identificado'} · ${enumLabel(asset.nature)} · Exec. ${asset.exerciseYear ?? '—'}`}
         breadcrumbs={[
-          { label: 'Precatórios', href: '/precatorios' },
+          { label: 'Base de Ativos', href: '/precatorios' },
           { label: asset.cnjNumber ?? `#${asset.id.slice(0, 8)}` },
         ]}
       >
@@ -70,6 +71,29 @@ export default function PrecatorioShow({ asset }: Props) {
           </Link>
         </Button>
       </PageHeader>
+
+      <Card className="mb-4 border-primary/20 bg-orange-50/60 dark:bg-orange-500/5">
+        <CardContent className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
+          <DecisionMetric
+            label="Leitura operacional"
+            value={<LabelChip variant={verdict.variant}>{verdict.label}</LabelChip>}
+            hint={verdict.hint}
+          />
+          <DecisionMetric label="Valor face" value={fmtBRL(asset.faceValue)} strong />
+          <DecisionMetric
+            label="Etapa"
+            value={<StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />}
+          />
+          <DecisionMetric
+            label="Revisão"
+            value={<StatusBadge kind="compliance" value={asset.complianceStatus} />}
+          />
+          <DecisionMetric
+            label="Dados sensíveis"
+            value={<StatusBadge kind="pii" value={asset.piiStatus} />}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
@@ -222,20 +246,20 @@ export default function PrecatorioShow({ asset }: Props) {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Status
+                Leitura
               </h2>
             </CardHeader>
             <CardContent className="space-y-3">
               <SummaryStatusRow
-                label="Lifecycle"
+                label="Etapa"
                 badge={<StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />}
               />
               <SummaryStatusRow
-                label="Compliance"
+                label="Revisão"
                 badge={<StatusBadge kind="compliance" value={asset.complianceStatus} />}
               />
               <SummaryStatusRow
-                label="PII"
+                label="Dados"
                 badge={<StatusBadge kind="pii" value={asset.piiStatus} />}
               />
               <SummaryStatusRow
@@ -283,7 +307,7 @@ export default function PrecatorioShow({ asset }: Props) {
             <CardHeader>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Hash className="size-3.5" />
-                Trilha
+                Auditoria
               </h2>
             </CardHeader>
             <CardContent className="space-y-2.5 text-xs">
@@ -304,10 +328,10 @@ export default function PrecatorioShow({ asset }: Props) {
               <CardContent className="p-4 flex items-start gap-2.5">
                 <Lock className="size-4 text-violet-600 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <div className="font-medium text-foreground">PII no bunker</div>
+                  <div className="font-medium text-foreground">Dados sensíveis no bunker</div>
                   <div className="text-muted-foreground mt-0.5">
-                    Beneficiários armazenados em schema isolado. Acesso requer permissão e gera log
-                    de auditoria.
+                    Beneficiários armazenados em schema isolado. Revelação exige permissão e gera
+                    auditoria.
                   </div>
                 </div>
               </CardContent>
@@ -316,6 +340,30 @@ export default function PrecatorioShow({ asset }: Props) {
         </div>
       </div>
     </>
+  )
+}
+
+function DecisionMetric({
+  label,
+  value,
+  hint,
+  strong,
+}: {
+  label: string
+  value: React.ReactNode
+  hint?: string
+  strong?: boolean
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className={`min-h-6 text-sm ${strong ? 'text-base font-semibold tabular-nums' : ''}`}>
+        {value}
+      </div>
+      {hint && <div className="mt-1 truncate text-xs text-muted-foreground">{hint}</div>}
+    </div>
   )
 }
 
@@ -394,6 +442,42 @@ function eventLabel(eventType: string) {
   }
 
   return labels[eventType] ?? enumLabel(eventType)
+}
+
+function assetVerdict(asset: Asset): {
+  label: string
+  hint: string
+  variant: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default'
+} {
+  if (asset.lifecycleStatus === 'paid') {
+    return { label: 'Recebido', hint: 'Baixa prioridade para originação', variant: 'success' }
+  }
+
+  if (asset.lifecycleStatus === 'suspended' || asset.complianceStatus === 'blocked') {
+    return { label: 'Bloqueado', hint: 'Risco jurídico impeditivo', variant: 'danger' }
+  }
+
+  if (asset.complianceStatus === 'approved_for_sales') {
+    return {
+      label: 'Pronto para oferta',
+      hint: 'Pode entrar no pipeline comercial',
+      variant: 'success',
+    }
+  }
+
+  if (asset.complianceStatus === 'approved_for_analysis') {
+    return {
+      label: 'Elegível para triagem',
+      hint: 'Priorizar análise financeira',
+      variant: 'primary',
+    }
+  }
+
+  if (asset.lifecycleStatus === 'expedited' || asset.lifecycleStatus === 'in_payment') {
+    return { label: 'Sinal positivo', hint: 'Acompanhar eventos e fila', variant: 'info' }
+  }
+
+  return { label: 'Monitorar', hint: 'Aguardando sinais de maturação', variant: 'warning' }
 }
 
 function enumLabel(value: string) {
