@@ -5,9 +5,11 @@ import CessionOpportunity, {
   type OpportunityGrade,
 } from '#modules/operations/models/cession_opportunity'
 import cessionPricingEngine, {
+  type MarketRatePricingSnapshot,
   type OpportunityProjection,
   type PricingInput,
 } from '#modules/operations/services/cession_pricing_engine'
+import marketRateService from '#modules/market/services/market_rate_service'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 
@@ -44,7 +46,8 @@ export type PipelineUpdateInput = {
 
 class OperationsService {
   async desk(tenantId: string) {
-    const opportunities = await this.computeOpportunities(tenantId, { limit: 500 })
+    const marketRates = await marketRateService.latestSnapshot()
+    const opportunities = await this.computeOpportunities(tenantId, { limit: 500, marketRates })
     const today = DateTime.now().minus({ hours: 24 })
     const inboxAPlus = opportunities.filter(
       (opportunity) => opportunity.pipeline.stage === 'inbox' && opportunity.pricing.grade === 'A+'
@@ -87,12 +90,14 @@ class OperationsService {
       market: {
         benchmark: 'CDI',
         targetSpreadLabel: '150-200% CDI',
+        rates: marketRates,
       },
     }
   }
 
   async list(tenantId: string, filters: OpportunityListFilters) {
-    const computed = await this.computeOpportunities(tenantId, { limit: 1_000 })
+    const marketRates = await marketRateService.latestSnapshot()
+    const computed = await this.computeOpportunities(tenantId, { limit: 1_000, marketRates })
     const filtered = computed.filter((opportunity) => matchesFilters(opportunity, filters))
     const sorted = filtered.sort(compareOpportunities)
     const page = Math.max(filters.page, 1)
@@ -112,16 +117,21 @@ class OperationsService {
   }
 
   async show(tenantId: string, assetId: string, pricing?: PricingInput | null) {
+    const marketRates = await marketRateService.latestSnapshot()
     const asset = await this.assetQuery(tenantId)
       .where('id', assetId)
-      .preload('debtor')
+      .preload('debtor', (query) =>
+        query.preload('paymentStats', (statsQuery) =>
+          statsQuery.orderBy('computed_at', 'desc').limit(1)
+        )
+      )
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(100))
       .preload('cessionOpportunity')
       .preload('judicialProcesses', (query) => query.orderBy('created_at', 'desc').limit(10))
       .preload('publications', (query) => query.orderBy('publication_date', 'desc').limit(10))
       .firstOrFail()
 
-    const opportunity = this.projectAsset(asset, pricing)
+    const opportunity = this.projectAsset(asset, pricing, marketRates)
 
     return {
       opportunity,
@@ -132,7 +142,8 @@ class OperationsService {
   }
 
   async pipeline(tenantId: string) {
-    const opportunities = await this.computeOpportunities(tenantId, { limit: 1_000 })
+    const marketRates = await marketRateService.latestSnapshot()
+    const opportunities = await this.computeOpportunities(tenantId, { limit: 1_000, marketRates })
     const stages: CessionPipelineStage[] = [
       'inbox',
       'qualified',
@@ -233,23 +244,32 @@ class OperationsService {
     tenantId: string,
     options: {
       limit: number
+      marketRates: MarketRatePricingSnapshot
     }
   ) {
     const assets = await this.assetQuery(tenantId)
-      .preload('debtor')
+      .preload('debtor', (query) =>
+        query.preload('paymentStats', (statsQuery) =>
+          statsQuery.orderBy('computed_at', 'desc').limit(1)
+        )
+      )
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(50))
       .preload('cessionOpportunity')
       .orderBy('created_at', 'desc')
       .limit(options.limit)
 
-    return assets.map((asset) => this.projectAsset(asset))
+    return assets.map((asset) => this.projectAsset(asset, null, options.marketRates))
   }
 
   private assetQuery(tenantId: string) {
     return PrecatorioAsset.query().where('tenant_id', tenantId).whereNull('deleted_at')
   }
 
-  private projectAsset(asset: PrecatorioAsset, pricing?: PricingInput | null) {
+  private projectAsset(
+    asset: PrecatorioAsset,
+    pricing?: PricingInput | null,
+    marketRates?: MarketRatePricingSnapshot | null
+  ) {
     const opportunity = asset.$preloaded.cessionOpportunity as CessionOpportunity | undefined
     const persistedPricing =
       opportunity && !pricing
@@ -268,6 +288,7 @@ class OperationsService {
       targetCloseAt: opportunity?.targetCloseAt?.toISO() ?? null,
       lastContactedAt: opportunity?.lastContactedAt?.toISO() ?? null,
       pricing: pricing ?? persistedPricing,
+      marketRates,
     })
   }
 

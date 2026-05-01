@@ -27,6 +27,10 @@ export interface ApiDefinition {
       store: typeof routes['tenants.select.store']
     }
   }
+  settings: {
+    tenant: typeof routes['settings.tenant']
+    users: typeof routes['settings.users']
+  }
   siop: {
     imports: {
       index: typeof routes['siop.imports.index']
@@ -78,6 +82,12 @@ export interface ApiDefinition {
       pipeline: typeof routes['operations.opportunities.pipeline']
     }
     pipeline: typeof routes['operations.pipeline']
+  }
+  market: {
+    rates: {
+      snapshot: typeof routes['market.rates.snapshot']
+      syncBcb: typeof routes['market.rates.sync_bcb']
+    }
   }
   dashboard: {
     index: typeof routes['dashboard.index']

@@ -32,18 +32,20 @@ const PIPELINE_STAGES: CessionPipelineStage[] = [
 const GRADES: OpportunityGrade[] = ['A+', 'A', 'B+', 'B', 'C', 'D']
 
 export default class OperationsController {
-  async desk({ response }: HttpContext) {
-    return response.ok(await operationsService.desk(tenantContext.requireTenantId()))
+  async desk({ inertia }: HttpContext) {
+    const data = await operationsService.desk(tenantContext.requireTenantId())
+    return inertia.render('operations/desk', data as any)
   }
 
-  async opportunities({ request, response }: HttpContext) {
+  async opportunities({ inertia, request }: HttpContext) {
     const filters = normalizeListFilters(request.qs())
-
-    return response.ok(await operationsService.list(tenantContext.requireTenantId(), filters))
+    const data = await operationsService.list(tenantContext.requireTenantId(), filters)
+    return inertia.render('operations/opportunities', { ...data, filters } as any)
   }
 
-  async show({ params, response }: HttpContext) {
-    return response.ok(await operationsService.show(tenantContext.requireTenantId(), params.id))
+  async show({ inertia, params }: HttpContext) {
+    const data = await operationsService.show(tenantContext.requireTenantId(), params.id)
+    return inertia.render('operations/show', data as any)
   }
 
   async pricing({ params, request, response }: HttpContext) {
@@ -56,8 +58,9 @@ export default class OperationsController {
     )
   }
 
-  async pipeline({ response }: HttpContext) {
-    return response.ok(await operationsService.pipeline(tenantContext.requireTenantId()))
+  async pipeline({ inertia }: HttpContext) {
+    const data = await operationsService.pipeline(tenantContext.requireTenantId())
+    return inertia.render('operations/pipeline', data as any)
   }
 
   async moveToPipeline({ auth, params, request, requestId, response }: HttpContext) {

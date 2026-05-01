@@ -127,6 +127,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/tenant/controllers/tenant_select_controller').default['store']>>>
     }
   }
+  'settings.tenant': {
+    methods: ["GET","HEAD"]
+    pattern: '/settings/tenant'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/tenant/controllers/settings_controller').default['tenant']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/tenant/controllers/settings_controller').default['tenant']>>>
+    }
+  }
+  'settings.users': {
+    methods: ["GET","HEAD"]
+    pattern: '/settings/users'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/tenant/controllers/settings_controller').default['users']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/tenant/controllers/settings_controller').default['users']>>>
+    }
+  }
   'siop.imports.index': {
     methods: ["GET","HEAD"]
     pattern: '/siop/imports'
@@ -461,6 +485,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pipeline']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pipeline']>>>
+    }
+  }
+  'market.rates.snapshot': {
+    methods: ["GET","HEAD"]
+    pattern: '/market/rates/snapshot'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/market/controllers/market_rates_controller').default['snapshot']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/market/controllers/market_rates_controller').default['snapshot']>>>
+    }
+  }
+  'market.rates.sync_bcb': {
+    methods: ["POST"]
+    pattern: '/market/rates/sync-bcb'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/market/controllers/market_rates_controller').default['syncBcb']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/market/controllers/market_rates_controller').default['syncBcb']>>>
     }
   }
   'dashboard.index': {

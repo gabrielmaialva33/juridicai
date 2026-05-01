@@ -66,6 +66,18 @@ const routes = {
     tokens: [{"old":"/tenants/select","type":0,"val":"tenants","end":""},{"old":"/tenants/select","type":0,"val":"select","end":""}],
     types: placeholder as Registry['tenants.select.store']['types'],
   },
+  'settings.tenant': {
+    methods: ["GET","HEAD"],
+    pattern: '/settings/tenant',
+    tokens: [{"old":"/settings/tenant","type":0,"val":"settings","end":""},{"old":"/settings/tenant","type":0,"val":"tenant","end":""}],
+    types: placeholder as Registry['settings.tenant']['types'],
+  },
+  'settings.users': {
+    methods: ["GET","HEAD"],
+    pattern: '/settings/users',
+    tokens: [{"old":"/settings/users","type":0,"val":"settings","end":""},{"old":"/settings/users","type":0,"val":"users","end":""}],
+    types: placeholder as Registry['settings.users']['types'],
+  },
   'siop.imports.index': {
     methods: ["GET","HEAD"],
     pattern: '/siop/imports',
@@ -233,6 +245,18 @@ const routes = {
     pattern: '/operations/pipeline',
     tokens: [{"old":"/operations/pipeline","type":0,"val":"operations","end":""},{"old":"/operations/pipeline","type":0,"val":"pipeline","end":""}],
     types: placeholder as Registry['operations.pipeline']['types'],
+  },
+  'market.rates.snapshot': {
+    methods: ["GET","HEAD"],
+    pattern: '/market/rates/snapshot',
+    tokens: [{"old":"/market/rates/snapshot","type":0,"val":"market","end":""},{"old":"/market/rates/snapshot","type":0,"val":"rates","end":""},{"old":"/market/rates/snapshot","type":0,"val":"snapshot","end":""}],
+    types: placeholder as Registry['market.rates.snapshot']['types'],
+  },
+  'market.rates.sync_bcb': {
+    methods: ["POST"],
+    pattern: '/market/rates/sync-bcb',
+    tokens: [{"old":"/market/rates/sync-bcb","type":0,"val":"market","end":""},{"old":"/market/rates/sync-bcb","type":0,"val":"rates","end":""},{"old":"/market/rates/sync-bcb","type":0,"val":"sync-bcb","end":""}],
+    types: placeholder as Registry['market.rates.sync_bcb']['types'],
   },
   'dashboard.index': {
     methods: ["GET","HEAD"],

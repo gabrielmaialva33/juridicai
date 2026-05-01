@@ -22,8 +22,14 @@ declare module '@adonisjs/inertia/types' {
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.tsx'))['default']>
     'errors/server_error': ExtractProps<(typeof import('../../inertia/pages/errors/server_error.tsx'))['default']>
     'home': ExtractProps<(typeof import('../../inertia/pages/home.tsx'))['default']>
+    'operations/desk': ExtractProps<(typeof import('../../inertia/pages/operations/desk.tsx'))['default']>
+    'operations/opportunities': ExtractProps<(typeof import('../../inertia/pages/operations/opportunities.tsx'))['default']>
+    'operations/pipeline': ExtractProps<(typeof import('../../inertia/pages/operations/pipeline.tsx'))['default']>
+    'operations/show': ExtractProps<(typeof import('../../inertia/pages/operations/show.tsx'))['default']>
     'precatorios/index': ExtractProps<(typeof import('../../inertia/pages/precatorios/index.tsx'))['default']>
     'precatorios/show': ExtractProps<(typeof import('../../inertia/pages/precatorios/show.tsx'))['default']>
+    'settings/tenant': ExtractProps<(typeof import('../../inertia/pages/settings/tenant.tsx'))['default']>
+    'settings/users': ExtractProps<(typeof import('../../inertia/pages/settings/users.tsx'))['default']>
     'siop/imports/errors': ExtractProps<(typeof import('../../inertia/pages/siop/imports/errors.tsx'))['default']>
     'siop/imports/index': ExtractProps<(typeof import('../../inertia/pages/siop/imports/index.tsx'))['default']>
     'siop/imports/new': ExtractProps<(typeof import('../../inertia/pages/siop/imports/new.tsx'))['default']>

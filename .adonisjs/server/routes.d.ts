@@ -14,6 +14,8 @@ export type ScannedRoutes = {
     'auth.logout': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'tenants.select.store': { paramsTuple?: []; params?: {} }
+    'settings.tenant': { paramsTuple?: []; params?: {} }
+    'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.store': { paramsTuple?: []; params?: {} }
@@ -42,6 +44,8 @@ export type ScannedRoutes = {
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'market.rates.snapshot': { paramsTuple?: []; params?: {} }
+    'market.rates.sync_bcb': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -54,6 +58,8 @@ export type ScannedRoutes = {
     'auth.signup.create': { paramsTuple?: []; params?: {} }
     'auth.login.create': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
+    'settings.tenant': { paramsTuple?: []; params?: {} }
+    'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -72,6 +78,7 @@ export type ScannedRoutes = {
     'operations.opportunities.index': { paramsTuple?: []; params?: {} }
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -83,6 +90,8 @@ export type ScannedRoutes = {
     'auth.signup.create': { paramsTuple?: []; params?: {} }
     'auth.login.create': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
+    'settings.tenant': { paramsTuple?: []; params?: {} }
+    'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -101,6 +110,7 @@ export type ScannedRoutes = {
     'operations.opportunities.index': { paramsTuple?: []; params?: {} }
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
@@ -122,6 +132,7 @@ export type ScannedRoutes = {
     'operations.opportunities.bulk_pipeline': { paramsTuple?: []; params?: {} }
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'market.rates.sync_bcb': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
