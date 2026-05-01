@@ -1,4 +1,5 @@
 import { BaseCommand, flags } from '@adonisjs/core/ace'
+import { DateTime } from 'luxon'
 import dataJudCandidateMatchService from '#modules/integrations/services/datajud_candidate_match_service'
 import {
   DATAJUD_MATCH_CANDIDATES_QUEUE,
@@ -76,7 +77,7 @@ export default class DataJudMatchCandidates extends BaseCommand {
       'datajud-match-candidates',
       payload,
       {
-        jobId: `datajud-match-candidates-${this.tenantId}-${Date.now()}`,
+        jobId: `datajud-match-candidates-${this.tenantId}-${DateTime.utc().toMillis()}`,
         attempts: 3,
         backoff: {
           type: 'exponential',

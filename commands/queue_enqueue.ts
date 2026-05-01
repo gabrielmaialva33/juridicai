@@ -1,4 +1,5 @@
 import { BaseCommand, args, flags } from '@adonisjs/core/ace'
+import { DateTime } from 'luxon'
 import queueService from '#shared/services/queue_service'
 import {
   SIOP_RECONCILE_QUEUE,
@@ -78,7 +79,7 @@ export default class QueueEnqueue extends BaseCommand {
       return
     }
 
-    const jobId = `${config.jobName}-${Date.now()}`
+    const jobId = `${config.jobName}-${DateTime.utc().toMillis()}`
     const job = await queueService.add(
       this.queueName,
       config.jobName,

@@ -1,4 +1,5 @@
 import { BaseCommand, flags } from '@adonisjs/core/ace'
+import { DateTime } from 'luxon'
 import queueService from '#shared/services/queue_service'
 import {
   DATAJUD_ENRICH_ASSETS_QUEUE,
@@ -79,7 +80,7 @@ export default class DataJudEnrichAssets extends BaseCommand {
       'datajud-enrich-assets',
       payload,
       {
-        jobId: `datajud-enrich-assets-${this.tenantId}-${Date.now()}`,
+        jobId: `datajud-enrich-assets-${this.tenantId}-${DateTime.utc().toMillis()}`,
         attempts: 3,
         backoff: {
           type: 'exponential',

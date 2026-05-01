@@ -1,10 +1,7 @@
 import { BaseCommand, flags } from '@adonisjs/core/ace'
-import queueService from '#shared/services/queue_service'
 import siopOpenDataAdapter from '#modules/integrations/services/siop_open_data_adapter'
-import {
-  SIOP_IMPORT_QUEUE,
-  type SiopImportJobPayload,
-} from '#modules/siop/jobs/siop_import_handler'
+import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
+import queueService from '#shared/services/queue_service'
 
 export default class SiopSyncOpenData extends BaseCommand {
   static commandName = 'siop:sync-open-data'
@@ -55,13 +52,13 @@ export default class SiopSyncOpenData extends BaseCommand {
       return
     }
 
-    const result = await siopOpenDataAdapter.sync({
+    const result = await siopOpenDataSyncService.sync({
       tenantId: this.tenantId!,
       years: parseYears(this.years),
+      enqueueImports: this.enqueue,
     })
 
     if (this.enqueue) {
-      await this.enqueueImports(result.items)
       await queueService.shutdown()
     }
 
@@ -72,41 +69,10 @@ export default class SiopSyncOpenData extends BaseCommand {
         downloaded: result.downloaded,
         importsCreated: result.importsCreated,
         importsReused: result.importsReused,
-        enqueue: this.enqueue,
+        importsEnqueued: result.importsEnqueued,
+        importsSkipped: result.importsSkipped,
       })}`
     )
-  }
-
-  private async enqueueImports(
-    items: Awaited<ReturnType<typeof siopOpenDataAdapter.sync>>['items']
-  ) {
-    for (const item of items) {
-      if (!item.siopImport) {
-        continue
-      }
-
-      const payload: SiopImportJobPayload = {
-        tenantId: item.siopImport.tenantId,
-        importId: item.siopImport.id,
-        origin: 'system',
-      }
-      const job = await queueService.add(SIOP_IMPORT_QUEUE, 'siop-import', payload, {
-        jobId: `siop-open-data-${item.siopImport.tenantId}-${item.siopImport.id}`,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-      })
-
-      this.logger.info(
-        `SIOP import enqueued: ${JSON.stringify({
-          importId: item.siopImport.id,
-          year: item.link.year,
-          jobId: job.id,
-        })}`
-      )
-    }
   }
 }
 
