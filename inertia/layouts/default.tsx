@@ -4,7 +4,9 @@ import { usePage } from '@inertiajs/react'
 import { Data } from '@generated/data'
 import { ThemeProvider } from '~/providers/theme-provider'
 import { QueryProvider } from '~/providers/query-provider'
-import { AppLayout } from '~/layouts/app'
+import { AppLayout } from '~/components/layouts/app-layout'
+
+const STANDALONE_PREFIXES = ['/login', '/signup', '/auth', '/tenants/select']
 
 export default function Layout({ children }: { children: ReactElement<Data.SharedProps> }) {
   const { url, props } = usePage<Data.SharedProps>()
@@ -18,10 +20,12 @@ export default function Layout({ children }: { children: ReactElement<Data.Share
     if (props.flash?.success) toast.success(props.flash.success)
   }, [props.flash])
 
+  const isStandalone = STANDALONE_PREFIXES.some((p) => url.startsWith(p))
+
   return (
     <ThemeProvider>
       <QueryProvider>
-        <AppLayout>{children}</AppLayout>
+        {isStandalone ? children : <AppLayout>{children}</AppLayout>}
         <Toaster position="top-center" richColors />
       </QueryProvider>
     </ThemeProvider>
