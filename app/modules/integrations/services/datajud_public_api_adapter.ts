@@ -8,6 +8,7 @@ import JudicialProcessMovementComplement from '#modules/precatorios/models/judic
 import JudicialProcessSubject from '#modules/precatorios/models/judicial_process_subject'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -226,6 +227,7 @@ class DataJudPublicApiAdapter {
       took: input.response.took,
       timedOut: input.response.timed_out,
     }
+    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('datajud-public-api')
     const existing = await SourceRecord.query()
       .where('tenant_id', input.tenantId)
       .where('source', 'datajud')
@@ -234,6 +236,7 @@ class DataJudPublicApiAdapter {
 
     if (existing) {
       existing.merge({
+        sourceDatasetId,
         sourceUrl: endpoint,
         collectedAt: DateTime.now(),
         rawData: metadata,
@@ -244,6 +247,7 @@ class DataJudPublicApiAdapter {
 
     return SourceRecord.create({
       tenantId: input.tenantId,
+      sourceDatasetId,
       source: 'datajud',
       sourceUrl: endpoint,
       sourceChecksum: checksum,
@@ -330,11 +334,77 @@ class DataJudPublicApiAdapter {
     if (existing) {
       existing.merge(payload)
       await existing.save()
+      await this.recordSourceEvidence(input, existing, asset)
       return { judicialProcess: existing, created: false }
     }
 
     const judicialProcess = await JudicialProcess.create(payload)
+    await this.recordSourceEvidence(input, judicialProcess, asset)
     return { judicialProcess, created: true }
+  }
+
+  private async recordSourceEvidence(
+    input: {
+      tenantId: string
+      courtAlias: string
+      sourceRecord: SourceRecord
+      hit: DataJudHit
+    },
+    judicialProcess: JudicialProcess,
+    asset: PrecatorioAsset | null
+  ) {
+    if (!asset) {
+      return
+    }
+
+    const source = input.hit._source
+    await sourceEvidenceService.linkAsset({
+      tenantId: input.tenantId,
+      assetId: asset.id,
+      sourceRecordId: input.sourceRecord.id,
+      sourceDatasetKey: 'datajud-public-api',
+      linkType: 'enrichment',
+      confidence: 1,
+      matchReason: 'datajud_cnj_match',
+      matchedFields: {
+        cnjNumber: judicialProcess.cnjNumber,
+        datajudId: input.hit._id,
+        courtAlias: input.courtAlias,
+      },
+      normalizedPayload: {
+        cnjNumber: judicialProcess.cnjNumber,
+        courtAlias: input.courtAlias,
+        classCode: numberOrNull(readNested(source, ['classe', 'codigo'])),
+        className: stringOrNull(readNested(source, ['classe', 'nome'])),
+        filedAt: parseDataJudDate(source.dataAjuizamento)?.toISODate() ?? null,
+      },
+      rawPointer: {
+        sourceRecordId: input.sourceRecord.id,
+        datajudId: input.hit._id,
+        index: input.hit._index,
+      },
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: input.tenantId,
+      assetId: asset.id,
+      sourceRecordId: input.sourceRecord.id,
+      sourceDatasetKey: 'datajud-public-api',
+      identifierType: 'cnj_number',
+      identifierValue: judicialProcess.cnjNumber,
+      issuer: input.courtAlias.toUpperCase(),
+      isPrimary: true,
+      rawData: judicialProcess.rawData,
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: input.tenantId,
+      assetId: asset.id,
+      sourceRecordId: input.sourceRecord.id,
+      sourceDatasetKey: 'datajud-public-api',
+      identifierType: 'datajud_id',
+      identifierValue: input.hit._id,
+      issuer: 'CNJ DataJud',
+      rawData: judicialProcess.rawData,
+    })
   }
 
   private async upsertJudicialProcessMetadata(input: {

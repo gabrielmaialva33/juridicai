@@ -6,7 +6,9 @@ import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetScore from '#modules/precatorios/models/asset_score'
 import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
 import AssetValuation from '#modules/precatorios/models/asset_valuation'
+import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import Debtor from '#modules/debtors/models/debtor'
+import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
@@ -74,6 +76,8 @@ test.group('SIOP import service', () => {
     assert.equal(valuation.faceValue, '1234567.89')
     assert.equal(asset.currentScore, 100)
     assert.isNotNull(asset.currentScoreId)
+    assert.equal(await countRows(AssetSourceLink.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(ExternalIdentifier.query().where('tenant_id', tenant.id)), 4)
 
     const secondRun = await siopImportService.importRows({
       tenantId: tenant.id,
@@ -94,6 +98,8 @@ test.group('SIOP import service', () => {
     })
     assert.equal(await countRows(PrecatorioAsset.query().where('tenant_id', tenant.id)), 2)
     assert.equal(await countRows(AssetEvent.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(AssetSourceLink.query().where('tenant_id', tenant.id)), 2)
+    assert.equal(await countRows(ExternalIdentifier.query().where('tenant_id', tenant.id)), 4)
 
     await cleanupTenantImportData(tenant)
   })

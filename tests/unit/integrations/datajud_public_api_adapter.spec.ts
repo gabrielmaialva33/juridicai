@@ -4,6 +4,8 @@ import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import JudicialProcessMovement from '#modules/precatorios/models/judicial_process_movement'
 import JudicialProcessMovementComplement from '#modules/precatorios/models/judicial_process_movement_complement'
 import JudicialProcessSubject from '#modules/precatorios/models/judicial_process_subject'
+import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
+import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
 import SourceRecord from '#modules/siop/models/source_record'
 import { PrecatorioAssetFactory } from '#database/factories/precatorio_asset_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
@@ -159,6 +161,9 @@ test.group('DataJud public API adapter', () => {
     assert.equal(judicialProcess.judgingBody.municipalityIbgeCode, 5300108)
     assert.equal(judicialProcess.filedAt?.toISODate(), '2020-01-28')
     assert.equal(judicialProcess.datajudUpdatedAt?.toISO(), '2024-03-22T23:13:45.049+00:00')
+    assert.isNotNull(sourceRecord.sourceDatasetId)
+    assert.equal(await countAssetSourceLinks(tenant.id), 1)
+    assert.equal(await countExternalIdentifiers(tenant.id), 2)
 
     const subjects = await JudicialProcessSubject.query()
       .where('tenant_id', tenant.id)
@@ -280,5 +285,15 @@ async function countJudicialProcessMovementComplements(tenantId: string) {
   const [result] = await JudicialProcessMovementComplement.query()
     .where('tenant_id', tenantId)
     .count('* as total')
+  return Number(result.$extras.total)
+}
+
+async function countAssetSourceLinks(tenantId: string) {
+  const [result] = await AssetSourceLink.query().where('tenant_id', tenantId).count('* as total')
+  return Number(result.$extras.total)
+}
+
+async function countExternalIdentifiers(tenantId: string) {
+  const [result] = await ExternalIdentifier.query().where('tenant_id', tenantId).count('* as total')
   return Number(result.$extras.total)
 }

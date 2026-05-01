@@ -4,6 +4,7 @@ import { basename } from 'node:path'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import SourceRecord from '#modules/siop/models/source_record'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -116,6 +117,9 @@ class Trf2PrecatorioAdapter {
     await mkdir(directory, { recursive: true })
     await writeFile(filePath, buffer)
 
+    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
+      'trf2-chronological-precatorios'
+    )
     const existing = await SourceRecord.query()
       .where('tenant_id', tenantId)
       .where('source', 'tribunal')
@@ -124,6 +128,7 @@ class Trf2PrecatorioAdapter {
 
     if (existing) {
       existing.merge({
+        sourceDatasetId,
         sourceUrl: link.url,
         sourceFilePath: filePath,
         originalFilename: filename,
@@ -138,6 +143,7 @@ class Trf2PrecatorioAdapter {
 
     const sourceRecord = await SourceRecord.create({
       tenantId,
+      sourceDatasetId,
       source: 'tribunal',
       sourceUrl: link.url,
       sourceFilePath: filePath,

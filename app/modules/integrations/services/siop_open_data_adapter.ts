@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import SiopImport from '#modules/siop/models/siop_import'
 import SourceRecord from '#modules/siop/models/source_record'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 
 export const SIOP_OPEN_DATA_LANDING_URL =
@@ -119,6 +120,7 @@ class SiopOpenDataAdapter {
     await mkdir(directory, { recursive: true })
     await writeFile(filePath, buffer)
 
+    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('siop-open-data-precatorios')
     const existing = await SourceRecord.query()
       .where('tenant_id', tenantId)
       .where('source', 'siop')
@@ -127,6 +129,7 @@ class SiopOpenDataAdapter {
 
     if (existing) {
       existing.merge({
+        sourceDatasetId,
         sourceUrl: link.url,
         sourceFilePath: filePath,
         originalFilename: filename,
@@ -141,6 +144,7 @@ class SiopOpenDataAdapter {
 
     const sourceRecord = await SourceRecord.create({
       tenantId,
+      sourceDatasetId,
       source: 'siop',
       sourceUrl: link.url,
       sourceFilePath: filePath,

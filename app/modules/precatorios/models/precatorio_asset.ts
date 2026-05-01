@@ -22,6 +22,8 @@ import Publication from '#modules/precatorios/models/publication'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
 import BudgetUnit from '#modules/reference/models/budget_unit'
 import Court from '#modules/reference/models/court'
+import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
+import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
 
 export default class PrecatorioAsset extends TenantBaseModel {
   faceValue: string | null = null
@@ -137,6 +139,16 @@ export default class PrecatorioAsset extends TenantBaseModel {
     foreignKey: 'assetId',
   })
   declare valuations: HasMany<typeof AssetValuation>
+
+  @hasMany(() => AssetSourceLink, {
+    foreignKey: 'assetId',
+  })
+  declare sourceLinks: HasMany<typeof AssetSourceLink>
+
+  @hasMany(() => ExternalIdentifier, {
+    foreignKey: 'assetId',
+  })
+  declare externalIdentifiers: HasMany<typeof ExternalIdentifier>
 
   @hasMany(() => JudicialProcess, {
     foreignKey: 'assetId',

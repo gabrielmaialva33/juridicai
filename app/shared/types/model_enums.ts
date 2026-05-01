@@ -19,6 +19,31 @@ export type JobRunOrigin = 'scheduler' | 'http' | 'manual_retry' | 'system'
 
 export type JobRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'cancelled'
 
+export type AssetSourceLinkType = 'primary' | 'enrichment' | 'cross_check' | 'conflict' | 'manual'
+
+export type ExternalIdentifierType =
+  | 'cnj_number'
+  | 'precatorio_number'
+  | 'requisition_number'
+  | 'origin_process_number'
+  | 'asset_number'
+  | 'chronological_order'
+  | 'source_external_id'
+  | 'datajud_id'
+  | 'payment_queue_id'
+
+export type FederativeLevel = 'federal' | 'state' | 'municipal' | 'multi_level'
+
+export type SourceDatasetAccess = 'public' | 'credentialed' | 'certificate'
+
+export type SourceDatasetKind =
+  | 'open_data_file'
+  | 'soap_webservice'
+  | 'public_search_api'
+  | 'tribunal_publication'
+
+export type SourceDatasetPriority = 'primary' | 'enrichment' | 'cross_check'
+
 export type LifecycleStatus =
   | 'unknown'
   | 'discovered'

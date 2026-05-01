@@ -20,6 +20,7 @@ import Court from '#modules/reference/models/court'
 import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import SourceRecord from '#modules/siop/models/source_record'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import type { AssetNature, DebtorType, ImportStatus, JsonRecord } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
@@ -397,6 +398,15 @@ class SiopImportService {
         input.row,
         input.trx
       )
+      await this.recordSourceEvidence(
+        input.payload.tenantId,
+        existingAsset,
+        input.sourceRecordId,
+        externalId,
+        normalized,
+        input.row,
+        input.trx
+      )
       await this.refreshScore(input.payload.tenantId, existingAsset, normalized, input.trx)
       return stagingRow
     }
@@ -457,6 +467,15 @@ class SiopImportService {
       input.row,
       input.trx
     )
+    await this.recordSourceEvidence(
+      input.payload.tenantId,
+      asset,
+      input.sourceRecordId,
+      externalId,
+      normalized,
+      input.row,
+      input.trx
+    )
     await this.refreshScore(input.payload.tenantId, asset, normalized, input.trx)
 
     return stagingRow
@@ -472,6 +491,7 @@ class SiopImportService {
   }
 
   private async findOrCreateSourceRecord(payload: SiopImportRowsPayload, checksum: string) {
+    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('siop-open-data-precatorios')
     const existing = await SourceRecord.query()
       .where('tenant_id', payload.tenantId)
       .where('source', 'siop')
@@ -480,6 +500,7 @@ class SiopImportService {
 
     if (existing) {
       existing.merge({
+        sourceDatasetId,
         sourceUrl: payload.source?.url ?? existing.sourceUrl,
         sourceFilePath: payload.source?.filePath ?? existing.sourceFilePath,
         originalFilename: payload.source?.originalFilename ?? existing.originalFilename,
@@ -493,6 +514,7 @@ class SiopImportService {
 
     return SourceRecord.create({
       tenantId: payload.tenantId,
+      sourceDatasetId,
       source: 'siop',
       sourceUrl: payload.source?.url ?? null,
       sourceFilePath: payload.source?.filePath ?? null,
@@ -820,6 +842,80 @@ class SiopImportService {
       },
       { client: trx }
     )
+  }
+
+  private async recordSourceEvidence(
+    tenantId: string,
+    asset: PrecatorioAsset,
+    sourceRecordId: string,
+    externalId: string,
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    row: JsonRecord,
+    trx: TransactionClientContract
+  ) {
+    await sourceEvidenceService.linkAsset({
+      tenantId,
+      assetId: asset.id,
+      sourceRecordId,
+      sourceDatasetKey: 'siop-open-data-precatorios',
+      linkType: 'primary',
+      confidence: normalized.cnjNumber ? 1 : 0.85,
+      matchReason: normalized.cnjNumber ? 'siop_cnj_match' : 'siop_external_id_match',
+      matchedFields: {
+        cnjNumber: normalized.cnjNumber,
+        externalId,
+        exerciseYear: normalized.exerciseYear,
+      },
+      normalizedPayload: {
+        cnjNumber: normalized.cnjNumber,
+        externalId,
+        exerciseYear: normalized.exerciseYear,
+        debtorName: normalized.debtorName,
+        faceValue: normalized.faceValue,
+        updatedValue: normalized.updatedValue,
+      },
+      rawPointer: {
+        externalId,
+        sourceRecordId,
+      },
+      trx,
+    })
+
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId,
+      assetId: asset.id,
+      sourceRecordId,
+      sourceDatasetKey: 'siop-open-data-precatorios',
+      identifierType: 'cnj_number',
+      identifierValue: normalized.cnjNumber,
+      issuer: 'SIOP',
+      isPrimary: true,
+      rawData: row,
+      trx,
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId,
+      assetId: asset.id,
+      sourceRecordId,
+      sourceDatasetKey: 'siop-open-data-precatorios',
+      identifierType: 'source_external_id',
+      identifierValue: externalId,
+      issuer: 'SIOP',
+      isPrimary: !normalized.cnjNumber,
+      rawData: row,
+      trx,
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId,
+      assetId: asset.id,
+      sourceRecordId,
+      sourceDatasetKey: 'siop-open-data-precatorios',
+      identifierType: 'asset_number',
+      identifierValue: asset.assetNumber,
+      issuer: 'SIOP',
+      rawData: row,
+      trx,
+    })
   }
 
   private async findOrCreateCourt(

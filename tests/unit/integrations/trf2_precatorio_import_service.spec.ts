@@ -5,7 +5,9 @@ import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
 import AssetEvent from '#modules/precatorios/models/asset_event'
+import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import AssetValuation from '#modules/precatorios/models/asset_valuation'
+import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Publication from '#modules/precatorios/models/publication'
@@ -60,6 +62,8 @@ test.group('TRF2 precatorio import service', () => {
     assert.equal(await countRows(JudicialProcess, tenant.id), 2)
     assert.equal(await countRows(Publication, tenant.id), 2)
     assert.equal(await countRows(AssetEvent, tenant.id), 2)
+    assert.equal(await countRows(AssetSourceLink, tenant.id), 2)
+    assert.equal(await countRows(ExternalIdentifier, tenant.id), 6)
 
     const secondRun = await trf2PrecatorioImportService.importSourceRecord(sourceRecord.id)
     assert.equal(secondRun.stats.inserted, 0)
@@ -67,6 +71,8 @@ test.group('TRF2 precatorio import service', () => {
     assert.equal(await countRows(PrecatorioAsset, tenant.id), 2)
     assert.equal(await countRows(Publication, tenant.id), 2)
     assert.equal(await countRows(AssetEvent, tenant.id), 2)
+    assert.equal(await countRows(AssetSourceLink, tenant.id), 2)
+    assert.equal(await countRows(ExternalIdentifier, tenant.id), 6)
 
     await cleanupTenantData(tenant)
   })
@@ -100,7 +106,13 @@ async function createSourceRecord(tenant: Tenant, contents: string) {
 }
 
 async function countRows(
-  model: typeof PrecatorioAsset | typeof JudicialProcess | typeof Publication | typeof AssetEvent,
+  model:
+    | typeof PrecatorioAsset
+    | typeof JudicialProcess
+    | typeof Publication
+    | typeof AssetEvent
+    | typeof AssetSourceLink
+    | typeof ExternalIdentifier,
   tenantId: string
 ) {
   const [result] = await model.query().where('tenant_id', tenantId).count('* as total')

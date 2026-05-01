@@ -10,6 +10,7 @@ import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Publication from '#modules/precatorios/models/publication'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import SourceRecord from '#modules/siop/models/source_record'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import { parseTrf2ChronologicalCsv, type Trf2PrecatorioRow } from './trf2_precatorio_adapter.js'
 import type { AssetNature, JsonRecord } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
@@ -26,6 +27,7 @@ export type Trf2PrecatorioImportStats = {
 
 type GroupedPrecatorio = {
   cnjNumber: string
+  precatorioNumber: string | null
   proposalYear: number | null
   legalBasis: string | null
   chronologicalOrder: number | null
@@ -110,6 +112,7 @@ class Trf2PrecatorioImportService {
       await this.createValuation(sourceRecord, existing.id, group, trx)
       await this.upsertPublication(sourceRecord, existing, group, trx)
       await this.createEvent(sourceRecord, existing.id, group, trx)
+      await this.recordSourceEvidence(sourceRecord, existing, group, trx)
       return 'updated' as const
     }
 
@@ -118,6 +121,7 @@ class Trf2PrecatorioImportService {
     await this.createValuation(sourceRecord, asset.id, group, trx)
     await this.upsertPublication(sourceRecord, asset, group, trx)
     await this.createEvent(sourceRecord, asset.id, group, trx)
+    await this.recordSourceEvidence(sourceRecord, asset, group, trx)
 
     return 'inserted' as const
   }
@@ -298,6 +302,75 @@ class Trf2PrecatorioImportService {
       { client: trx }
     )
   }
+
+  private async recordSourceEvidence(
+    sourceRecord: SourceRecord,
+    asset: PrecatorioAsset,
+    group: GroupedPrecatorio,
+    trx: TransactionClientContract
+  ) {
+    await sourceEvidenceService.linkAsset({
+      tenantId: sourceRecord.tenantId,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetKey: 'trf2-chronological-precatorios',
+      linkType: 'enrichment',
+      confidence: 1,
+      matchReason: 'trf2_cnj_match',
+      matchedFields: {
+        cnjNumber: group.cnjNumber,
+        proposalYear: group.proposalYear,
+        chronologicalOrder: group.chronologicalOrder,
+      },
+      normalizedPayload: {
+        cnjNumber: group.cnjNumber,
+        precatorioNumber: group.precatorioNumber,
+        proposalYear: group.proposalYear,
+        chronologicalOrder: group.chronologicalOrder,
+        paidAt: group.paidAt,
+      },
+      rawPointer: {
+        sourceRecordId: sourceRecord.id,
+        rowCount: group.rows.length,
+      },
+      trx,
+    })
+
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: sourceRecord.tenantId,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetKey: 'trf2-chronological-precatorios',
+      identifierType: 'cnj_number',
+      identifierValue: group.cnjNumber,
+      issuer: 'TRF2',
+      isPrimary: true,
+      rawData: buildAssetRawData(sourceRecord, group),
+      trx,
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: sourceRecord.tenantId,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetKey: 'trf2-chronological-precatorios',
+      identifierType: 'precatorio_number',
+      identifierValue: group.precatorioNumber,
+      issuer: 'TRF2',
+      rawData: buildAssetRawData(sourceRecord, group),
+      trx,
+    })
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: sourceRecord.tenantId,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetKey: 'trf2-chronological-precatorios',
+      identifierType: 'chronological_order',
+      identifierValue: group.chronologicalOrder,
+      issuer: 'TRF2',
+      rawData: buildAssetRawData(sourceRecord, group),
+      trx,
+    })
+  }
 }
 
 function groupRows(rows: Trf2PrecatorioRow[]) {
@@ -312,6 +385,7 @@ function groupRows(rows: Trf2PrecatorioRow[]) {
     if (!existing) {
       groups.set(row.cnjNumber, {
         cnjNumber: row.cnjNumber,
+        precatorioNumber: row.precatorioNumber,
         proposalYear: row.proposalYear,
         legalBasis: row.legalBasis,
         chronologicalOrder: row.chronologicalOrder,
@@ -331,6 +405,7 @@ function groupRows(rows: Trf2PrecatorioRow[]) {
     existing.originalPaidValue = sumMoney(existing.originalPaidValue, row.originalPaidValue)
     existing.paidValue = sumMoney(existing.paidValue, row.paidValue)
     existing.chronologicalOrder = minNumber(existing.chronologicalOrder, row.chronologicalOrder)
+    existing.precatorioNumber = existing.precatorioNumber ?? row.precatorioNumber
   }
 
   return [...groups.values()]

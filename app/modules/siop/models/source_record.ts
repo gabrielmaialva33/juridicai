@@ -4,6 +4,7 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import type { JsonRecord, SourceType } from '#shared/types/model_enums'
 import Tenant from '#modules/tenant/models/tenant'
 import SiopImport from '#modules/siop/models/siop_import'
+import SourceDataset from '#modules/integrations/models/source_dataset'
 
 export default class SourceRecord extends BaseModel {
   @column({ isPrimary: true })
@@ -11,6 +12,9 @@ export default class SourceRecord extends BaseModel {
 
   @column()
   declare tenantId: string
+
+  @column()
+  declare sourceDatasetId: string | null
 
   @column()
   declare source: SourceType
@@ -44,6 +48,9 @@ export default class SourceRecord extends BaseModel {
 
   @belongsTo(() => Tenant)
   declare tenant: BelongsTo<typeof Tenant>
+
+  @belongsTo(() => SourceDataset)
+  declare sourceDataset: BelongsTo<typeof SourceDataset>
 
   @hasMany(() => SiopImport)
   declare siopImports: HasMany<typeof SiopImport>
