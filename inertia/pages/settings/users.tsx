@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react'
 import { ShieldCheck, Users as UsersIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -12,10 +12,17 @@ import {
 } from '@/components/ui/table'
 import { PageHeader } from '~/components/shared/page-header'
 import { EmptyState } from '~/components/shared/empty-state'
+import { LabelChip } from '~/components/shared/label-chip'
 import { getInitials } from '~/lib/helpers'
 import { fmtRelative } from '~/lib/helpers'
 
-type Role = { id: string; name: string; slug: string }
+type Role = {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  permissionCount?: string | number
+}
 
 type Membership = {
   id: string
@@ -101,7 +108,7 @@ export default function SettingsUsers({ memberships, allRoles }: Props) {
                                 appearance="light"
                                 size="sm"
                               >
-                                {r.name}
+                                {roleLabel(r.slug, r.name)}
                               </Badge>
                             ))
                           )}
@@ -127,29 +134,74 @@ export default function SettingsUsers({ memberships, allRoles }: Props) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="size-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Papéis disponíveis</h3>
+        <Card className="self-start">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <ShieldCheck className="size-4 text-primary" />
+                Papéis operacionais
+              </h3>
+              <LabelChip variant="default">{`${allRoles.length} ativos`}</LabelChip>
             </div>
-            <ul className="space-y-2">
-              {allRoles.map((r) => (
-                <li key={r.id} className="flex items-center gap-2">
-                  <Badge variant={ROLE_BADGE[r.slug] ?? 'secondary'} appearance="light" size="sm">
-                    {r.name}
+          </CardHeader>
+          <CardContent className="space-y-2.5">
+            {allRoles.map((role) => (
+              <div key={role.id} className="rounded-md border border-border bg-muted/25 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">
+                      {roleLabel(role.slug, role.name)}
+                    </div>
+                    <div className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
+                      {role.slug}
+                    </div>
+                  </div>
+                  <Badge
+                    variant={ROLE_BADGE[role.slug] ?? 'secondary'}
+                    appearance="light"
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    {formatPermissionCount(role.permissionCount)}
                   </Badge>
-                  <span className="text-xs text-muted-foreground font-mono truncate">{r.slug}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-[10px] text-muted-foreground mt-4 pt-3 border-t border-border">
-              Edição de papéis e convites virão na próxima iteração. Por enquanto, ajuste via
-              seeders ou banco diretamente.
-            </p>
+                </div>
+                {role.description && (
+                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {roleDescription(role.slug, role.description)}
+                  </p>
+                )}
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
     </>
   )
+}
+
+function roleLabel(slug: string, fallback: string) {
+  const labels: Record<string, string> = {
+    owner: 'Proprietário',
+    analyst: 'Analista',
+    tenant_admin: 'Administrador',
+    operations_lead: 'Líder de operações',
+    compliance_officer: 'Compliance',
+    viewer: 'Leitura',
+  }
+
+  return labels[slug] ?? fallback
+}
+
+function roleDescription(slug: string, fallback: string) {
+  const descriptions: Record<string, string> = {
+    owner: 'Acesso completo à operação, dados, integrações e administração do tenant.',
+    analyst: 'Acesso de leitura e análise para radar, devedores, integrações e mesa operacional.',
+  }
+
+  return descriptions[slug] ?? fallback
+}
+
+function formatPermissionCount(value?: string | number) {
+  const count = Number(value ?? 0)
+  return `${count} perm.`
 }

@@ -2,6 +2,8 @@ import db from '@adonisjs/lucid/services/db'
 import tenantContext from '#shared/helpers/tenant_context'
 import type { HttpContext } from '@adonisjs/core/http'
 
+const OPERATIONAL_ROLE_SLUGS = ['owner', 'analyst'] as const
+
 export default class SettingsController {
   async tenant({ inertia }: HttpContext) {
     const tenantId = tenantContext.requireTenantId()
@@ -53,7 +55,14 @@ export default class SettingsController {
       rolesByUser[ur.userId].push({ id: ur.roleId, name: ur.name, slug: ur.slug })
     }
 
-    const allRoles = await db.from('roles').orderBy('name', 'asc').select('id', 'name', 'slug')
+    const allRoles = await db
+      .from('roles as r')
+      .join('role_permissions as rp', 'rp.role_id', 'r.id')
+      .whereIn('r.slug', [...OPERATIONAL_ROLE_SLUGS])
+      .select('r.id', 'r.name', 'r.slug', 'r.description')
+      .count('rp.permission_id as permissionCount')
+      .groupBy('r.id', 'r.name', 'r.slug', 'r.description')
+      .orderBy('r.name', 'asc')
 
     return inertia.render('settings/users', {
       memberships: memberships.map((m) => ({ ...m, roles: rolesByUser[m.id] ?? [] })) as any,
