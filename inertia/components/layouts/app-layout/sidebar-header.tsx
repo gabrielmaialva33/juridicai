@@ -14,7 +14,7 @@ export function SidebarHeader({ isExpanded }: Props) {
   return (
     <div
       className={cn(
-        'hidden lg:flex items-center shrink-0 h-[64px] border-b border-border group/header',
+        'hidden lg:flex items-center shrink-0 h-[64px] border-b border-white/10 group/header',
         isExpanded ? 'justify-between px-4 lg:px-5' : 'justify-center px-2'
       )}
     >
@@ -23,7 +23,9 @@ export function SidebarHeader({ isExpanded }: Props) {
           <Scale className="size-4" />
         </div>
         {isExpanded && (
-          <span className="text-sm font-semibold tracking-tight truncate">JuridicAI</span>
+          <span className="truncate text-sm font-semibold tracking-tight text-white">
+            JuridicAI
+          </span>
         )}
       </Link>
       {isExpanded && (
@@ -32,7 +34,7 @@ export function SidebarHeader({ isExpanded }: Props) {
           size="sm"
           mode="icon"
           variant="ghost"
-          className="size-7 opacity-0 group-hover/header:opacity-100 transition-opacity"
+          className="size-7 text-white/70 opacity-0 transition-opacity hover:bg-white/10 hover:text-white group-hover/header:opacity-100"
           aria-label={sidebarCollapse ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           {sidebarCollapse ? (

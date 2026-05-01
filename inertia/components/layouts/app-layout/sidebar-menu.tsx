@@ -49,7 +49,7 @@ function MenuNode({
   if (item.heading) {
     if (!isExpanded) return null
     return (
-      <div className="px-3 pt-4 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="px-3 pt-4 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-white/55">
         {item.heading}
       </div>
     )
@@ -84,8 +84,8 @@ function MenuLeaf({
         'flex items-center gap-3 rounded-md py-2 pe-3 text-sm transition-colors',
         inset,
         active
-          ? 'bg-primary/10 text-primary font-medium'
-          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+          ? 'bg-primary text-primary-foreground font-medium'
+          : 'text-white/70 hover:bg-white/10 hover:text-white'
       )}
     >
       {Icon && <Icon className="size-4 shrink-0" />}
@@ -151,8 +151,8 @@ function MenuGroup({
           'flex w-full items-center gap-3 rounded-md py-2 pe-3 text-sm transition-colors',
           inset,
           childActive
-            ? 'text-foreground font-medium'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            ? 'text-white font-medium'
+            : 'text-white/70 hover:bg-white/10 hover:text-white'
         )}
       >
         {Icon && <Icon className="size-4 shrink-0" />}

@@ -18,7 +18,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'bg-card lg:border-e lg:border-border lg:fixed lg:top-0 lg:bottom-0 lg:z-20 lg:flex flex-col items-stretch shrink-0 hidden',
+        'bg-[var(--sidebar)] text-white lg:fixed lg:top-0 lg:bottom-0 lg:z-20 lg:flex flex-col items-stretch shrink-0 hidden',
         'transition-[width,max-width] duration-300 ease-in-out',
         sidebarCollapse && !isHovered && 'overflow-hidden',
         sidebarCollapse && isHovered && 'shadow-xl'

@@ -8,58 +8,88 @@
 
 /** Colors - https://tailwindcss.com/docs/colors **/
 :root {
-  --background: var(--color-white);
-  --foreground: var(--color-zinc-950);
-  --card: var(--color-white);
-  --card-foreground: var(--color-zinc-950);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-zinc-950);
-  --primary: var(--color-zinc-900);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-100);
-  --secondary-foreground: var(--color-zinc-900);
-  --muted: var(--color-zinc-100);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
-  --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: oklch(94% 0.004 286.32); /* between --color-zinc-100 and --color-zinc-200 */
-  --input: var(--color-zinc-200);
-  --ring: var(--color-zinc-400);
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+  --primary-hover: #ea580c;
+  --color-primary-accent: #f97316;
+  --color-primary-soft: #fff7ed;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #fff7ed;
+  --accent-foreground: #161c24;
+  --destructive: #ec6553;
+  --destructive-foreground: #ffffff;
+  --sidebar: #373737;
+  --chart-1: #f97316;
+  --chart-2: #2fac68;
+  --chart-3: #008980;
+  --chart-4: #1cd6f4;
+  --chart-5: #f7c000;
+  --border: #e1e3ea;
+  --input: #cbd5e1;
+  --ring: #f97316;
+  --color-success-accent: #2fac68;
+  --color-success-soft: #eaf7f0;
+  --color-success-foreground: #ffffff;
+  --color-warning-accent: #f7c000;
+  --color-warning-soft: #fff7cc;
+  --color-warning-foreground: #3f3000;
+  --color-info-accent: #008980;
+  --color-info-soft: #e5f6f5;
+  --color-info-foreground: #ffffff;
+  --color-destructive-accent: #ec6553;
+  --color-destructive-soft: #feeeee;
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: var(--color-zinc-950);
-  --foreground: var(--color-zinc-50);
-  --card: var(--color-zinc-950);
-  --card-foreground: var(--color-zinc-50);
-  --popover: var(--color-zinc-950);
-  --popover-foreground: var(--color-zinc-50);
-  --primary: var(--color-zinc-300);
-  --primary-foreground: var(--color-zinc-950);
-  --secondary: var(--color-zinc-800);
-  --secondary-foreground: var(--color-zinc-50);
-  --muted: var(--color-zinc-900);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-900);
-  --accent-foreground: var(--color-zinc-50);
-  --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: var(--color-zinc-800);
-  --input: var(--color-zinc-800);
-  --ring: var(--color-zinc-600);
+  --background: #101214;
+  --foreground: #f8fafc;
+  --card: #181a1d;
+  --card-foreground: #f8fafc;
+  --popover: #1c1f23;
+  --popover-foreground: #f8fafc;
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+  --primary-hover: #fb923c;
+  --color-primary-accent: #fb923c;
+  --color-primary-soft: #3a2112;
+  --secondary: #24272b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #24272b;
+  --muted-foreground: #a1a5b7;
+  --accent: #2a211b;
+  --accent-foreground: #fed7aa;
+  --destructive: #ec6553;
+  --destructive-foreground: #ffffff;
+  --sidebar: #252525;
+  --chart-1: #fb923c;
+  --chart-2: #34d399;
+  --chart-3: #2dd4bf;
+  --chart-4: #22d3ee;
+  --chart-5: #facc15;
+  --border: #2d3136;
+  --input: #3a4048;
+  --ring: #f97316;
+  --color-success-accent: #45d487;
+  --color-success-soft: #123326;
+  --color-success-foreground: #071f14;
+  --color-warning-accent: #f7c000;
+  --color-warning-soft: #352b08;
+  --color-warning-foreground: #211900;
+  --color-info-accent: #1cd6f4;
+  --color-info-soft: #07313a;
+  --color-info-foreground: #031b20;
+  --color-destructive-accent: #ff8678;
+  --color-destructive-soft: #3a1715;
 }
 
 /** Theme Setup **/
@@ -117,6 +147,10 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 
   *:focus-visible {
