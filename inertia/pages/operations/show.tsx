@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageHeader } from '~/components/shared/page-header'
 import { fmtBRL, fmtRelative } from '~/lib/helpers'
+import { toast } from 'sonner'
 
 type PricingResult = {
   faceValue: number
@@ -52,6 +53,16 @@ type Signal = {
   eventDate?: string | null
 }
 
+type PipelineStage =
+  | 'inbox'
+  | 'qualified'
+  | 'contact'
+  | 'offer'
+  | 'due_diligence'
+  | 'cession'
+  | 'paid'
+  | 'lost'
+
 type Opportunity = {
   id: string
   asset: {
@@ -80,7 +91,7 @@ type Opportunity = {
     recentDefault?: boolean
   }
   pipeline: {
-    stage: string
+    stage: PipelineStage
     opportunityId?: string | null
     targetCloseAt?: string | null
   }
@@ -93,6 +104,12 @@ type Props = {
   judicialProcesses: any[]
   publications: any[]
   events: any[]
+}
+
+type PersistenceFeedback = {
+  action: 'save' | 'pipeline'
+  stage: PipelineStage
+  time: string
 }
 
 const GRADE_COLOR: Record<string, string> = {
@@ -126,12 +143,25 @@ const DECISION_LABEL: Record<string, { label: string; color: string }> = {
 const fmtPct = (value: number | null | undefined, digits = 1) =>
   value === null || value === undefined ? '—' : `${(value * 100).toFixed(digits)}%`
 
+const PIPELINE_STAGE_LABEL: Record<PipelineStage, string> = {
+  inbox: 'Inbox',
+  qualified: 'Qualificada',
+  contact: 'Contato',
+  offer: 'Oferta',
+  due_diligence: 'Diligência',
+  cession: 'Cessão',
+  paid: 'Pago',
+  lost: 'Perdido',
+}
+
 export default function OpportunityShow({ opportunity: initial, events }: Props) {
   const [pricing, setPricing] = useState<PricingResult>(initial.pricing)
   const [opportunity, setOpportunity] = useState<Opportunity>(initial)
   const [offerRate, setOfferRate] = useState<number>(initial.pricing.offerRate)
   const [termMonths, setTermMonths] = useState<number>(initial.pricing.termMonths)
   const [recomputing, setRecomputing] = useState(false)
+  const [savingAction, setSavingAction] = useState<'save' | 'pipeline' | null>(null)
+  const [persistenceFeedback, setPersistenceFeedback] = useState<PersistenceFeedback | null>(null)
 
   // Recompute pricing on slider change.
   useEffect(() => {
@@ -177,9 +207,64 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
   const irrVsCdi = cdiRate > 0 ? (pricing.riskAdjustedIrr / cdiRate) * 100 : 0
   const multiplier = pricing.netProceeds > 0 ? pricing.netProceeds / pricing.acquisitionCost : 0
   const decision = DECISION_LABEL[pricing.decision] ?? DECISION_LABEL.watch
+  const busyPersisting = savingAction !== null || recomputing
+  const alreadyInPipeline = opportunity.pipeline.stage !== 'inbox'
 
   const debtor = opportunity.debtor
   const recentEvents = useMemo(() => events.slice(0, 8), [events])
+
+  function stageForAction(action: 'save' | 'pipeline'): PipelineStage {
+    if (action === 'save') {
+      return opportunity.pipeline.stage ?? 'inbox'
+    }
+
+    return opportunity.pipeline.stage === 'inbox' ? 'qualified' : opportunity.pipeline.stage
+  }
+
+  async function persistOffer(action: 'save' | 'pipeline') {
+    const stage = stageForAction(action)
+
+    setSavingAction(action)
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+
+    try {
+      const response = await fetch(`/operations/opportunities/${opportunity.asset.id}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrf,
+          'Accept': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ stage, offerRate, termMonths }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Pipeline update failed')
+      }
+
+      const data = await response.json()
+      setPricing(data.opportunity.pricing)
+      setOpportunity(data.opportunity)
+      setPersistenceFeedback({
+        action,
+        stage: data.opportunity.pipeline.stage,
+        time: new Intl.DateTimeFormat('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date()),
+      })
+      toast.success(action === 'save' ? 'Oferta salva.' : 'Pipeline atualizado.')
+    } catch {
+      toast.error(
+        action === 'save'
+          ? 'Não foi possível salvar a oferta.'
+          : 'Não foi possível atualizar o pipeline.'
+      )
+    } finally {
+      setSavingAction(null)
+    }
+  }
 
   return (
     <>
@@ -503,14 +588,57 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
-                <Button>
-                  <Save className="me-1 size-3.5" />
-                  Salvar oferta
+                <Button onClick={() => persistOffer('save')} disabled={busyPersisting}>
+                  {savingAction === 'save' ? (
+                    <Loader2 className="me-1 size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="me-1 size-3.5" />
+                  )}
+                  {savingAction === 'save' ? 'Salvando...' : 'Salvar oferta'}
                 </Button>
-                <Button variant="outline" size="sm">
-                  <Briefcase className="me-1 size-3.5" />
-                  Adicionar ao Pipeline
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => persistOffer('pipeline')}
+                  disabled={busyPersisting}
+                >
+                  {savingAction === 'pipeline' ? (
+                    <Loader2 className="me-1 size-3.5 animate-spin" />
+                  ) : (
+                    <Briefcase className="me-1 size-3.5" />
+                  )}
+                  {savingAction === 'pipeline'
+                    ? alreadyInPipeline
+                      ? 'Atualizando...'
+                      : 'Adicionando...'
+                    : alreadyInPipeline
+                      ? 'Atualizar Pipeline'
+                      : 'Adicionar ao Pipeline'}
                 </Button>
+                <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  {persistenceFeedback ? (
+                    <>
+                      {persistenceFeedback.action === 'save'
+                        ? 'Oferta salva'
+                        : 'Pipeline atualizado'}{' '}
+                      às {persistenceFeedback.time} em{' '}
+                      <span className="font-medium text-foreground">
+                        {PIPELINE_STAGE_LABEL[persistenceFeedback.stage]}
+                      </span>
+                      .
+                    </>
+                  ) : opportunity.pipeline.opportunityId ? (
+                    <>
+                      Oferta persistida em{' '}
+                      <span className="font-medium text-foreground">
+                        {PIPELINE_STAGE_LABEL[opportunity.pipeline.stage]}
+                      </span>
+                      .
+                    </>
+                  ) : (
+                    'A simulação ainda não foi salva nesta oportunidade.'
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
