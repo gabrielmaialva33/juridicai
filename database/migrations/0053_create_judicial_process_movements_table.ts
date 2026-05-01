@@ -24,6 +24,9 @@ export default class extends BaseSchema {
       table.text('movement_name').notNullable()
       table.timestamp('occurred_at', { useTz: true }).nullable()
       table.integer('sequence').nullable()
+      table.text('judging_body_code').nullable()
+      table.text('judging_body_name').nullable()
+      table.integer('judging_body_municipality_ibge_code').nullable()
       table.jsonb('raw_data').nullable()
       table.text('idempotency_key').notNullable()
 
@@ -33,6 +36,7 @@ export default class extends BaseSchema {
       table.unique(['tenant_id', 'idempotency_key'])
       table.index(['tenant_id', 'process_id', 'occurred_at'])
       table.index(['tenant_id', 'movement_code'])
+      table.index(['tenant_id', 'judging_body_municipality_ibge_code'])
       table.index(['process_id', 'sequence'])
     })
   }

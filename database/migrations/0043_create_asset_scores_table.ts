@@ -26,9 +26,25 @@ export default class extends BaseSchema {
 
       table.index(['tenant_id', 'asset_id', 'computed_at'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table precatorio_assets
+        add constraint precatorio_assets_current_score_id_foreign
+        foreign key (current_score_id)
+        references asset_scores (id)
+        on delete set null
+      `)
+    )
   }
 
   async down() {
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table if exists precatorio_assets
+        drop constraint if exists precatorio_assets_current_score_id_foreign
+      `)
+    )
     this.schema.dropTable(this.tableName)
   }
 }
