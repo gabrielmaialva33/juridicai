@@ -88,6 +88,21 @@ export default class extends BaseSchema {
             '{"levels":["federal","state","municipal","multi_level"],"coverage":"procedural_publications"}'::jsonb
           ),
           (
+            'tjsp-precatorio-communications',
+            'TJSP Comunicados de Precatórios',
+            'Tribunal de Justiça do Estado de São Paulo',
+            'tribunal',
+            'state',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://www.tjsp.jus.br/Precatorios/Precatorios/ListaGeral',
+            'tjsp',
+            'html/pdf/xls/xlsx',
+            'TJSP public communication pages for state, municipal and INSS precatorio lists.',
+            '{"levels":["state","municipal"],"coverage":"precatorio_communications","state_code":"SP","categories":["state_entities","municipal_entities","inss","statistics"]}'::jsonb
+          ),
+          (
             'trf2-chronological-precatorios',
             'TRF2 ordem cronológica de precatórios',
             'Tribunal Regional Federal da 2ª Região',

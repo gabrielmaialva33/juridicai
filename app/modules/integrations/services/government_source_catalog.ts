@@ -199,6 +199,25 @@ export const governmentSourceCatalog: GovernmentSourceRecord[] = [
     ],
   },
   {
+    id: 'tjsp-precatorio-communications',
+    name: 'TJSP Comunicados de Precatórios',
+    owner: 'Tribunal de Justiça do Estado de São Paulo',
+    levels: ['state', 'municipal'],
+    source: 'tribunal',
+    kind: 'tribunal_publication',
+    access: 'public',
+    priority: 'primary',
+    baseUrl: 'https://www.tjsp.jus.br/Precatorios/Precatorios/ListaGeral',
+    notes:
+      'São Paulo court pages with state, municipal, INSS and statistics communications. Use as a concrete discovery lane for public precatorio lists and attached files.',
+    constraints: [
+      'Communication list pages are public HTML and can point to FileFetch documents whose content type must be inspected before parsing.',
+      'The separate GeneXus pending/payment search pages include session and CAPTCHA behavior and must not be treated as a reliable unattended source yet.',
+      'Municipal entities are published under TJSP categories, so debtor normalization must happen after document parsing.',
+    ],
+    courtAliases: ['tjsp'],
+  },
+  {
     id: 'cnj-annual-precatorios-map',
     name: 'CNJ Mapa Anual dos Precatórios',
     owner: 'Conselho Nacional de Justiça',

@@ -15,11 +15,11 @@ test.group('Government source catalog', () => {
 
     assert.sameDeepMembers(
       stateSources.map((source) => source.id),
-      ['court-annual-map-pages']
+      ['court-annual-map-pages', 'tjsp-precatorio-communications']
     )
     assert.sameDeepMembers(
       municipalSources.map((source) => source.id),
-      ['court-annual-map-pages']
+      ['court-annual-map-pages', 'tjsp-precatorio-communications']
     )
   })
 
