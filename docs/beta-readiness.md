@@ -39,14 +39,21 @@ public beta:
 
 The beta must rely on public source ingestion:
 
+- `government-data-sync-orchestrator`: tenant-level daily cycle that coordinates SIOP discovery,
+  DataJud national discovery, asset enrichment, and candidate matching.
 - `datajud-national-precatorio-sync`: scans all official DataJud court aliases for CNJ class
   `1265` (Precatório) and `1266` (Requisição de Pequeno Valor), using `search_after`
-  pagination and persisting raw process payloads.
+  pagination and persisting raw process payloads plus normalized subjects, movements, and
+  movement complements.
 - `siop-open-data-sync`: discovers SIOP open-data files, downloads official annual files, creates
   pending imports, and enqueues SIOP processing jobs.
 - `siop-imports`: parses downloaded SIOP files into source records, debtors, assets, scores, and
   events.
 - `datajud-enrich-assets`: enriches assets through CNJ DataJud per inferred court alias.
+- `datajud-legal-signal-classifier`: converts normalized DataJud movements and movement
+  complements into legal signals such as requisition issued, payment available, prior cession,
+  lien, suspension, objection, and superpreference. Linked processes are projected into
+  `asset_events` for pricing and advisory, then recompute `legal-signals-v1` score snapshots.
 - `siop-reconcile`: marks stale imports as failed for operator visibility.
 
 National discovery starts from DataJud metadata across federal, state, labor, electoral, military,
@@ -57,8 +64,14 @@ different format, often CSV, XLS, XLSX, PDF, HTML, or dashboard exports.
 For a new production workspace, run an initial controlled national scan:
 
 ```bash
-node ace datajud:sync-precatorios --tenant-id=<tenant-id> --page-size=100 --max-pages-per-court=1
-node ace siop:sync-open-data --tenant-id=<tenant-id> --enqueue
+node ace government:sync-data --tenant-id=<tenant-id> --years=2026,2027 --datajud-page-size=100 --datajud-max-pages-per-court=1
+```
+
+For targeted troubleshooting, run individual phases:
+
+```bash
+node ace datajud:sync-precatorios --tenant-id=<tenant-id> --courts=tjsp --page-size=100 --max-pages-per-court=1 --run-inline
+node ace datajud:classify-signals --tenant-id=<tenant-id> --limit=2000 --run-inline
 ```
 
 Increase `--max-pages-per-court` gradually after checking job duration, DataJud response stability,
