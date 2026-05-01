@@ -85,18 +85,15 @@ test.group('DataJud process asset link service', () => {
     await cleanupTenantData(tenant)
   })
 
-  test('skips exact CNJ links when more than one asset matches', async ({ assert }) => {
+  test('counts missing assets when no exact CNJ asset exists', async ({ assert }) => {
     const tenant = await TenantFactory.create()
-    const cnjNumber = '1006611-83.2024.8.26.0624'
 
-    await PrecatorioAssetFactory.merge({ tenantId: tenant.id, cnjNumber }).create()
-    await PrecatorioAssetFactory.merge({ tenantId: tenant.id, cnjNumber }).create()
     await JudicialProcess.create({
       tenantId: tenant.id,
       assetId: null,
       sourceRecordId: null,
       source: 'datajud',
-      cnjNumber,
+      cnjNumber: '1006611-83.2024.8.26.0624',
       courtAlias: 'tjsp',
       courtCode: 'TJSP',
       classCode: 1265,
@@ -112,7 +109,7 @@ test.group('DataJud process asset link service', () => {
 
     assert.equal(metrics.selectedProcesses, 1)
     assert.equal(metrics.linked, 0)
-    assert.equal(metrics.conflicts, 1)
+    assert.equal(metrics.missingAsset, 1)
 
     await cleanupTenantData(tenant)
   })
