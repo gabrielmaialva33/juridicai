@@ -99,8 +99,43 @@ type Opportunity = {
   signals: { positive: Signal[]; negative: Signal[] }
 }
 
+type LiquidityReadiness = {
+  status: 'ready' | 'review' | 'blocked'
+  score: number
+  label: string
+  summary: string
+}
+
+type LiquidityChecklistItem = {
+  key: string
+  label: string
+  status: 'passed' | 'review' | 'blocked'
+  reason: string
+  action: string
+}
+
+type LiquidityChannel = {
+  key: 'private_cession' | 'direct_agreement' | 'hold_and_wait' | 'bridge_loan'
+  title: string
+  fitScore: number
+  recommended: boolean
+  value: number
+  termMonths: number
+  annualRate: number | null
+  rationale: string
+  nextAction: string
+}
+
+type LiquidityAdvisory = {
+  readiness: LiquidityReadiness
+  checklist: LiquidityChecklistItem[]
+  channels: LiquidityChannel[]
+  insights: string[]
+}
+
 type Props = {
   opportunity: Opportunity
+  liquidity: LiquidityAdvisory
   judicialProcesses: any[]
   publications: any[]
   events: any[]
@@ -154,9 +189,16 @@ const PIPELINE_STAGE_LABEL: Record<PipelineStage, string> = {
   lost: 'Perdido',
 }
 
-export default function OpportunityShow({ opportunity: initial, events }: Props) {
+const READINESS_COLOR: Record<LiquidityReadiness['status'], string> = {
+  ready: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  review: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  blocked: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
+}
+
+export default function OpportunityShow({ opportunity: initial, liquidity, events }: Props) {
   const [pricing, setPricing] = useState<PricingResult>(initial.pricing)
   const [opportunity, setOpportunity] = useState<Opportunity>(initial)
+  const [liquidityAdvisory, setLiquidityAdvisory] = useState<LiquidityAdvisory>(liquidity)
   const [offerRate, setOfferRate] = useState<number>(initial.pricing.offerRate)
   const [termMonths, setTermMonths] = useState<number>(initial.pricing.termMonths)
   const [recomputing, setRecomputing] = useState(false)
@@ -187,6 +229,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
           const data = await r.json()
           setPricing(data.opportunity.pricing)
           setOpportunity(data.opportunity)
+          setLiquidityAdvisory(data.liquidity)
         }
       } catch {
         // Keep the current pricing visible if recomputation fails.
@@ -246,6 +289,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
       const data = await response.json()
       setPricing(data.opportunity.pricing)
       setOpportunity(data.opportunity)
+      setLiquidityAdvisory(data.liquidity)
       setPersistenceFeedback({
         action,
         stage: data.opportunity.pipeline.stage,
@@ -358,6 +402,47 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
 
           <Card>
             <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    <Briefcase className="size-4 text-primary" />
+                    Liquidez e próximos caminhos
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {liquidityAdvisory.readiness.summary}
+                  </p>
+                </div>
+                <div
+                  className={`rounded-md border px-3 py-2 text-sm font-semibold tabular-nums ${READINESS_COLOR[liquidityAdvisory.readiness.status]}`}
+                >
+                  {liquidityAdvisory.readiness.score}/100 · {liquidityAdvisory.readiness.label}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {liquidityAdvisory.insights.length > 0 && (
+                <div className="grid gap-2">
+                  {liquidityAdvisory.insights.map((insight) => (
+                    <div
+                      key={insight}
+                      className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm"
+                    >
+                      {insight}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                {liquidityAdvisory.channels.map((channel) => (
+                  <LiquidityChannelCard key={channel.key} channel={channel} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <h2 className="text-base font-semibold flex items-center gap-2">
                 <Star className="size-4 text-emerald-500" />
                 Perfil do devedor
@@ -408,6 +493,7 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
           <Tabs defaultValue="events">
             <TabsList>
               <TabsTrigger value="events">Eventos ({events.length})</TabsTrigger>
+              <TabsTrigger value="checklist">Diligência</TabsTrigger>
               <TabsTrigger value="comparison">Comparativo</TabsTrigger>
               <TabsTrigger value="assumptions">Premissas</TabsTrigger>
             </TabsList>
@@ -436,6 +522,16 @@ export default function OpportunityShow({ opportunity: initial, events }: Props)
                       ))}
                     </ul>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="checklist" className="mt-3">
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  {liquidityAdvisory.checklist.map((item) => (
+                    <ChecklistRow key={item.key} item={item} />
+                  ))}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -678,6 +774,62 @@ function Stat({
         {value}
       </div>
       {hint && <div className="text-xs text-muted-foreground tabular-nums">{hint}</div>}
+    </div>
+  )
+}
+
+function LiquidityChannelCard({ channel }: { channel: LiquidityChannel }) {
+  return (
+    <div
+      className={`rounded-md border p-3 text-sm ${
+        channel.recommended ? 'border-primary/40 bg-primary/5' : 'border-border bg-background/40'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-semibold">{channel.title}</div>
+        <div className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
+          {channel.fitScore}/100
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div className="text-muted-foreground">Valor</div>
+          <div className="font-semibold tabular-nums">{fmtBRL(channel.value)}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Prazo</div>
+          <div className="font-semibold tabular-nums">{channel.termMonths}m</div>
+        </div>
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{channel.rationale}</p>
+      <div className="mt-2 text-xs font-medium">{channel.nextAction}</div>
+      {channel.recommended && (
+        <div className="mt-2 inline-flex rounded bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+          Recomendado
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChecklistRow({ item }: { item: LiquidityChecklistItem }) {
+  const blocked = item.status === 'blocked'
+  const review = item.status === 'review'
+
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-border p-3">
+      {blocked ? (
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-red-500" />
+      ) : review ? (
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+      ) : (
+        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="font-medium">{item.label}</div>
+        <div className="mt-0.5 text-sm text-muted-foreground">{item.reason}</div>
+        <div className="mt-1 text-xs font-medium">{item.action}</div>
+      </div>
     </div>
   )
 }
