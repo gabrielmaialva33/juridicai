@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
 import AssetEvent from '#modules/precatorios/models/asset_event'
+import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Publication from '#modules/precatorios/models/publication'
@@ -46,8 +47,12 @@ test.group('TRF2 precatorio import service', () => {
       .firstOrFail()
 
     assert.equal(asset.source, 'tribunal')
-    assert.equal(asset.faceValue, '156093.70')
-    assert.equal(asset.estimatedUpdatedValue, '159590.19')
+    const valuation = await AssetValuation.query()
+      .where('tenant_id', tenant.id)
+      .where('asset_id', asset.id)
+      .firstOrFail()
+    assert.equal(valuation.faceValue, '156093.70')
+    assert.equal(valuation.estimatedUpdatedValue, '159590.19')
     assert.equal(asset.lifecycleStatus, 'paid')
     assert.equal(asset.piiStatus, 'pseudonymous')
     assert.deepEqual(asset.rawData?.beneficiaryDocumentMasks, ['109********', '773********'])

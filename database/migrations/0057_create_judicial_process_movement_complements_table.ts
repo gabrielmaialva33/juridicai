@@ -42,6 +42,16 @@ export default class extends BaseSchema {
       table.index(['tenant_id', 'complement_description'])
       table.index(['tenant_id', 'complement_code', 'complement_value'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table judicial_process_movement_complements
+        add constraint judicial_process_movement_complements_movement_same_tenant_fk
+        foreign key (tenant_id, movement_id)
+        references judicial_process_movements (tenant_id, id)
+        on delete cascade;
+      `)
+    )
   }
 
   async down() {

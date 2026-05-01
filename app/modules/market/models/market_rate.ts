@@ -12,28 +12,13 @@ export default class MarketRate extends BaseModel {
   declare id: string
 
   @column()
-  declare seriesId: string | null
-
-  @column()
-  declare seriesKey: MarketRateSeriesKey
-
-  @column()
-  declare seriesCode: string | null
-
-  @column()
-  declare source: string
+  declare seriesId: string
 
   @column.date()
   declare rateDate: DateTime
 
   @column()
   declare value: string
-
-  @column()
-  declare periodicity: MarketRatePeriodicity
-
-  @column()
-  declare unit: string
 
   @column()
   declare rawData: JsonRecord | null

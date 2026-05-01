@@ -13,6 +13,7 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('precatorio_assets')
         .onDelete('CASCADE')
+      table.uuid('current_pricing_id').nullable()
       table
         .text('stage')
         .notNullable()
@@ -27,18 +28,10 @@ export default class extends BaseSchema {
           'paid',
           'lost',
         ])
-      table.decimal('offer_rate', 8, 6).nullable()
-      table.decimal('offer_value', 18, 2).nullable()
-      table.integer('term_months').nullable()
-      table.decimal('expected_annual_irr', 10, 6).nullable()
-      table.decimal('risk_adjusted_irr', 10, 6).nullable()
-      table.decimal('payment_probability', 8, 6).nullable()
-      table.decimal('final_score', 8, 6).nullable()
       table.text('grade').nullable()
       table.integer('priority').notNullable().defaultTo(0)
       table.timestamp('target_close_at', { useTz: true }).nullable()
       table.timestamp('last_contacted_at', { useTz: true }).nullable()
-      table.jsonb('pricing_snapshot').nullable()
       table.jsonb('metadata').nullable()
       table.text('notes').nullable()
       table
@@ -58,9 +51,10 @@ export default class extends BaseSchema {
       table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.unique(['tenant_id', 'asset_id'])
+      table.unique(['tenant_id', 'id'])
       table.index(['tenant_id', 'stage'])
       table.index(['tenant_id', 'grade'])
-      table.index(['tenant_id', 'risk_adjusted_irr'])
+      table.index(['tenant_id', 'current_pricing_id'])
       table.index(['tenant_id', 'target_close_at'])
     })
 
@@ -83,6 +77,8 @@ export default class extends BaseSchema {
         .onDelete('SET NULL')
       table.text('reason').nullable()
       table.timestamp('changed_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'opportunity_id', 'changed_at'])
     })
@@ -112,13 +108,49 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('users')
         .onDelete('SET NULL')
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'opportunity_id', 'computed_at'])
       table.index(['tenant_id', 'risk_adjusted_irr'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table cession_opportunities
+        add constraint cession_opportunities_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete cascade;
+
+        alter table cession_stage_history
+        add constraint cession_stage_history_opportunity_same_tenant_fk
+        foreign key (tenant_id, opportunity_id)
+        references cession_opportunities (tenant_id, id)
+        on delete cascade;
+
+        alter table cession_pricings
+        add constraint cession_pricings_opportunity_same_tenant_fk
+        foreign key (tenant_id, opportunity_id)
+        references cession_opportunities (tenant_id, id)
+        on delete cascade;
+
+        alter table cession_opportunities
+        add constraint cession_opportunities_current_pricing_id_foreign
+        foreign key (current_pricing_id)
+        references cession_pricings (id)
+        on delete set null;
+      `)
+    )
   }
 
   async down() {
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table if exists cession_opportunities
+        drop constraint if exists cession_opportunities_current_pricing_id_foreign
+      `)
+    )
     this.schema.dropTable('cession_pricings')
     this.schema.dropTable('cession_stage_history')
     this.schema.dropTable(this.tableName)

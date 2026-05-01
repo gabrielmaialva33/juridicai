@@ -35,6 +35,7 @@ export default class extends BaseSchema {
         .onDelete('SET NULL')
       table.jsonb('raw_data').nullable()
       table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'asset_id'])
       table.index(['tenant_id', 'budget_unit_id'])
@@ -66,6 +67,8 @@ export default class extends BaseSchema {
         .onDelete('SET NULL')
       table.timestamp('computed_at', { useTz: true }).notNullable().defaultTo(this.now())
       table.jsonb('raw_data').nullable()
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
       table.index(['tenant_id', 'asset_id', 'computed_at'])
       table.index(['tenant_id', 'base_date'])

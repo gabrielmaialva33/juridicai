@@ -3,6 +3,7 @@ import ProcessMatchCandidate, {
 } from '#modules/integrations/models/process_match_candidate'
 import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type SourceRecord from '#modules/siop/models/source_record'
+import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import type { SourceType } from '#shared/types/model_enums'
 
 type CandidateSortBy = 'created_at' | 'updated_at' | 'score'
@@ -25,7 +26,11 @@ class DataJudCandidateApiService {
   async list(tenantId: string, filters: DataJudCandidateListFilters) {
     const query = ProcessMatchCandidate.query()
       .where('tenant_id', tenantId)
-      .preload('asset')
+      .preload('asset', (assetQuery) =>
+        assetQuery.preload('valuations', (valuationQuery) =>
+          valuationQuery.orderBy('computed_at', 'desc').limit(1)
+        )
+      )
       .preload('sourceRecord')
       .orderBy(filters.sortBy, filters.sortDirection)
 
@@ -66,7 +71,11 @@ class DataJudCandidateApiService {
     return ProcessMatchCandidate.query()
       .where('tenant_id', tenantId)
       .where('id', candidateId)
-      .preload('asset')
+      .preload('asset', (assetQuery) =>
+        assetQuery.preload('valuations', (valuationQuery) =>
+          valuationQuery.orderBy('computed_at', 'desc').limit(1)
+        )
+      )
       .preload('sourceRecord')
       .firstOrFail()
   }
@@ -100,6 +109,8 @@ export function serializeDataJudCandidate(
 }
 
 function serializeCandidateAsset(asset: PrecatorioAsset) {
+  const value = assetValueSnapshot(asset)
+
   return {
     id: asset.id,
     source: asset.source,
@@ -109,8 +120,8 @@ function serializeCandidateAsset(asset: PrecatorioAsset) {
     exerciseYear: asset.exerciseYear,
     budgetYear: asset.budgetYear,
     nature: asset.nature,
-    faceValue: asset.faceValue,
-    estimatedUpdatedValue: asset.estimatedUpdatedValue,
+    faceValue: value.faceValue,
+    estimatedUpdatedValue: value.estimatedUpdatedValue,
     lifecycleStatus: asset.lifecycleStatus,
     complianceStatus: asset.complianceStatus,
     currentScore: asset.currentScore,

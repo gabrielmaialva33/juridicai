@@ -3,7 +3,9 @@ import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import operationsService from '#modules/operations/services/operations_service'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import CessionPricing from '#modules/operations/models/cession_pricing'
 import MarketRate from '#modules/market/models/market_rate'
+import MarketRateSeries from '#modules/market/models/market_rate_series'
 import { AssetEventFactory } from '#database/factories/asset_event_factory'
 import { DebtorPaymentStatFactory } from '#database/factories/debtor_payment_stat_factory'
 import { DebtorFactory } from '#database/factories/debtor_factory'
@@ -19,7 +21,8 @@ test.group('operations service', () => {
   }) => {
     const tenant = await TenantFactory.create()
     const otherTenant = await TenantFactory.create()
-    await MarketRate.query().where('series_key', 'selic').delete()
+    const selicSeries = await rateSeries('selic', '11', 'daily')
+    await MarketRate.query().where('series_id', selicSeries.id).delete()
     const debtor = await DebtorFactory.merge({
       tenantId: tenant.id,
       name: 'Instituto Nacional do Seguro Social',
@@ -36,7 +39,7 @@ test.group('operations service', () => {
       reliabilityScore: 96,
     }).create()
     await MarketRateFactory.merge({
-      seriesKey: 'selic',
+      seriesId: selicSeries.id,
       rateDate: DateTime.fromISO('2026-05-01'),
       value: '0.0004900000',
     }).create()
@@ -60,8 +63,6 @@ test.group('operations service', () => {
       tenantId: tenant.id,
       assetId: strongAsset.id,
       stage: 'inbox',
-      offerRate: '0.385',
-      termMonths: 14,
       priority: 100,
     })
     await PrecatorioAssetFactory.merge({
@@ -89,7 +90,7 @@ test.group('operations service', () => {
 
     await cleanupTenantData(tenant)
     await cleanupTenantData(otherTenant)
-    await MarketRate.query().where('series_key', 'selic').delete()
+    await MarketRate.query().where('series_id', selicSeries.id).delete()
   })
 
   test('moves assets into the cession pipeline with a pricing snapshot and audit log', async ({
@@ -125,7 +126,12 @@ test.group('operations service', () => {
     assert.equal(result.opportunity.pipeline.stage, 'offer')
     assert.equal(persisted.stage, 'offer')
     assert.equal(persisted.priority, 90)
-    assert.equal(persisted.pricingSnapshot?.grade, result.opportunity.pricing.grade)
+    const pricing = await CessionPricing.query()
+      .where('tenant_id', tenant.id)
+      .where('opportunity_id', persisted.id)
+      .firstOrFail()
+    assert.equal(persisted.currentPricingId, pricing.id)
+    assert.equal(pricing.pricingSnapshot?.grade, result.opportunity.pricing.grade)
     assert.equal(result.opportunity.pricing.offerRate, 0.385)
     assert.equal(auditLog?.user_id, user.id)
     assert.equal(auditLog?.request_id, 'operations-request-1')
@@ -137,4 +143,18 @@ test.group('operations service', () => {
 
 async function cleanupTenantData(tenant: Tenant) {
   await tenant.delete()
+}
+
+function rateSeries(key: 'selic', code: string, periodicity: 'daily') {
+  return MarketRateSeries.updateOrCreate(
+    { key },
+    {
+      key,
+      code,
+      source: 'test',
+      periodicity,
+      unit: 'decimal_rate',
+      description: null,
+    }
+  )
 }

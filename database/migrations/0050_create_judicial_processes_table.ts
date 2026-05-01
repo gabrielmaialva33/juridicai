@@ -49,20 +49,8 @@ export default class extends BaseSchema {
         .inTable('judging_bodies')
         .onDelete('SET NULL')
       table.text('court_alias').nullable()
-      table.text('court_code').nullable()
-      table.text('court_name').nullable()
       table.text('degree').nullable()
       table.integer('secrecy_level').nullable()
-      table.integer('system_code').nullable()
-      table.text('system_name').nullable()
-      table.integer('format_code').nullable()
-      table.text('format_name').nullable()
-      table.integer('class_code').nullable()
-      table.text('class_name').nullable()
-      table.text('subject').nullable()
-      table.text('judging_body_code').nullable()
-      table.text('judging_body_name').nullable()
-      table.integer('judging_body_municipality_ibge_code').nullable()
       table.date('filed_at').nullable()
       table.timestamp('datajud_updated_at', { useTz: true }).nullable()
       table.timestamp('datajud_indexed_at', { useTz: true }).nullable()
@@ -77,10 +65,22 @@ export default class extends BaseSchema {
       table.index(['tenant_id', 'class_id'])
       table.index(['tenant_id', 'judging_body_id'])
       table.index(['tenant_id', 'court_alias'])
-      table.index(['tenant_id', 'class_code'])
       table.index(['tenant_id', 'degree'])
-      table.index(['tenant_id', 'judging_body_municipality_ibge_code'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table judicial_processes
+        add constraint judicial_processes_tenant_id_id_uq
+        unique (tenant_id, id);
+
+        alter table judicial_processes
+        add constraint judicial_processes_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete set null (asset_id);
+      `)
+    )
   }
 
   async down() {

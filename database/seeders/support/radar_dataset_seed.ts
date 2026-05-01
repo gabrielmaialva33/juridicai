@@ -7,14 +7,17 @@ import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetScore from '#modules/precatorios/models/asset_score'
+import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import Publication from '#modules/precatorios/models/publication'
 import PublicationEvent from '#modules/precatorios/models/publication_event'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import CessionPricing from '#modules/operations/models/cession_pricing'
 import Beneficiary from '#modules/pii/models/beneficiary'
 import AssetBeneficiary from '#modules/pii/models/asset_beneficiary'
 import RadarJobRun from '#modules/admin/models/radar_job_run'
 import ExportJob from '#modules/exports/models/export_job'
+import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import type Tenant from '#modules/tenant/models/tenant'
 import type User from '#modules/auth/models/user'
 import { assetSeeds, cessionOpportunitySeeds, debtorSeeds } from './radar_seed_data.js'
@@ -190,10 +193,6 @@ async function seedAssets(
         exerciseYear: seed.exerciseYear,
         budgetYear: seed.budgetYear,
         nature: seed.nature,
-        faceValue: seed.faceValue,
-        estimatedUpdatedValue: seed.estimatedUpdatedValue,
-        baseDate: DateTime.fromISO(seed.baseDate),
-        queuePosition: seed.queuePosition,
         lifecycleStatus: seed.lifecycleStatus,
         piiStatus: seed.piiStatus,
         complianceStatus: seed.complianceStatus,
@@ -205,6 +204,18 @@ async function seedAssets(
         rowFingerprint: stableHash(`${tenant.id}:${seed.externalId}`),
       }
     )
+    await AssetValuation.create({
+      tenantId: tenant.id,
+      assetId: asset.id,
+      faceValue: seed.faceValue,
+      estimatedUpdatedValue: seed.estimatedUpdatedValue,
+      baseDate: DateTime.fromISO(seed.baseDate),
+      queuePosition: seed.queuePosition,
+      rawData: {
+        seed: true,
+        row: seed.externalId,
+      },
+    })
 
     const score = await upsertModel(
       AssetScore,
@@ -310,6 +321,12 @@ async function seedAssetTrail(
     }
   )
 
+  const court = await referenceCatalogService.court({
+    code: 'TRF1',
+    alias: 'trf1',
+    name: 'Tribunal Regional Federal da 1ª Região',
+  })
+
   const process = await upsertModel(
     JudicialProcess,
     {
@@ -320,10 +337,8 @@ async function seedAssetTrail(
       assetId: asset.id,
       sourceRecordId: sourceRecord.id,
       source: 'siop',
-      courtCode: 'TRF1',
-      courtName: 'Tribunal Regional Federal da 1ª Região',
-      className: 'Requisição de Pagamento',
-      subject: 'Precatório federal',
+      courtId: court?.id ?? null,
+      courtAlias: 'trf1',
       filedAt: DateTime.fromISO(`${exerciseYear - 3}-04-12`),
       rawData: {
         seed: true,
@@ -409,8 +424,9 @@ async function seedCessionOpportunities(
     if (!asset) {
       continue
     }
+    const assetSeed = assetSeeds.find((item) => item.externalId === seed.externalId)
 
-    await upsertModel(
+    const opportunity = await upsertModel(
       CessionOpportunity,
       {
         tenantId: tenant.id,
@@ -418,9 +434,6 @@ async function seedCessionOpportunities(
       },
       {
         stage: seed.stage,
-        offerRate: seed.offerRate,
-        offerValue: String(Number(asset.faceValue ?? 0) * Number(seed.offerRate)),
-        termMonths: seed.termMonths,
         priority: seed.priority,
         targetCloseAt:
           seed.targetCloseDays === null
@@ -436,6 +449,22 @@ async function seedCessionOpportunities(
         updatedByUserId: owner.id,
       }
     )
+    const pricing = await CessionPricing.create({
+      tenantId: tenant.id,
+      opportunityId: opportunity.id,
+      offerRate: seed.offerRate,
+      offerValue: String(Number(assetSeed?.faceValue ?? 0) * Number(seed.offerRate)),
+      termMonths: seed.termMonths,
+      modelVersion: 'seed-v1',
+      pricingSnapshot: {
+        seed: true,
+        offerRate: Number(seed.offerRate),
+        termMonths: seed.termMonths,
+      },
+      createdByUserId: owner.id,
+    })
+    opportunity.currentPricingId = pricing.id
+    await opportunity.save()
   }
 }
 

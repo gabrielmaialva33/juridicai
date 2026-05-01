@@ -35,6 +35,16 @@ export default class extends BaseSchema {
       table.index(['tenant_id', 'candidate_cnj'])
       table.unique(['tenant_id', 'asset_id', 'candidate_cnj', 'candidate_datajud_id'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table process_match_candidates
+        add constraint process_match_candidates_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete cascade;
+      `)
+    )
   }
 
   async down() {

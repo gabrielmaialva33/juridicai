@@ -25,9 +25,6 @@ test.group('DataJud process asset link service', () => {
       source: 'datajud',
       cnjNumber: asset.cnjNumber!,
       courtAlias: 'tjsp',
-      courtCode: 'TJSP',
-      classCode: 1265,
-      className: 'Precatório',
       filedAt: DateTime.fromISO('2024-01-10'),
       rawData: {},
     })
@@ -95,9 +92,6 @@ test.group('DataJud process asset link service', () => {
       source: 'datajud',
       cnjNumber: '1006611-83.2024.8.26.0624',
       courtAlias: 'tjsp',
-      courtCode: 'TJSP',
-      classCode: 1265,
-      className: 'Precatório',
       filedAt: DateTime.fromISO('2024-01-10'),
       rawData: {},
     })

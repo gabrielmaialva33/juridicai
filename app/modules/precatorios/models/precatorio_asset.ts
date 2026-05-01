@@ -24,6 +24,17 @@ import BudgetUnit from '#modules/reference/models/budget_unit'
 import Court from '#modules/reference/models/court'
 
 export default class PrecatorioAsset extends TenantBaseModel {
+  faceValue: string | null = null
+  estimatedUpdatedValue: string | null = null
+  baseDate: DateTime | null = null
+  queuePosition: number | null = null
+  courtCode: string | null = null
+  courtName: string | null = null
+  courtClass: string | null = null
+  budgetUnitCode: string | null = null
+  budgetUnitName: string | null = null
+  causeType: string | null = null
+
   @column()
   declare sourceRecordId: string | null
 
@@ -60,71 +71,11 @@ export default class PrecatorioAsset extends TenantBaseModel {
   @column()
   declare nature: AssetNature
 
-  @column()
-  declare courtCode: string | null
-
-  @column()
-  declare courtName: string | null
-
-  @column()
-  declare courtClass: string | null
-
-  @column()
-  declare budgetUnitCode: string | null
-
-  @column()
-  declare budgetUnitName: string | null
-
-  @column()
-  declare expenseType: string | null
-
-  @column()
-  declare causeType: string | null
-
-  @column()
-  declare natureExpenseCode: string | null
-
-  @column()
-  declare valueRange: string | null
-
-  @column()
-  declare taxClaim: boolean | null
-
-  @column()
-  declare fundef: boolean | null
-
-  @column()
-  declare elapsedYears: number | null
-
-  @column()
-  declare elapsedYearsClass: string | null
-
-  @column()
-  declare faceValue: string | null
-
-  @column()
-  declare estimatedUpdatedValue: string | null
-
   @column.date()
   declare originFiledAt: DateTime | null
 
   @column.date()
   declare autuatedAt: DateTime | null
-
-  @column.date()
-  declare baseDate: DateTime | null
-
-  @column.date()
-  declare correctionStartedAt: DateTime | null
-
-  @column.date()
-  declare correctionEndedAt: DateTime | null
-
-  @column()
-  declare correctionIndex: string | null
-
-  @column()
-  declare queuePosition: number | null
 
   @column()
   declare lifecycleStatus: LifecycleStatus

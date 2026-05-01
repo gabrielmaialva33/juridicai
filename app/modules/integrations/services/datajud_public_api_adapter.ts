@@ -7,6 +7,7 @@ import JudicialProcessMovement from '#modules/precatorios/models/judicial_proces
 import JudicialProcessMovementComplement from '#modules/precatorios/models/judicial_process_movement_complement'
 import JudicialProcessSubject from '#modules/precatorios/models/judicial_process_subject'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -272,6 +273,33 @@ class DataJudPublicApiAdapter {
       .where('tenant_id', input.tenantId)
       .where('cnj_number', cnjNumber)
       .first()
+    const courtCode = stringOrNull(source.tribunal) ?? input.courtAlias.toUpperCase()
+    const judgingBodyName = stringOrNull(readNested(source, ['orgaoJulgador', 'nome']))
+    const court = await referenceCatalogService.court({
+      code: courtCode,
+      alias: input.courtAlias.toLowerCase(),
+      name: judgingBodyName ?? courtCode,
+    })
+    const judicialSystem = await referenceCatalogService.judicialSystem({
+      code: numberOrNull(readNested(source, ['sistema', 'codigo'])),
+      name: stringOrNull(readNested(source, ['sistema', 'nome'])),
+    })
+    const processFormat = await referenceCatalogService.processFormat({
+      code: numberOrNull(readNested(source, ['formato', 'codigo'])),
+      name: stringOrNull(readNested(source, ['formato', 'nome'])),
+    })
+    const judicialClass = await referenceCatalogService.judicialClass({
+      code: numberOrNull(readNested(source, ['classe', 'codigo'])),
+      name: stringOrNull(readNested(source, ['classe', 'nome'])),
+    })
+    const judgingBody = await referenceCatalogService.judgingBody({
+      courtId: court?.id ?? null,
+      code: stringFromUnknown(readNested(source, ['orgaoJulgador', 'codigo'])),
+      name: judgingBodyName,
+      municipalityIbgeCode: numberOrNull(
+        readNested(source, ['orgaoJulgador', 'codigoMunicipioIBGE'])
+      ),
+    })
     const payload = {
       tenantId: input.tenantId,
       assetId: asset?.id ?? null,
@@ -280,23 +308,14 @@ class DataJudPublicApiAdapter {
       cnjNumber,
       datajudId: input.hit._id,
       datajudIndex: input.hit._index,
+      courtId: court?.id ?? null,
+      systemId: judicialSystem?.id ?? null,
+      formatId: processFormat?.id ?? null,
+      classId: judicialClass?.id ?? null,
+      judgingBodyId: judgingBody?.id ?? null,
       courtAlias: input.courtAlias.toLowerCase(),
-      courtCode: stringOrNull(source.tribunal) ?? input.courtAlias.toUpperCase(),
-      courtName: stringOrNull(readNested(source, ['orgaoJulgador', 'nome'])),
       degree: stringOrNull(source.grau),
       secrecyLevel: numberOrNull(source.nivelSigilo),
-      systemCode: numberOrNull(readNested(source, ['sistema', 'codigo'])),
-      systemName: stringOrNull(readNested(source, ['sistema', 'nome'])),
-      formatCode: numberOrNull(readNested(source, ['formato', 'codigo'])),
-      formatName: stringOrNull(readNested(source, ['formato', 'nome'])),
-      classCode: numberOrNull(readNested(source, ['classe', 'codigo'])),
-      className: stringOrNull(readNested(source, ['classe', 'nome'])),
-      subject: firstSubject(source.assuntos),
-      judgingBodyCode: stringFromUnknown(readNested(source, ['orgaoJulgador', 'codigo'])),
-      judgingBodyName: stringOrNull(readNested(source, ['orgaoJulgador', 'nome'])),
-      judgingBodyMunicipalityIbgeCode: numberOrNull(
-        readNested(source, ['orgaoJulgador', 'codigoMunicipioIBGE'])
-      ),
       filedAt: parseDataJudDate(source.dataAjuizamento),
       datajudUpdatedAt: parseDataJudDateTime(source.dataHoraUltimaAtualizacao),
       datajudIndexedAt: parseDataJudDateTime(source['@timestamp']),
@@ -344,6 +363,10 @@ class DataJudPublicApiAdapter {
     let upserted = 0
 
     for (const subject of subjects) {
+      const catalog = await referenceCatalogService.subject({
+        code: subject.code,
+        name: subject.name,
+      })
       await JudicialProcessSubject.updateOrCreate(
         {
           tenantId: input.tenantId,
@@ -353,6 +376,7 @@ class DataJudPublicApiAdapter {
           tenantId: input.tenantId,
           processId: input.judicialProcess.id,
           sourceRecordId: input.sourceRecord.id,
+          subjectCatalogId: catalog?.id ?? null,
           subjectCode: subject.code,
           subjectName: subject.name,
           sequence: subject.sequence,
@@ -377,6 +401,16 @@ class DataJudPublicApiAdapter {
     let complementsUpserted = 0
 
     for (const movement of movements) {
+      const movementType = await referenceCatalogService.movementType({
+        code: movement.code,
+        name: movement.name,
+      })
+      const judgingBody = await referenceCatalogService.judgingBody({
+        courtId: input.judicialProcess.courtId,
+        code: movement.judgingBodyCode,
+        name: movement.judgingBodyName,
+        municipalityIbgeCode: movement.judgingBodyMunicipalityIbgeCode,
+      })
       const movementRow = await JudicialProcessMovement.updateOrCreate(
         {
           tenantId: input.tenantId,
@@ -387,10 +421,12 @@ class DataJudPublicApiAdapter {
           processId: input.judicialProcess.id,
           sourceRecordId: input.sourceRecord.id,
           source: 'datajud',
+          movementTypeId: movementType?.id ?? null,
           movementCode: movement.code,
           movementName: movement.name,
           occurredAt: movement.occurredAt,
           sequence: movement.sequence,
+          judgingBodyId: judgingBody?.id ?? null,
           judgingBodyCode: movement.judgingBodyCode,
           judgingBodyName: movement.judgingBodyName,
           judgingBodyMunicipalityIbgeCode: movement.judgingBodyMunicipalityIbgeCode,
@@ -419,6 +455,12 @@ class DataJudPublicApiAdapter {
     let upserted = 0
 
     for (const complement of input.complements) {
+      const complementType = await referenceCatalogService.complementType({
+        code: complement.code,
+        value: complement.value,
+        name: complement.name,
+        description: complement.description,
+      })
       await JudicialProcessMovementComplement.updateOrCreate(
         {
           tenantId: input.tenantId,
@@ -428,6 +470,7 @@ class DataJudPublicApiAdapter {
           tenantId: input.tenantId,
           movementId: input.movement.id,
           sourceRecordId: input.sourceRecord.id,
+          complementTypeId: complementType?.id ?? null,
           complementCode: complement.code,
           complementValue: complement.value,
           complementName: complement.name,
@@ -491,19 +534,6 @@ function stringFromUnknown(value: unknown) {
   }
 
   return stringOrNull(value)
-}
-
-function firstSubject(value: unknown) {
-  if (!Array.isArray(value)) {
-    return null
-  }
-
-  const flattened = value.flat(2)
-  const subject = flattened.find(
-    (item): item is JsonRecord => !!item && typeof item === 'object' && !Array.isArray(item)
-  )
-
-  return stringOrNull(subject?.nome)
 }
 
 type DataJudMovementComplement = {

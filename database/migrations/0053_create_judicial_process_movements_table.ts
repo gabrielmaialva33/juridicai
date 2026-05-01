@@ -53,6 +53,20 @@ export default class extends BaseSchema {
       table.index(['tenant_id', 'judging_body_municipality_ibge_code'])
       table.index(['process_id', 'sequence'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table judicial_process_movements
+        add constraint judicial_process_movements_tenant_id_id_uq
+        unique (tenant_id, id);
+
+        alter table judicial_process_movements
+        add constraint judicial_process_movements_process_same_tenant_fk
+        foreign key (tenant_id, process_id)
+        references judicial_processes (tenant_id, id)
+        on delete cascade;
+      `)
+    )
   }
 
   async down() {

@@ -3,6 +3,7 @@ import db from '@adonisjs/lucid/services/db'
 import ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
+import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
@@ -108,6 +109,17 @@ class DataJudCandidateReviewService {
     trx: TransactionClientContract
   ) {
     const source = readRawSource(candidate.rawData)
+    const courtCode = stringOrNull(source.tribunal) ?? candidate.courtAlias.toUpperCase()
+    const judgingBodyName = stringOrNull(readNested(source, ['orgaoJulgador', 'nome']))
+    const court = await referenceCatalogService.court({
+      code: courtCode,
+      alias: candidate.courtAlias,
+      name: judgingBodyName ?? courtCode,
+    })
+    const judicialClass = await referenceCatalogService.judicialClass({
+      code: numberOrNull(readNested(source, ['classe', 'codigo'])),
+      name: stringOrNull(readNested(source, ['classe', 'nome'])),
+    })
     const existing = await JudicialProcess.query({ client: trx })
       .where('tenant_id', candidate.tenantId)
       .where('cnj_number', candidate.candidateCnj)
@@ -118,10 +130,9 @@ class DataJudCandidateReviewService {
       sourceRecordId: null,
       source: 'datajud' as const,
       cnjNumber: candidate.candidateCnj,
-      courtCode: stringOrNull(source.tribunal) ?? candidate.courtAlias.toUpperCase(),
-      courtName: stringOrNull(readNested(source, ['orgaoJulgador', 'nome'])),
-      className: stringOrNull(readNested(source, ['classe', 'nome'])),
-      subject: firstSubject(source.assuntos),
+      courtId: court?.id ?? null,
+      classId: judicialClass?.id ?? null,
+      courtAlias: candidate.courtAlias,
       filedAt: parseDataJudDate(source.dataAjuizamento),
       rawData: {
         ...candidate.rawData,
@@ -241,18 +252,6 @@ function stringOrNull(value: unknown) {
   return trimmed || null
 }
 
-function firstSubject(value: unknown) {
-  if (!Array.isArray(value)) {
-    return null
-  }
-
-  const subject = value
-    .flat(2)
-    .find((item): item is JsonRecord => !!item && typeof item === 'object' && !Array.isArray(item))
-
-  return stringOrNull(subject?.nome)
-}
-
 function parseDataJudDate(value: unknown) {
   if (typeof value !== 'string' || !value.trim()) {
     return null
@@ -266,6 +265,19 @@ function parseDataJudDate(value: unknown) {
       : DateTime.fromISO(trimmed)
 
   return parsed.isValid ? parsed.startOf('day') : null
+}
+
+function numberOrNull(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const numeric = Number(value)
+    return Number.isFinite(numeric) ? numeric : null
+  }
+
+  return null
 }
 
 export { DataJudCandidateReviewError }

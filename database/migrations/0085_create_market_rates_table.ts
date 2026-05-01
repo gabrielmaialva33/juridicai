@@ -20,29 +20,19 @@ export default class extends BaseSchema {
       table.uuid('id').primary().defaultTo(this.raw('gen_random_uuid()'))
       table
         .uuid('series_id')
-        .nullable()
+        .notNullable()
         .references('id')
         .inTable('market_rate_series')
         .onDelete('CASCADE')
-      table
-        .text('series_key')
-        .notNullable()
-        .checkIn(['cdi', 'selic', 'ipca', 'ipca_plus_2', 'ec_136_cap'])
-      table.text('series_code').nullable()
-      table.text('source').notNullable().defaultTo('bcb_sgs')
       table.date('rate_date').notNullable()
       table.decimal('value', 18, 10).notNullable()
-      table.text('periodicity').notNullable().checkIn(['daily', 'monthly', 'annual', 'derived'])
-      table.text('unit').notNullable().defaultTo('decimal_rate')
       table.jsonb('raw_data').nullable()
 
       table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
       table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
 
-      table.unique(['series_key', 'rate_date'])
       table.unique(['series_id', 'rate_date'])
       table.index(['series_id', 'rate_date'])
-      table.index(['series_key', 'rate_date'])
     })
   }
 

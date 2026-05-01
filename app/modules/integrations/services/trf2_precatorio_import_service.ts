@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import AssetEvent from '#modules/precatorios/models/asset_event'
+import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import Debtor from '#modules/debtors/models/debtor'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Publication from '#modules/precatorios/models/publication'
+import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import SourceRecord from '#modules/siop/models/source_record'
 import { parseTrf2ChronologicalCsv, type Trf2PrecatorioRow } from './trf2_precatorio_adapter.js'
 import type { AssetNature, JsonRecord } from '#shared/types/model_enums'
@@ -93,10 +95,6 @@ class Trf2PrecatorioImportService {
       exerciseYear: group.proposalYear,
       budgetYear: group.proposalYear,
       nature: detectNature(group.legalBasis),
-      faceValue: group.parcelValue,
-      estimatedUpdatedValue: group.paidValue ?? group.originalPaidValue ?? group.parcelValue,
-      baseDate: parseTrf2Date(group.autuadoAt),
-      queuePosition: group.chronologicalOrder,
       lifecycleStatus: group.paidValue ? ('paid' as const) : ('discovered' as const),
       piiStatus: 'pseudonymous' as const,
       complianceStatus: 'approved_for_analysis' as const,
@@ -109,6 +107,7 @@ class Trf2PrecatorioImportService {
       existing.merge(assetPayload)
       await existing.save()
       await this.upsertJudicialProcess(sourceRecord, existing, group, trx)
+      await this.createValuation(sourceRecord, existing.id, group, trx)
       await this.upsertPublication(sourceRecord, existing, group, trx)
       await this.createEvent(sourceRecord, existing.id, group, trx)
       return 'updated' as const
@@ -116,10 +115,32 @@ class Trf2PrecatorioImportService {
 
     const asset = await PrecatorioAsset.create(assetPayload, { client: trx })
     await this.upsertJudicialProcess(sourceRecord, asset, group, trx)
+    await this.createValuation(sourceRecord, asset.id, group, trx)
     await this.upsertPublication(sourceRecord, asset, group, trx)
     await this.createEvent(sourceRecord, asset.id, group, trx)
 
     return 'inserted' as const
+  }
+
+  private createValuation(
+    sourceRecord: SourceRecord,
+    assetId: string,
+    group: GroupedPrecatorio,
+    trx: TransactionClientContract
+  ) {
+    return AssetValuation.create(
+      {
+        tenantId: sourceRecord.tenantId,
+        assetId,
+        faceValue: group.parcelValue,
+        estimatedUpdatedValue: group.paidValue ?? group.originalPaidValue ?? group.parcelValue,
+        baseDate: parseTrf2Date(group.autuadoAt),
+        queuePosition: group.chronologicalOrder,
+        sourceRecordId: sourceRecord.id,
+        rawData: buildAssetRawData(sourceRecord, group),
+      },
+      { client: trx }
+    )
   }
 
   private async findOrCreateDebtor(tenantId: string, trx: TransactionClientContract) {
@@ -156,16 +177,24 @@ class Trf2PrecatorioImportService {
     group: GroupedPrecatorio,
     trx: TransactionClientContract
   ) {
+    const court = await referenceCatalogService.court({
+      code: 'TRF2',
+      alias: 'trf2',
+      name: 'Tribunal Regional Federal da 2ª Região',
+    })
+    const judicialClass = await referenceCatalogService.judicialClass({
+      code: null,
+      name: 'Precatório',
+    })
     const payload = {
       tenantId: sourceRecord.tenantId,
       assetId: asset.id,
       sourceRecordId: sourceRecord.id,
       source: 'tribunal' as const,
       cnjNumber: group.cnjNumber,
-      courtCode: 'TRF2',
-      courtName: 'Tribunal Regional Federal da 2ª Região',
-      className: 'Precatório',
-      subject: group.legalBasis,
+      courtId: court?.id ?? null,
+      classId: judicialClass?.id ?? null,
+      courtAlias: 'trf2',
       filedAt: parseTrf2Date(group.autuadoAt),
       rawData: {
         providerId: 'trf2-precatorios',

@@ -27,9 +27,6 @@ test.group('DataJud legal signal classifier service', () => {
       source: 'datajud',
       cnjNumber: asset.cnjNumber!,
       courtAlias: 'tjsp',
-      courtCode: 'TJSP',
-      classCode: 1265,
-      className: 'Precatório',
       filedAt: DateTime.fromISO('2024-01-10'),
       rawData: {},
     })

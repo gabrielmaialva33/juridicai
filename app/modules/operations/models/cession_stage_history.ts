@@ -8,6 +8,8 @@ import CessionOpportunity, {
 import User from '#modules/auth/models/user'
 
 export default class CessionStageHistory extends TenantModel {
+  static table = 'cession_stage_history'
+
   @column()
   declare opportunityId: string
 

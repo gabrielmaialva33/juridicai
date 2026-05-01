@@ -40,6 +40,22 @@ export default class extends BaseSchema {
 
     this.defer((db) =>
       db.rawQuery(`
+        alter table publications
+        add constraint publications_tenant_id_id_uq
+        unique (tenant_id, id);
+
+        alter table publications
+        add constraint publications_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete set null (asset_id);
+
+        alter table publications
+        add constraint publications_process_same_tenant_fk
+        foreign key (tenant_id, process_id)
+        references judicial_processes (tenant_id, id)
+        on delete set null (process_id);
+
         create unique index publications_tenant_source_hash_date_uq
         on publications (tenant_id, source, text_hash, publication_date)
         where text_hash is not null;

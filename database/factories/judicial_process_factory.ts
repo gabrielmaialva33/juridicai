@@ -10,7 +10,6 @@ export const JudicialProcessFactory = factory
       source: 'siop' as const,
       cnjNumber: `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${faker.string.numeric(4)}.4.01.${faker.string.numeric(4)}`,
       filedAt: DateTime.now(),
-      subject: faker.lorem.words({ min: 3, max: 8 }),
       rawData: {},
     }
   })

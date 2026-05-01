@@ -8,7 +8,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class AssetBudgetFactSchema extends BaseModel {
-  static $columns = ['assetId', 'budgetUnitId', 'budgetYear', 'causeType', 'createdAt', 'elapsedYears', 'elapsedYearsClass', 'exerciseYear', 'expenseType', 'fundef', 'id', 'natureExpenseCode', 'rawData', 'sourceRecordId', 'taxClaim', 'tenantId', 'valueRange'] as const
+  static $columns = ['assetId', 'budgetUnitId', 'budgetYear', 'causeType', 'createdAt', 'elapsedYears', 'elapsedYearsClass', 'exerciseYear', 'expenseType', 'fundef', 'id', 'natureExpenseCode', 'rawData', 'sourceRecordId', 'taxClaim', 'tenantId', 'updatedAt', 'valueRange'] as const
   $columns = AssetBudgetFactSchema.$columns
   @column()
   declare assetId: string
@@ -42,6 +42,8 @@ export class AssetBudgetFactSchema extends BaseModel {
   declare taxClaim: boolean | null
   @column()
   declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
   @column()
   declare valueRange: string | null
 }
@@ -101,7 +103,7 @@ export class AssetScoreSchema extends BaseModel {
 }
 
 export class AssetValuationSchema extends BaseModel {
-  static $columns = ['assetId', 'baseDate', 'computedAt', 'correctionEndedAt', 'correctionIndex', 'correctionStartedAt', 'estimatedUpdatedValue', 'faceValue', 'id', 'queuePosition', 'rawData', 'sourceRecordId', 'tenantId'] as const
+  static $columns = ['assetId', 'baseDate', 'computedAt', 'correctionEndedAt', 'correctionIndex', 'correctionStartedAt', 'createdAt', 'estimatedUpdatedValue', 'faceValue', 'id', 'queuePosition', 'rawData', 'sourceRecordId', 'tenantId', 'updatedAt'] as const
   $columns = AssetValuationSchema.$columns
   @column()
   declare assetId: string
@@ -115,6 +117,8 @@ export class AssetValuationSchema extends BaseModel {
   declare correctionIndex: string | null
   @column.date()
   declare correctionStartedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column()
   declare estimatedUpdatedValue: string | null
   @column()
@@ -129,6 +133,8 @@ export class AssetValuationSchema extends BaseModel {
   declare sourceRecordId: string | null
   @column()
   declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
 }
 
 export class AuditLogSchema extends BaseModel {
@@ -203,7 +209,7 @@ export class BudgetUnitSchema extends BaseModel {
 }
 
 export class CessionOpportunitySchema extends BaseModel {
-  static $columns = ['assetId', 'createdAt', 'createdByUserId', 'expectedAnnualIrr', 'finalScore', 'grade', 'id', 'lastContactedAt', 'metadata', 'notes', 'offerRate', 'offerValue', 'paymentProbability', 'pricingSnapshot', 'priority', 'riskAdjustedIrr', 'stage', 'targetCloseAt', 'tenantId', 'termMonths', 'updatedAt', 'updatedByUserId'] as const
+  static $columns = ['assetId', 'createdAt', 'createdByUserId', 'currentPricingId', 'grade', 'id', 'lastContactedAt', 'metadata', 'notes', 'priority', 'stage', 'targetCloseAt', 'tenantId', 'updatedAt', 'updatedByUserId'] as const
   $columns = CessionOpportunitySchema.$columns
   @column()
   declare assetId: string
@@ -212,9 +218,7 @@ export class CessionOpportunitySchema extends BaseModel {
   @column()
   declare createdByUserId: string | null
   @column()
-  declare expectedAnnualIrr: string | null
-  @column()
-  declare finalScore: string | null
+  declare currentPricingId: string | null
   @column()
   declare grade: string | null
   @column({ isPrimary: true })
@@ -226,25 +230,13 @@ export class CessionOpportunitySchema extends BaseModel {
   @column()
   declare notes: string | null
   @column()
-  declare offerRate: string | null
-  @column()
-  declare offerValue: string | null
-  @column()
-  declare paymentProbability: string | null
-  @column()
-  declare pricingSnapshot: any | null
-  @column()
   declare priority: number
-  @column()
-  declare riskAdjustedIrr: string | null
   @column()
   declare stage: string
   @column.dateTime()
   declare targetCloseAt: DateTime | null
   @column()
   declare tenantId: string
-  @column()
-  declare termMonths: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
@@ -252,10 +244,12 @@ export class CessionOpportunitySchema extends BaseModel {
 }
 
 export class CessionPricingSchema extends BaseModel {
-  static $columns = ['computedAt', 'createdByUserId', 'expectedAnnualIrr', 'finalScore', 'id', 'modelVersion', 'offerRate', 'offerValue', 'opportunityId', 'paymentProbability', 'pricingSnapshot', 'riskAdjustedIrr', 'tenantId', 'termMonths'] as const
+  static $columns = ['computedAt', 'createdAt', 'createdByUserId', 'expectedAnnualIrr', 'finalScore', 'id', 'modelVersion', 'offerRate', 'offerValue', 'opportunityId', 'paymentProbability', 'pricingSnapshot', 'riskAdjustedIrr', 'tenantId', 'termMonths', 'updatedAt'] as const
   $columns = CessionPricingSchema.$columns
   @column.dateTime()
   declare computedAt: DateTime
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column()
   declare createdByUserId: string | null
   @column()
@@ -282,15 +276,19 @@ export class CessionPricingSchema extends BaseModel {
   declare tenantId: string
   @column()
   declare termMonths: number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
 }
 
 export class CessionStageHistorySchema extends BaseModel {
-  static $columns = ['changedAt', 'changedByUserId', 'fromStage', 'id', 'opportunityId', 'reason', 'tenantId', 'toStage'] as const
+  static $columns = ['changedAt', 'changedByUserId', 'createdAt', 'fromStage', 'id', 'opportunityId', 'reason', 'tenantId', 'toStage', 'updatedAt'] as const
   $columns = CessionStageHistorySchema.$columns
   @column.dateTime()
   declare changedAt: DateTime
   @column()
   declare changedByUserId: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column()
   declare fromStage: string | null
   @column({ isPrimary: true })
@@ -303,6 +301,8 @@ export class CessionStageHistorySchema extends BaseModel {
   declare tenantId: string
   @column()
   declare toStage: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
 }
 
 export class ClientErrorSchema extends BaseModel {
@@ -627,26 +627,18 @@ export class JudicialProcessSubjectSchema extends BaseModel {
 }
 
 export class JudicialProcessSchema extends BaseModel {
-  static $columns = ['assetId', 'classCode', 'classId', 'className', 'cnjNumber', 'courtAlias', 'courtCode', 'courtId', 'courtName', 'createdAt', 'datajudId', 'datajudIndex', 'datajudIndexedAt', 'datajudUpdatedAt', 'degree', 'deletedAt', 'filedAt', 'formatCode', 'formatId', 'formatName', 'id', 'judgingBodyCode', 'judgingBodyId', 'judgingBodyMunicipalityIbgeCode', 'judgingBodyName', 'rawData', 'secrecyLevel', 'source', 'sourceRecordId', 'subject', 'systemCode', 'systemId', 'systemName', 'tenantId', 'updatedAt'] as const
+  static $columns = ['assetId', 'classId', 'cnjNumber', 'courtAlias', 'courtId', 'createdAt', 'datajudId', 'datajudIndex', 'datajudIndexedAt', 'datajudUpdatedAt', 'degree', 'deletedAt', 'filedAt', 'formatId', 'id', 'judgingBodyId', 'rawData', 'secrecyLevel', 'source', 'sourceRecordId', 'systemId', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessSchema.$columns
   @column()
   declare assetId: string | null
   @column()
-  declare classCode: number | null
-  @column()
   declare classId: string | null
-  @column()
-  declare className: string | null
   @column()
   declare cnjNumber: string
   @column()
   declare courtAlias: string | null
   @column()
-  declare courtCode: string | null
-  @column()
   declare courtId: string | null
-  @column()
-  declare courtName: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -664,21 +656,11 @@ export class JudicialProcessSchema extends BaseModel {
   @column.date()
   declare filedAt: DateTime | null
   @column()
-  declare formatCode: number | null
-  @column()
   declare formatId: string | null
-  @column()
-  declare formatName: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
-  declare judgingBodyCode: string | null
-  @column()
   declare judgingBodyId: string | null
-  @column()
-  declare judgingBodyMunicipalityIbgeCode: number | null
-  @column()
-  declare judgingBodyName: string | null
   @column()
   declare rawData: any | null
   @column()
@@ -688,13 +670,7 @@ export class JudicialProcessSchema extends BaseModel {
   @column()
   declare sourceRecordId: string | null
   @column()
-  declare subject: string | null
-  @column()
-  declare systemCode: number | null
-  @column()
   declare systemId: string | null
-  @column()
-  declare systemName: string | null
   @column()
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -755,28 +731,18 @@ export class MarketRateSerySchema extends BaseModel {
 }
 
 export class MarketRateSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'periodicity', 'rateDate', 'rawData', 'seriesCode', 'seriesId', 'seriesKey', 'source', 'unit', 'updatedAt', 'value'] as const
+  static $columns = ['createdAt', 'id', 'rateDate', 'rawData', 'seriesId', 'updatedAt', 'value'] as const
   $columns = MarketRateSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
-  @column()
-  declare periodicity: string
   @column.date()
   declare rateDate: DateTime
   @column()
   declare rawData: any | null
   @column()
-  declare seriesCode: string | null
-  @column()
-  declare seriesId: string | null
-  @column()
-  declare seriesKey: string
-  @column()
-  declare source: string
-  @column()
-  declare unit: string
+  declare seriesId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
@@ -835,42 +801,22 @@ export class PermissionSchema extends BaseModel {
 }
 
 export class PrecatorioAssetSchema extends BaseModel {
-  static $columns = ['assetNumber', 'autuatedAt', 'baseDate', 'budgetUnitCode', 'budgetUnitId', 'budgetUnitName', 'budgetYear', 'causeType', 'cnjNumber', 'complianceStatus', 'correctionEndedAt', 'correctionIndex', 'correctionStartedAt', 'courtClass', 'courtCode', 'courtId', 'courtName', 'createdAt', 'currentScore', 'currentScoreId', 'debtorId', 'deletedAt', 'elapsedYears', 'elapsedYearsClass', 'estimatedUpdatedValue', 'exerciseYear', 'expenseType', 'externalId', 'faceValue', 'fundef', 'id', 'lifecycleStatus', 'nature', 'natureExpenseCode', 'originFiledAt', 'originProcessNumber', 'piiStatus', 'queuePosition', 'rawData', 'rowFingerprint', 'source', 'sourceRecordId', 'taxClaim', 'tenantId', 'updatedAt', 'valueRange'] as const
+  static $columns = ['assetNumber', 'autuatedAt', 'budgetUnitId', 'budgetYear', 'cnjNumber', 'complianceStatus', 'courtId', 'createdAt', 'currentScore', 'currentScoreId', 'debtorId', 'deletedAt', 'exerciseYear', 'externalId', 'id', 'lifecycleStatus', 'nature', 'originFiledAt', 'originProcessNumber', 'piiStatus', 'rawData', 'rowFingerprint', 'source', 'sourceRecordId', 'tenantId', 'updatedAt'] as const
   $columns = PrecatorioAssetSchema.$columns
   @column()
   declare assetNumber: string | null
   @column.date()
   declare autuatedAt: DateTime | null
-  @column.date()
-  declare baseDate: DateTime | null
-  @column()
-  declare budgetUnitCode: string | null
   @column()
   declare budgetUnitId: string | null
   @column()
-  declare budgetUnitName: string | null
-  @column()
   declare budgetYear: number | null
-  @column()
-  declare causeType: string | null
   @column()
   declare cnjNumber: string | null
   @column()
   declare complianceStatus: any
-  @column.date()
-  declare correctionEndedAt: DateTime | null
-  @column()
-  declare correctionIndex: string | null
-  @column.date()
-  declare correctionStartedAt: DateTime | null
-  @column()
-  declare courtClass: string | null
-  @column()
-  declare courtCode: string | null
   @column()
   declare courtId: string | null
-  @column()
-  declare courtName: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -882,37 +828,21 @@ export class PrecatorioAssetSchema extends BaseModel {
   @column.dateTime()
   declare deletedAt: DateTime | null
   @column()
-  declare elapsedYears: number | null
-  @column()
-  declare elapsedYearsClass: string | null
-  @column()
-  declare estimatedUpdatedValue: string | null
-  @column()
   declare exerciseYear: number | null
   @column()
-  declare expenseType: string | null
-  @column()
   declare externalId: string | null
-  @column()
-  declare faceValue: string | null
-  @column()
-  declare fundef: boolean | null
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare lifecycleStatus: any
   @column()
   declare nature: any
-  @column()
-  declare natureExpenseCode: string | null
   @column.date()
   declare originFiledAt: DateTime | null
   @column()
   declare originProcessNumber: string | null
   @column()
   declare piiStatus: any
-  @column()
-  declare queuePosition: number | null
   @column()
   declare rawData: any | null
   @column()
@@ -922,13 +852,9 @@ export class PrecatorioAssetSchema extends BaseModel {
   @column()
   declare sourceRecordId: string | null
   @column()
-  declare taxClaim: boolean | null
-  @column()
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
-  @column()
-  declare valueRange: string | null
 }
 
 export class ProcessFormatSchema extends BaseModel {

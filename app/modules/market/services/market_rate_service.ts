@@ -1,5 +1,6 @@
 import db from '@adonisjs/lucid/services/db'
 import MarketRate, { type MarketRateSeriesKey } from '#modules/market/models/market_rate'
+import MarketRateSeries from '#modules/market/models/market_rate_series'
 import bcbSgsAdapter, { BCB_SGS_SERIES } from '#modules/market/services/bcb_sgs_adapter'
 
 export type MarketRateSnapshot = {
@@ -43,12 +44,12 @@ class MarketRateService {
       ec136CorrectionAnnualRate: roundRate(ec136CorrectionAnnualRate) ?? 0.12,
       asOf,
       sources: sourceRows.map((row) => ({
-        seriesKey: row.seriesKey,
-        seriesCode: row.seriesCode,
+        seriesKey: row.series.key,
+        seriesCode: row.series.code,
         rateDate: row.rateDate.toISODate()!,
         value: rateValue(row),
-        periodicity: row.periodicity,
-        source: row.source,
+        periodicity: row.series.periodicity,
+        source: row.series.source,
       })),
     }
   }
@@ -65,7 +66,7 @@ class MarketRateService {
 
     for (const seriesKey of seriesKeys) {
       const points = await bcbSgsAdapter.fetchLatest(seriesKey, limit)
-      const series = BCB_SGS_SERIES[seriesKey]
+      const series = await findOrCreateSeries(seriesKey)
 
       stats.fetched += points.length
 
@@ -73,16 +74,12 @@ class MarketRateService {
         await db
           .table('market_rates')
           .insert({
-            series_key: seriesKey,
-            series_code: series.code,
-            source: 'bcb_sgs',
+            series_id: series.id,
             rate_date: point.date.toISODate(),
             value: point.value,
-            periodicity: series.periodicity,
-            unit: 'decimal_rate',
             raw_data: point.raw,
           })
-          .onConflict(['series_key', 'rate_date'])
+          .onConflict(['series_id', 'rate_date'])
           .merge({
             value: point.value,
             raw_data: point.raw,
@@ -98,11 +95,35 @@ class MarketRateService {
 }
 
 function latestRate(seriesKey: MarketRateSeriesKey) {
-  return MarketRate.query().where('series_key', seriesKey).orderBy('rate_date', 'desc').first()
+  return MarketRate.query()
+    .preload('series')
+    .whereHas('series', (query) => query.where('key', seriesKey))
+    .orderBy('rate_date', 'desc')
+    .first()
 }
 
 function latestRates(seriesKey: MarketRateSeriesKey, limit: number) {
-  return MarketRate.query().where('series_key', seriesKey).orderBy('rate_date', 'desc').limit(limit)
+  return MarketRate.query()
+    .preload('series')
+    .whereHas('series', (query) => query.where('key', seriesKey))
+    .orderBy('rate_date', 'desc')
+    .limit(limit)
+}
+
+async function findOrCreateSeries(seriesKey: keyof typeof BCB_SGS_SERIES) {
+  const series = BCB_SGS_SERIES[seriesKey]
+
+  return MarketRateSeries.updateOrCreate(
+    { key: seriesKey },
+    {
+      key: seriesKey,
+      code: series.code,
+      source: 'bcb_sgs',
+      periodicity: series.periodicity,
+      unit: 'decimal_rate',
+      description: null,
+    }
+  )
 }
 
 function annualizeDailyRate(rate: number) {

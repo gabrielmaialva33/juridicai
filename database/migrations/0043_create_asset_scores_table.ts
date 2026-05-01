@@ -29,6 +29,12 @@ export default class extends BaseSchema {
 
     this.defer((db) =>
       db.rawQuery(`
+        alter table asset_scores
+        add constraint asset_scores_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete cascade;
+
         alter table precatorio_assets
         add constraint precatorio_assets_current_score_id_foreign
         foreign key (current_score_id)

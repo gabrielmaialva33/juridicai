@@ -6,6 +6,7 @@ import type {
   CessionPipelineStage,
   OpportunityGrade,
 } from '#modules/operations/models/cession_opportunity'
+import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import type { DebtorType, PaymentRegime } from '#shared/types/model_enums'
 
 const DEFAULT_ANNUAL_CORRECTION_RATE = 0.12
@@ -215,8 +216,8 @@ class CessionPricingEngine {
     const debtor = options.debtor ?? null
     const debtorPaymentStat = options.debtorPaymentStat ?? latestPaymentStat(debtor)
     const events = options.events ?? []
-    const faceValue =
-      moneyToNumber(asset.estimatedUpdatedValue) ?? moneyToNumber(asset.faceValue) ?? 0
+    const valueSnapshot = assetValueSnapshot(asset)
+    const faceValue = valueSnapshot.faceValue
     const pricing = this.calculate({
       asset,
       debtor,
@@ -241,7 +242,7 @@ class CessionPricingEngine {
         nature: asset.nature,
         lifecycleStatus: asset.lifecycleStatus,
         faceValue,
-        estimatedUpdatedValue: moneyToNumber(asset.estimatedUpdatedValue),
+        estimatedUpdatedValue: valueSnapshot.estimatedUpdatedValue,
         exerciseYear: asset.exerciseYear,
         budgetYear: asset.budgetYear,
         currentScore: asset.currentScore,
@@ -284,8 +285,7 @@ class CessionPricingEngine {
     const events = input.events ?? []
     const pricingInput = input.input ?? {}
     const marketRates = input.marketRates ?? null
-    const faceValue =
-      moneyToNumber(asset.estimatedUpdatedValue) ?? moneyToNumber(asset.faceValue) ?? 0
+    const faceValue = assetValueSnapshot(asset).faceValue
     const termMonths = Math.max(
       1,
       Math.round(pricingInput.termMonths ?? defaultTermMonths(asset, debtor, events))

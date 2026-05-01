@@ -23,6 +23,16 @@ export default class extends BaseSchema {
       table.unique(['tenant_id', 'asset_id', 'event_type', 'idempotency_key'])
       table.index(['tenant_id', 'asset_id', 'event_date'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table asset_events
+        add constraint asset_events_asset_same_tenant_fk
+        foreign key (tenant_id, asset_id)
+        references precatorio_assets (tenant_id, id)
+        on delete cascade;
+      `)
+    )
   }
 
   async down() {

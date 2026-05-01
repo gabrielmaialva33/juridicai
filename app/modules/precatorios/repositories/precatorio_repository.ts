@@ -30,7 +30,11 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
   }
 
   list(tenantId: string, filters: PrecatorioListFilters) {
-    const query = this.query(tenantId).preload('debtor')
+    const query = this.query(tenantId)
+      .preload('debtor')
+      .preload('valuations', (valuationQuery) =>
+        valuationQuery.orderBy('computed_at', 'desc').limit(1)
+      )
 
     if (filters.q) {
       const term = `%${filters.q.toLowerCase()}%`
@@ -49,11 +53,20 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
     if (filters.complianceStatus) query.where('compliance_status', filters.complianceStatus)
     if (filters.exerciseYearFrom) query.where('exercise_year', '>=', filters.exerciseYearFrom)
     if (filters.exerciseYearTo) query.where('exercise_year', '<=', filters.exerciseYearTo)
-    if (filters.minFaceValue) query.where('face_value', '>=', filters.minFaceValue)
-    if (filters.maxFaceValue) query.where('face_value', '<=', filters.maxFaceValue)
+    if (filters.minFaceValue) {
+      query.whereRaw(`${latestValueSql()} >= ?`, [filters.minFaceValue])
+    }
+    if (filters.maxFaceValue) {
+      query.whereRaw(`${latestValueSql()} <= ?`, [filters.maxFaceValue])
+    }
 
     return query
-      .orderBy(filters.sortBy, filters.sortDirection)
+      .if(filters.sortBy === 'face_value', (builder) =>
+        builder.orderByRaw(`${latestValueSql()} ${filters.sortDirection}`)
+      )
+      .if(filters.sortBy !== 'face_value', (builder) =>
+        builder.orderBy(filters.sortBy, filters.sortDirection)
+      )
       .orderBy('id', 'asc')
       .paginate(filters.page, filters.limit)
   }
@@ -65,6 +78,8 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
       .preload('sourceRecord')
       .preload('currentScoreRow')
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(50))
+      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(10))
+      .preload('budgetFacts', (query) => query.orderBy('created_at', 'desc').limit(10))
       .preload('scores', (query) => query.orderBy('computed_at', 'desc').limit(20))
       .preload('judicialProcesses', (query) => query.orderBy('created_at', 'desc').limit(20))
       .preload('publications', (query) => query.orderBy('publication_date', 'desc').limit(20))
@@ -75,6 +90,24 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
   findByExternalId(tenantId: string, externalId: string) {
     return this.query(tenantId).where('external_id', externalId).first()
   }
+}
+
+function latestValueSql() {
+  return `coalesce((
+    select av.estimated_updated_value
+    from asset_valuations av
+    where av.tenant_id = precatorio_assets.tenant_id
+      and av.asset_id = precatorio_assets.id
+    order by av.computed_at desc
+    limit 1
+  ), (
+    select av.face_value
+    from asset_valuations av
+    where av.tenant_id = precatorio_assets.tenant_id
+      and av.asset_id = precatorio_assets.id
+    order by av.computed_at desc
+    limit 1
+  ), 0)`
 }
 
 export default new PrecatorioRepository()

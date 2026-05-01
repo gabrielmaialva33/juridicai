@@ -37,14 +37,20 @@ export default class OperationsController {
     return inertia.render('operations/desk', data as any)
   }
 
-  async opportunities({ inertia, request }: HttpContext) {
+  async opportunities({ inertia, request, response }: HttpContext) {
     const filters = normalizeListFilters(request.qs())
     const data = await operationsService.list(tenantContext.requireTenantId(), filters)
+    if (wantsJson(request)) {
+      return response.ok(data)
+    }
     return inertia.render('operations/opportunities', { ...data, filters } as any)
   }
 
-  async show({ inertia, params }: HttpContext) {
+  async show({ inertia, params, request, response }: HttpContext) {
     const data = await operationsService.show(tenantContext.requireTenantId(), params.id)
+    if (wantsJson(request)) {
+      return response.ok(data)
+    }
     return inertia.render('operations/show', data as any)
   }
 
@@ -67,8 +73,11 @@ export default class OperationsController {
     )
   }
 
-  async pipeline({ inertia }: HttpContext) {
+  async pipeline({ inertia, request, response }: HttpContext) {
     const data = await operationsService.pipeline(tenantContext.requireTenantId())
+    if (wantsJson(request)) {
+      return response.ok(data)
+    }
     return inertia.render('operations/pipeline', data as any)
   }
 
@@ -148,4 +157,8 @@ function dateTimeOrNull(value: unknown) {
 
   const parsed = DateTime.fromISO(normalized)
   return parsed.isValid ? parsed : null
+}
+
+function wantsJson(request: HttpContext['request']) {
+  return request.header('accept')?.includes('application/json') ?? false
 }

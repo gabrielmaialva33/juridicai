@@ -129,29 +129,38 @@ class DataJudCandidateMatchService {
     const query = db
       .from('precatorio_assets')
       .select(
-        'id',
-        'tenant_id',
-        'source_record_id',
-        'source',
-        'cnj_number',
-        'exercise_year',
-        'court_code',
-        'court_name',
-        'cause_type',
-        'origin_filed_at',
-        'autuated_at',
-        'raw_data'
+        'precatorio_assets.id',
+        'precatorio_assets.tenant_id',
+        'precatorio_assets.source_record_id',
+        'precatorio_assets.source',
+        'precatorio_assets.cnj_number',
+        'precatorio_assets.exercise_year',
+        'courts.code as court_code',
+        'courts.name as court_name',
+        'asset_budget_facts.cause_type',
+        'precatorio_assets.origin_filed_at',
+        'precatorio_assets.autuated_at',
+        'precatorio_assets.raw_data'
       )
-      .where('tenant_id', options.tenantId)
-      .whereNull('deleted_at')
-      .where((builder) => {
-        builder.whereNotNull('cnj_number').orWhereNotNull('court_name').orWhereNotNull('court_code')
+      .leftJoin('courts', 'courts.id', 'precatorio_assets.court_id')
+      .leftJoin('asset_budget_facts', (join) => {
+        join
+          .on('asset_budget_facts.asset_id', 'precatorio_assets.id')
+          .andOn('asset_budget_facts.tenant_id', 'precatorio_assets.tenant_id')
       })
-      .orderBy('created_at', 'asc')
+      .where('precatorio_assets.tenant_id', options.tenantId)
+      .whereNull('precatorio_assets.deleted_at')
+      .where((builder) => {
+        builder
+          .whereNotNull('cnj_number')
+          .orWhereNotNull('courts.name')
+          .orWhereNotNull('courts.code')
+      })
+      .orderBy('precatorio_assets.created_at', 'asc')
       .limit(normalizeLimit(options.limit))
 
     if (options.source) {
-      query.where('source', options.source)
+      query.where('precatorio_assets.source', options.source)
     }
 
     return query as Promise<CandidateAssetRow[]>

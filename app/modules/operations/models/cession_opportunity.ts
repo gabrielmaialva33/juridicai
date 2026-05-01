@@ -26,28 +26,10 @@ export default class CessionOpportunity extends TenantModel {
   declare assetId: string
 
   @column()
+  declare currentPricingId: string | null
+
+  @column()
   declare stage: CessionPipelineStage
-
-  @column()
-  declare offerRate: string | null
-
-  @column()
-  declare offerValue: string | null
-
-  @column()
-  declare termMonths: number | null
-
-  @column()
-  declare expectedAnnualIrr: string | null
-
-  @column()
-  declare riskAdjustedIrr: string | null
-
-  @column()
-  declare paymentProbability: string | null
-
-  @column()
-  declare finalScore: string | null
 
   @column()
   declare grade: OpportunityGrade | null
@@ -60,9 +42,6 @@ export default class CessionOpportunity extends TenantModel {
 
   @column.dateTime()
   declare lastContactedAt: DateTime | null
-
-  @column()
-  declare pricingSnapshot: JsonRecord | null
 
   @column()
   declare metadata: JsonRecord | null
@@ -83,6 +62,11 @@ export default class CessionOpportunity extends TenantModel {
     foreignKey: 'assetId',
   })
   declare asset: BelongsTo<typeof PrecatorioAsset>
+
+  @belongsTo(() => CessionPricing, {
+    foreignKey: 'currentPricingId',
+  })
+  declare currentPricing: BelongsTo<typeof CessionPricing>
 
   @belongsTo(() => User, {
     foreignKey: 'createdByUserId',

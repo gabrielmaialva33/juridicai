@@ -54,46 +54,10 @@ export default class JudicialProcess extends TenantBaseModel {
   declare courtAlias: string | null
 
   @column()
-  declare courtCode: string | null
-
-  @column()
-  declare courtName: string | null
-
-  @column()
   declare degree: string | null
 
   @column()
   declare secrecyLevel: number | null
-
-  @column()
-  declare systemCode: number | null
-
-  @column()
-  declare systemName: string | null
-
-  @column()
-  declare formatCode: number | null
-
-  @column()
-  declare formatName: string | null
-
-  @column()
-  declare classCode: number | null
-
-  @column()
-  declare className: string | null
-
-  @column()
-  declare subject: string | null
-
-  @column()
-  declare judgingBodyCode: string | null
-
-  @column()
-  declare judgingBodyName: string | null
-
-  @column()
-  declare judgingBodyMunicipalityIbgeCode: number | null
 
   @column.date()
   declare filedAt: DateTime | null

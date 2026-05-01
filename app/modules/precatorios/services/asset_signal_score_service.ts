@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import AssetScore from '#modules/precatorios/models/asset_score'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
+import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import type { JsonRecord } from '#shared/types/model_enums'
 
 const SCORE_VERSION = 'legal-signals-v1'
@@ -31,6 +32,7 @@ class AssetSignalScoreService {
       .where('tenant_id', tenantId)
       .where('id', assetId)
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(200))
+      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
       .firstOrFail()
     const events = (asset.events ?? []) as AssetEvent[]
     const snapshot = buildScoreSnapshot(asset, events)
@@ -86,10 +88,13 @@ function buildScoreSnapshot(asset: PrecatorioAsset, events: AssetEvent[]) {
   )
     ? 0
     : clamp(50 + positiveWeight - negativeWeight, 0, 100)
+  const valueSnapshot = assetValueSnapshot(asset)
   const dataQualityScore =
-    [asset.cnjNumber, asset.debtorId, asset.faceValue ?? asset.estimatedUpdatedValue].filter(
-      Boolean
-    ).length * 30
+    [
+      asset.cnjNumber,
+      asset.debtorId,
+      valueSnapshot.faceValue > 0 ? valueSnapshot.faceValue : null,
+    ].filter(Boolean).length * 30
   const maturityScore = clamp(
     40 +
       (positiveEvents.some((event) => event.eventType === 'requisition_issued') ? 20 : 0) +
@@ -107,11 +112,7 @@ function buildScoreSnapshot(asset: PrecatorioAsset, events: AssetEvent[]) {
     0,
     100
   )
-  const economicScore = clamp(
-    Number(asset.estimatedUpdatedValue ?? asset.faceValue ?? 0) >= 50_000 ? 70 : 45,
-    0,
-    100
-  )
+  const economicScore = clamp(valueSnapshot.faceValue >= 50_000 ? 70 : 45, 0, 100)
   const riskScore = clamp(100 - legalSignalScore + negativeWeight / 2, 0, 100)
   const finalScore = clamp(
     Math.round(

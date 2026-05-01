@@ -38,8 +38,9 @@ test.group('DataJud candidate review service', () => {
     assert.equal(result.judicialProcess.assetId, asset.id)
     assert.equal(result.judicialProcess.cnjNumber, '5004648-91.2022.4.02.5005')
     assert.equal(result.judicialProcess.source, 'datajud')
+    await result.judicialProcess.load('judicialClass')
     assert.equal(
-      result.judicialProcess.className,
+      result.judicialProcess.judicialClass.name,
       'Cumprimento de Sentença contra a Fazenda Pública'
     )
     const rejectedCompeting = await ProcessMatchCandidate.findOrFail(competing.id)

@@ -11,8 +11,12 @@ import siopImportRepository from '#modules/siop/repositories/siop_import_reposit
 import siopNormalizeService from '#modules/siop/services/siop_normalize_service'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetScore from '#modules/precatorios/models/asset_score'
+import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
+import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import Debtor from '#modules/debtors/models/debtor'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import BudgetUnit from '#modules/reference/models/budget_unit'
+import Court from '#modules/reference/models/court'
 import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import SourceRecord from '#modules/siop/models/source_record'
@@ -339,12 +343,16 @@ class SiopImportService {
       externalId,
       input.trx
     )
+    const court = await this.findOrCreateCourt(normalized, input.trx)
+    const budgetUnit = await this.findOrCreateBudgetUnit(normalized, input.trx)
 
     if (existingAsset) {
       existingAsset.useTransaction(input.trx)
       existingAsset.merge({
         sourceRecordId: input.sourceRecordId,
         debtorId: debtor.id,
+        courtId: court?.id ?? null,
+        budgetUnitId: budgetUnit?.id ?? null,
         externalId,
         originProcessNumber: normalized.cnjNumber,
         assetNumber: extractString(input.row, [
@@ -356,9 +364,8 @@ class SiopImportService {
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
-        ...siopAssetMetadata(normalized),
-        faceValue: normalized.faceValue,
-        estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
+        originFiledAt: normalized.originFiledAt,
+        autuatedAt: normalized.autuatedAt,
         lifecycleStatus: 'discovered',
         complianceStatus: 'approved_for_analysis',
         rawData: input.row,
@@ -370,6 +377,23 @@ class SiopImportService {
         input.payload.tenantId,
         existingAsset.id,
         fingerprint,
+        input.row,
+        input.trx
+      )
+      await this.createBudgetFact(
+        input.payload.tenantId,
+        existingAsset.id,
+        budgetUnit?.id ?? null,
+        input.sourceRecordId,
+        normalized,
+        input.row,
+        input.trx
+      )
+      await this.createValuation(
+        input.payload.tenantId,
+        existingAsset.id,
+        input.sourceRecordId,
+        normalized,
         input.row,
         input.trx
       )
@@ -386,6 +410,8 @@ class SiopImportService {
         cnjNumber: normalized.cnjNumber,
         originProcessNumber: normalized.cnjNumber,
         debtorId: debtor.id,
+        courtId: court?.id ?? null,
+        budgetUnitId: budgetUnit?.id ?? null,
         assetNumber: extractString(input.row, [
           'chave',
           'asset_number',
@@ -395,9 +421,8 @@ class SiopImportService {
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
-        ...siopAssetMetadata(normalized),
-        faceValue: normalized.faceValue,
-        estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
+        originFiledAt: normalized.originFiledAt,
+        autuatedAt: normalized.autuatedAt,
         lifecycleStatus: 'discovered',
         piiStatus: 'none',
         complianceStatus: 'approved_for_analysis',
@@ -412,6 +437,23 @@ class SiopImportService {
       input.payload.tenantId,
       asset.id,
       fingerprint,
+      input.row,
+      input.trx
+    )
+    await this.createBudgetFact(
+      input.payload.tenantId,
+      asset.id,
+      budgetUnit?.id ?? null,
+      input.sourceRecordId,
+      normalized,
+      input.row,
+      input.trx
+    )
+    await this.createValuation(
+      input.payload.tenantId,
+      asset.id,
+      input.sourceRecordId,
+      normalized,
       input.row,
       input.trx
     )
@@ -700,6 +742,117 @@ class SiopImportService {
     )
   }
 
+  private async createBudgetFact(
+    tenantId: string,
+    assetId: string,
+    budgetUnitId: string | null,
+    sourceRecordId: string,
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    row: JsonRecord,
+    trx: TransactionClientContract
+  ) {
+    return AssetBudgetFact.create(
+      {
+        tenantId,
+        assetId,
+        exerciseYear: normalized.exerciseYear,
+        budgetYear: normalized.exerciseYear,
+        budgetUnitId,
+        expenseType: normalized.expenseType,
+        causeType: normalized.causeType,
+        natureExpenseCode: normalized.natureExpenseCode,
+        valueRange: normalized.valueRange,
+        taxClaim: normalized.taxClaim,
+        fundef: normalized.fundef,
+        elapsedYears: normalized.elapsedYears,
+        elapsedYearsClass: normalized.elapsedYearsClass,
+        sourceRecordId,
+        rawData: row,
+      },
+      { client: trx }
+    )
+  }
+
+  private async createValuation(
+    tenantId: string,
+    assetId: string,
+    sourceRecordId: string,
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    row: JsonRecord,
+    trx: TransactionClientContract
+  ) {
+    return AssetValuation.create(
+      {
+        tenantId,
+        assetId,
+        faceValue: normalized.faceValue,
+        estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
+        baseDate: normalized.correctionEndedAt ?? normalized.autuatedAt ?? normalized.originFiledAt,
+        correctionStartedAt: normalized.correctionStartedAt,
+        correctionEndedAt: normalized.correctionEndedAt,
+        correctionIndex: normalized.correctionIndex,
+        sourceRecordId,
+        rawData: row,
+      },
+      { client: trx }
+    )
+  }
+
+  private async findOrCreateCourt(
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    trx: TransactionClientContract
+  ) {
+    if (!normalized.courtCode || !normalized.courtName) {
+      return null
+    }
+
+    const existing = await Court.query({ client: trx }).where('code', normalized.courtCode).first()
+    if (existing) {
+      existing.merge({
+        name: normalized.courtName,
+        courtClass: normalized.courtClass,
+      })
+      await existing.save()
+      return existing
+    }
+
+    return Court.create(
+      {
+        code: normalized.courtCode,
+        alias: null,
+        name: normalized.courtName,
+        courtClass: normalized.courtClass,
+      },
+      { client: trx }
+    )
+  }
+
+  private async findOrCreateBudgetUnit(
+    normalized: ReturnType<typeof siopNormalizeService.normalizeRow>,
+    trx: TransactionClientContract
+  ) {
+    if (!normalized.budgetUnitCode || !normalized.budgetUnitName) {
+      return null
+    }
+
+    const existing = await BudgetUnit.query({ client: trx })
+      .where('code', normalized.budgetUnitCode)
+      .first()
+    if (existing) {
+      existing.name = normalized.budgetUnitName
+      await existing.save()
+      return existing
+    }
+
+    return BudgetUnit.create(
+      {
+        code: normalized.budgetUnitCode,
+        name: normalized.budgetUnitName,
+      },
+      { client: trx }
+    )
+  }
+
   private async refreshScore(
     tenantId: string,
     asset: PrecatorioAsset,
@@ -762,30 +915,6 @@ function detectAssetNature(row: JsonRecord): AssetNature {
   if (rawNature.includes('comum')) return 'comum'
 
   return 'unknown'
-}
-
-function siopAssetMetadata(normalized: ReturnType<typeof siopNormalizeService.normalizeRow>) {
-  return {
-    courtCode: normalized.courtCode,
-    courtName: normalized.courtName,
-    courtClass: normalized.courtClass,
-    budgetUnitCode: normalized.budgetUnitCode,
-    budgetUnitName: normalized.budgetUnitName,
-    expenseType: normalized.expenseType,
-    causeType: normalized.causeType,
-    natureExpenseCode: normalized.natureExpenseCode,
-    valueRange: normalized.valueRange,
-    taxClaim: normalized.taxClaim,
-    fundef: normalized.fundef,
-    elapsedYears: normalized.elapsedYears,
-    elapsedYearsClass: normalized.elapsedYearsClass,
-    originFiledAt: normalized.originFiledAt,
-    autuatedAt: normalized.autuatedAt,
-    baseDate: normalized.correctionEndedAt ?? normalized.autuatedAt ?? normalized.originFiledAt,
-    correctionStartedAt: normalized.correctionStartedAt,
-    correctionEndedAt: normalized.correctionEndedAt,
-    correctionIndex: normalized.correctionIndex,
-  }
 }
 
 function extractString(row: JsonRecord, keys: string[]) {

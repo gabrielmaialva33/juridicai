@@ -20,6 +20,16 @@ export default class extends BaseSchema {
 
       table.index(['tenant_id', 'publication_id', 'event_date'])
     })
+
+    this.defer((db) =>
+      db.rawQuery(`
+        alter table publication_events
+        add constraint publication_events_publication_same_tenant_fk
+        foreign key (tenant_id, publication_id)
+        references publications (tenant_id, id)
+        on delete cascade;
+      `)
+    )
   }
 
   async down() {

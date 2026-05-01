@@ -4,6 +4,8 @@ import CessionOpportunity, {
   type CessionPipelineStage,
   type OpportunityGrade,
 } from '#modules/operations/models/cession_opportunity'
+import CessionPricing from '#modules/operations/models/cession_pricing'
+import CessionStageHistory from '#modules/operations/models/cession_stage_history'
 import cessionPricingEngine, {
   type MarketRatePricingSnapshot,
   type OpportunityProjection,
@@ -128,7 +130,8 @@ class OperationsService {
         )
       )
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(100))
-      .preload('cessionOpportunity')
+      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
+      .preload('cessionOpportunity', (query) => query.preload('currentPricing'))
       .preload('judicialProcesses', (query) => query.orderBy('created_at', 'desc').limit(10))
       .preload('publications', (query) => query.orderBy('publication_date', 'desc').limit(10))
       .firstOrFail()
@@ -200,18 +203,10 @@ class OperationsService {
       tenantId,
       assetId,
       stage: input.stage,
-      offerRate: String(pricing.offerRate),
-      offerValue: String(pricing.acquisitionCost),
-      termMonths: pricing.termMonths,
-      expectedAnnualIrr: String(pricing.expectedAnnualIrr),
-      riskAdjustedIrr: String(pricing.riskAdjustedIrr),
-      paymentProbability: String(pricing.paymentProbability),
-      finalScore: String(pricing.finalScore),
       grade: pricing.grade,
       priority: input.priority ?? existing?.priority ?? gradePriority(pricing.grade),
       targetCloseAt: input.targetCloseAt ?? existing?.targetCloseAt ?? null,
       lastContactedAt: input.lastContactedAt ?? existing?.lastContactedAt ?? null,
-      pricingSnapshot: pricing,
       notes: input.notes ?? existing?.notes ?? null,
       updatedByUserId: input.userId ?? null,
     }
@@ -222,7 +217,31 @@ class OperationsService {
       createdByUserId: existing?.createdByUserId ?? input.userId ?? null,
     })
     await opportunity.save()
-    await this.writeAuditLog(tenantId, assetId, opportunity, input)
+    const currentPricing = await CessionPricing.create({
+      tenantId,
+      opportunityId: opportunity.id,
+      offerRate: String(pricing.offerRate),
+      offerValue: String(pricing.acquisitionCost),
+      termMonths: pricing.termMonths,
+      expectedAnnualIrr: String(pricing.expectedAnnualIrr),
+      riskAdjustedIrr: String(pricing.riskAdjustedIrr),
+      paymentProbability: String(pricing.paymentProbability),
+      finalScore: String(pricing.finalScore),
+      modelVersion: pricing.assumptions.version,
+      pricingSnapshot: pricing,
+      createdByUserId: input.userId ?? null,
+    })
+    opportunity.currentPricingId = currentPricing.id
+    await opportunity.save()
+    await CessionStageHistory.create({
+      tenantId,
+      opportunityId: opportunity.id,
+      fromStage: existing?.stage ?? null,
+      toStage: input.stage,
+      changedByUserId: input.userId ?? null,
+      reason: input.notes ?? null,
+    })
+    await this.writeAuditLog(tenantId, assetId, opportunity, input, pricing.riskAdjustedIrr)
 
     return this.show(tenantId, assetId)
   }
@@ -268,7 +287,8 @@ class OperationsService {
         )
       )
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(50))
-      .preload('cessionOpportunity')
+      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
+      .preload('cessionOpportunity', (query) => query.preload('currentPricing'))
       .orderBy('created_at', 'desc')
       .limit(options.limit)
 
@@ -285,11 +305,12 @@ class OperationsService {
     marketRates?: MarketRatePricingSnapshot | null
   ) {
     const opportunity = asset.$preloaded.cessionOpportunity as CessionOpportunity | undefined
+    const currentPricing = opportunity?.$preloaded.currentPricing as CessionPricing | undefined
     const persistedPricing =
       opportunity && !pricing
         ? {
-            offerRate: numberOrUndefined(opportunity.offerRate),
-            termMonths: opportunity.termMonths,
+            offerRate: numberOrUndefined(currentPricing?.offerRate ?? null),
+            termMonths: currentPricing?.termMonths,
           }
         : undefined
 
@@ -310,7 +331,8 @@ class OperationsService {
     tenantId: string,
     assetId: string,
     opportunity: CessionOpportunity,
-    input: PipelineUpdateInput
+    input: PipelineUpdateInput,
+    riskAdjustedIrr: number
   ) {
     return db.table('audit_logs').insert({
       tenant_id: tenantId,
@@ -322,7 +344,7 @@ class OperationsService {
         assetId,
         stage: input.stage,
         grade: opportunity.grade,
-        riskAdjustedIrr: opportunity.riskAdjustedIrr,
+        riskAdjustedIrr,
       },
       request_id: input.requestId ?? null,
     })

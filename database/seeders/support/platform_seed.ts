@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import MarketRate from '#modules/market/models/market_rate'
+import MarketRateSeries from '#modules/market/models/market_rate_series'
 import type Tenant from '#modules/tenant/models/tenant'
 import { upsertModel } from './upsert.js'
 
@@ -59,18 +60,26 @@ export async function seedMarketRates() {
   ]
 
   for (const rate of rates) {
+    const series = await upsertModel(
+      MarketRateSeries,
+      { key: rate.seriesKey },
+      {
+        code: rate.seriesCode,
+        source: 'seed',
+        periodicity: rate.periodicity,
+        unit: 'decimal_rate',
+        description: null,
+      }
+    )
+
     await upsertModel(
       MarketRate,
       {
-        seriesKey: rate.seriesKey,
+        seriesId: series.id,
         rateDate: DateTime.fromISO(rate.rateDate),
       },
       {
-        seriesCode: rate.seriesCode,
-        source: 'seed',
         value: rate.value,
-        periodicity: rate.periodicity,
-        unit: 'decimal_rate',
         rawData: {
           seed: true,
         },

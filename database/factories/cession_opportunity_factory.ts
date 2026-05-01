@@ -5,13 +5,9 @@ import { ensureTenantId } from '#database/factories/factory_helpers'
 
 export const CessionOpportunityFactory = factory
   .define(CessionOpportunity, ({ faker }) => {
-    const offerRate = faker.number.float({ min: 0.35, max: 0.85, fractionDigits: 4 })
-
     return {
       stage: 'qualified' as const,
-      offerRate: String(offerRate),
       priority: faker.number.int({ min: 0, max: 100 }),
-      pricingSnapshot: {},
       metadata: {},
     }
   })

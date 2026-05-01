@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import ExportJob from '#modules/exports/models/export_job'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import tenantContext from '#shared/helpers/tenant_context'
 import jobRunService from '#shared/services/job_run_service'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -67,25 +68,30 @@ async function runExport(tenantId: string, exportJobId: string) {
   const assets = await PrecatorioAsset.query()
     .where('tenant_id', tenantId)
     .preload('debtor')
+    .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
     .orderBy('created_at', 'desc')
     .limit(getLimit(exportJob.filters))
 
   const filePath = await writePrecatorioCsv({
     tenantId,
     exportJobId,
-    rows: assets.map((asset) => ({
-      external_id: asset.externalId,
-      cnj_number: asset.cnjNumber,
-      debtor_name: asset.debtor?.name ?? null,
-      exercise_year: asset.exerciseYear,
-      nature: asset.nature,
-      face_value: asset.faceValue,
-      estimated_updated_value: asset.estimatedUpdatedValue,
-      lifecycle_status: asset.lifecycleStatus,
-      compliance_status: asset.complianceStatus,
-      current_score: asset.currentScore,
-      source: asset.source,
-    })),
+    rows: assets.map((asset) => {
+      const value = assetValueSnapshot(asset)
+
+      return {
+        external_id: asset.externalId,
+        cnj_number: asset.cnjNumber,
+        debtor_name: asset.debtor?.name ?? null,
+        exercise_year: asset.exerciseYear,
+        nature: asset.nature,
+        face_value: value.faceValue,
+        estimated_updated_value: value.estimatedUpdatedValue,
+        lifecycle_status: asset.lifecycleStatus,
+        compliance_status: asset.complianceStatus,
+        current_score: asset.currentScore,
+        source: asset.source,
+      }
+    }),
   })
 
   exportJob.merge({

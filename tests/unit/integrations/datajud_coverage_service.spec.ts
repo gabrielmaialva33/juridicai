@@ -35,7 +35,6 @@ test.group('DataJud coverage service', () => {
       assetId: enriched.id,
       source: 'datajud',
       cnjNumber: '0702042-05.2020.8.07.0003',
-      courtCode: 'TJDFT',
       rawData: {},
     })
 

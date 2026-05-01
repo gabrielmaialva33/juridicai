@@ -5,16 +5,24 @@ export default class extends BaseSchema {
     await this.db.rawQuery(`
       create materialized view dashboard_asset_metrics as
       select
-        tenant_id,
+        a.tenant_id,
         count(*)::bigint as total_assets,
-        count(*) filter (where lifecycle_status = 'paid')::bigint as paid_assets,
-        count(*) filter (where compliance_status = 'approved_for_analysis')::bigint as approved_for_analysis,
-        coalesce(sum(face_value), 0)::numeric(18,2) as total_face_value,
-        coalesce(sum(estimated_updated_value), 0)::numeric(18,2) as total_estimated_updated_value,
+        count(*) filter (where a.lifecycle_status = 'paid')::bigint as paid_assets,
+        count(*) filter (where a.compliance_status = 'approved_for_analysis')::bigint as approved_for_analysis,
+        coalesce(sum(v.face_value), 0)::numeric(18,2) as total_face_value,
+        coalesce(sum(v.estimated_updated_value), 0)::numeric(18,2) as total_estimated_updated_value,
         now() as refreshed_at
-      from precatorio_assets
-      where deleted_at is null
-      group by tenant_id
+      from precatorio_assets a
+      left join lateral (
+        select av.face_value, av.estimated_updated_value
+        from asset_valuations av
+        where av.tenant_id = a.tenant_id
+          and av.asset_id = a.id
+        order by av.computed_at desc, av.id desc
+        limit 1
+      ) v on true
+      where a.deleted_at is null
+      group by a.tenant_id
       with no data;
 
       create unique index dashboard_asset_metrics_tenant_uq
@@ -26,11 +34,19 @@ export default class extends BaseSchema {
         d.id as debtor_id,
         d.name,
         count(a.id)::bigint as asset_count,
-        coalesce(sum(a.face_value), 0)::numeric(18,2) as total_face_value,
+        coalesce(sum(v.face_value), 0)::numeric(18,2) as total_face_value,
         coalesce(avg(a.current_score), 0)::numeric(10,2) as average_score,
         now() as refreshed_at
       from debtors d
       left join precatorio_assets a on a.debtor_id = d.id and a.deleted_at is null
+      left join lateral (
+        select av.face_value
+        from asset_valuations av
+        where av.tenant_id = a.tenant_id
+          and av.asset_id = a.id
+        order by av.computed_at desc, av.id desc
+        limit 1
+      ) v on true
       where d.deleted_at is null
       group by d.tenant_id, d.id, d.name
       with no data;
@@ -40,15 +56,23 @@ export default class extends BaseSchema {
 
       create materialized view asset_yearly_stats as
       select
-        tenant_id,
-        exercise_year,
+        a.tenant_id,
+        a.exercise_year,
         count(*)::bigint as asset_count,
-        coalesce(sum(face_value), 0)::numeric(18,2) as total_face_value,
-        coalesce(sum(estimated_updated_value), 0)::numeric(18,2) as total_estimated_updated_value,
+        coalesce(sum(v.face_value), 0)::numeric(18,2) as total_face_value,
+        coalesce(sum(v.estimated_updated_value), 0)::numeric(18,2) as total_estimated_updated_value,
         now() as refreshed_at
-      from precatorio_assets
-      where deleted_at is null
-      group by tenant_id, exercise_year
+      from precatorio_assets a
+      left join lateral (
+        select av.face_value, av.estimated_updated_value
+        from asset_valuations av
+        where av.tenant_id = a.tenant_id
+          and av.asset_id = a.id
+        order by av.computed_at desc, av.id desc
+        limit 1
+      ) v on true
+      where a.deleted_at is null
+      group by a.tenant_id, a.exercise_year
       with no data;
 
       create unique index asset_yearly_stats_tenant_year_uq
