@@ -771,22 +771,38 @@ export class PermissionSchema extends BaseModel {
 export class PrecatorioAssetSchema extends BaseModel {
   static $columns = [
     'assetNumber',
+    'autuatedAt',
     'baseDate',
+    'budgetUnitCode',
+    'budgetUnitName',
     'budgetYear',
+    'causeType',
     'cnjNumber',
     'complianceStatus',
+    'correctionEndedAt',
+    'correctionIndex',
+    'correctionStartedAt',
+    'courtClass',
+    'courtCode',
+    'courtName',
     'createdAt',
     'currentScore',
     'currentScoreId',
     'debtorId',
     'deletedAt',
+    'elapsedYears',
+    'elapsedYearsClass',
     'estimatedUpdatedValue',
     'exerciseYear',
+    'expenseType',
     'externalId',
     'faceValue',
+    'fundef',
     'id',
     'lifecycleStatus',
     'nature',
+    'natureExpenseCode',
+    'originFiledAt',
     'originProcessNumber',
     'piiStatus',
     'queuePosition',
@@ -794,20 +810,42 @@ export class PrecatorioAssetSchema extends BaseModel {
     'rowFingerprint',
     'source',
     'sourceRecordId',
+    'taxClaim',
     'tenantId',
     'updatedAt',
+    'valueRange',
   ] as const
   $columns = PrecatorioAssetSchema.$columns
   @column()
   declare assetNumber: string | null
   @column.date()
+  declare autuatedAt: DateTime | null
+  @column.date()
   declare baseDate: DateTime | null
   @column()
+  declare budgetUnitCode: string | null
+  @column()
+  declare budgetUnitName: string | null
+  @column()
   declare budgetYear: number | null
+  @column()
+  declare causeType: string | null
   @column()
   declare cnjNumber: string | null
   @column()
   declare complianceStatus: any
+  @column.date()
+  declare correctionEndedAt: DateTime | null
+  @column()
+  declare correctionIndex: string | null
+  @column.date()
+  declare correctionStartedAt: DateTime | null
+  @column()
+  declare courtClass: string | null
+  @column()
+  declare courtCode: string | null
+  @column()
+  declare courtName: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -819,19 +857,31 @@ export class PrecatorioAssetSchema extends BaseModel {
   @column.dateTime()
   declare deletedAt: DateTime | null
   @column()
+  declare elapsedYears: number | null
+  @column()
+  declare elapsedYearsClass: string | null
+  @column()
   declare estimatedUpdatedValue: string | null
   @column()
   declare exerciseYear: number | null
   @column()
+  declare expenseType: string | null
+  @column()
   declare externalId: string | null
   @column()
   declare faceValue: string | null
+  @column()
+  declare fundef: boolean | null
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare lifecycleStatus: any
   @column()
   declare nature: any
+  @column()
+  declare natureExpenseCode: string | null
+  @column.date()
+  declare originFiledAt: DateTime | null
   @column()
   declare originProcessNumber: string | null
   @column()
@@ -847,9 +897,13 @@ export class PrecatorioAssetSchema extends BaseModel {
   @column()
   declare sourceRecordId: string | null
   @column()
+  declare taxClaim: boolean | null
+  @column()
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column()
+  declare valueRange: string | null
 }
 
 export class ProcessMatchCandidateSchema extends BaseModel {

@@ -167,11 +167,22 @@ test.group('SIOP import service', () => {
           codigo_do_tribunal: '12105',
           nome_do_tribunal: 'Tribunal Regional Federal da 4a. Região',
           tipo_de_despesa: '12',
+          codigo_da_uo_executada: '33904',
           nome_da_uo_executada: 'Fundo do Regime Geral de Previdência Social',
           natureza_de_despesa: '33909100',
           tipo_de_causa: 'Aposentadoria por Tempo de Contribuição (Art. 55/6)',
           valor_original_do_precatorio: '401540,95',
           valor_atualizado: '454035,83505015308',
+          tributario: 'Não',
+          fundef: 'Não Fundef',
+          anos_decorridos: '10',
+          class_tempo: 'De 10 até 15 anos',
+          class_tribunais: 'Justiça Federal',
+          datainicio: '2025-04-01 00:00:00,000',
+          datafim: '2026-02-01 00:00:00,000',
+          indiceatualizacao: '1,0315237099479411',
+          data_de_ajuizamento_da_acao_originaria: '2014-07-28 00:00:00,000',
+          data_da_autuacao: '2024-08-07 00:00:00,000',
           faixavalor: 'Até R$ 1 milhão',
         },
       ],
@@ -196,6 +207,24 @@ test.group('SIOP import service', () => {
     assert.equal(asset.faceValue, '401540.95')
     assert.equal(asset.estimatedUpdatedValue, '454035.83')
     assert.equal(asset.assetNumber, '1116122')
+    assert.equal(asset.courtCode, '12105')
+    assert.equal(asset.courtName, 'Tribunal Regional Federal da 4a. Região')
+    assert.equal(asset.courtClass, 'Justiça Federal')
+    assert.equal(asset.budgetUnitCode, '33904')
+    assert.equal(asset.budgetUnitName, 'Fundo do Regime Geral de Previdência Social')
+    assert.equal(asset.causeType, 'Aposentadoria por Tempo de Contribuição (Art. 55/6)')
+    assert.equal(asset.natureExpenseCode, '33909100')
+    assert.equal(asset.valueRange, 'Até R$ 1 milhão')
+    assert.equal(asset.taxClaim, false)
+    assert.equal(asset.fundef, false)
+    assert.equal(asset.elapsedYears, 10)
+    assert.equal(asset.elapsedYearsClass, 'De 10 até 15 anos')
+    assert.equal(asset.originFiledAt?.toISODate(), '2014-07-28')
+    assert.equal(asset.autuatedAt?.toISODate(), '2024-08-07')
+    assert.equal(asset.baseDate?.toISODate(), '2026-02-01')
+    assert.equal(asset.correctionStartedAt?.toISODate(), '2025-04-01')
+    assert.equal(asset.correctionEndedAt?.toISODate(), '2026-02-01')
+    assert.equal(asset.correctionIndex, '1.0315237099479411')
     assert.equal(debtor.normalizedKey, 'FUNDO DO REGIME GERAL DE PREVIDENCIA SOCIAL')
 
     await cleanupTenantImportData(tenant)

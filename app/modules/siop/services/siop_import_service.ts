@@ -356,6 +356,7 @@ class SiopImportService {
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
+        ...siopAssetMetadata(normalized),
         faceValue: normalized.faceValue,
         estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
         lifecycleStatus: 'discovered',
@@ -394,6 +395,7 @@ class SiopImportService {
         exerciseYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         budgetYear: normalized.exerciseYear ?? input.payload.exerciseYear,
         nature: detectAssetNature(input.row),
+        ...siopAssetMetadata(normalized),
         faceValue: normalized.faceValue,
         estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
         lifecycleStatus: 'discovered',
@@ -760,6 +762,30 @@ function detectAssetNature(row: JsonRecord): AssetNature {
   if (rawNature.includes('comum')) return 'comum'
 
   return 'unknown'
+}
+
+function siopAssetMetadata(normalized: ReturnType<typeof siopNormalizeService.normalizeRow>) {
+  return {
+    courtCode: normalized.courtCode,
+    courtName: normalized.courtName,
+    courtClass: normalized.courtClass,
+    budgetUnitCode: normalized.budgetUnitCode,
+    budgetUnitName: normalized.budgetUnitName,
+    expenseType: normalized.expenseType,
+    causeType: normalized.causeType,
+    natureExpenseCode: normalized.natureExpenseCode,
+    valueRange: normalized.valueRange,
+    taxClaim: normalized.taxClaim,
+    fundef: normalized.fundef,
+    elapsedYears: normalized.elapsedYears,
+    elapsedYearsClass: normalized.elapsedYearsClass,
+    originFiledAt: normalized.originFiledAt,
+    autuatedAt: normalized.autuatedAt,
+    baseDate: normalized.correctionEndedAt ?? normalized.autuatedAt ?? normalized.originFiledAt,
+    correctionStartedAt: normalized.correctionStartedAt,
+    correctionEndedAt: normalized.correctionEndedAt,
+    correctionIndex: normalized.correctionIndex,
+  }
 }
 
 function extractString(row: JsonRecord, keys: string[]) {

@@ -85,6 +85,13 @@ The official SIOP landing page exposes CSV links for:
 SIOP remains the best federal financial source for face value, debtor/budget context,
 annual expedition, and correction inputs. It does not replace DataJud movements.
 
+The official expedition CSV does not expose CNJ numbers in the current public shape.
+It exposes a SIOP `Chave`, exercise year, court code/name/class, originating filing
+date, autuation date, debtor budget unit, expense type, tax flag, nature expense,
+cause type, original value, Fundef flag, elapsed-year buckets, correction period,
+correction index, updated value, and value range. Therefore, SIOP assets must be
+modeled as financial records first, not as process records with guaranteed CNJ.
+
 ### CJF/TRF Public Pages
 
 The CJF public page links users to TRF1 through TRF6 portals and embeds an official
@@ -106,11 +113,32 @@ Use one high-level tenant job for the daily public-data cycle:
 1. Discover and download SIOP open data for the target years.
 2. Enqueue SIOP import jobs for downloaded annual files.
 3. Scan DataJud nationally by court alias for classes `1265` and `1266`.
-4. Enrich known assets by inferred court alias.
-5. Classify legal signals from normalized DataJud movements.
-6. Refresh linked asset scores from projected legal signals.
-7. Persist DataJud match candidates for review.
-8. Refresh derived aggregates after import workers finish.
+4. Enrich known assets by inferred court alias when CNJ exists.
+5. Link exact-CNJ DataJud processes to assets and project existing signals.
+6. Classify legal signals from normalized DataJud movements.
+7. Refresh linked asset scores from projected legal signals.
+8. Persist DataJud match candidates for review.
+9. Refresh derived aggregates after import workers finish.
+
+## Relationship Intelligence Model
+
+Treat identifiers by strength instead of forcing every source into one key:
+
+- Strong identity: `tenant_id + cnj_number` links `precatorio_assets` to
+  `judicial_processes` automatically when present.
+- Source identity: `tenant_id + source + external_id` preserves SIOP `Chave`,
+  court file IDs, and future state/municipal source IDs.
+- Financial context: debtor, budget unit, court class, exercise year, values,
+  correction interval, value range, and cause type live on `precatorio_assets`
+  for filtering and pricing even when CNJ is missing.
+- Process context: DataJud cover, subjects, movements, complements, and classified
+  signals live on `judicial_processes` and related timeline tables.
+- Probabilistic evidence: when CNJ is missing, candidate matching should compare
+  court, debtor/budget unit, exercise year, cause type, value bands, filing/autuation
+  dates, and movement evidence before an operator promotes a link.
+
+This keeps the beta useful with real SIOP federal data today while allowing richer
+state, municipal, TRF, and DataJud joins as each provider exposes stronger keys.
 
 Keep individual jobs available for retry, but schedule the orchestrator as the canonical
 entry point. This gives operators one audit trail for the government data cycle and keeps

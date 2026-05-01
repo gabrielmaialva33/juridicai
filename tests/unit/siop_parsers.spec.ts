@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
-import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
+import { parseBrazilianDecimal, parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import siopNormalizeService from '#modules/siop/services/siop_normalize_service'
 
 test.group('SIOP parsers / CNJ numbers', () => {
@@ -34,6 +34,12 @@ test.group('SIOP parsers / BRL values', () => {
     assert.isNull(parseBrazilianMoney('sem valor'))
     assert.isNull(parseBrazilianMoney('1,234.56'))
   })
+
+  test('parses high precision Brazilian decimals', ({ assert }) => {
+    assert.equal(parseBrazilianDecimal('1,0315237099479411'), '1.0315237099479411')
+    assert.equal(parseBrazilianDecimal('1.234,5678'), '1234.5678')
+    assert.isNull(parseBrazilianDecimal('1,234.56'))
+  })
 })
 
 test.group('SIOP normalizer / official open-data rows', () => {
@@ -49,6 +55,16 @@ test.group('SIOP normalizer / official open-data rows', () => {
       tipo_de_causa: 'Aposentadoria por Tempo de Contribuição (Art. 55/6)',
       valor_original_do_precatorio: '401540,95',
       valor_atualizado: '454035,83505015308',
+      tributario: 'Não',
+      fundef: 'Não Fundef',
+      anos_decorridos: '10',
+      class_tempo: 'De 10 até 15 anos',
+      class_tribunais: 'Justiça Federal',
+      datainicio: '2025-04-01 00:00:00,000',
+      datafim: '2026-02-01 00:00:00,000',
+      indiceatualizacao: '1,0315237099479411',
+      data_de_ajuizamento_da_acao_originaria: '2014-07-28 00:00:00,000',
+      data_da_autuacao: '2024-08-07 00:00:00,000',
       faixavalor: 'Até R$ 1 milhão',
     })
 
@@ -62,6 +78,16 @@ test.group('SIOP normalizer / official open-data rows', () => {
     assert.equal(normalized.budgetUnitName, 'Fundo do Regime Geral de Previdência Social')
     assert.equal(normalized.natureExpenseCode, '33909100')
     assert.equal(normalized.valueRange, 'Até R$ 1 milhão')
+    assert.equal(normalized.taxClaim, false)
+    assert.equal(normalized.fundef, false)
+    assert.equal(normalized.elapsedYears, 10)
+    assert.equal(normalized.elapsedYearsClass, 'De 10 até 15 anos')
+    assert.equal(normalized.courtClass, 'Justiça Federal')
+    assert.equal(normalized.originFiledAt?.toISODate(), '2014-07-28')
+    assert.equal(normalized.autuatedAt?.toISODate(), '2024-08-07')
+    assert.equal(normalized.correctionStartedAt?.toISODate(), '2025-04-01')
+    assert.equal(normalized.correctionEndedAt?.toISODate(), '2026-02-01')
+    assert.equal(normalized.correctionIndex, '1.0315237099479411')
   })
 })
 

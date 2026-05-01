@@ -16,3 +16,19 @@ export function parseBrazilianMoney(input: string | number | null | undefined) {
 
   return `${sign}${integer || '0'}.${cents.slice(0, 2).padEnd(2, '0')}`
 }
+
+export function parseBrazilianDecimal(input: string | number | null | undefined) {
+  if (input === null || input === undefined || input === '') return null
+  if (typeof input === 'number') return Number.isFinite(input) ? String(input) : null
+
+  const value = input.trim().replace(/\s/g, '')
+  if (!value) return null
+
+  const match = value.match(/^(-?)(?:(\d{1,3}(?:\.\d{3})+)|(\d+))(?:,(\d+))?$/)
+  if (!match) return null
+
+  const [, sign, groupedInteger, plainInteger, decimals = ''] = match
+  const integer = (groupedInteger ?? plainInteger).replace(/\./g, '').replace(/^0+(?=\d)/, '')
+
+  return decimals ? `${sign}${integer || '0'}.${decimals}` : `${sign}${integer || '0'}`
+}

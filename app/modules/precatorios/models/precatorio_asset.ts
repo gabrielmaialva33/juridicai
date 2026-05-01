@@ -51,13 +51,67 @@ export default class PrecatorioAsset extends TenantBaseModel {
   declare nature: AssetNature
 
   @column()
+  declare courtCode: string | null
+
+  @column()
+  declare courtName: string | null
+
+  @column()
+  declare courtClass: string | null
+
+  @column()
+  declare budgetUnitCode: string | null
+
+  @column()
+  declare budgetUnitName: string | null
+
+  @column()
+  declare expenseType: string | null
+
+  @column()
+  declare causeType: string | null
+
+  @column()
+  declare natureExpenseCode: string | null
+
+  @column()
+  declare valueRange: string | null
+
+  @column()
+  declare taxClaim: boolean | null
+
+  @column()
+  declare fundef: boolean | null
+
+  @column()
+  declare elapsedYears: number | null
+
+  @column()
+  declare elapsedYearsClass: string | null
+
+  @column()
   declare faceValue: string | null
 
   @column()
   declare estimatedUpdatedValue: string | null
 
   @column.date()
+  declare originFiledAt: DateTime | null
+
+  @column.date()
+  declare autuatedAt: DateTime | null
+
+  @column.date()
   declare baseDate: DateTime | null
+
+  @column.date()
+  declare correctionStartedAt: DateTime | null
+
+  @column.date()
+  declare correctionEndedAt: DateTime | null
+
+  @column()
+  declare correctionIndex: string | null
 
   @column()
   declare queuePosition: number | null
