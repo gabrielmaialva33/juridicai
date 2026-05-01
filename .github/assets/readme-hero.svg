@@ -1,19 +1,4 @@
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-
-<Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Name</TableHead>
-      <TableHead>Status</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    <TableRow>
-      <TableCell>Item 1</TableCell>
-      <TableCell>Active</TableCell>
-    </TableRow>
-  </TableBody>
-</Table><svg
+<svg
   xmlns="http://www.w3.org/2000/svg"
   width="1400"
   height="440"
