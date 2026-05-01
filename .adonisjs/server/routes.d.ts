@@ -12,6 +12,7 @@ export type ScannedRoutes = {
     'auth.login.create': { paramsTuple?: []; params?: {} }
     'auth.login.store': { paramsTuple?: []; params?: {} }
     'auth.logout': { paramsTuple?: []; params?: {} }
+    'auth.profile': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'tenants.select.store': { paramsTuple?: []; params?: {} }
     'settings.tenant': { paramsTuple?: []; params?: {} }
@@ -57,6 +58,7 @@ export type ScannedRoutes = {
     'healthz': { paramsTuple?: []; params?: {} }
     'auth.signup.create': { paramsTuple?: []; params?: {} }
     'auth.login.create': { paramsTuple?: []; params?: {} }
+    'auth.profile': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'settings.tenant': { paramsTuple?: []; params?: {} }
     'settings.users': { paramsTuple?: []; params?: {} }
@@ -89,6 +91,7 @@ export type ScannedRoutes = {
     'healthz': { paramsTuple?: []; params?: {} }
     'auth.signup.create': { paramsTuple?: []; params?: {} }
     'auth.login.create': { paramsTuple?: []; params?: {} }
+    'auth.profile': { paramsTuple?: []; params?: {} }
     'tenants.select': { paramsTuple?: []; params?: {} }
     'settings.tenant': { paramsTuple?: []; params?: {} }
     'settings.users': { paramsTuple?: []; params?: {} }

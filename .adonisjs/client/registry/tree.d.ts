@@ -21,6 +21,7 @@ export interface ApiDefinition {
       store: typeof routes['auth.login.store']
     }
     logout: typeof routes['auth.logout']
+    profile: typeof routes['auth.profile']
   }
   tenants: {
     select: typeof routes['tenants.select'] & {

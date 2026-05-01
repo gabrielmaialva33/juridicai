@@ -28,6 +28,7 @@ declare module '@adonisjs/inertia/types' {
     'operations/show': ExtractProps<(typeof import('../../inertia/pages/operations/show.tsx'))['default']>
     'precatorios/index': ExtractProps<(typeof import('../../inertia/pages/precatorios/index.tsx'))['default']>
     'precatorios/show': ExtractProps<(typeof import('../../inertia/pages/precatorios/show.tsx'))['default']>
+    'profile/show': ExtractProps<(typeof import('../../inertia/pages/profile/show.tsx'))['default']>
     'settings/tenant': ExtractProps<(typeof import('../../inertia/pages/settings/tenant.tsx'))['default']>
     'settings/users': ExtractProps<(typeof import('../../inertia/pages/settings/users.tsx'))['default']>
     'siop/imports/errors': ExtractProps<(typeof import('../../inertia/pages/siop/imports/errors.tsx'))['default']>

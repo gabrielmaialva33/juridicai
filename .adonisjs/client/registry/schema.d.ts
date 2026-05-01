@@ -103,6 +103,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/auth/controllers/login_controller').default['destroy']>>>
     }
   }
+  'auth.profile': {
+    methods: ["GET","HEAD"]
+    pattern: '/profile'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/auth/controllers/profile_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/auth/controllers/profile_controller').default['show']>>>
+    }
+  }
   'tenants.select': {
     methods: ["GET","HEAD"]
     pattern: '/tenants/select'

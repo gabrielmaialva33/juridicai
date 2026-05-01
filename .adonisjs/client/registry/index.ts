@@ -54,6 +54,12 @@ const routes = {
     tokens: [{"old":"/logout","type":0,"val":"logout","end":""}],
     types: placeholder as Registry['auth.logout']['types'],
   },
+  'auth.profile': {
+    methods: ["GET","HEAD"],
+    pattern: '/profile',
+    tokens: [{"old":"/profile","type":0,"val":"profile","end":""}],
+    types: placeholder as Registry['auth.profile']['types'],
+  },
   'tenants.select': {
     methods: ["GET","HEAD"],
     pattern: '/tenants/select',
