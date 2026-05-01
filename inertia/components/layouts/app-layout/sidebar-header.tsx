@@ -18,7 +18,7 @@ export function SidebarHeader({ isExpanded }: Props) {
         isExpanded ? 'justify-between px-4 lg:px-5' : 'justify-center px-2'
       )}
     >
-      <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
+      <Link href="/operations/desk" className="flex items-center gap-2 min-w-0">
         <div className="flex items-center justify-center size-8 rounded-md bg-primary text-primary-foreground shrink-0">
           <Scale className="size-4" />
         </div>

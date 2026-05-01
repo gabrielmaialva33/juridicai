@@ -19,8 +19,8 @@ export function PageHeader({ title, description, breadcrumbs, children }: Props)
     <div className="mb-6 lg:mb-8">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-          <Link href="/dashboard" className="hover:text-foreground transition-colors">
-            Dashboard
+          <Link href="/operations/desk" className="hover:text-foreground transition-colors">
+            Mesa
           </Link>
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">

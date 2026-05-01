@@ -1,6 +1,16 @@
 import { router, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { ChevronsUpDown, LogOut, Monitor, Moon, Sun, User, UserRound } from 'lucide-react'
+import {
+  Building2,
+  ChevronsUpDown,
+  LogOut,
+  Monitor,
+  Moon,
+  ShieldCheck,
+  Sun,
+  User,
+  UserRound,
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import {
@@ -74,6 +84,18 @@ export function SidebarFooter({ isExpanded }: Props) {
             <Link href="/profile">
               <UserRound className="mr-2 h-4 w-4" />
               <span>Perfil</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/tenant">
+              <Building2 className="mr-2 h-4 w-4" />
+              <span>Organização</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/users">
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              <span>Acessos</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

@@ -35,7 +35,6 @@ export function Header({ sidebarWidth = 0, headerHeight = 64, tenantName }: Prop
       style={{ insetInlineStart: sidebarWidth, height: headerHeight }}
     >
       <div className="w-full flex items-stretch justify-between px-4 lg:px-6 lg:gap-4">
-        {/* Mobile: hamburger + logo */}
         <div className="flex lg:hidden items-center gap-2">
           {mobileMode && (
             <Sheet open={isSidebarSheetOpen} onOpenChange={setIsSidebarSheetOpen}>
@@ -54,12 +53,11 @@ export function Header({ sidebarWidth = 0, headerHeight = 64, tenantName }: Prop
               </SheetContent>
             </Sheet>
           )}
-          <Link href="/dashboard" className="text-sm font-semibold">
+          <Link href="/operations/desk" className="text-sm font-semibold">
             JuridicAI
           </Link>
         </div>
 
-        {/* Desktop: tenant indicator */}
         {!mobileMode && tenantName && (
           <div className="flex items-center gap-2 min-w-0">
             <Building2 className="size-4 text-muted-foreground shrink-0" />
