@@ -2,6 +2,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
 const LoginController = () => import('#modules/auth/controllers/login_controller')
+const ProfileController = () => import('#modules/auth/controllers/profile_controller')
 const SignupController = () => import('#modules/auth/controllers/signup_controller')
 
 router
@@ -18,6 +19,8 @@ router
 router
   .group(() => {
     router.post('logout', [LoginController, 'destroy']).as('logout')
+    router.get('profile', [ProfileController, 'show']).as('profile')
   })
   .as('auth')
   .use(middleware.auth())
+  .use(middleware.tenant())
