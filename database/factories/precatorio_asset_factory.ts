@@ -23,6 +23,8 @@ type AssetFactoryRow = Partial<PrecatorioAsset> & {
 
 export const PrecatorioAssetFactory = factory
   .define(PrecatorioAsset, async ({ faker }) => {
+    const faceValue = String(faker.number.int({ min: 10_000, max: 5_000_000 }))
+
     return {
       source: 'siop' as const,
       externalId: faker.string.uuid(),
@@ -31,8 +33,7 @@ export const PrecatorioAssetFactory = factory
       lifecycleStatus: 'unknown' as const,
       piiStatus: 'none' as const,
       complianceStatus: 'pending' as const,
-      faceValue: String(faker.number.int({ min: 10_000, max: 5_000_000 })),
-      estimatedUpdatedValue: String(faker.number.int({ min: 10_000, max: 6_000_000 })),
+      faceValue,
       budgetYear: faker.number.int({ min: 2010, max: 2026 }),
       exerciseYear: faker.number.int({ min: 2010, max: 2026 }),
       baseDate: DateTime.now(),
