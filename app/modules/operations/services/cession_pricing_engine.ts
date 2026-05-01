@@ -1,4 +1,5 @@
 import type Debtor from '#modules/debtors/models/debtor'
+import type DebtorPaymentStat from '#modules/debtors/models/debtor_payment_stat'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type {
@@ -110,6 +111,14 @@ export type PricingInput = {
   taxRate?: number | null
 }
 
+export type MarketRatePricingSnapshot = {
+  cdiAnnualRate: number | null
+  selicAnnualRate: number | null
+  ipcaAnnualRate: number | null
+  ec136CorrectionAnnualRate: number
+  asOf: string | null
+}
+
 export type PricingResult = {
   faceValue: number
   offerRate: number
@@ -131,9 +140,10 @@ export type PricingResult = {
   decision: 'aggressive_buy' | 'buy' | 'watch' | 'avoid'
   assumptions: {
     version: 'cession-pricing-v1'
-    correctionRule: 'annual_correction_rate_assumption'
+    correctionRule: 'ec_136_min_ipca_plus_2_selic'
     taxModel: 'capital_gain_flat_rate'
     scoreModel: 'rule_based_v1'
+    marketRatesAsOf: string | null
   }
 }
 
@@ -160,6 +170,10 @@ export type OpportunityProjection = {
     paymentReliabilityScore: number
     historicalMultiplier: number
     rclDebtRatio: number | null
+    averagePaymentMonths: number | null
+    onTimePaymentRate: number | null
+    regimeSpecialActive: boolean
+    recentDefault: boolean
   }
   pipeline: {
     stage: CessionPipelineStage
@@ -187,7 +201,9 @@ class CessionPricingEngine {
     asset: PrecatorioAsset,
     options: {
       debtor?: Debtor | null
+      debtorPaymentStat?: DebtorPaymentStat | null
       events?: AssetEvent[]
+      marketRates?: MarketRatePricingSnapshot | null
       stage?: CessionPipelineStage
       opportunityId?: string | null
       priority?: number
@@ -197,17 +213,22 @@ class CessionPricingEngine {
     } = {}
   ): OpportunityProjection {
     const debtor = options.debtor ?? null
+    const debtorPaymentStat = options.debtorPaymentStat ?? latestPaymentStat(debtor)
     const events = options.events ?? []
     const faceValue =
       moneyToNumber(asset.estimatedUpdatedValue) ?? moneyToNumber(asset.faceValue) ?? 0
     const pricing = this.calculate({
       asset,
       debtor,
+      debtorPaymentStat,
       events,
+      marketRates: options.marketRates,
       input: options.pricing,
     })
     const paymentReliabilityScore =
-      debtor?.paymentReliabilityScore ?? defaultReliabilityScore(debtor)
+      debtorPaymentStat?.reliabilityScore ??
+      debtor?.paymentReliabilityScore ??
+      defaultReliabilityScore(debtor)
 
     return {
       id: asset.id,
@@ -231,7 +252,11 @@ class CessionPricingEngine {
         paymentRegime: debtor?.paymentRegime ?? null,
         paymentReliabilityScore,
         historicalMultiplier: round(paymentReliabilityScore / 30, 2),
-        rclDebtRatio: debtStockRatio(debtor),
+        rclDebtRatio: statNumber(debtorPaymentStat?.rclDebtRatio) ?? debtStockRatio(debtor),
+        averagePaymentMonths: debtorPaymentStat?.averagePaymentMonths ?? null,
+        onTimePaymentRate: statNumber(debtorPaymentStat?.onTimePaymentRate),
+        regimeSpecialActive: debtorPaymentStat?.regimeSpecialActive ?? false,
+        recentDefault: debtorPaymentStat?.recentDefault ?? false,
       },
       pipeline: {
         stage: options.stage ?? 'inbox',
@@ -248,13 +273,17 @@ class CessionPricingEngine {
   calculate(input: {
     asset: PrecatorioAsset
     debtor?: Debtor | null
+    debtorPaymentStat?: DebtorPaymentStat | null
     events?: AssetEvent[]
+    marketRates?: MarketRatePricingSnapshot | null
     input?: PricingInput | null
   }): PricingResult {
     const asset = input.asset
     const debtor = input.debtor ?? null
+    const debtorPaymentStat = input.debtorPaymentStat ?? latestPaymentStat(debtor)
     const events = input.events ?? []
     const pricingInput = input.input ?? {}
+    const marketRates = input.marketRates ?? null
     const faceValue =
       moneyToNumber(asset.estimatedUpdatedValue) ?? moneyToNumber(asset.faceValue) ?? 0
     const termMonths = Math.max(
@@ -265,7 +294,7 @@ class CessionPricingEngine {
     const acquisitionCost = faceValue * offerRate
     const annualCorrectionRate = normalizedRate(
       pricingInput.annualCorrectionRate,
-      DEFAULT_ANNUAL_CORRECTION_RATE
+      marketRates?.ec136CorrectionAnnualRate ?? DEFAULT_ANNUAL_CORRECTION_RATE
     )
     const expectedPayment = faceValue * Math.pow(1 + annualCorrectionRate, termMonths / 12)
     const operationalCost =
@@ -276,10 +305,17 @@ class CessionPricingEngine {
     const estimatedTax = grossGain * taxRate
     const netProceeds = expectedPayment - operationalCost - estimatedTax
     const netProfit = netProceeds - acquisitionCost
-    const expectedAnnualIrr =
-      acquisitionCost > 0 ? Math.pow(netProceeds / acquisitionCost, 12 / termMonths) - 1 : 0
-    const paymentProbability = estimatePaymentProbability(asset, debtor, events)
-    const riskAdjustedIrr = expectedAnnualIrr * paymentProbability
+    // TIR anualizada com proteção: prazos curtos (<6m) usam anualização linear
+    // pra evitar explosão exponencial. Cap superior em 200% a.a. (defensivo).
+    const rawIrr =
+      acquisitionCost > 0
+        ? termMonths >= 6
+          ? Math.pow(netProceeds / acquisitionCost, 12 / termMonths) - 1
+          : ((netProceeds - acquisitionCost) / acquisitionCost) * (12 / termMonths)
+        : 0
+    const expectedAnnualIrr = clamp(rawIrr, -1, 2)
+    const paymentProbability = estimatePaymentProbability(asset, debtor, debtorPaymentStat, events)
+    const riskAdjustedIrr = clamp(expectedAnnualIrr * paymentProbability, -1, 2)
     const finalScore = scoreOpportunity({
       riskAdjustedIrr,
       paymentProbability,
@@ -309,9 +345,10 @@ class CessionPricingEngine {
       decision: decisionFromGrade(grade),
       assumptions: {
         version: 'cession-pricing-v1',
-        correctionRule: 'annual_correction_rate_assumption',
+        correctionRule: 'ec_136_min_ipca_plus_2_selic',
         taxModel: 'capital_gain_flat_rate',
         scoreModel: 'rule_based_v1',
+        marketRatesAsOf: marketRates?.asOf ?? null,
       },
     }
   }
@@ -345,6 +382,12 @@ function resolveOfferRate(asset: PrecatorioAsset, debtor: Debtor | null, input: 
 }
 
 function defaultTermMonths(asset: PrecatorioAsset, debtor: Debtor | null, events: AssetEvent[]) {
+  const debtorPaymentStat = latestPaymentStat(debtor)
+
+  if (debtorPaymentStat?.averagePaymentMonths) {
+    return debtorPaymentStat.averagePaymentMonths
+  }
+
   const signals = classifySignals(events, asset)
 
   if (signals.positive.some((signal) => signal.code === 'payment_available')) {
@@ -360,7 +403,9 @@ function defaultTermMonths(asset: PrecatorioAsset, debtor: Debtor | null, events
   }
 
   if (asset.lifecycleStatus === 'paid') {
-    return 1
+    // Para assets já pagos sem histórico real de duração, usa placeholder
+    // razoável de 12 meses para evitar explosão exponencial na anualização.
+    return debtorPaymentStat?.averagePaymentMonths ?? 12
   }
 
   if (debtor?.paymentRegime === 'special') {
@@ -384,13 +429,22 @@ function defaultTermMonths(asset: PrecatorioAsset, debtor: Debtor | null, events
 function estimatePaymentProbability(
   asset: PrecatorioAsset,
   debtor: Debtor | null,
+  debtorPaymentStat: DebtorPaymentStat | null,
   events: AssetEvent[]
 ) {
-  let probability = (debtor?.paymentReliabilityScore ?? defaultReliabilityScore(debtor)) / 100
+  let probability =
+    statNumber(debtorPaymentStat?.onTimePaymentRate) ??
+    (debtorPaymentStat?.reliabilityScore ??
+      debtor?.paymentReliabilityScore ??
+      defaultReliabilityScore(debtor)) / 100
   const signals = classifySignals(events, asset)
 
-  if (debtor?.paymentRegime === 'special') {
+  if (debtorPaymentStat?.regimeSpecialActive || debtor?.paymentRegime === 'special') {
     probability *= 0.7
+  }
+
+  if (debtorPaymentStat?.recentDefault) {
+    probability *= 0.55
   }
 
   for (const signal of [...signals.positive, ...signals.negative]) {
@@ -398,6 +452,11 @@ function estimatePaymentProbability(
   }
 
   return clamp(probability, 0, 1)
+}
+
+function latestPaymentStat(debtor: Debtor | null) {
+  const stats = debtor?.$preloaded.paymentStats as DebtorPaymentStat[] | undefined
+  return stats?.[0] ?? null
 }
 
 function classifySignals(events: AssetEvent[], asset: PrecatorioAsset) {
@@ -518,6 +577,15 @@ function inverseNormalize(value: number, min: number, max: number) {
 }
 
 function moneyToNumber(value: string | number | null | undefined) {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function statNumber(value: string | number | null | undefined) {
   if (value === null || value === undefined) {
     return null
   }
