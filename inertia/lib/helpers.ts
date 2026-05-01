@@ -110,3 +110,52 @@ export function formatDateTime(input: Date | string | number): string {
     hour12: true,
   })
 }
+
+/**
+ * Brazilian currency (BRL) formatter.
+ */
+export function fmtBRL(value: string | number | null | undefined): string {
+  return Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+/**
+ * Brazilian number formatter (thousands separator).
+ */
+export function fmtNum(value: string | number | null | undefined): string {
+  return Number(value ?? 0).toLocaleString('pt-BR')
+}
+
+/**
+ * Brazilian date formatter (dd/mm/yyyy hh:mm).
+ */
+export function fmtDate(value: string | Date | null | undefined): string {
+  if (!value) return '—'
+  const d = typeof value === 'string' ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/**
+ * Relative time in pt-BR ("agora", "há 3min", "há 5h", "há 2d", or absolute).
+ */
+export function fmtRelative(value: string | Date | null | undefined): string {
+  if (!value) return '—'
+  const d = typeof value === 'string' ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) return '—'
+  const diff = Date.now() - d.getTime()
+  const sec = Math.floor(diff / 1000)
+  if (sec < 60) return 'agora'
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `há ${min}min`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `há ${hr}h`
+  const days = Math.floor(hr / 24)
+  if (days < 30) return `há ${days}d`
+  return fmtDate(d)
+}
