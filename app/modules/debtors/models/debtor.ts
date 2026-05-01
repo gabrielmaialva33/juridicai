@@ -4,6 +4,7 @@ import TenantBaseModel from '#shared/models/tenant_base_model'
 import type { DebtorType, PaymentRegime } from '#shared/types/model_enums'
 import Tenant from '#modules/tenant/models/tenant'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import DebtorPaymentStat from '#modules/debtors/models/debtor_payment_stat'
 
 export default class Debtor extends TenantBaseModel {
   @column()
@@ -41,4 +42,9 @@ export default class Debtor extends TenantBaseModel {
 
   @hasMany(() => PrecatorioAsset)
   declare assets: HasMany<typeof PrecatorioAsset>
+
+  @hasMany(() => DebtorPaymentStat, {
+    foreignKey: 'debtorId',
+  })
+  declare paymentStats: HasMany<typeof DebtorPaymentStat>
 }

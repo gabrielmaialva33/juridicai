@@ -280,6 +280,69 @@ export class ClientErrorSchema extends BaseModel {
   declare userId: string | null
 }
 
+export class DebtorPaymentStatSchema extends BaseModel {
+  static $columns = [
+    'averagePaymentMonths',
+    'computedAt',
+    'createdAt',
+    'debtorId',
+    'id',
+    'onTimePaymentRate',
+    'openDebtStock',
+    'paidVolume',
+    'periodEnd',
+    'periodStart',
+    'rawData',
+    'rclDebtRatio',
+    'recentDefault',
+    'regimeSpecialActive',
+    'reliabilityScore',
+    'sampleSize',
+    'source',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = DebtorPaymentStatSchema.$columns
+  @column()
+  declare averagePaymentMonths: number | null
+  @column.dateTime()
+  declare computedAt: DateTime
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare debtorId: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare onTimePaymentRate: string | null
+  @column()
+  declare openDebtStock: string | null
+  @column()
+  declare paidVolume: string | null
+  @column.date()
+  declare periodEnd: DateTime | null
+  @column.date()
+  declare periodStart: DateTime | null
+  @column()
+  declare rawData: any | null
+  @column()
+  declare rclDebtRatio: string | null
+  @column()
+  declare recentDefault: boolean
+  @column()
+  declare regimeSpecialActive: boolean
+  @column()
+  declare reliabilityScore: number | null
+  @column()
+  declare sampleSize: number
+  @column()
+  declare source: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class DebtorSchema extends BaseModel {
   static $columns = [
     'cnpj',
@@ -419,6 +482,45 @@ export class JudicialProcessSchema extends BaseModel {
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+}
+
+export class MarketRateSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'id',
+    'periodicity',
+    'rateDate',
+    'rawData',
+    'seriesCode',
+    'seriesKey',
+    'source',
+    'unit',
+    'updatedAt',
+    'value',
+  ] as const
+  $columns = MarketRateSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare periodicity: string
+  @column.date()
+  declare rateDate: DateTime
+  @column()
+  declare rawData: any | null
+  @column()
+  declare seriesCode: string | null
+  @column()
+  declare seriesKey: string
+  @column()
+  declare source: string
+  @column()
+  declare unit: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+  @column()
+  declare value: string
 }
 
 export class PermissionSchema extends BaseModel {
