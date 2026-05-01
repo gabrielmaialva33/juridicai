@@ -10,6 +10,10 @@ router
       .as('imports.index')
       .use(middleware.permission('imports.read'))
     router
+      .get('siop/imports/new', [ImportController, 'newForm'])
+      .as('imports.new')
+      .use(middleware.permission('imports.manage'))
+    router
       .post('siop/imports', [ImportController, 'store'])
       .as('imports.store')
       .use(middleware.permission('imports.manage'))

@@ -11,21 +11,21 @@ import type { DebtorListFilters } from '#modules/debtors/repositories/debtor_rep
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class DebtorsController {
-  async index({ request, response }: HttpContext) {
+  async index({ inertia, request }: HttpContext) {
     const filters = normalizeFilters(request.qs())
     const debtors = await debtorService.list(tenantContext.requireTenantId(), filters)
 
-    return response.ok({
-      debtors: debtors.serialize(),
-      filters,
+    return inertia.render('debtors/index', {
+      debtors: debtors.serialize() as any,
+      filters: filters as any,
     })
   }
 
-  async show({ params, response }: HttpContext) {
+  async show({ inertia, params }: HttpContext) {
     const debtor = await debtorService.show(tenantContext.requireTenantId(), params.id)
 
-    return response.ok({
-      debtor: debtor.serialize(),
+    return inertia.render('debtors/show', {
+      debtor: debtor.serialize() as any,
     })
   }
 }

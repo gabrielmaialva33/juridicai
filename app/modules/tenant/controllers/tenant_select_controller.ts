@@ -2,12 +2,18 @@ import membershipService from '#modules/tenant/services/membership_service'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class TenantSelectController {
-  async index({ auth, response }: HttpContext) {
+  async index({ auth, inertia, response, session }: HttpContext) {
     const user = auth.getUserOrFail()
     const memberships = await membershipService.listUserTenants(user.id)
 
-    return response.ok({
-      memberships: memberships.map((membership) => membership.serialize()),
+    // Auto-select if user has only one membership
+    if (memberships.length === 1) {
+      session.put('active_tenant_id', memberships[0].tenantId)
+      return response.redirect('/dashboard')
+    }
+
+    return inertia.render('tenants/select', {
+      memberships: memberships.map((membership) => membership.serialize()) as any,
     })
   }
 
@@ -16,25 +22,18 @@ export default class TenantSelectController {
     const tenantId = request.input('tenant_id')
 
     if (!tenantId || typeof tenantId !== 'string') {
-      return response.status(422).send({
-        code: 'E_VALIDATION_FAILED',
-        message: 'tenant_id is required.',
-      })
+      session.flash('error', 'Selecione uma organização válida.')
+      return response.redirect().back()
     }
 
     const membership = await membershipService.assertUserBelongsToTenant(tenantId, user.id)
 
     if (!membership) {
-      return response.status(403).send({
-        code: 'E_TENANT_FORBIDDEN',
-        message: 'The selected tenant is not available for this user.',
-      })
+      session.flash('error', 'Você não tem acesso a esta organização.')
+      return response.redirect().back()
     }
 
     session.put('active_tenant_id', tenantId)
-
-    return response.ok({
-      activeTenantId: tenantId,
-    })
+    return response.redirect('/dashboard')
   }
 }

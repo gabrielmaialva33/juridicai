@@ -19,12 +19,16 @@ type UploadedFile = {
 }
 
 export default class ImportController {
-  async index({ response }: HttpContext) {
+  async index({ inertia }: HttpContext) {
     const imports = await siopImportService.listRecentImports(tenantContext.requireTenantId())
 
-    return response.ok({
-      imports: imports.map((importRow) => importRow.serialize()),
+    return inertia.render('siop/imports/index', {
+      imports: imports.map((importRow) => importRow.serialize()) as any,
     })
+  }
+
+  async newForm({ inertia }: HttpContext) {
+    return inertia.render('siop/imports/new', {})
   }
 
   async store({ auth, request, response }: HttpContext) {
@@ -80,7 +84,7 @@ export default class ImportController {
     })
   }
 
-  async show({ params, response }: HttpContext) {
+  async show({ inertia, params }: HttpContext) {
     const siopImport = await this.findTenantImport(params.id, tenantContext.requireTenantId())
     const invalidRows = await SiopStagingRow.query()
       .where('import_id', siopImport.id)
@@ -88,13 +92,13 @@ export default class ImportController {
       .orderBy('created_at', 'desc')
       .limit(25)
 
-    return response.ok({
-      import: siopImport.serialize(),
-      errors: invalidRows.map((row) => row.serialize()),
+    return inertia.render('siop/imports/show', {
+      import: siopImport.serialize() as any,
+      invalidRows: invalidRows.map((row) => row.serialize()) as any,
     })
   }
 
-  async errors({ params, request, response }: HttpContext) {
+  async errors({ inertia, params, request }: HttpContext) {
     const page = request.input('page', 1)
     const siopImport = await this.findTenantImport(params.id, tenantContext.requireTenantId())
     const rows = await SiopStagingRow.query()
@@ -103,9 +107,9 @@ export default class ImportController {
       .orderBy('created_at', 'desc')
       .paginate(page, 50)
 
-    return response.ok({
-      import: siopImport.serialize(),
-      rows: rows.serialize(),
+    return inertia.render('siop/imports/errors', {
+      import: siopImport.serialize() as any,
+      rows: rows.serialize() as any,
     })
   }
 

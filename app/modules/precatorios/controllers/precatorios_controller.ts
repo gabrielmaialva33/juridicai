@@ -11,21 +11,21 @@ import type { PrecatorioListFilters } from '#modules/precatorios/repositories/pr
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class PrecatoriosController {
-  async index({ response, request }: HttpContext) {
+  async index({ inertia, request }: HttpContext) {
     const filters = normalizeFilters(request.qs())
     const assets = await precatorioService.list(tenantContext.requireTenantId(), filters)
 
-    return response.ok({
-      assets: assets.serialize(),
-      filters,
+    return inertia.render('precatorios/index', {
+      assets: assets.serialize() as any,
+      filters: filters as any,
     })
   }
 
-  async show({ params, response }: HttpContext) {
+  async show({ inertia, params }: HttpContext) {
     const asset = await precatorioService.show(tenantContext.requireTenantId(), params.id)
 
-    return response.ok({
-      asset: asset.serialize(),
+    return inertia.render('precatorios/show', {
+      asset: asset.serialize() as any,
     })
   }
 }

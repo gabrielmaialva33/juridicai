@@ -7,7 +7,7 @@ import { queueNames } from '#start/jobs'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class JobsController {
-  async index({ request, response }: HttpContext) {
+  async index({ inertia, request }: HttpContext) {
     const page = positiveInteger(request.input('page'), 1)
     const limit = Math.min(positiveInteger(request.input('limit'), 25), 100)
     const paginator = await RadarJobRun.query()
@@ -17,11 +17,11 @@ export default class JobsController {
     const queues = await queueService.getSnapshots(queueNames)
     const workers = await workerHeartbeatService.queueFreshness(queueNames)
 
-    return response.ok({
-      runs: paginator.all().map((run) => run.serialize()),
-      meta: paginator.getMeta(),
-      queues,
-      workers,
+    return inertia.render('admin/jobs', {
+      runs: paginator.all().map((run) => run.serialize()) as any,
+      meta: paginator.getMeta() as any,
+      queues: queues as any,
+      workers: workers as any,
     })
   }
 

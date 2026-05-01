@@ -18,6 +18,11 @@ export default class TenantMiddleware {
         return next()
       }
 
+      const acceptsHtml = ctx.request.accepts(['html', 'json']) === 'html'
+      if (acceptsHtml || ctx.request.header('x-inertia')) {
+        return ctx.response.redirect('/tenants/select')
+      }
+
       return ctx.response.status(400).send({
         code: 'E_TENANT_REQUIRED',
         message: 'A tenant context is required for this action.',
