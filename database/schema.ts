@@ -433,21 +433,219 @@ export class ExportJobSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class JudicialProcessMovementComplementSchema extends BaseModel {
+  static $columns = [
+    'complementCode',
+    'complementDescription',
+    'complementName',
+    'complementValue',
+    'createdAt',
+    'id',
+    'idempotencyKey',
+    'movementId',
+    'rawData',
+    'sequence',
+    'sourceRecordId',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = JudicialProcessMovementComplementSchema.$columns
+  @column()
+  declare complementCode: number | null
+  @column()
+  declare complementDescription: string | null
+  @column()
+  declare complementName: string | null
+  @column()
+  declare complementValue: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare idempotencyKey: string
+  @column()
+  declare movementId: string
+  @column()
+  declare rawData: any | null
+  @column()
+  declare sequence: number | null
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class JudicialProcessMovementSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'id',
+    'idempotencyKey',
+    'judgingBodyCode',
+    'judgingBodyMunicipalityIbgeCode',
+    'judgingBodyName',
+    'movementCode',
+    'movementName',
+    'occurredAt',
+    'processId',
+    'rawData',
+    'sequence',
+    'source',
+    'sourceRecordId',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = JudicialProcessMovementSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare idempotencyKey: string
+  @column()
+  declare judgingBodyCode: string | null
+  @column()
+  declare judgingBodyMunicipalityIbgeCode: number | null
+  @column()
+  declare judgingBodyName: string | null
+  @column()
+  declare movementCode: number | null
+  @column()
+  declare movementName: string
+  @column.dateTime()
+  declare occurredAt: DateTime | null
+  @column()
+  declare processId: string
+  @column()
+  declare rawData: any | null
+  @column()
+  declare sequence: number | null
+  @column()
+  declare source: any
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class JudicialProcessSignalSchema extends BaseModel {
+  static $columns = [
+    'confidence',
+    'createdAt',
+    'detectedAt',
+    'evidence',
+    'id',
+    'idempotencyKey',
+    'movementId',
+    'polarity',
+    'processId',
+    'signalCode',
+    'source',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = JudicialProcessSignalSchema.$columns
+  @column()
+  declare confidence: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare detectedAt: DateTime
+  @column()
+  declare evidence: any | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare idempotencyKey: string
+  @column()
+  declare movementId: string | null
+  @column()
+  declare polarity: string
+  @column()
+  declare processId: string
+  @column()
+  declare signalCode: string
+  @column()
+  declare source: any
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class JudicialProcessSubjectSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'id',
+    'idempotencyKey',
+    'processId',
+    'rawData',
+    'sequence',
+    'sourceRecordId',
+    'subjectCode',
+    'subjectName',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = JudicialProcessSubjectSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare idempotencyKey: string
+  @column()
+  declare processId: string
+  @column()
+  declare rawData: any | null
+  @column()
+  declare sequence: number | null
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare subjectCode: number | null
+  @column()
+  declare subjectName: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class JudicialProcessSchema extends BaseModel {
   static $columns = [
     'assetId',
+    'classCode',
     'className',
     'cnjNumber',
+    'courtAlias',
     'courtCode',
     'courtName',
     'createdAt',
+    'datajudId',
+    'datajudIndex',
+    'datajudIndexedAt',
+    'datajudUpdatedAt',
+    'degree',
     'deletedAt',
     'filedAt',
+    'formatCode',
+    'formatName',
     'id',
+    'judgingBodyCode',
+    'judgingBodyMunicipalityIbgeCode',
+    'judgingBodyName',
     'rawData',
+    'secrecyLevel',
     'source',
     'sourceRecordId',
     'subject',
+    'systemCode',
+    'systemName',
     'tenantId',
     'updatedAt',
   ] as const
@@ -455,29 +653,59 @@ export class JudicialProcessSchema extends BaseModel {
   @column()
   declare assetId: string | null
   @column()
+  declare classCode: number | null
+  @column()
   declare className: string | null
   @column()
   declare cnjNumber: string
+  @column()
+  declare courtAlias: string | null
   @column()
   declare courtCode: string | null
   @column()
   declare courtName: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare datajudId: string | null
+  @column()
+  declare datajudIndex: string | null
+  @column.dateTime()
+  declare datajudIndexedAt: DateTime | null
+  @column.dateTime()
+  declare datajudUpdatedAt: DateTime | null
+  @column()
+  declare degree: string | null
   @column.dateTime()
   declare deletedAt: DateTime | null
   @column.date()
   declare filedAt: DateTime | null
+  @column()
+  declare formatCode: number | null
+  @column()
+  declare formatName: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
+  declare judgingBodyCode: string | null
+  @column()
+  declare judgingBodyMunicipalityIbgeCode: number | null
+  @column()
+  declare judgingBodyName: string | null
+  @column()
   declare rawData: any | null
+  @column()
+  declare secrecyLevel: number | null
   @column()
   declare source: any
   @column()
   declare sourceRecordId: string | null
   @column()
   declare subject: string | null
+  @column()
+  declare systemCode: number | null
+  @column()
+  declare systemName: string | null
   @column()
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
