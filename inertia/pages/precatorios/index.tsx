@@ -234,92 +234,128 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
             </EmptyState>
           ) : (
             <>
-              <Table className="min-w-[1060px] table-fixed">
-                <TableHeader className="bg-muted/40">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[180px]">Ativo</TableHead>
-                    <TableHead className="w-[180px]">Ente/devedor</TableHead>
-                    <TableHead className="w-[60px]">
-                      <SortHead
-                        col="exercise_year"
-                        label="Exec"
-                        filters={filters}
-                        onClick={toggleSort}
-                      />
-                    </TableHead>
-                    <TableHead className="w-[88px]">Classe</TableHead>
-                    <TableHead className="w-[126px] text-end">
-                      <SortHead
-                        col="face_value"
-                        label="Face"
-                        filters={filters}
-                        onClick={toggleSort}
-                        align="end"
-                      />
-                    </TableHead>
-                    <TableHead className="w-[86px]">Etapa</TableHead>
-                    <TableHead className="w-[94px]">Revisão</TableHead>
-                    <TableHead className="w-[118px]">Dados sensíveis</TableHead>
-                    <TableHead className="w-[62px] text-end">
-                      <SortHead
-                        col="current_score"
-                        label="Score"
-                        filters={filters}
-                        onClick={toggleSort}
-                        align="end"
-                      />
-                    </TableHead>
-                    <TableHead className="w-[90px] text-end">Criado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assets.data.map((asset) => (
-                    <TableRow
-                      key={asset.id}
-                      className="cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
-                      onClick={() => router.visit(`/precatorios/${asset.id}`)}
-                    >
-                      <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">
-                        {asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="truncate font-medium">{asset.debtor?.name ?? '—'}</div>
-                        {asset.debtor?.stateCode && (
-                          <div className="text-xs text-muted-foreground">
-                            {asset.debtor.stateCode}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="tabular-nums text-sm">
-                        {asset.exerciseYear ?? '—'}
-                      </TableCell>
-                      <TableCell>
-                        <LabelChip>{NATURE_LABELS[asset.nature] ?? asset.nature}</LabelChip>
-                      </TableCell>
-                      <TableCell className="text-end font-medium tabular-nums">
+              <div className="divide-y divide-border md:hidden">
+                {assets.data.map((asset) => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onClick={() => router.visit(`/precatorios/${asset.id}`)}
+                    className="block w-full px-4 py-4 text-left transition-colors hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-mono text-xs tabular-nums">
+                          {asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}
+                        </div>
+                        <div className="mt-1 truncate text-sm font-semibold">
+                          {asset.debtor?.name ?? 'Devedor não identificado'}
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          Exec. {asset.exerciseYear ?? '—'} ·{' '}
+                          {NATURE_LABELS[asset.nature] ?? asset.nature}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right text-sm font-semibold tabular-nums">
                         {fmtBRL(asset.faceValue)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge kind="compliance" value={asset.complianceStatus} />
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge kind="pii" value={asset.piiStatus} />
-                      </TableCell>
-                      <TableCell className="text-end tabular-nums">
-                        {asset.currentScore !== null && asset.currentScore !== undefined
-                          ? asset.currentScore.toFixed(1)
-                          : '—'}
-                      </TableCell>
-                      <TableCell className="text-end text-xs text-muted-foreground tabular-nums">
-                        {fmtRelative(asset.createdAt)}
-                      </TableCell>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
+                      <StatusBadge kind="compliance" value={asset.complianceStatus} />
+                      <StatusBadge kind="pii" value={asset.piiStatus} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="hidden md:block">
+                <Table className="min-w-[1060px] table-fixed">
+                  <TableHeader className="bg-muted/40">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[180px]">Ativo</TableHead>
+                      <TableHead className="w-[180px]">Ente/devedor</TableHead>
+                      <TableHead className="w-[60px]">
+                        <SortHead
+                          col="exercise_year"
+                          label="Exec"
+                          filters={filters}
+                          onClick={toggleSort}
+                        />
+                      </TableHead>
+                      <TableHead className="w-[88px]">Classe</TableHead>
+                      <TableHead className="w-[126px] text-end">
+                        <SortHead
+                          col="face_value"
+                          label="Face"
+                          filters={filters}
+                          onClick={toggleSort}
+                          align="end"
+                        />
+                      </TableHead>
+                      <TableHead className="w-[86px]">Etapa</TableHead>
+                      <TableHead className="w-[94px]">Revisão</TableHead>
+                      <TableHead className="w-[118px]">Dados sensíveis</TableHead>
+                      <TableHead className="w-[62px] text-end">
+                        <SortHead
+                          col="current_score"
+                          label="Score"
+                          filters={filters}
+                          onClick={toggleSort}
+                          align="end"
+                        />
+                      </TableHead>
+                      <TableHead className="w-[90px] text-end">Criado</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {assets.data.map((asset) => (
+                      <TableRow
+                        key={asset.id}
+                        className="cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
+                        onClick={() => router.visit(`/precatorios/${asset.id}`)}
+                      >
+                        <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">
+                          {asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="truncate font-medium">{asset.debtor?.name ?? '—'}</div>
+                          {asset.debtor?.stateCode && (
+                            <div className="text-xs text-muted-foreground">
+                              {asset.debtor.stateCode}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="tabular-nums text-sm">
+                          {asset.exerciseYear ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <LabelChip>{NATURE_LABELS[asset.nature] ?? asset.nature}</LabelChip>
+                        </TableCell>
+                        <TableCell className="text-end font-medium tabular-nums">
+                          {fmtBRL(asset.faceValue)}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge kind="compliance" value={asset.complianceStatus} />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge kind="pii" value={asset.piiStatus} />
+                        </TableCell>
+                        <TableCell className="text-end tabular-nums">
+                          {asset.currentScore !== null && asset.currentScore !== undefined
+                            ? asset.currentScore.toFixed(1)
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="text-end text-xs text-muted-foreground tabular-nums">
+                          {fmtRelative(asset.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               {assets.meta.lastPage > 1 && (
                 <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
