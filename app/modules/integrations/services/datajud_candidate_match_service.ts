@@ -21,6 +21,11 @@ type CandidateAssetRow = {
   source: SourceType
   cnj_number: string | null
   exercise_year: number | null
+  court_code: string | null
+  court_name: string | null
+  cause_type: string | null
+  origin_filed_at: Date | string | null
+  autuated_at: Date | string | null
   raw_data: JsonRecord | null
 }
 
@@ -46,7 +51,7 @@ export type DataJudCandidateMatchStats = {
 
 export type DataJudCandidateMatch = {
   assetId: string
-  requestedCnj: string
+  requestedCnj: string | null
   courtAlias: string
   candidateCnj: string
   candidateDatajudId: string
@@ -72,12 +77,19 @@ class DataJudCandidateMatchService {
 
     for (const asset of assets) {
       const cnjNumber = normalizeCnj(asset.cnj_number)
-      if (!cnjNumber) {
+      const plan = cnjNumber
+        ? exactCnjSearchPlan(cnjNumber, options, asset)
+        : metadataSearchPlan(asset, options)
+      if (!cnjNumber && !plan) {
+        stats.noCourt += 1
+        continue
+      }
+      if (asset.cnj_number && !cnjNumber) {
         stats.invalidCnj += 1
         continue
       }
 
-      const [courtAlias] = inferDataJudCourtAliases(cnjNumber)
+      const courtAlias = plan?.courtAlias
       if (!courtAlias) {
         stats.noCourt += 1
         continue
@@ -87,14 +99,7 @@ class DataJudCandidateMatchService {
         stats.attempted += 1
         const response = await dataJudPublicApiAdapter.search({
           courtAlias,
-          body: {
-            size: normalizeCandidatesPerAsset(options.candidatesPerAsset),
-            query: {
-              wildcard: {
-                numeroProcesso: `${cnjPrefix(cnjNumber)}*`,
-              },
-            },
-          },
+          body: plan.body,
           fetcher: options.fetcher,
           apiKey: options.apiKey,
         })
@@ -130,11 +135,18 @@ class DataJudCandidateMatchService {
         'source',
         'cnj_number',
         'exercise_year',
+        'court_code',
+        'court_name',
+        'cause_type',
+        'origin_filed_at',
+        'autuated_at',
         'raw_data'
       )
       .where('tenant_id', options.tenantId)
       .whereNull('deleted_at')
-      .whereNotNull('cnj_number')
+      .where((builder) => {
+        builder.whereNotNull('cnj_number').orWhereNotNull('court_name').orWhereNotNull('court_code')
+      })
       .orderBy('created_at', 'asc')
       .limit(normalizeLimit(options.limit))
 
@@ -179,7 +191,7 @@ class DataJudCandidateMatchService {
 
 function buildMatch(
   asset: CandidateAssetRow,
-  requestedCnj: string,
+  requestedCnj: string | null,
   courtAlias: string,
   hit: DataJudHit
 ): DataJudCandidateMatch {
@@ -208,11 +220,11 @@ function buildMatch(
 
 function scoreSignals(
   asset: CandidateAssetRow,
-  requestedCnj: string,
+  requestedCnj: string | null,
   candidateCnj: string,
   source: JsonRecord
 ) {
-  const requestedDigits = onlyDigits(requestedCnj)
+  const requestedDigits = requestedCnj ? onlyDigits(requestedCnj) : ''
   const candidateDigits = onlyDigits(candidateCnj)
   const requestedPrefix = requestedDigits.slice(0, 7)
   const requestedYear = requestedDigits.slice(9, 13)
@@ -222,6 +234,8 @@ function scoreSignals(
   const className = stringOrNull(readNested(source, ['classe', 'nome']))?.toLowerCase() ?? ''
   const subject = firstSubject(source.assuntos)?.toLowerCase() ?? ''
   const assetProposalYear = asset.exercise_year ? String(asset.exercise_year) : null
+  const processFiledYear = dataJudYear(source.dataAjuizamento)
+  const assetReferenceYear = dateYear(asset.autuated_at) ?? dateYear(asset.origin_filed_at)
 
   return {
     prefix: requestedPrefix && candidateDigits.startsWith(requestedPrefix) ? 35 : 0,
@@ -229,7 +243,18 @@ function scoreSignals(
     sameSegmentCourt:
       requestedSegmentCourt && requestedSegmentCourt === candidateSegmentCourt ? 15 : 0,
     proposalYear: assetProposalYear && assetProposalYear === candidateYear ? 10 : 0,
+    processDate:
+      !requestedCnj && assetReferenceYear && processFiledYear === assetReferenceYear ? 20 : 0,
+    closeProposalYear:
+      !requestedCnj &&
+      assetProposalYear &&
+      processFiledYear &&
+      Math.abs(Number(assetProposalYear) - Number(processFiledYear)) <= 2
+        ? 10
+        : 0,
+    precatorioClass: /precat[oó]rio|requisi[cç][aã]o de pequeno valor|rpv/.test(className) ? 25 : 0,
     executionClass: /cumprimento|execu[cç][aã]o|fazenda/.test(className) ? 15 : 0,
+    causeSubject: causeMatchesSubject(asset.cause_type, subject) ? 15 : 0,
     benefitSubject: /aposentadoria|previd|benef[ií]cio|servidor|sal[aá]rio/.test(subject) ? 5 : 0,
   }
 }
@@ -250,12 +275,156 @@ function scoreFromSignals(signals: ReturnType<typeof scoreSignals>) {
   return Object.values(signals).reduce((total, value) => total + value, 0)
 }
 
+function exactCnjSearchPlan(
+  cnjNumber: string,
+  options: DataJudCandidateMatchOptions,
+  asset: CandidateAssetRow
+) {
+  const [courtAlias] = inferDataJudCourtAliases(cnjNumber)
+  if (!courtAlias) {
+    return null
+  }
+
+  return {
+    courtAlias,
+    body: {
+      size: normalizeCandidatesPerAsset(options.candidatesPerAsset),
+      query: {
+        wildcard: {
+          numeroProcesso: `${cnjPrefix(cnjNumber)}*`,
+        },
+      },
+      _source: metadataSourceFields(asset),
+    },
+  }
+}
+
+function metadataSearchPlan(asset: CandidateAssetRow, options: DataJudCandidateMatchOptions) {
+  const courtAlias = inferCourtAliasFromAsset(asset)
+  if (!courtAlias) {
+    return null
+  }
+
+  const dateRange = dataJudDateRange(asset.autuated_at ?? asset.origin_filed_at)
+  const filters: JsonRecord[] = [
+    {
+      terms: {
+        'classe.codigo': [1265, 1266],
+      },
+    },
+  ]
+
+  if (dateRange) {
+    filters.push({
+      range: {
+        dataAjuizamento: dateRange,
+      },
+    })
+  }
+
+  return {
+    courtAlias,
+    body: {
+      size: normalizeCandidatesPerAsset(options.candidatesPerAsset),
+      query: {
+        bool: {
+          filter: filters,
+        },
+      },
+      _source: metadataSourceFields(asset),
+    },
+  }
+}
+
+function metadataSourceFields(_asset: CandidateAssetRow) {
+  return [
+    'numeroProcesso',
+    'tribunal',
+    'grau',
+    'classe',
+    'assuntos',
+    'orgaoJulgador',
+    'dataAjuizamento',
+    'dataHoraUltimaAtualizacao',
+  ]
+}
+
+function inferCourtAliasFromAsset(asset: CandidateAssetRow) {
+  const courtName = normalizeText(asset.court_name)
+  const courtCode = normalizeText(asset.court_code)
+  const text = `${courtName} ${courtCode}`.trim()
+
+  const trfMatch = text.match(/\btrf\s*([1-6])\b/) ?? text.match(/federal.*\b([1-6])a?\b.*regiao/)
+  if (trfMatch?.[1]) {
+    return `trf${trfMatch[1]}`
+  }
+
+  return null
+}
+
+function dataJudDateRange(value: Date | string | null) {
+  const year = dateYear(value)
+  if (!year) {
+    return null
+  }
+
+  return {
+    gte: `${year}-01-01`,
+    lte: `${year}-12-31`,
+  }
+}
+
+function dataJudYear(value: unknown) {
+  const text = stringOrNull(value)
+  if (!text) {
+    return null
+  }
+
+  return text.slice(0, 4)
+}
+
+function dateYear(value: Date | string | null) {
+  if (!value) {
+    return null
+  }
+
+  if (value instanceof Date) {
+    return String(value.getUTCFullYear())
+  }
+
+  const text = String(value)
+  return /^\d{4}/.test(text) ? text.slice(0, 4) : null
+}
+
+function causeMatchesSubject(causeType: string | null, subject: string) {
+  const cause = normalizeText(causeType)
+  const normalizedSubject = normalizeText(subject)
+
+  if (!cause || !normalizedSubject) {
+    return false
+  }
+
+  return cause
+    .split(/\s+/)
+    .filter((word) => word.length >= 5)
+    .some((word) => normalizedSubject.includes(word))
+}
+
 function cnjPrefix(cnjNumber: string) {
   return onlyDigits(cnjNumber).slice(0, 7)
 }
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
+}
+
+function normalizeText(value: string | null) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
 function normalizeLimit(limit?: number | null) {
