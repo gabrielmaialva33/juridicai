@@ -55,7 +55,7 @@ class DataJudCandidateReviewService {
         .where('asset_id', candidate.assetId)
         .whereNot('id', candidate.id)
         .whereIn('status', ['candidate', 'ambiguous'])
-        .update({ status: 'rejected', updated_at: new Date() })
+        .update({ status: 'rejected', updated_at: DateTime.now().toSQL() })
 
       return { candidate, judicialProcess }
     })
