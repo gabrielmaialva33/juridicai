@@ -37,9 +37,11 @@ export async function seedRoles(permissions: Map<string, Permission>) {
       { slug: roleSeed.slug },
       {
         name: roleSeed.name,
-        description: `${roleSeed.name} role for the Radar Federal base workspace.`,
+        description: roleDescription(roleSeed.slug),
       }
     )
+
+    await db.from('role_permissions').where('role_id', role.id).delete()
 
     for (const permissionSlug of roleSeed.permissions) {
       const permission = permissions.get(permissionSlug)
@@ -93,18 +95,38 @@ export async function seedUsers() {
     User,
     { email: 'analyst@juridicai.local' },
     {
-      fullName: 'Analista Radar',
+      fullName: 'Marina Costa',
       password: SEED_PASSWORD,
       status: 'active',
     }
   )
 
-  return { owner, analyst }
+  const advocate = await upsertModel(
+    User,
+    { email: 'advogado@juridicai.local' },
+    {
+      fullName: 'Dra. Helena Duarte',
+      password: SEED_PASSWORD,
+      status: 'active',
+    }
+  )
+
+  const operator = await upsertModel(
+    User,
+    { email: 'operador@juridicai.local' },
+    {
+      fullName: 'Rafael Nunes',
+      password: SEED_PASSWORD,
+      status: 'active',
+    }
+  )
+
+  return { owner, analyst, advocate, operator }
 }
 
 export async function seedMembershipsAndRoles(
   tenant: Tenant,
-  users: { owner: User; analyst: User },
+  users: { owner: User; analyst: User; advocate: User; operator: User },
   roles: Map<string, Role>
 ) {
   await upsertModel(
@@ -117,9 +139,21 @@ export async function seedMembershipsAndRoles(
     { tenantId: tenant.id, userId: users.analyst.id },
     { status: 'active' }
   )
+  await upsertModel(
+    TenantMembership,
+    { tenantId: tenant.id, userId: users.advocate.id },
+    { status: 'active' }
+  )
+  await upsertModel(
+    TenantMembership,
+    { tenantId: tenant.id, userId: users.operator.id },
+    { status: 'active' }
+  )
 
   const ownerRole = roles.get('owner')
   const analystRole = roles.get('analyst')
+  const advocateRole = roles.get('advocate')
+  const operatorRole = roles.get('operator')
 
   if (ownerRole) {
     await upsertModel(
@@ -136,4 +170,31 @@ export async function seedMembershipsAndRoles(
       {}
     )
   }
+
+  if (advocateRole) {
+    await upsertModel(
+      UserRole,
+      { tenantId: tenant.id, userId: users.advocate.id, roleId: advocateRole.id },
+      {}
+    )
+  }
+
+  if (operatorRole) {
+    await upsertModel(
+      UserRole,
+      { tenantId: tenant.id, userId: users.operator.id, roleId: operatorRole.id },
+      {}
+    )
+  }
+}
+
+function roleDescription(slug: string) {
+  const descriptions: Record<string, string> = {
+    owner: 'Acesso completo para configurar a organização, integrações e operação.',
+    advocate: 'Conduz análise jurídica, atendimento ao cliente e decisões de encaminhamento.',
+    operator: 'Acompanha triagem, contatos, prazos e movimentações operacionais.',
+    analyst: 'Pesquisa créditos, devedores e sinais públicos para apoiar a triagem.',
+  }
+
+  return descriptions[slug] ?? 'Operational role for the beta workspace.'
 }

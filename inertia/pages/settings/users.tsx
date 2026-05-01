@@ -46,6 +46,8 @@ const ROLE_BADGE: Record<
 > = {
   root: 'destructive',
   tenant_admin: 'primary',
+  advocate: 'success',
+  operator: 'info',
   operations_lead: 'success',
   compliance_officer: 'warning',
   analyst: 'info',
@@ -59,7 +61,7 @@ export default function SettingsUsers({ memberships, allRoles }: Props) {
 
       <PageHeader
         title="Permissões"
-        description={`${memberships.length} membros · ${allRoles.length} papéis disponíveis`}
+        description={`${memberships.length} membros · ${allRoles.length} papéis operacionais`}
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Permissões' }]}
       />
 
@@ -182,7 +184,9 @@ export default function SettingsUsers({ memberships, allRoles }: Props) {
 function roleLabel(slug: string, fallback: string) {
   const labels: Record<string, string> = {
     owner: 'Proprietário',
-    analyst: 'Analista',
+    advocate: 'Advogado responsável',
+    operator: 'Operador de atendimento',
+    analyst: 'Analista jurídico',
     tenant_admin: 'Administrador',
     operations_lead: 'Líder de operações',
     compliance_officer: 'Compliance',
@@ -195,7 +199,9 @@ function roleLabel(slug: string, fallback: string) {
 function roleDescription(slug: string, fallback: string) {
   const descriptions: Record<string, string> = {
     owner: 'Acesso completo à operação, dados, integrações e administração do tenant.',
-    analyst: 'Acesso de leitura e análise para radar, devedores, integrações e mesa operacional.',
+    advocate: 'Conduz análise jurídica, atendimento ao cliente e decisões de encaminhamento.',
+    operator: 'Acompanha triagem, contatos, prazos e movimentações operacionais.',
+    analyst: 'Pesquisa créditos, devedores e sinais públicos para apoiar a triagem.',
   }
 
   return descriptions[slug] ?? fallback

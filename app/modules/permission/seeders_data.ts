@@ -21,12 +21,39 @@ export type PermissionSlug = (typeof PERMISSIONS)[number]
 export const ROLES = [
   {
     slug: 'owner',
-    name: 'Owner',
+    name: 'Sócio gestor',
     permissions: [...PERMISSIONS],
   },
   {
+    slug: 'advocate',
+    name: 'Advogado responsável',
+    permissions: [
+      'dashboard.read',
+      'imports.read',
+      'precatorios.read',
+      'debtors.read',
+      'pii.reveal',
+      'integrations.datajud.read',
+      'operations.read',
+      'operations.manage',
+      'market.read',
+    ],
+  },
+  {
+    slug: 'operator',
+    name: 'Operador de atendimento',
+    permissions: [
+      'dashboard.read',
+      'precatorios.read',
+      'debtors.read',
+      'operations.read',
+      'operations.manage',
+      'market.read',
+    ],
+  },
+  {
     slug: 'analyst',
-    name: 'Analyst',
+    name: 'Analista jurídico',
     permissions: [
       'dashboard.read',
       'imports.read',

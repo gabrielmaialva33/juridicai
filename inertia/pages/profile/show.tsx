@@ -114,7 +114,7 @@ export default function ProfileShow({ profile }: { profile: Profile }) {
               <div className="flex flex-wrap gap-2">
                 {profile.roles.map((role) => (
                   <LabelChip key={role.id} variant="primary">
-                    {role.name}
+                    {roleLabel(role.slug, role.name)}
                   </LabelChip>
                 ))}
               </div>
@@ -136,6 +136,17 @@ function statusLabel(status?: string | null) {
   }
 
   return labels[status] ?? status
+}
+
+function roleLabel(slug: string, fallback: string) {
+  const labels: Record<string, string> = {
+    owner: 'Sócio gestor',
+    advocate: 'Advogado responsável',
+    operator: 'Operador de atendimento',
+    analyst: 'Analista jurídico',
+  }
+
+  return labels[slug] ?? fallback
 }
 
 function ProfileField({
