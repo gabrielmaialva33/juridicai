@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageHeader } from '~/components/shared/page-header'
 import { fmtBRL, fmtRelative } from '~/lib/helpers'
+import { jsonRequest } from '~/lib/http'
 import { toast } from 'sonner'
 
 type PricingResult = {
@@ -141,6 +142,11 @@ type Props = {
   events: any[]
 }
 
+type OpportunityResponse = {
+  opportunity: Opportunity
+  liquidity: LiquidityAdvisory
+}
+
 type PersistenceFeedback = {
   action: 'save' | 'pipeline'
   stage: PipelineStage
@@ -213,24 +219,16 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
     const timer = setTimeout(async () => {
       setRecomputing(true)
       try {
-        const csrf =
-          document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-        const r = await fetch(`/operations/opportunities/${initial.asset.id}/pricing`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrf,
-            'Accept': 'application/json',
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ offerRate, termMonths }),
-        })
-        if (r.ok) {
-          const data = await r.json()
-          setPricing(data.opportunity.pricing)
-          setOpportunity(data.opportunity)
-          setLiquidityAdvisory(data.liquidity)
-        }
+        const data = await jsonRequest<OpportunityResponse>(
+          `/operations/opportunities/${initial.asset.id}/pricing`,
+          {
+            method: 'POST',
+            body: { offerRate, termMonths },
+          }
+        )
+        setPricing(data.opportunity.pricing)
+        setOpportunity(data.opportunity)
+        setLiquidityAdvisory(data.liquidity)
       } catch {
         // Keep the current pricing visible if recomputation fails.
       } finally {
@@ -268,25 +266,15 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
     const stage = stageForAction(action)
 
     setSavingAction(action)
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
     try {
-      const response = await fetch(`/operations/opportunities/${opportunity.asset.id}/pipeline`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrf,
-          'Accept': 'application/json',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ stage, offerRate, termMonths }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Pipeline update failed')
-      }
-
-      const data = await response.json()
+      const data = await jsonRequest<OpportunityResponse>(
+        `/operations/opportunities/${opportunity.asset.id}/pipeline`,
+        {
+          method: 'POST',
+          body: { stage, offerRate, termMonths },
+        }
+      )
       setPricing(data.opportunity.pricing)
       setOpportunity(data.opportunity)
       setLiquidityAdvisory(data.liquidity)

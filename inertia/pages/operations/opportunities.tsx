@@ -17,6 +17,7 @@ import { FilterPanel, SelectFilter } from '~/components/shared/filter-controls'
 import { LabelChip } from '~/components/shared/label-chip'
 import { PageHeader } from '~/components/shared/page-header'
 import { fmtBRL, fmtNum } from '~/lib/helpers'
+import { jsonRequest } from '~/lib/http'
 
 type Asset = {
   id: string
@@ -192,22 +193,13 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
 
   async function bulkMoveToPipeline() {
     if (selected.size === 0) return
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
     try {
-      const r = await fetch('/operations/opportunities/bulk-pipeline', {
+      await jsonRequest('/operations/opportunities/bulk-pipeline', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrf,
-          'Accept': 'application/json',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ assetIds: Array.from(selected), stage: 'qualified' }),
+        body: { assetIds: Array.from(selected), stage: 'qualified' },
       })
-      if (r.ok) {
-        setSelected(new Set())
-        router.reload({ only: ['opportunities', 'meta'] })
-      }
+      setSelected(new Set())
+      router.reload({ only: ['opportunities', 'meta'] })
     } catch {
       // Keep the selection so the operator can retry the bulk action.
     }

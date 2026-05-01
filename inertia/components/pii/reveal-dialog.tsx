@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { jsonRequest } from '~/lib/http'
 import { toast } from 'sonner'
 
 interface BeneficiaryRevealed {
@@ -58,7 +59,7 @@ export function RevealDialog({ beneficiaryId, beneficiaryHandle, open, onOpenCha
   const [error, setError] = useState<string | null>(null)
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS)
 
-  // Reset state quando o dialog fecha
+  // Reset volatile reveal state when the dialog closes.
   useEffect(() => {
     if (!open) {
       setPhase('form')
@@ -70,7 +71,7 @@ export function RevealDialog({ beneficiaryId, beneficiaryHandle, open, onOpenCha
     }
   }, [open])
 
-  // Countdown auto-clear (90s)
+  // Auto-clear revealed data after the countdown expires.
   useEffect(() => {
     if (phase !== 'revealed') return
     if (countdown <= 0) {
@@ -82,7 +83,7 @@ export function RevealDialog({ beneficiaryId, beneficiaryHandle, open, onOpenCha
     return () => clearTimeout(t)
   }, [phase, countdown, onOpenChange])
 
-  // Self-clear quando aba fica oculta (visibilitychange)
+  // Clear revealed data when the tab becomes hidden.
   useEffect(() => {
     if (phase !== 'revealed') return
     const onVisibility = () => {
@@ -100,26 +101,13 @@ export function RevealDialog({ beneficiaryId, beneficiaryHandle, open, onOpenCha
     setPhase('loading')
     setError(null)
     try {
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-      const r = await fetch(`/pii/beneficiaries/${beneficiaryId}/reveal`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrf,
-          'Accept': 'application/json',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ purpose, justification }),
-      })
-      if (!r.ok) {
-        const errorData = await r.json().catch(() => ({}))
-        throw new Error(
-          errorData?.message ??
-            errorData?.code ??
-            (r.status === 403 ? 'Sem permissão para revelar este beneficiário' : `Erro ${r.status}`)
-        )
-      }
-      const json = await r.json()
+      const json = await jsonRequest<{ beneficiary?: BeneficiaryRevealed } & BeneficiaryRevealed>(
+        `/pii/beneficiaries/${beneficiaryId}/reveal`,
+        {
+          method: 'POST',
+          body: { purpose, justification },
+        }
+      )
       setData(json.beneficiary ?? json)
       setPhase('revealed')
       setCountdown(COUNTDOWN_SECONDS)

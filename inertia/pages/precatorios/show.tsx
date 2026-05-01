@@ -25,6 +25,7 @@ import { LabelChip } from '~/components/shared/label-chip'
 import { PageHeader } from '~/components/shared/page-header'
 import { StatusBadge } from '~/components/status-badge'
 import { fmtBRL, fmtDate, fmtRelative } from '~/lib/helpers'
+import { jsonRequest } from '~/lib/http'
 
 type Asset = {
   id: string
@@ -125,23 +126,12 @@ export default function PrecatorioShow({ asset }: Props) {
 
   async function moveToPipeline(stage: 'inbox' | 'qualified' | 'due_diligence') {
     setMovingToStage(stage)
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
     try {
-      const response = await fetch(`/operations/opportunities/${asset.id}/pipeline`, {
+      await jsonRequest(`/operations/opportunities/${asset.id}/pipeline`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrf,
-          'Accept': 'application/json',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ stage }),
+        body: { stage },
       })
-
-      if (!response.ok) {
-        throw new Error('Pipeline update failed')
-      }
 
       toast.success('Ativo enviado para o pipeline.')
       router.visit(`/operations/opportunities/${asset.id}`)
