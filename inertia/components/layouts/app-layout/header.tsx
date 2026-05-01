@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet'
 import { SidebarMenu } from './sidebar-menu'
 import { SidebarHeader } from './sidebar-header'
+import { SidebarFooter } from './sidebar-footer'
 
 interface Props {
   sidebarWidth?: number
@@ -43,13 +44,18 @@ export function Header({ sidebarWidth = 0, headerHeight = 64, tenantName }: Prop
                   <Menu className="text-muted-foreground" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="p-0 gap-0 w-[280px]" side="left" close={false}>
+              <SheetContent
+                className="w-[280px] gap-0 border-white/10 bg-[var(--sidebar)] p-0 text-white"
+                side="left"
+                close={false}
+              >
                 <SheetHeader className="p-0 space-y-0">
                   <SidebarHeader isExpanded />
                 </SheetHeader>
-                <SheetBody className="p-0 overflow-y-auto">
+                <SheetBody className="min-h-0 flex-1 overflow-y-auto p-0">
                   <SidebarMenu isExpanded />
                 </SheetBody>
+                <SidebarFooter isExpanded />
               </SheetContent>
             </Sheet>
           )}

@@ -37,7 +37,7 @@ export function Main({
           headerHeight={headerHeight}
           tenantName={tenantName}
         />
-        <main className="grow px-4 lg:px-8 py-6">{children}</main>
+        <main className="grow px-3 py-4 sm:px-4 lg:px-8 lg:py-6">{children}</main>
       </div>
     </>
   )

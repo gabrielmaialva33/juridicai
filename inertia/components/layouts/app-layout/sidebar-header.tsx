@@ -14,7 +14,7 @@ export function SidebarHeader({ isExpanded }: Props) {
   return (
     <div
       className={cn(
-        'hidden lg:flex items-center shrink-0 h-[64px] border-b border-white/10 group/header',
+        'flex h-[64px] shrink-0 items-center border-b border-white/10 group/header',
         isExpanded ? 'justify-between px-4 lg:px-5' : 'justify-center px-2'
       )}
     >
