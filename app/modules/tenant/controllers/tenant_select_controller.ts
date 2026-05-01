@@ -9,7 +9,7 @@ export default class TenantSelectController {
     // Auto-select if user has only one membership
     if (memberships.length === 1) {
       session.put('active_tenant_id', memberships[0].tenantId)
-      return response.redirect('/dashboard')
+      return response.redirect('/operations/desk')
     }
 
     return inertia.render('tenants/select', {
@@ -34,6 +34,6 @@ export default class TenantSelectController {
     }
 
     session.put('active_tenant_id', tenantId)
-    return response.redirect('/dashboard')
+    return response.redirect('/operations/desk')
   }
 }

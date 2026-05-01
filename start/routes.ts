@@ -25,4 +25,4 @@ import '#modules/admin/routes'
 import '#modules/healthcheck/routes'
 import '#modules/client_errors/routes'
 
-router.on('/').renderInertia('home', {}).as('home')
+router.get('/', ({ response }) => response.redirect('/operations/desk')).as('home')
