@@ -18,6 +18,13 @@ export default class extends BaseSchema {
       table.text('cnj_number').nullable()
       table.text('origin_process_number').nullable()
       table.uuid('debtor_id').nullable().references('id').inTable('debtors').onDelete('SET NULL')
+      table.uuid('court_id').nullable().references('id').inTable('courts').onDelete('SET NULL')
+      table
+        .uuid('budget_unit_id')
+        .nullable()
+        .references('id')
+        .inTable('budget_units')
+        .onDelete('SET NULL')
       table.text('asset_number').nullable()
       table.integer('exercise_year').nullable()
       table.integer('budget_year').nullable()
@@ -60,6 +67,8 @@ export default class extends BaseSchema {
 
       table.index(['tenant_id', 'exercise_year'])
       table.index(['tenant_id', 'debtor_id'])
+      table.index(['tenant_id', 'court_id'])
+      table.index(['tenant_id', 'budget_unit_id'])
       table.index(['tenant_id', 'lifecycle_status'])
       table.index(['tenant_id', 'compliance_status'])
       table.index(['tenant_id', 'court_code'])
@@ -77,6 +86,10 @@ export default class extends BaseSchema {
         create unique index precatorio_assets_tenant_cnj_uq
         on precatorio_assets (tenant_id, cnj_number)
         where cnj_number is not null;
+
+        alter table precatorio_assets
+        add constraint precatorio_assets_tenant_id_id_uq
+        unique (tenant_id, id);
       `)
     )
   }

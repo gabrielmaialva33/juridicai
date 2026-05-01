@@ -5,6 +5,7 @@ import type { JsonRecord } from '#shared/types/model_enums'
 import JudicialProcessMovement from '#modules/precatorios/models/judicial_process_movement'
 import SourceRecord from '#modules/siop/models/source_record'
 import Tenant from '#modules/tenant/models/tenant'
+import MovementComplementType from '#modules/reference/models/movement_complement_type'
 
 export default class JudicialProcessMovementComplement extends TenantModel {
   @column()
@@ -12,6 +13,9 @@ export default class JudicialProcessMovementComplement extends TenantModel {
 
   @column()
   declare sourceRecordId: string | null
+
+  @column()
+  declare complementTypeId: string | null
 
   @column()
   declare complementCode: number | null
@@ -44,4 +48,9 @@ export default class JudicialProcessMovementComplement extends TenantModel {
 
   @belongsTo(() => SourceRecord)
   declare sourceRecord: BelongsTo<typeof SourceRecord>
+
+  @belongsTo(() => MovementComplementType, {
+    foreignKey: 'complementTypeId',
+  })
+  declare complementType: BelongsTo<typeof MovementComplementType>
 }

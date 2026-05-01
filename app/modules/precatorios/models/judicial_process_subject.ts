@@ -5,6 +5,7 @@ import type { JsonRecord } from '#shared/types/model_enums'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import SourceRecord from '#modules/siop/models/source_record'
 import Tenant from '#modules/tenant/models/tenant'
+import JudicialSubjectCatalog from '#modules/reference/models/judicial_subject_catalog'
 
 export default class JudicialProcessSubject extends TenantModel {
   @column()
@@ -12,6 +13,9 @@ export default class JudicialProcessSubject extends TenantModel {
 
   @column()
   declare sourceRecordId: string | null
+
+  @column()
+  declare subjectCatalogId: string | null
 
   @column()
   declare subjectCode: number | null
@@ -38,4 +42,9 @@ export default class JudicialProcessSubject extends TenantModel {
 
   @belongsTo(() => SourceRecord)
   declare sourceRecord: BelongsTo<typeof SourceRecord>
+
+  @belongsTo(() => JudicialSubjectCatalog, {
+    foreignKey: 'subjectCatalogId',
+  })
+  declare subjectCatalog: BelongsTo<typeof JudicialSubjectCatalog>
 }

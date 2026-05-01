@@ -7,18 +7,47 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class AssetBudgetFactSchema extends BaseModel {
+  static $columns = ['assetId', 'budgetUnitId', 'budgetYear', 'causeType', 'createdAt', 'elapsedYears', 'elapsedYearsClass', 'exerciseYear', 'expenseType', 'fundef', 'id', 'natureExpenseCode', 'rawData', 'sourceRecordId', 'taxClaim', 'tenantId', 'valueRange'] as const
+  $columns = AssetBudgetFactSchema.$columns
+  @column()
+  declare assetId: string
+  @column()
+  declare budgetUnitId: string | null
+  @column()
+  declare budgetYear: number | null
+  @column()
+  declare causeType: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare elapsedYears: number | null
+  @column()
+  declare elapsedYearsClass: string | null
+  @column()
+  declare exerciseYear: number | null
+  @column()
+  declare expenseType: string | null
+  @column()
+  declare fundef: boolean | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare natureExpenseCode: string | null
+  @column()
+  declare rawData: any | null
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare taxClaim: boolean | null
+  @column()
+  declare tenantId: string
+  @column()
+  declare valueRange: string | null
+}
+
 export class AssetEventSchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'createdAt',
-    'eventDate',
-    'eventType',
-    'id',
-    'idempotencyKey',
-    'payload',
-    'source',
-    'tenantId',
-  ] as const
+  static $columns = ['assetId', 'createdAt', 'eventDate', 'eventType', 'id', 'idempotencyKey', 'payload', 'source', 'tenantId'] as const
   $columns = AssetEventSchema.$columns
   @column()
   declare assetId: string
@@ -41,21 +70,7 @@ export class AssetEventSchema extends BaseModel {
 }
 
 export class AssetScoreSchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'computedAt',
-    'dataQualityScore',
-    'economicScore',
-    'explanation',
-    'finalScore',
-    'id',
-    'legalSignalScore',
-    'liquidityScore',
-    'maturityScore',
-    'riskScore',
-    'scoreVersion',
-    'tenantId',
-  ] as const
+  static $columns = ['assetId', 'computedAt', 'dataQualityScore', 'economicScore', 'explanation', 'finalScore', 'id', 'legalSignalScore', 'liquidityScore', 'maturityScore', 'riskScore', 'scoreVersion', 'tenantId'] as const
   $columns = AssetScoreSchema.$columns
   @column()
   declare assetId: string
@@ -85,22 +100,39 @@ export class AssetScoreSchema extends BaseModel {
   declare tenantId: string
 }
 
+export class AssetValuationSchema extends BaseModel {
+  static $columns = ['assetId', 'baseDate', 'computedAt', 'correctionEndedAt', 'correctionIndex', 'correctionStartedAt', 'estimatedUpdatedValue', 'faceValue', 'id', 'queuePosition', 'rawData', 'sourceRecordId', 'tenantId'] as const
+  $columns = AssetValuationSchema.$columns
+  @column()
+  declare assetId: string
+  @column.date()
+  declare baseDate: DateTime | null
+  @column.dateTime()
+  declare computedAt: DateTime
+  @column.date()
+  declare correctionEndedAt: DateTime | null
+  @column()
+  declare correctionIndex: string | null
+  @column.date()
+  declare correctionStartedAt: DateTime | null
+  @column()
+  declare estimatedUpdatedValue: string | null
+  @column()
+  declare faceValue: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare queuePosition: number | null
+  @column()
+  declare rawData: any | null
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare tenantId: string
+}
+
 export class AuditLogSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'entityId',
-    'entityType',
-    'event',
-    'id',
-    'ipAddress',
-    'metadata',
-    'newValues',
-    'oldValues',
-    'requestId',
-    'tenantId',
-    'userAgent',
-    'userId',
-  ] as const
+  static $columns = ['createdAt', 'entityId', 'entityType', 'event', 'id', 'ipAddress', 'metadata', 'newValues', 'oldValues', 'requestId', 'tenantId', 'userAgent', 'userId'] as const
   $columns = AuditLogSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -131,18 +163,7 @@ export class AuditLogSchema extends BaseModel {
 }
 
 export class AuthAccessTokenSchema extends BaseModel {
-  static $columns = [
-    'abilities',
-    'createdAt',
-    'expiresAt',
-    'hash',
-    'id',
-    'lastUsedAt',
-    'name',
-    'tokenableId',
-    'type',
-    'updatedAt',
-  ] as const
+  static $columns = ['abilities', 'createdAt', 'expiresAt', 'hash', 'id', 'lastUsedAt', 'name', 'tokenableId', 'type', 'updatedAt'] as const
   $columns = AuthAccessTokenSchema.$columns
   @column()
   declare abilities: string
@@ -166,31 +187,23 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BudgetUnitSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = BudgetUnitSchema.$columns
+  @column()
+  declare code: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class CessionOpportunitySchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'createdAt',
-    'createdByUserId',
-    'expectedAnnualIrr',
-    'finalScore',
-    'grade',
-    'id',
-    'lastContactedAt',
-    'metadata',
-    'notes',
-    'offerRate',
-    'offerValue',
-    'paymentProbability',
-    'pricingSnapshot',
-    'priority',
-    'riskAdjustedIrr',
-    'stage',
-    'targetCloseAt',
-    'tenantId',
-    'termMonths',
-    'updatedAt',
-    'updatedByUserId',
-  ] as const
+  static $columns = ['assetId', 'createdAt', 'createdByUserId', 'expectedAnnualIrr', 'finalScore', 'grade', 'id', 'lastContactedAt', 'metadata', 'notes', 'offerRate', 'offerValue', 'paymentProbability', 'pricingSnapshot', 'priority', 'riskAdjustedIrr', 'stage', 'targetCloseAt', 'tenantId', 'termMonths', 'updatedAt', 'updatedByUserId'] as const
   $columns = CessionOpportunitySchema.$columns
   @column()
   declare assetId: string
@@ -238,21 +251,62 @@ export class CessionOpportunitySchema extends BaseModel {
   declare updatedByUserId: string | null
 }
 
+export class CessionPricingSchema extends BaseModel {
+  static $columns = ['computedAt', 'createdByUserId', 'expectedAnnualIrr', 'finalScore', 'id', 'modelVersion', 'offerRate', 'offerValue', 'opportunityId', 'paymentProbability', 'pricingSnapshot', 'riskAdjustedIrr', 'tenantId', 'termMonths'] as const
+  $columns = CessionPricingSchema.$columns
+  @column.dateTime()
+  declare computedAt: DateTime
+  @column()
+  declare createdByUserId: string | null
+  @column()
+  declare expectedAnnualIrr: string | null
+  @column()
+  declare finalScore: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare modelVersion: string | null
+  @column()
+  declare offerRate: string | null
+  @column()
+  declare offerValue: string | null
+  @column()
+  declare opportunityId: string
+  @column()
+  declare paymentProbability: string | null
+  @column()
+  declare pricingSnapshot: any | null
+  @column()
+  declare riskAdjustedIrr: string | null
+  @column()
+  declare tenantId: string
+  @column()
+  declare termMonths: number | null
+}
+
+export class CessionStageHistorySchema extends BaseModel {
+  static $columns = ['changedAt', 'changedByUserId', 'fromStage', 'id', 'opportunityId', 'reason', 'tenantId', 'toStage'] as const
+  $columns = CessionStageHistorySchema.$columns
+  @column.dateTime()
+  declare changedAt: DateTime
+  @column()
+  declare changedByUserId: string | null
+  @column()
+  declare fromStage: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare opportunityId: string
+  @column()
+  declare reason: string | null
+  @column()
+  declare tenantId: string
+  @column()
+  declare toStage: string
+}
+
 export class ClientErrorSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'id',
-    'message',
-    'payload',
-    'requestId',
-    'stackHash',
-    'status',
-    'tenantId',
-    'updatedAt',
-    'url',
-    'userAgent',
-    'userId',
-  ] as const
+  static $columns = ['createdAt', 'id', 'message', 'payload', 'requestId', 'stackHash', 'status', 'tenantId', 'updatedAt', 'url', 'userAgent', 'userId'] as const
   $columns = ClientErrorSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -280,28 +334,27 @@ export class ClientErrorSchema extends BaseModel {
   declare userId: string | null
 }
 
+export class CourtSchema extends BaseModel {
+  static $columns = ['alias', 'code', 'courtClass', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = CourtSchema.$columns
+  @column()
+  declare alias: string | null
+  @column()
+  declare code: string
+  @column()
+  declare courtClass: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class DebtorPaymentStatSchema extends BaseModel {
-  static $columns = [
-    'averagePaymentMonths',
-    'computedAt',
-    'createdAt',
-    'debtorId',
-    'id',
-    'onTimePaymentRate',
-    'openDebtStock',
-    'paidVolume',
-    'periodEnd',
-    'periodStart',
-    'rawData',
-    'rclDebtRatio',
-    'recentDefault',
-    'regimeSpecialActive',
-    'reliabilityScore',
-    'sampleSize',
-    'source',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['averagePaymentMonths', 'computedAt', 'createdAt', 'debtorId', 'id', 'onTimePaymentRate', 'openDebtStock', 'paidVolume', 'periodEnd', 'periodStart', 'rawData', 'rclDebtRatio', 'recentDefault', 'regimeSpecialActive', 'reliabilityScore', 'sampleSize', 'source', 'tenantId', 'updatedAt'] as const
   $columns = DebtorPaymentStatSchema.$columns
   @column()
   declare averagePaymentMonths: number | null
@@ -344,23 +397,7 @@ export class DebtorPaymentStatSchema extends BaseModel {
 }
 
 export class DebtorSchema extends BaseModel {
-  static $columns = [
-    'cnpj',
-    'createdAt',
-    'debtStockEstimate',
-    'debtorType',
-    'deletedAt',
-    'id',
-    'name',
-    'normalizedKey',
-    'normalizedName',
-    'paymentRegime',
-    'paymentReliabilityScore',
-    'rclEstimate',
-    'stateCode',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['cnpj', 'createdAt', 'debtStockEstimate', 'debtorType', 'deletedAt', 'id', 'name', 'normalizedKey', 'normalizedName', 'paymentRegime', 'paymentReliabilityScore', 'rclEstimate', 'stateCode', 'tenantId', 'updatedAt'] as const
   $columns = DebtorSchema.$columns
   @column()
   declare cnpj: string | null
@@ -395,19 +432,7 @@ export class DebtorSchema extends BaseModel {
 }
 
 export class ExportJobSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'errorMessage',
-    'expiresAt',
-    'exportType',
-    'filePath',
-    'filters',
-    'id',
-    'requestedByUserId',
-    'status',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'errorMessage', 'expiresAt', 'exportType', 'filePath', 'filters', 'id', 'requestedByUserId', 'status', 'tenantId', 'updatedAt'] as const
   $columns = ExportJobSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -433,22 +458,42 @@ export class ExportJobSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class JudgingBodySchema extends BaseModel {
+  static $columns = ['code', 'courtId', 'createdAt', 'id', 'municipalityIbgeCode', 'name', 'updatedAt'] as const
+  $columns = JudgingBodySchema.$columns
+  @column()
+  declare code: string
+  @column()
+  declare courtId: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare municipalityIbgeCode: number | null
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class JudicialClassSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = JudicialClassSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class JudicialProcessMovementComplementSchema extends BaseModel {
-  static $columns = [
-    'complementCode',
-    'complementDescription',
-    'complementName',
-    'complementValue',
-    'createdAt',
-    'id',
-    'idempotencyKey',
-    'movementId',
-    'rawData',
-    'sequence',
-    'sourceRecordId',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['complementCode', 'complementDescription', 'complementName', 'complementTypeId', 'complementValue', 'createdAt', 'id', 'idempotencyKey', 'movementId', 'rawData', 'sequence', 'sourceRecordId', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessMovementComplementSchema.$columns
   @column()
   declare complementCode: number | null
@@ -456,6 +501,8 @@ export class JudicialProcessMovementComplementSchema extends BaseModel {
   declare complementDescription: string | null
   @column()
   declare complementName: string | null
+  @column()
+  declare complementTypeId: string | null
   @column()
   declare complementValue: number | null
   @column.dateTime({ autoCreate: true })
@@ -479,24 +526,7 @@ export class JudicialProcessMovementComplementSchema extends BaseModel {
 }
 
 export class JudicialProcessMovementSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'id',
-    'idempotencyKey',
-    'judgingBodyCode',
-    'judgingBodyMunicipalityIbgeCode',
-    'judgingBodyName',
-    'movementCode',
-    'movementName',
-    'occurredAt',
-    'processId',
-    'rawData',
-    'sequence',
-    'source',
-    'sourceRecordId',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'id', 'idempotencyKey', 'judgingBodyCode', 'judgingBodyId', 'judgingBodyMunicipalityIbgeCode', 'judgingBodyName', 'movementCode', 'movementName', 'movementTypeId', 'occurredAt', 'processId', 'rawData', 'sequence', 'source', 'sourceRecordId', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessMovementSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -507,6 +537,8 @@ export class JudicialProcessMovementSchema extends BaseModel {
   @column()
   declare judgingBodyCode: string | null
   @column()
+  declare judgingBodyId: string | null
+  @column()
   declare judgingBodyMunicipalityIbgeCode: number | null
   @column()
   declare judgingBodyName: string | null
@@ -514,6 +546,8 @@ export class JudicialProcessMovementSchema extends BaseModel {
   declare movementCode: number | null
   @column()
   declare movementName: string
+  @column()
+  declare movementTypeId: string | null
   @column.dateTime()
   declare occurredAt: DateTime | null
   @column()
@@ -533,21 +567,7 @@ export class JudicialProcessMovementSchema extends BaseModel {
 }
 
 export class JudicialProcessSignalSchema extends BaseModel {
-  static $columns = [
-    'confidence',
-    'createdAt',
-    'detectedAt',
-    'evidence',
-    'id',
-    'idempotencyKey',
-    'movementId',
-    'polarity',
-    'processId',
-    'signalCode',
-    'source',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['confidence', 'createdAt', 'detectedAt', 'evidence', 'id', 'idempotencyKey', 'movementId', 'polarity', 'processId', 'signalCode', 'source', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessSignalSchema.$columns
   @column()
   declare confidence: number
@@ -578,19 +598,7 @@ export class JudicialProcessSignalSchema extends BaseModel {
 }
 
 export class JudicialProcessSubjectSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'id',
-    'idempotencyKey',
-    'processId',
-    'rawData',
-    'sequence',
-    'sourceRecordId',
-    'subjectCode',
-    'subjectName',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'id', 'idempotencyKey', 'processId', 'rawData', 'sequence', 'sourceRecordId', 'subjectCatalogId', 'subjectCode', 'subjectName', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessSubjectSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -607,6 +615,8 @@ export class JudicialProcessSubjectSchema extends BaseModel {
   @column()
   declare sourceRecordId: string | null
   @column()
+  declare subjectCatalogId: string | null
+  @column()
   declare subjectCode: number | null
   @column()
   declare subjectName: string
@@ -617,43 +627,14 @@ export class JudicialProcessSubjectSchema extends BaseModel {
 }
 
 export class JudicialProcessSchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'classCode',
-    'className',
-    'cnjNumber',
-    'courtAlias',
-    'courtCode',
-    'courtName',
-    'createdAt',
-    'datajudId',
-    'datajudIndex',
-    'datajudIndexedAt',
-    'datajudUpdatedAt',
-    'degree',
-    'deletedAt',
-    'filedAt',
-    'formatCode',
-    'formatName',
-    'id',
-    'judgingBodyCode',
-    'judgingBodyMunicipalityIbgeCode',
-    'judgingBodyName',
-    'rawData',
-    'secrecyLevel',
-    'source',
-    'sourceRecordId',
-    'subject',
-    'systemCode',
-    'systemName',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['assetId', 'classCode', 'classId', 'className', 'cnjNumber', 'courtAlias', 'courtCode', 'courtId', 'courtName', 'createdAt', 'datajudId', 'datajudIndex', 'datajudIndexedAt', 'datajudUpdatedAt', 'degree', 'deletedAt', 'filedAt', 'formatCode', 'formatId', 'formatName', 'id', 'judgingBodyCode', 'judgingBodyId', 'judgingBodyMunicipalityIbgeCode', 'judgingBodyName', 'rawData', 'secrecyLevel', 'source', 'sourceRecordId', 'subject', 'systemCode', 'systemId', 'systemName', 'tenantId', 'updatedAt'] as const
   $columns = JudicialProcessSchema.$columns
   @column()
   declare assetId: string | null
   @column()
   declare classCode: number | null
+  @column()
+  declare classId: string | null
   @column()
   declare className: string | null
   @column()
@@ -662,6 +643,8 @@ export class JudicialProcessSchema extends BaseModel {
   declare courtAlias: string | null
   @column()
   declare courtCode: string | null
+  @column()
+  declare courtId: string | null
   @column()
   declare courtName: string | null
   @column.dateTime({ autoCreate: true })
@@ -683,11 +666,15 @@ export class JudicialProcessSchema extends BaseModel {
   @column()
   declare formatCode: number | null
   @column()
+  declare formatId: string | null
+  @column()
   declare formatName: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare judgingBodyCode: string | null
+  @column()
+  declare judgingBodyId: string | null
   @column()
   declare judgingBodyMunicipalityIbgeCode: number | null
   @column()
@@ -705,6 +692,8 @@ export class JudicialProcessSchema extends BaseModel {
   @column()
   declare systemCode: number | null
   @column()
+  declare systemId: string | null
+  @column()
   declare systemName: string | null
   @column()
   declare tenantId: string
@@ -712,20 +701,61 @@ export class JudicialProcessSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class JudicialSubjectsCatalogSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = JudicialSubjectsCatalogSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class JudicialSystemSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = JudicialSystemSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class MarketRateSerySchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'description', 'id', 'key', 'periodicity', 'source', 'unit', 'updatedAt'] as const
+  $columns = MarketRateSerySchema.$columns
+  @column()
+  declare code: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare key: string
+  @column()
+  declare periodicity: string
+  @column()
+  declare source: string
+  @column()
+  declare unit: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class MarketRateSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'id',
-    'periodicity',
-    'rateDate',
-    'rawData',
-    'seriesCode',
-    'seriesKey',
-    'source',
-    'unit',
-    'updatedAt',
-    'value',
-  ] as const
+  static $columns = ['createdAt', 'id', 'periodicity', 'rateDate', 'rawData', 'seriesCode', 'seriesId', 'seriesKey', 'source', 'unit', 'updatedAt', 'value'] as const
   $columns = MarketRateSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -740,6 +770,8 @@ export class MarketRateSchema extends BaseModel {
   @column()
   declare seriesCode: string | null
   @column()
+  declare seriesId: string | null
+  @column()
   declare seriesKey: string
   @column()
   declare source: string
@@ -749,6 +781,40 @@ export class MarketRateSchema extends BaseModel {
   declare updatedAt: DateTime
   @column()
   declare value: string
+}
+
+export class MovementComplementTypeSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'description', 'id', 'name', 'updatedAt', 'value'] as const
+  $columns = MovementComplementTypeSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+  @column()
+  declare value: number | null
+}
+
+export class MovementTypeSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = MovementTypeSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
 }
 
 export class PermissionSchema extends BaseModel {
@@ -769,52 +835,7 @@ export class PermissionSchema extends BaseModel {
 }
 
 export class PrecatorioAssetSchema extends BaseModel {
-  static $columns = [
-    'assetNumber',
-    'autuatedAt',
-    'baseDate',
-    'budgetUnitCode',
-    'budgetUnitName',
-    'budgetYear',
-    'causeType',
-    'cnjNumber',
-    'complianceStatus',
-    'correctionEndedAt',
-    'correctionIndex',
-    'correctionStartedAt',
-    'courtClass',
-    'courtCode',
-    'courtName',
-    'createdAt',
-    'currentScore',
-    'currentScoreId',
-    'debtorId',
-    'deletedAt',
-    'elapsedYears',
-    'elapsedYearsClass',
-    'estimatedUpdatedValue',
-    'exerciseYear',
-    'expenseType',
-    'externalId',
-    'faceValue',
-    'fundef',
-    'id',
-    'lifecycleStatus',
-    'nature',
-    'natureExpenseCode',
-    'originFiledAt',
-    'originProcessNumber',
-    'piiStatus',
-    'queuePosition',
-    'rawData',
-    'rowFingerprint',
-    'source',
-    'sourceRecordId',
-    'taxClaim',
-    'tenantId',
-    'updatedAt',
-    'valueRange',
-  ] as const
+  static $columns = ['assetNumber', 'autuatedAt', 'baseDate', 'budgetUnitCode', 'budgetUnitId', 'budgetUnitName', 'budgetYear', 'causeType', 'cnjNumber', 'complianceStatus', 'correctionEndedAt', 'correctionIndex', 'correctionStartedAt', 'courtClass', 'courtCode', 'courtId', 'courtName', 'createdAt', 'currentScore', 'currentScoreId', 'debtorId', 'deletedAt', 'elapsedYears', 'elapsedYearsClass', 'estimatedUpdatedValue', 'exerciseYear', 'expenseType', 'externalId', 'faceValue', 'fundef', 'id', 'lifecycleStatus', 'nature', 'natureExpenseCode', 'originFiledAt', 'originProcessNumber', 'piiStatus', 'queuePosition', 'rawData', 'rowFingerprint', 'source', 'sourceRecordId', 'taxClaim', 'tenantId', 'updatedAt', 'valueRange'] as const
   $columns = PrecatorioAssetSchema.$columns
   @column()
   declare assetNumber: string | null
@@ -824,6 +845,8 @@ export class PrecatorioAssetSchema extends BaseModel {
   declare baseDate: DateTime | null
   @column()
   declare budgetUnitCode: string | null
+  @column()
+  declare budgetUnitId: string | null
   @column()
   declare budgetUnitName: string | null
   @column()
@@ -844,6 +867,8 @@ export class PrecatorioAssetSchema extends BaseModel {
   declare courtClass: string | null
   @column()
   declare courtCode: string | null
+  @column()
+  declare courtId: string | null
   @column()
   declare courtName: string | null
   @column.dateTime({ autoCreate: true })
@@ -906,24 +931,23 @@ export class PrecatorioAssetSchema extends BaseModel {
   declare valueRange: string | null
 }
 
+export class ProcessFormatSchema extends BaseModel {
+  static $columns = ['code', 'createdAt', 'id', 'name', 'updatedAt'] as const
+  $columns = ProcessFormatSchema.$columns
+  @column()
+  declare code: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class ProcessMatchCandidateSchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'candidateCnj',
-    'candidateDatajudId',
-    'candidateIndex',
-    'courtAlias',
-    'createdAt',
-    'id',
-    'rawData',
-    'score',
-    'signals',
-    'source',
-    'sourceRecordId',
-    'status',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['assetId', 'candidateCnj', 'candidateDatajudId', 'candidateIndex', 'courtAlias', 'createdAt', 'id', 'rawData', 'score', 'signals', 'source', 'sourceRecordId', 'status', 'tenantId', 'updatedAt'] as const
   $columns = ProcessMatchCandidateSchema.$columns
   @column()
   declare assetId: string
@@ -958,15 +982,7 @@ export class ProcessMatchCandidateSchema extends BaseModel {
 }
 
 export class PublicationEventSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'eventDate',
-    'eventType',
-    'id',
-    'payload',
-    'publicationId',
-    'tenantId',
-  ] as const
+  static $columns = ['createdAt', 'eventDate', 'eventType', 'id', 'payload', 'publicationId', 'tenantId'] as const
   $columns = PublicationEventSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -985,21 +1001,7 @@ export class PublicationEventSchema extends BaseModel {
 }
 
 export class PublicationSchema extends BaseModel {
-  static $columns = [
-    'assetId',
-    'body',
-    'createdAt',
-    'id',
-    'processId',
-    'publicationDate',
-    'rawData',
-    'source',
-    'sourceRecordId',
-    'tenantId',
-    'textHash',
-    'title',
-    'updatedAt',
-  ] as const
+  static $columns = ['assetId', 'body', 'createdAt', 'id', 'processId', 'publicationDate', 'rawData', 'source', 'sourceRecordId', 'tenantId', 'textHash', 'title', 'updatedAt'] as const
   $columns = PublicationSchema.$columns
   @column()
   declare assetId: string | null
@@ -1030,25 +1032,7 @@ export class PublicationSchema extends BaseModel {
 }
 
 export class RadarJobRunSchema extends BaseModel {
-  static $columns = [
-    'attempts',
-    'bullmqJobId',
-    'createdAt',
-    'durationMs',
-    'errorCode',
-    'errorMessage',
-    'finishedAt',
-    'id',
-    'jobName',
-    'metadata',
-    'metrics',
-    'origin',
-    'queueName',
-    'startedAt',
-    'status',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['attempts', 'bullmqJobId', 'createdAt', 'durationMs', 'errorCode', 'errorMessage', 'finishedAt', 'id', 'jobName', 'metadata', 'metrics', 'origin', 'queueName', 'startedAt', 'status', 'tenantId', 'updatedAt'] as const
   $columns = RadarJobRunSchema.$columns
   @column()
   declare attempts: number
@@ -1087,15 +1071,7 @@ export class RadarJobRunSchema extends BaseModel {
 }
 
 export class RetentionConfigSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'enabled',
-    'id',
-    'retentionDays',
-    'subject',
-    'tenantId',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'enabled', 'id', 'retentionDays', 'subject', 'tenantId', 'updatedAt'] as const
   $columns = RetentionConfigSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1114,15 +1090,7 @@ export class RetentionConfigSchema extends BaseModel {
 }
 
 export class RetentionManifestSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'cutoffAt',
-    'deletedCount',
-    'id',
-    'metadata',
-    'subject',
-    'tenantId',
-  ] as const
+  static $columns = ['createdAt', 'cutoffAt', 'deletedCount', 'id', 'metadata', 'subject', 'tenantId'] as const
   $columns = RetentionManifestSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1169,19 +1137,7 @@ export class RoleSchema extends BaseModel {
 }
 
 export class SecurityAuditLogSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'emailHash',
-    'event',
-    'id',
-    'ipAddress',
-    'metadata',
-    'requestId',
-    'severity',
-    'tenantId',
-    'userAgent',
-    'userId',
-  ] as const
+  static $columns = ['createdAt', 'emailHash', 'event', 'id', 'ipAddress', 'metadata', 'requestId', 'severity', 'tenantId', 'userAgent', 'userId'] as const
   $columns = SecurityAuditLogSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1208,26 +1164,7 @@ export class SecurityAuditLogSchema extends BaseModel {
 }
 
 export class SiopImportSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'deletedAt',
-    'errors',
-    'exerciseYear',
-    'finishedAt',
-    'id',
-    'inserted',
-    'rawMetadata',
-    'skipped',
-    'source',
-    'sourceRecordId',
-    'startedAt',
-    'status',
-    'tenantId',
-    'totalRows',
-    'updated',
-    'updatedAt',
-    'uploadedByUserId',
-  ] as const
+  static $columns = ['createdAt', 'deletedAt', 'errors', 'exerciseYear', 'finishedAt', 'id', 'inserted', 'rawMetadata', 'skipped', 'source', 'sourceRecordId', 'startedAt', 'status', 'tenantId', 'totalRows', 'updated', 'updatedAt', 'uploadedByUserId'] as const
   $columns = SiopImportSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1268,19 +1205,7 @@ export class SiopImportSchema extends BaseModel {
 }
 
 export class SiopStagingRowSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'errors',
-    'id',
-    'importId',
-    'normalizedCnj',
-    'normalizedDebtorKey',
-    'normalizedValue',
-    'normalizedYear',
-    'processedAt',
-    'rawData',
-    'validationStatus',
-  ] as const
+  static $columns = ['createdAt', 'errors', 'id', 'importId', 'normalizedCnj', 'normalizedDebtorKey', 'normalizedValue', 'normalizedYear', 'processedAt', 'rawData', 'validationStatus'] as const
   $columns = SiopStagingRowSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1307,20 +1232,7 @@ export class SiopStagingRowSchema extends BaseModel {
 }
 
 export class SourceRecordSchema extends BaseModel {
-  static $columns = [
-    'collectedAt',
-    'createdAt',
-    'fileSizeBytes',
-    'id',
-    'mimeType',
-    'originalFilename',
-    'rawData',
-    'source',
-    'sourceChecksum',
-    'sourceFilePath',
-    'sourceUrl',
-    'tenantId',
-  ] as const
+  static $columns = ['collectedAt', 'createdAt', 'fileSizeBytes', 'id', 'mimeType', 'originalFilename', 'rawData', 'source', 'sourceChecksum', 'sourceFilePath', 'sourceUrl', 'tenantId'] as const
   $columns = SourceRecordSchema.$columns
   @column.dateTime()
   declare collectedAt: DateTime
@@ -1366,17 +1278,7 @@ export class TenantMembershipSchema extends BaseModel {
 }
 
 export class TenantSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'document',
-    'id',
-    'name',
-    'plan',
-    'rbacVersion',
-    'slug',
-    'status',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'document', 'id', 'name', 'plan', 'rbacVersion', 'slug', 'status', 'updatedAt'] as const
   $columns = TenantSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -1416,15 +1318,7 @@ export class UserRoleSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'email',
-    'fullName',
-    'id',
-    'password',
-    'status',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'status', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

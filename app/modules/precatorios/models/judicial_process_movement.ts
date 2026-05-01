@@ -8,6 +8,8 @@ import JudicialProcessSignal from '#modules/precatorios/models/judicial_process_
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import SourceRecord from '#modules/siop/models/source_record'
 import Tenant from '#modules/tenant/models/tenant'
+import JudgingBody from '#modules/reference/models/judging_body'
+import MovementType from '#modules/reference/models/movement_type'
 
 export default class JudicialProcessMovement extends TenantModel {
   @column()
@@ -18,6 +20,9 @@ export default class JudicialProcessMovement extends TenantModel {
 
   @column()
   declare source: SourceType
+
+  @column()
+  declare movementTypeId: string | null
 
   @column()
   declare movementCode: number | null
@@ -33,6 +38,9 @@ export default class JudicialProcessMovement extends TenantModel {
 
   @column()
   declare judgingBodyCode: string | null
+
+  @column()
+  declare judgingBodyId: string | null
 
   @column()
   declare judgingBodyName: string | null
@@ -56,6 +64,16 @@ export default class JudicialProcessMovement extends TenantModel {
 
   @belongsTo(() => SourceRecord)
   declare sourceRecord: BelongsTo<typeof SourceRecord>
+
+  @belongsTo(() => MovementType, {
+    foreignKey: 'movementTypeId',
+  })
+  declare movementType: BelongsTo<typeof MovementType>
+
+  @belongsTo(() => JudgingBody, {
+    foreignKey: 'judgingBodyId',
+  })
+  declare judgingBody: BelongsTo<typeof JudgingBody>
 
   @hasMany(() => JudicialProcessMovementComplement, {
     foreignKey: 'movementId',

@@ -15,9 +15,13 @@ import Tenant from '#modules/tenant/models/tenant'
 import SourceRecord from '#modules/siop/models/source_record'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetScore from '#modules/precatorios/models/asset_score'
+import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
+import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import Publication from '#modules/precatorios/models/publication'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import BudgetUnit from '#modules/reference/models/budget_unit'
+import Court from '#modules/reference/models/court'
 
 export default class PrecatorioAsset extends TenantBaseModel {
   @column()
@@ -37,6 +41,12 @@ export default class PrecatorioAsset extends TenantBaseModel {
 
   @column()
   declare debtorId: string | null
+
+  @column()
+  declare courtId: string | null
+
+  @column()
+  declare budgetUnitId: string | null
 
   @column()
   declare assetNumber: string | null
@@ -146,6 +156,12 @@ export default class PrecatorioAsset extends TenantBaseModel {
   @belongsTo(() => Debtor)
   declare debtor: BelongsTo<typeof Debtor>
 
+  @belongsTo(() => Court)
+  declare court: BelongsTo<typeof Court>
+
+  @belongsTo(() => BudgetUnit)
+  declare budgetUnit: BelongsTo<typeof BudgetUnit>
+
   @belongsTo(() => AssetScore, {
     foreignKey: 'currentScoreId',
   })
@@ -160,6 +176,16 @@ export default class PrecatorioAsset extends TenantBaseModel {
     foreignKey: 'assetId',
   })
   declare scores: HasMany<typeof AssetScore>
+
+  @hasMany(() => AssetBudgetFact, {
+    foreignKey: 'assetId',
+  })
+  declare budgetFacts: HasMany<typeof AssetBudgetFact>
+
+  @hasMany(() => AssetValuation, {
+    foreignKey: 'assetId',
+  })
+  declare valuations: HasMany<typeof AssetValuation>
 
   @hasMany(() => JudicialProcess, {
     foreignKey: 'assetId',

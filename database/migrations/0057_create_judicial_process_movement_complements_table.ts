@@ -19,6 +19,12 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('source_records')
         .onDelete('SET NULL')
+      table
+        .uuid('complement_type_id')
+        .nullable()
+        .references('id')
+        .inTable('movement_complement_types')
+        .onDelete('SET NULL')
       table.integer('complement_code').nullable()
       table.integer('complement_value').nullable()
       table.text('complement_name').nullable()
@@ -32,6 +38,7 @@ export default class extends BaseSchema {
 
       table.unique(['tenant_id', 'idempotency_key'])
       table.index(['tenant_id', 'movement_id'])
+      table.index(['tenant_id', 'complement_type_id'])
       table.index(['tenant_id', 'complement_description'])
       table.index(['tenant_id', 'complement_code', 'complement_value'])
     })

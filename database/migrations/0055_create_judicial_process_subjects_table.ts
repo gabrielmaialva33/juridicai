@@ -19,6 +19,12 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('source_records')
         .onDelete('SET NULL')
+      table
+        .uuid('subject_catalog_id')
+        .nullable()
+        .references('id')
+        .inTable('judicial_subjects_catalog')
+        .onDelete('SET NULL')
       table.integer('subject_code').nullable()
       table.text('subject_name').notNullable()
       table.integer('sequence').nullable()
@@ -30,6 +36,7 @@ export default class extends BaseSchema {
 
       table.unique(['tenant_id', 'idempotency_key'])
       table.index(['tenant_id', 'process_id'])
+      table.index(['tenant_id', 'subject_catalog_id'])
       table.index(['tenant_id', 'subject_code'])
     })
   }
