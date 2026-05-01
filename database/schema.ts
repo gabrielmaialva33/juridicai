@@ -166,6 +166,78 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CessionOpportunitySchema extends BaseModel {
+  static $columns = [
+    'assetId',
+    'createdAt',
+    'createdByUserId',
+    'expectedAnnualIrr',
+    'finalScore',
+    'grade',
+    'id',
+    'lastContactedAt',
+    'metadata',
+    'notes',
+    'offerRate',
+    'offerValue',
+    'paymentProbability',
+    'pricingSnapshot',
+    'priority',
+    'riskAdjustedIrr',
+    'stage',
+    'targetCloseAt',
+    'tenantId',
+    'termMonths',
+    'updatedAt',
+    'updatedByUserId',
+  ] as const
+  $columns = CessionOpportunitySchema.$columns
+  @column()
+  declare assetId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByUserId: string | null
+  @column()
+  declare expectedAnnualIrr: string | null
+  @column()
+  declare finalScore: string | null
+  @column()
+  declare grade: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column.dateTime()
+  declare lastContactedAt: DateTime | null
+  @column()
+  declare metadata: any | null
+  @column()
+  declare notes: string | null
+  @column()
+  declare offerRate: string | null
+  @column()
+  declare offerValue: string | null
+  @column()
+  declare paymentProbability: string | null
+  @column()
+  declare pricingSnapshot: any | null
+  @column()
+  declare priority: number
+  @column()
+  declare riskAdjustedIrr: string | null
+  @column()
+  declare stage: string
+  @column.dateTime()
+  declare targetCloseAt: DateTime | null
+  @column()
+  declare tenantId: string
+  @column()
+  declare termMonths: number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+  @column()
+  declare updatedByUserId: string | null
+}
+
 export class ClientErrorSchema extends BaseModel {
   static $columns = [
     'createdAt',
@@ -444,6 +516,57 @@ export class PrecatorioAssetSchema extends BaseModel {
   declare source: any
   @column()
   declare sourceRecordId: string | null
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class ProcessMatchCandidateSchema extends BaseModel {
+  static $columns = [
+    'assetId',
+    'candidateCnj',
+    'candidateDatajudId',
+    'candidateIndex',
+    'courtAlias',
+    'createdAt',
+    'id',
+    'rawData',
+    'score',
+    'signals',
+    'source',
+    'sourceRecordId',
+    'status',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = ProcessMatchCandidateSchema.$columns
+  @column()
+  declare assetId: string
+  @column()
+  declare candidateCnj: string
+  @column()
+  declare candidateDatajudId: string
+  @column()
+  declare candidateIndex: string
+  @column()
+  declare courtAlias: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare rawData: any
+  @column()
+  declare score: number
+  @column()
+  declare signals: any
+  @column()
+  declare source: any
+  @column()
+  declare sourceRecordId: string | null
+  @column()
+  declare status: string
   @column()
   declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })

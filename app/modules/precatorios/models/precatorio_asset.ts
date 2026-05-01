@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
-import { belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { belongsTo, column, hasMany, hasOne } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 import TenantBaseModel from '#shared/models/tenant_base_model'
 import type {
   AssetNature,
@@ -17,6 +17,7 @@ import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetScore from '#modules/precatorios/models/asset_score'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import Publication from '#modules/precatorios/models/publication'
+import CessionOpportunity from '#modules/operations/models/cession_opportunity'
 
 export default class PrecatorioAsset extends TenantBaseModel {
   @column()
@@ -115,4 +116,9 @@ export default class PrecatorioAsset extends TenantBaseModel {
     foreignKey: 'assetId',
   })
   declare publications: HasMany<typeof Publication>
+
+  @hasOne(() => CessionOpportunity, {
+    foreignKey: 'assetId',
+  })
+  declare cessionOpportunity: HasOne<typeof CessionOpportunity>
 }
