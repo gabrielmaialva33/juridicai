@@ -17,6 +17,7 @@ export type GovernmentDataSyncOptions = {
   dataJudPageSize?: number | null
   dataJudMaxPagesPerCourt?: number | null
   djenCourtAliases?: string[] | null
+  djenSearchTexts?: string[] | null
   djenStartDate?: string | null
   djenEndDate?: string | null
   djenMaxPagesPerCourt?: number | null
@@ -62,6 +63,7 @@ class GovernmentDataSyncOrchestratorService {
     const djenPublicationDiscovery = await djenPublicationSyncService.sync({
       tenantId: options.tenantId,
       courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases,
+      searchTexts: options.djenSearchTexts,
       startDate: options.djenStartDate,
       endDate: options.djenEndDate,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
@@ -138,6 +140,7 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
     },
     djenPublicationDiscovery: {
       courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases ?? 'all',
+      searchTexts: options.djenSearchTexts ?? ['precatório', 'RPV'],
       startDate: options.djenStartDate ?? null,
       endDate: options.djenEndDate ?? null,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,

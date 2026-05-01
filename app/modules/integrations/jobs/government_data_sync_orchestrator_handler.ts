@@ -12,6 +12,7 @@ export type GovernmentDataSyncOrchestratorPayload = {
   dataJudPageSize?: number | null
   dataJudMaxPagesPerCourt?: number | null
   djenCourtAliases?: string[] | null
+  djenSearchTexts?: string[] | null
   djenStartDate?: string | null
   djenEndDate?: string | null
   djenMaxPagesPerCourt?: number | null
@@ -46,6 +47,7 @@ export async function handleGovernmentDataSyncOrchestrator(
       dataJudPageSize: payload.dataJudPageSize ?? null,
       dataJudMaxPagesPerCourt: payload.dataJudMaxPagesPerCourt ?? null,
       djenCourtAliases: payload.djenCourtAliases ?? null,
+      djenSearchTexts: payload.djenSearchTexts ?? null,
       djenStartDate: payload.djenStartDate ?? null,
       djenEndDate: payload.djenEndDate ?? null,
       djenMaxPagesPerCourt: payload.djenMaxPagesPerCourt ?? null,

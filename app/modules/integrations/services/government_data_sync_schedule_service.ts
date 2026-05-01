@@ -5,6 +5,7 @@ export const SIOP_OPEN_DATA_START_YEAR = 2008
 export const DATAJUD_SCHEDULED_COURT_BATCH_SIZE = 12
 export const DATAJUD_SCHEDULED_MAX_PAGES_PER_COURT = 25
 export const DJEN_SCHEDULED_MAX_PAGES_PER_COURT = 5
+export const DJEN_SCHEDULED_SEARCH_TEXTS = ['precatório', 'RPV'] as const
 
 class GovernmentDataSyncScheduleService {
   buildScheduledPayload(now: DateTime = DateTime.utc()) {
@@ -16,6 +17,7 @@ class GovernmentDataSyncScheduleService {
       dataJudPageSize: 100,
       dataJudMaxPagesPerCourt: DATAJUD_SCHEDULED_MAX_PAGES_PER_COURT,
       djenCourtAliases: courtAliases,
+      djenSearchTexts: [...DJEN_SCHEDULED_SEARCH_TEXTS],
       djenStartDate: now.minus({ days: 1 }).toISODate(),
       djenEndDate: now.toISODate(),
       djenMaxPagesPerCourt: DJEN_SCHEDULED_MAX_PAGES_PER_COURT,

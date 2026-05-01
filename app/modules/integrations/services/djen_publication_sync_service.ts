@@ -7,6 +7,7 @@ import type { JobRunOrigin, JsonRecord } from '#shared/types/model_enums'
 export type DjenPublicationSyncServiceOptions = {
   tenantId: string
   courtAliases?: string[] | null
+  searchTexts?: string[] | null
   startDate?: string | null
   endDate?: string | null
   maxPagesPerCourt?: number | null
@@ -17,6 +18,7 @@ export type DjenPublicationSyncServiceOptions = {
 
 export type DjenPublicationCourtMetrics = {
   courtAlias: string
+  searchText: string
   requestedPages: number
   count: number
   fetched: number
@@ -40,8 +42,9 @@ export type DjenPublicationSyncServiceResult = {
   startDate: string
   endDate: string
   maxPagesPerCourt: number
+  searchTexts: string[]
   courts: DjenPublicationCourtMetrics[]
-  totals: Omit<DjenPublicationCourtMetrics, 'courtAlias' | 'errorMessages'>
+  totals: Omit<DjenPublicationCourtMetrics, 'courtAlias' | 'searchText' | 'errorMessages'>
 }
 
 class DjenPublicationSyncService {
@@ -49,6 +52,7 @@ class DjenPublicationSyncService {
     options: DjenPublicationSyncServiceOptions
   ): Promise<DjenPublicationSyncServiceResult> {
     const courtAliases = normalizeCourtAliases(options.courtAliases)
+    const searchTexts = normalizeSearchTexts(options.searchTexts)
     const startDate = normalizeDate(options.startDate, DateTime.utc().minus({ days: 1 }))
     const endDate = normalizeDate(options.endDate, DateTime.utc())
     const maxPagesPerCourt = normalizeMaxPages(options.maxPagesPerCourt)
@@ -58,6 +62,7 @@ class DjenPublicationSyncService {
       origin: options.origin ?? 'system',
       scope: {
         courtAliases,
+        searchTexts,
         startDate,
         endDate,
         maxPagesPerCourt,
@@ -68,15 +73,18 @@ class DjenPublicationSyncService {
     try {
       const courts: DjenPublicationCourtMetrics[] = []
       for (const courtAlias of courtAliases) {
-        courts.push(
-          await this.syncCourt({
-            ...options,
-            courtAlias,
-            startDate,
-            endDate,
-            maxPagesPerCourt,
-          })
-        )
+        for (const searchText of searchTexts) {
+          courts.push(
+            await this.syncCourt({
+              ...options,
+              courtAlias,
+              searchText,
+              startDate,
+              endDate,
+              maxPagesPerCourt,
+            })
+          )
+        }
       }
 
       const result = {
@@ -84,6 +92,7 @@ class DjenPublicationSyncService {
         startDate,
         endDate,
         maxPagesPerCourt,
+        searchTexts,
         courts,
         totals: sumCourtMetrics(courts),
       }
@@ -105,6 +114,7 @@ class DjenPublicationSyncService {
         errorCount: 1,
         metrics: {
           courtAliases,
+          searchTexts,
           startDate,
           endDate,
           maxPagesPerCourt,
@@ -117,17 +127,19 @@ class DjenPublicationSyncService {
   private async syncCourt(
     options: DjenPublicationSyncServiceOptions & {
       courtAlias: string
+      searchText: string
       startDate: string
       endDate: string
       maxPagesPerCourt: number
     }
   ) {
-    const metrics = emptyCourtMetrics(options.courtAlias)
+    const metrics = emptyCourtMetrics(options.courtAlias, options.searchText)
 
     try {
       const result = await djenPublicationAdapter.sync({
         tenantId: options.tenantId,
         siglaTribunal: options.courtAlias,
+        texto: options.searchText,
         dataDisponibilizacaoInicio: options.startDate,
         dataDisponibilizacaoFim: options.endDate,
         meio: 'D',
@@ -166,6 +178,12 @@ function normalizeCourtAliases(value?: string[] | null) {
   return [...new Set(aliases.map((alias) => alias.trim().toUpperCase()).filter(Boolean))]
 }
 
+function normalizeSearchTexts(value?: string[] | null) {
+  const texts = value?.length ? value : ['precatório', 'RPV']
+
+  return [...new Set(texts.map((text) => text.trim()).filter(Boolean))]
+}
+
 function normalizeDate(value: string | null | undefined, fallback: DateTime) {
   if (!value) {
     return fallback.toISODate()!
@@ -183,9 +201,10 @@ function normalizeMaxPages(value?: number | null) {
   return Math.min(Math.floor(value), 100)
 }
 
-function emptyCourtMetrics(courtAlias: string): DjenPublicationCourtMetrics {
+function emptyCourtMetrics(courtAlias: string, searchText: string): DjenPublicationCourtMetrics {
   return {
     courtAlias,
+    searchText,
     requestedPages: 0,
     count: 0,
     fetched: 0,

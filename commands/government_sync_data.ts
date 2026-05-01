@@ -46,6 +46,11 @@ export default class GovernmentSyncData extends BaseCommand {
   declare djenCourts?: string
 
   @flags.string({
+    description: 'Comma-separated DJEN text searches. Defaults to precatório and RPV',
+  })
+  declare djenTexts?: string
+
+  @flags.string({
     description: 'DJEN availability start date in ISO format',
   })
   declare djenStartDate?: string
@@ -109,6 +114,7 @@ export default class GovernmentSyncData extends BaseCommand {
       dataJudPageSize: this.datajudPageSize,
       dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
       djenCourtAliases: normalizeAliases(this.djenCourts?.split(',')),
+      djenSearchTexts: normalizeSearchTexts(this.djenTexts),
       djenStartDate: this.djenStartDate,
       djenEndDate: this.djenEndDate,
       djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
@@ -161,4 +167,15 @@ function parseYears(value?: string) {
     .split(',')
     .map((year) => Number(year.trim()))
     .filter((year) => Number.isInteger(year))
+}
+
+function normalizeSearchTexts(value?: string) {
+  if (!value?.trim()) {
+    return undefined
+  }
+
+  return value
+    .split(',')
+    .map((text) => text.trim())
+    .filter(Boolean)
 }

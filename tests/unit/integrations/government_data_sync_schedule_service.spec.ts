@@ -4,6 +4,7 @@ import governmentDataSyncScheduleService, {
   DATAJUD_SCHEDULED_COURT_BATCH_SIZE,
   DATAJUD_SCHEDULED_MAX_PAGES_PER_COURT,
   DJEN_SCHEDULED_MAX_PAGES_PER_COURT,
+  DJEN_SCHEDULED_SEARCH_TEXTS,
   SIOP_OPEN_DATA_START_YEAR,
 } from '#modules/integrations/services/government_data_sync_schedule_service'
 
@@ -36,6 +37,7 @@ test.group('Government data sync schedule service', () => {
     assert.lengthOf(payload.dataJudCourtAliases, DATAJUD_SCHEDULED_COURT_BATCH_SIZE)
     assert.equal(payload.dataJudMaxPagesPerCourt, DATAJUD_SCHEDULED_MAX_PAGES_PER_COURT)
     assert.deepEqual(payload.djenCourtAliases, payload.dataJudCourtAliases)
+    assert.deepEqual(payload.djenSearchTexts, [...DJEN_SCHEDULED_SEARCH_TEXTS])
     assert.equal(payload.djenStartDate, '2026-04-30')
     assert.equal(payload.djenEndDate, '2026-05-01')
     assert.equal(payload.djenMaxPagesPerCourt, DJEN_SCHEDULED_MAX_PAGES_PER_COURT)
