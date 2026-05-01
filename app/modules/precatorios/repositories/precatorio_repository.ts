@@ -68,6 +68,7 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
       .preload('scores', (query) => query.orderBy('computed_at', 'desc').limit(20))
       .preload('judicialProcesses', (query) => query.orderBy('created_at', 'desc').limit(20))
       .preload('publications', (query) => query.orderBy('publication_date', 'desc').limit(20))
+      .preload('cessionOpportunity')
       .firstOrFail()
   }
 
