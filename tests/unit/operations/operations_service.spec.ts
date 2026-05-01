@@ -1,9 +1,13 @@
+import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import operationsService from '#modules/operations/services/operations_service'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import MarketRate from '#modules/market/models/market_rate'
 import { AssetEventFactory } from '#database/factories/asset_event_factory'
+import { DebtorPaymentStatFactory } from '#database/factories/debtor_payment_stat_factory'
 import { DebtorFactory } from '#database/factories/debtor_factory'
+import { MarketRateFactory } from '#database/factories/market_rate_factory'
 import { PrecatorioAssetFactory } from '#database/factories/precatorio_asset_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import { UserFactory } from '#database/factories/user_factory'
@@ -15,6 +19,7 @@ test.group('operations service', () => {
   }) => {
     const tenant = await TenantFactory.create()
     const otherTenant = await TenantFactory.create()
+    await MarketRate.query().where('series_key', 'selic').delete()
     const debtor = await DebtorFactory.merge({
       tenantId: tenant.id,
       name: 'Instituto Nacional do Seguro Social',
@@ -22,6 +27,18 @@ test.group('operations service', () => {
       debtorType: 'autarchy',
       paymentRegime: 'federal_unique',
       paymentReliabilityScore: 96,
+    }).create()
+    await DebtorPaymentStatFactory.merge({
+      tenantId: tenant.id,
+      debtorId: debtor.id,
+      averagePaymentMonths: 14,
+      onTimePaymentRate: '0.960000',
+      reliabilityScore: 96,
+    }).create()
+    await MarketRateFactory.merge({
+      seriesKey: 'selic',
+      rateDate: DateTime.fromISO('2026-05-01'),
+      value: '0.0004900000',
     }).create()
     const strongAsset = await PrecatorioAssetFactory.merge({
       tenantId: tenant.id,
@@ -39,6 +56,14 @@ test.group('operations service', () => {
       source: 'djen',
       idempotencyKey: 'payment-available-test',
     }).create()
+    await CessionOpportunity.create({
+      tenantId: tenant.id,
+      assetId: strongAsset.id,
+      stage: 'inbox',
+      offerRate: '0.385',
+      termMonths: 14,
+      priority: 100,
+    })
     await PrecatorioAssetFactory.merge({
       tenantId: otherTenant.id,
       faceValue: '5000000.00',
@@ -55,10 +80,16 @@ test.group('operations service', () => {
     assert.equal(result.meta.total, 1)
     assert.equal(result.opportunities[0].asset.id, strongAsset.id)
     assert.equal(result.opportunities[0].pricing.grade, 'A+')
+    assert.equal(
+      result.opportunities[0].pricing.assumptions.correctionRule,
+      'ec_136_min_ipca_plus_2_selic'
+    )
+    assert.equal(result.opportunities[0].debtor.averagePaymentMonths, 14)
     assert.isAtLeast(result.opportunities[0].pricing.riskAdjustedIrr, 0.25)
 
     await cleanupTenantData(tenant)
     await cleanupTenantData(otherTenant)
+    await MarketRate.query().where('series_key', 'selic').delete()
   })
 
   test('moves assets into the cession pipeline with a pricing snapshot and audit log', async ({

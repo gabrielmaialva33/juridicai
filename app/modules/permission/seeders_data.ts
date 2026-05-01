@@ -10,6 +10,8 @@ export const PERMISSIONS = [
   'integrations.datajud.manage',
   'operations.read',
   'operations.manage',
+  'market.read',
+  'market.manage',
   'admin.health.read',
   'admin.jobs.read',
 ] as const
@@ -32,6 +34,7 @@ export const ROLES = [
       'debtors.read',
       'integrations.datajud.read',
       'operations.read',
+      'market.read',
     ],
   },
 ] as const
