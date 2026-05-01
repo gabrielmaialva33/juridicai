@@ -26,6 +26,11 @@ import {
   type DataJudMatchCandidatesPayload,
 } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import {
+  SIOP_OPEN_DATA_SYNC_QUEUE,
+  handleSiopOpenDataSync,
+  type SiopOpenDataSyncPayload,
+} from '#modules/integrations/jobs/siop_open_data_sync_handler'
+import {
   APPLY_RETENTION_POLICY_QUEUE,
   handleApplyRetentionPolicy,
   type ApplyRetentionPolicyPayload,
@@ -54,6 +59,7 @@ export const queues = {
   refreshAggregates: { name: REFRESH_AGGREGATES_QUEUE, concurrency: 1 },
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
+  siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
   dataJudMatchCandidates: { name: DATAJUD_MATCH_CANDIDATES_QUEUE, concurrency: 1 },
 } as const
@@ -150,6 +156,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.exportPrecatorios.concurrency }
+  )
+
+  queueService.registerWorker<SiopOpenDataSyncPayload>(
+    queues.siopOpenDataSync.name,
+    async (job) => {
+      await handleSiopOpenDataSync({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.siopOpenDataSync.concurrency }
   )
 
   queueService.registerWorker<DataJudEnrichAssetsPayload>(

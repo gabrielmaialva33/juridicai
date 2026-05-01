@@ -1,6 +1,10 @@
 import scheduler from 'adonisjs-scheduler/services/main'
+import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
 import queueService from '#shared/services/queue_service'
 import { SIOP_RECONCILE_QUEUE } from '#modules/siop/jobs/siop_reconcile_handler'
+import { SIOP_OPEN_DATA_SYNC_QUEUE } from '#modules/integrations/jobs/siop_open_data_sync_handler'
+import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { PURGE_STAGING_QUEUE } from '#modules/maintenance/jobs/purge_staging_handler'
 import { REFRESH_AGGREGATES_QUEUE } from '#modules/maintenance/jobs/refresh_aggregates_handler'
@@ -14,6 +18,28 @@ scheduler
 scheduler
   .call(() => enqueueScheduledJob(SIOP_RECONCILE_QUEUE, 'siop-reconcile'))
   .weeklyOn(0, '03:00')
+  .withoutOverlapping()
+
+scheduler
+  .call(() =>
+    enqueueScheduledTenantJobs(SIOP_OPEN_DATA_SYNC_QUEUE, 'siop-open-data-sync', {
+      years: [DateTime.now().year, DateTime.now().plus({ years: 1 }).year],
+      download: true,
+      enqueueImports: true,
+    })
+  )
+  .dailyAt('01:00')
+  .withoutOverlapping()
+
+scheduler
+  .call(() =>
+    enqueueScheduledTenantJobs(DATAJUD_ENRICH_ASSETS_QUEUE, 'datajud-enrich-assets', {
+      limit: 500,
+      missingOnly: true,
+      dryRun: false,
+    })
+  )
+  .dailyAt('01:45')
   .withoutOverlapping()
 
 scheduler
@@ -34,7 +60,7 @@ scheduler
   .withoutOverlapping()
 
 async function enqueueScheduledJob(queueName: string, jobName: string) {
-  const windowId = Math.floor(Date.now() / (15 * 60 * 1000))
+  const windowId = Math.floor(DateTime.utc().toMillis() / (15 * 60 * 1000))
   const jobId = `${jobName}-${windowId}`
 
   await queueService.add(
@@ -52,4 +78,41 @@ async function enqueueScheduledJob(queueName: string, jobName: string) {
       },
     }
   )
+}
+
+async function enqueueScheduledTenantJobs(
+  queueName: string,
+  jobName: string,
+  payload: Record<string, unknown>
+) {
+  const tenants = await activeTenantIds()
+  const windowId = DateTime.utc().toFormat('yyyy-LL-dd')
+
+  await Promise.all(
+    tenants.map((tenantId) =>
+      queueService.add(
+        queueName,
+        jobName,
+        {
+          ...payload,
+          tenantId,
+          origin: 'scheduler',
+        },
+        {
+          jobId: `${jobName}-${tenantId}-${windowId}`,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        }
+      )
+    )
+  )
+}
+
+async function activeTenantIds() {
+  const rows = await db.from('tenants').where('status', 'active').select('id')
+
+  return rows.map((row) => String(row.id))
 }
