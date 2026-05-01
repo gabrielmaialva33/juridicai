@@ -44,6 +44,7 @@ export async function handleSiopOpenDataSync(payload: SiopOpenDataSyncPayload) {
           years: payload.years,
           download: payload.download,
           enqueueImports: payload.enqueueImports,
+          origin: payload.origin ?? 'scheduler',
         })
     )
 

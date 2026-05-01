@@ -4,8 +4,9 @@ import dataJudCandidateMatchService from '#modules/integrations/services/datajud
 import dataJudLegalSignalClassifierService from '#modules/integrations/services/datajud_legal_signal_classifier_service'
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import dataJudProcessAssetLinkService from '#modules/integrations/services/datajud_process_asset_link_service'
+import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
-import type { SourceType } from '#shared/types/model_enums'
+import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
 export type GovernmentDataSyncOptions = {
   tenantId: string
@@ -19,6 +20,7 @@ export type GovernmentDataSyncOptions = {
   matchLimit?: number | null
   candidatesPerAsset?: number | null
   source?: SourceType | null
+  origin?: JobRunOrigin
   dryRun?: boolean
 }
 
@@ -41,12 +43,14 @@ class GovernmentDataSyncOrchestratorService {
       years,
       download: true,
       enqueueImports: true,
+      origin: options.origin ?? 'scheduler',
     })
     const dataJudNationalDiscovery = await dataJudNationalPrecatorioSyncService.sync({
       tenantId: options.tenantId,
       courtAliases: options.dataJudCourtAliases,
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+      origin: options.origin ?? 'scheduler',
     })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
       tenantId: options.tenantId,
@@ -95,8 +99,7 @@ function normalizeYears(years?: number[] | null) {
     return [...new Set(years.map((year) => Math.trunc(year)).filter((year) => year >= 2008))]
   }
 
-  const now = DateTime.utc()
-  return [now.year, now.plus({ years: 1 }).year]
+  return governmentDataSyncScheduleService.siopBackfillYears()
 }
 
 function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {

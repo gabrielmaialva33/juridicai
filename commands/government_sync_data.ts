@@ -21,7 +21,7 @@ export default class GovernmentSyncData extends BaseCommand {
   declare tenantId?: string
 
   @flags.string({
-    description: 'Comma-separated SIOP years. Defaults to current and next year',
+    description: 'Comma-separated SIOP years. Defaults to the full public open-data range',
   })
   declare years?: string
 

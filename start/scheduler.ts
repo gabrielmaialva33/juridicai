@@ -2,6 +2,7 @@ import scheduler from 'adonisjs-scheduler/services/main'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import queueService from '#shared/services/queue_service'
+import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import { SIOP_RECONCILE_QUEUE } from '#modules/siop/jobs/siop_reconcile_handler'
 import { GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
 import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_retention_policy_handler'
@@ -24,15 +25,7 @@ scheduler
     enqueueScheduledTenantJobs(
       GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
       'government-data-sync-orchestrator',
-      {
-        years: [DateTime.utc().year, DateTime.utc().plus({ years: 1 }).year],
-        dataJudPageSize: 100,
-        dataJudMaxPagesPerCourt: 1,
-        enrichLimit: 500,
-        linkLimit: 2_000,
-        signalLimit: 2_000,
-        matchLimit: 500,
-      }
+      governmentDataSyncScheduleService.buildScheduledPayload()
     )
   )
   .dailyAt('00:30')

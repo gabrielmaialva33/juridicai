@@ -46,6 +46,7 @@ export async function handleDataJudNationalPrecatorioSync(
           courtAliases: payload.courtAliases,
           pageSize: payload.pageSize,
           maxPagesPerCourt: payload.maxPagesPerCourt,
+          origin: payload.origin ?? 'scheduler',
         })
     )
 
