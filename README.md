@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-hero.svg" alt="JuridicAI - Radar Federal Base" width="100%"/>
+<img src=".github/assets/readme-hero.svg" alt="JuridicAI - Radar Federal Base" width="100%"/>
 
 **Public records become governed legal intelligence.**
 
@@ -339,6 +339,6 @@ This repository is currently private and marked `UNLICENSED` in `package.json`.
 
 <div align="center">
 
-<img src="assets/readme-footer.svg" alt="Built for evidence, governance, and tenant-safe legal intelligence." width="100%"/>
+<img src=".github/assets/readme-footer.svg" alt="Built for evidence, governance, and tenant-safe legal intelligence." width="100%"/>
 
 </div>
