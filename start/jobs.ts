@@ -31,10 +31,25 @@ import {
   type DataJudMatchCandidatesPayload,
 } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import {
+  DATAJUD_LEGAL_SIGNAL_CLASSIFIER_QUEUE,
+  handleDataJudLegalSignalClassifier,
+  type DataJudLegalSignalClassifierPayload,
+} from '#modules/integrations/jobs/datajud_legal_signal_classifier_handler'
+import {
+  DATAJUD_PROCESS_ASSET_LINK_QUEUE,
+  handleDataJudProcessAssetLink,
+  type DataJudProcessAssetLinkPayload,
+} from '#modules/integrations/jobs/datajud_process_asset_link_handler'
+import {
   SIOP_OPEN_DATA_SYNC_QUEUE,
   handleSiopOpenDataSync,
   type SiopOpenDataSyncPayload,
 } from '#modules/integrations/jobs/siop_open_data_sync_handler'
+import {
+  GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
+  handleGovernmentDataSyncOrchestrator,
+  type GovernmentDataSyncOrchestratorPayload,
+} from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
 import {
   APPLY_RETENTION_POLICY_QUEUE,
   handleApplyRetentionPolicy,
@@ -65,9 +80,12 @@ export const queues = {
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
   siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
+  governmentDataSyncOrchestrator: { name: GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE, concurrency: 1 },
   dataJudNationalPrecatorioSync: { name: DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
   dataJudMatchCandidates: { name: DATAJUD_MATCH_CANDIDATES_QUEUE, concurrency: 1 },
+  dataJudLegalSignalClassifier: { name: DATAJUD_LEGAL_SIGNAL_CLASSIFIER_QUEUE, concurrency: 1 },
+  dataJudProcessAssetLink: { name: DATAJUD_PROCESS_ASSET_LINK_QUEUE, concurrency: 1 },
 } as const
 
 export const queueNames = Object.values(queues).map((queue) => queue.name)
@@ -176,6 +194,18 @@ export function bootWorkers() {
     { concurrency: queues.siopOpenDataSync.concurrency }
   )
 
+  queueService.registerWorker<GovernmentDataSyncOrchestratorPayload>(
+    queues.governmentDataSyncOrchestrator.name,
+    async (job) => {
+      await handleGovernmentDataSyncOrchestrator({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.governmentDataSyncOrchestrator.concurrency }
+  )
+
   queueService.registerWorker<DataJudEnrichAssetsPayload>(
     queues.dataJudEnrichAssets.name,
     async (job) => {
@@ -210,6 +240,30 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.dataJudMatchCandidates.concurrency }
+  )
+
+  queueService.registerWorker<DataJudLegalSignalClassifierPayload>(
+    queues.dataJudLegalSignalClassifier.name,
+    async (job) => {
+      await handleDataJudLegalSignalClassifier({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.dataJudLegalSignalClassifier.concurrency }
+  )
+
+  queueService.registerWorker<DataJudProcessAssetLinkPayload>(
+    queues.dataJudProcessAssetLink.name,
+    async (job) => {
+      await handleDataJudProcessAssetLink({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.dataJudProcessAssetLink.concurrency }
   )
 
   heartbeatInterval = setInterval(() => {

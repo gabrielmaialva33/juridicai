@@ -3,9 +3,7 @@ import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import queueService from '#shared/services/queue_service'
 import { SIOP_RECONCILE_QUEUE } from '#modules/siop/jobs/siop_reconcile_handler'
-import { SIOP_OPEN_DATA_SYNC_QUEUE } from '#modules/integrations/jobs/siop_open_data_sync_handler'
-import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
-import { DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE } from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
+import { GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
 import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { PURGE_STAGING_QUEUE } from '#modules/maintenance/jobs/purge_staging_handler'
 import { REFRESH_AGGREGATES_QUEUE } from '#modules/maintenance/jobs/refresh_aggregates_handler'
@@ -24,37 +22,20 @@ scheduler
 scheduler
   .call(() =>
     enqueueScheduledTenantJobs(
-      DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE,
-      'datajud-national-precatorio-sync',
+      GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
+      'government-data-sync-orchestrator',
       {
-        pageSize: 100,
-        maxPagesPerCourt: 1,
+        years: [DateTime.utc().year, DateTime.utc().plus({ years: 1 }).year],
+        dataJudPageSize: 100,
+        dataJudMaxPagesPerCourt: 1,
+        enrichLimit: 500,
+        linkLimit: 2_000,
+        signalLimit: 2_000,
+        matchLimit: 500,
       }
     )
   )
   .dailyAt('00:30')
-  .withoutOverlapping()
-
-scheduler
-  .call(() =>
-    enqueueScheduledTenantJobs(SIOP_OPEN_DATA_SYNC_QUEUE, 'siop-open-data-sync', {
-      years: [DateTime.now().year, DateTime.now().plus({ years: 1 }).year],
-      download: true,
-      enqueueImports: true,
-    })
-  )
-  .dailyAt('01:00')
-  .withoutOverlapping()
-
-scheduler
-  .call(() =>
-    enqueueScheduledTenantJobs(DATAJUD_ENRICH_ASSETS_QUEUE, 'datajud-enrich-assets', {
-      limit: 500,
-      missingOnly: true,
-      dryRun: false,
-    })
-  )
-  .dailyAt('01:45')
   .withoutOverlapping()
 
 scheduler
