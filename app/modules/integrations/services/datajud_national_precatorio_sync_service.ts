@@ -1,6 +1,7 @@
 import dataJudPublicApiAdapter from '#modules/integrations/services/datajud_public_api_adapter'
+import coverageRunService from '#modules/integrations/services/coverage_run_service'
 import governmentSourceCatalog from '#modules/integrations/services/government_source_catalog'
-import type { JsonRecord } from '#shared/types/model_enums'
+import type { JobRunOrigin, JsonRecord } from '#shared/types/model_enums'
 
 export const DATAJUD_PRECATORIO_CLASS_CODES = [1265, 1266] as const
 
@@ -11,6 +12,7 @@ export type DataJudNationalPrecatorioSyncOptions = {
   maxPagesPerCourt?: number | null
   fetcher?: typeof fetch
   apiKey?: string
+  origin?: JobRunOrigin
 }
 
 export type DataJudNationalPrecatorioCourtMetrics = {
@@ -54,41 +56,78 @@ class DataJudNationalPrecatorioSyncService {
     const maxPagesPerCourt = normalizeMaxPages(options.maxPagesPerCourt)
     const courtAliases = normalizeCourtAliases(options.courtAliases)
     const courts: DataJudNationalPrecatorioCourtMetrics[] = []
+    const coverageRun = await coverageRunService.start({
+      tenantId: options.tenantId,
+      sourceDatasetKey: 'datajud-public-api',
+      origin: options.origin ?? 'system',
+      scope: {
+        courtAliases,
+        pageSize,
+        maxPagesPerCourt,
+        classCodes: [...DATAJUD_PRECATORIO_CLASS_CODES],
+      },
+    })
 
-    for (const courtAlias of courtAliases) {
-      courts.push(await this.syncCourt({ ...options, courtAlias, pageSize, maxPagesPerCourt }))
-    }
+    try {
+      for (const courtAlias of courtAliases) {
+        courts.push(await this.syncCourt({ ...options, courtAlias, pageSize, maxPagesPerCourt }))
+      }
 
-    return {
-      requestedCourts: courtAliases.length,
-      pageSize,
-      maxPagesPerCourt,
-      classCodes: [...DATAJUD_PRECATORIO_CLASS_CODES],
-      courts,
-      totals: courts.reduce(
-        (totals, court) => ({
-          pages: totals.pages + court.pages,
-          hits: totals.hits + court.hits,
-          persisted: totals.persisted + court.persisted,
-          created: totals.created + court.created,
-          updated: totals.updated + court.updated,
-          subjects: totals.subjects + court.subjects,
-          movements: totals.movements + court.movements,
-          movementComplements: totals.movementComplements + court.movementComplements,
-          errors: totals.errors + court.errors,
-        }),
-        {
-          pages: 0,
-          hits: 0,
-          persisted: 0,
-          created: 0,
-          updated: 0,
-          subjects: 0,
-          movements: 0,
-          movementComplements: 0,
-          errors: 0,
-        }
-      ),
+      const result = {
+        requestedCourts: courtAliases.length,
+        pageSize,
+        maxPagesPerCourt,
+        classCodes: [...DATAJUD_PRECATORIO_CLASS_CODES],
+        courts,
+        totals: courts.reduce(
+          (totals, court) => ({
+            pages: totals.pages + court.pages,
+            hits: totals.hits + court.hits,
+            persisted: totals.persisted + court.persisted,
+            created: totals.created + court.created,
+            updated: totals.updated + court.updated,
+            subjects: totals.subjects + court.subjects,
+            movements: totals.movements + court.movements,
+            movementComplements: totals.movementComplements + court.movementComplements,
+            errors: totals.errors + court.errors,
+          }),
+          {
+            pages: 0,
+            hits: 0,
+            persisted: 0,
+            created: 0,
+            updated: 0,
+            subjects: 0,
+            movements: 0,
+            movementComplements: 0,
+            errors: 0,
+          }
+        ),
+      }
+
+      await coverageRunService.finish(coverageRun, 'completed', {
+        discoveredCount: result.totals.hits,
+        sourceRecordsCount: result.totals.pages,
+        createdAssetsCount: result.totals.created,
+        linkedAssetsCount: result.totals.persisted,
+        enrichedAssetsCount: result.totals.updated,
+        errorCount: result.totals.errors,
+        metrics: result as unknown as JsonRecord,
+      })
+
+      return result
+    } catch (error) {
+      await coverageRunService.finish(coverageRun, 'failed', {
+        error,
+        errorCount: 1,
+        metrics: {
+          requestedCourts: courtAliases.length,
+          pageSize,
+          maxPagesPerCourt,
+          courtAliases,
+        },
+      })
+      throw error
     }
   }
 

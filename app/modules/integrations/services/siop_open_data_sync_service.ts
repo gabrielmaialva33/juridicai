@@ -1,7 +1,9 @@
 import queueService from '#shared/services/queue_service'
 import siopOpenDataAdapter from '#modules/integrations/services/siop_open_data_adapter'
+import coverageRunService from '#modules/integrations/services/coverage_run_service'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import type SiopImport from '#modules/siop/models/siop_import'
+import type { JobRunOrigin } from '#shared/types/model_enums'
 
 export type SiopOpenDataSyncServiceOptions = {
   tenantId: string
@@ -9,6 +11,7 @@ export type SiopOpenDataSyncServiceOptions = {
   download?: boolean
   enqueueImports?: boolean
   fetcher?: typeof fetch
+  origin?: JobRunOrigin
 }
 
 export type SiopOpenDataImportEnqueueResult = {
@@ -31,29 +34,58 @@ export type SiopOpenDataSyncServiceResult = {
 
 class SiopOpenDataSyncService {
   async sync(options: SiopOpenDataSyncServiceOptions): Promise<SiopOpenDataSyncServiceResult> {
-    const result = await siopOpenDataAdapter.sync({
+    const coverageRun = await coverageRunService.start({
       tenantId: options.tenantId,
-      years: options.years ?? undefined,
-      download: options.download,
-      fetcher: options.fetcher,
+      sourceDatasetKey: 'siop-open-data-precatorios',
+      origin: options.origin ?? 'system',
+      scope: {
+        years: options.years ?? null,
+        download: options.download ?? true,
+        enqueueImports: options.enqueueImports ?? true,
+      },
     })
-    const importJobs =
-      options.enqueueImports === false
-        ? []
-        : await this.enqueueImportJobs(
-            options.tenantId,
-            result.items.map((item) => item.siopImport).filter((item): item is SiopImport => !!item)
-          )
 
-    return {
-      discovered: result.discovered,
-      selected: result.selected,
-      downloaded: result.downloaded,
-      importsCreated: result.importsCreated,
-      importsReused: result.importsReused,
-      importsEnqueued: importJobs.filter((item) => item.enqueued).length,
-      importsSkipped: importJobs.filter((item) => !item.enqueued).length,
-      importJobs,
+    try {
+      const result = await siopOpenDataAdapter.sync({
+        tenantId: options.tenantId,
+        years: options.years ?? undefined,
+        download: options.download,
+        fetcher: options.fetcher,
+      })
+      const importJobs =
+        options.enqueueImports === false
+          ? []
+          : await this.enqueueImportJobs(
+              options.tenantId,
+              result.items
+                .map((item) => item.siopImport)
+                .filter((item): item is SiopImport => !!item)
+            )
+
+      const metrics = {
+        discovered: result.discovered,
+        selected: result.selected,
+        downloaded: result.downloaded,
+        importsCreated: result.importsCreated,
+        importsReused: result.importsReused,
+        importsEnqueued: importJobs.filter((item) => item.enqueued).length,
+        importsSkipped: importJobs.filter((item) => !item.enqueued).length,
+        importJobs,
+      }
+
+      await coverageRunService.finish(coverageRun, 'completed', {
+        discoveredCount: metrics.discovered,
+        sourceRecordsCount: metrics.downloaded,
+        metrics,
+      })
+
+      return metrics
+    } catch (error) {
+      await coverageRunService.finish(coverageRun, 'failed', {
+        error,
+        errorCount: 1,
+      })
+      throw error
     }
   }
 
