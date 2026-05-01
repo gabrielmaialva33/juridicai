@@ -10,9 +10,16 @@ const DEFAULT_MIN_ACCEPT_SCORE = 85
 
 type DataJudCandidateReviewOptions = {
   tenantId?: string
+  userId?: string | null
+  requestId?: string | null
   force?: boolean
   minScore?: number
 }
+
+type DataJudCandidateReviewContext = Pick<
+  DataJudCandidateReviewOptions,
+  'tenantId' | 'userId' | 'requestId'
+>
 
 class DataJudCandidateReviewError extends Error {
   constructor(
@@ -37,11 +44,11 @@ class DataJudCandidateReviewService {
       }
 
       const judicialProcess = await this.upsertJudicialProcess(candidate, trx)
-      await this.createReviewEvent(candidate, 'datajud_candidate_accepted', trx)
-
       candidate.status = 'accepted'
       candidate.useTransaction(trx)
       await candidate.save()
+      await this.createReviewEvent(candidate, 'datajud_candidate_accepted', trx, options)
+      await this.writeAuditLog(candidate, 'datajud_candidate_accepted', trx, options)
 
       await ProcessMatchCandidate.query({ client: trx })
         .where('tenant_id', candidate.tenantId)
@@ -54,27 +61,29 @@ class DataJudCandidateReviewService {
     })
   }
 
-  async reject(candidateId: string, options: { tenantId?: string } = {}) {
+  async reject(candidateId: string, options: DataJudCandidateReviewContext = {}) {
     return db.transaction(async (trx) => {
       const candidate = await this.findCandidateForReview(candidateId, options.tenantId, trx)
 
       candidate.status = 'rejected'
       candidate.useTransaction(trx)
       await candidate.save()
-      await this.createReviewEvent(candidate, 'datajud_candidate_rejected', trx)
+      await this.createReviewEvent(candidate, 'datajud_candidate_rejected', trx, options)
+      await this.writeAuditLog(candidate, 'datajud_candidate_rejected', trx, options)
 
       return candidate
     })
   }
 
-  async markAmbiguous(candidateId: string, options: { tenantId?: string } = {}) {
+  async markAmbiguous(candidateId: string, options: DataJudCandidateReviewContext = {}) {
     return db.transaction(async (trx) => {
       const candidate = await this.findCandidateForReview(candidateId, options.tenantId, trx)
 
       candidate.status = 'ambiguous'
       candidate.useTransaction(trx)
       await candidate.save()
-      await this.createReviewEvent(candidate, 'datajud_candidate_marked_ambiguous', trx)
+      await this.createReviewEvent(candidate, 'datajud_candidate_marked_ambiguous', trx, options)
+      await this.writeAuditLog(candidate, 'datajud_candidate_marked_ambiguous', trx, options)
 
       return candidate
     })
@@ -137,7 +146,8 @@ class DataJudCandidateReviewService {
       | 'datajud_candidate_accepted'
       | 'datajud_candidate_rejected'
       | 'datajud_candidate_marked_ambiguous',
-    trx: TransactionClientContract
+    trx: TransactionClientContract,
+    context: DataJudCandidateReviewContext
   ) {
     const idempotencyKey = `${eventType}:${candidate.id}`
     const existing = await AssetEvent.query({ client: trx })
@@ -164,11 +174,40 @@ class DataJudCandidateReviewService {
           candidateDatajudId: candidate.candidateDatajudId,
           score: candidate.score,
           signals: candidate.signals,
+          reviewedByUserId: context.userId ?? null,
+          requestId: context.requestId ?? null,
+          reviewedAt: DateTime.now().toISO(),
         },
         idempotencyKey,
       },
       { client: trx }
     )
+  }
+
+  private writeAuditLog(
+    candidate: ProcessMatchCandidate,
+    eventType:
+      | 'datajud_candidate_accepted'
+      | 'datajud_candidate_rejected'
+      | 'datajud_candidate_marked_ambiguous',
+    trx: TransactionClientContract,
+    context: DataJudCandidateReviewContext
+  ) {
+    return trx.table('audit_logs').insert({
+      tenant_id: candidate.tenantId,
+      user_id: context.userId ?? null,
+      event: eventType,
+      entity_type: 'process_match_candidate',
+      entity_id: candidate.id,
+      metadata: {
+        assetId: candidate.assetId,
+        candidateCnj: candidate.candidateCnj,
+        candidateDatajudId: candidate.candidateDatajudId,
+        score: candidate.score,
+        status: candidate.status,
+      },
+      request_id: context.requestId ?? null,
+    })
   }
 }
 

@@ -41,10 +41,12 @@ export default class DataJudCandidatesController {
     })
   }
 
-  async accept({ params, request, response }: HttpContext) {
+  async accept({ auth, params, request, requestId, response }: HttpContext) {
     try {
       const result = await dataJudCandidateReviewService.accept(params.id, {
         tenantId: tenantContext.requireTenantId(),
+        userId: auth.getUserOrFail().id,
+        requestId,
         force: booleanInput(request.input('force')),
         minScore: numberOrNull(request.input('minScore')) ?? undefined,
       })
@@ -69,9 +71,11 @@ export default class DataJudCandidatesController {
     }
   }
 
-  async reject({ params, response }: HttpContext) {
+  async reject({ auth, params, requestId, response }: HttpContext) {
     await dataJudCandidateReviewService.reject(params.id, {
       tenantId: tenantContext.requireTenantId(),
+      userId: auth.getUserOrFail().id,
+      requestId,
     })
     const candidate = await dataJudCandidateApiService.show(
       tenantContext.requireTenantId(),
@@ -83,9 +87,11 @@ export default class DataJudCandidatesController {
     })
   }
 
-  async markAmbiguous({ params, response }: HttpContext) {
+  async markAmbiguous({ auth, params, requestId, response }: HttpContext) {
     await dataJudCandidateReviewService.markAmbiguous(params.id, {
       tenantId: tenantContext.requireTenantId(),
+      userId: auth.getUserOrFail().id,
+      requestId,
     })
     const candidate = await dataJudCandidateApiService.show(
       tenantContext.requireTenantId(),
