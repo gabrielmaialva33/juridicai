@@ -13,21 +13,35 @@ pnpm start
 pnpm worker
 ```
 
-Create the first account through `/signup`. The signup flow creates the user, workspace tenant,
-owner role assignment, permissions catalog, and active tenant session. Real data population then
-comes from scheduled jobs.
+The migration bootstrap creates the minimum operational catalog: local beta workspace, default
+`@juridicai.local` users, roles, permissions, role assignments, and retention policies. Real data
+population then comes from scheduled jobs and manual sync commands.
 
 Required runtime services:
 
 - PostgreSQL/TimescaleDB 17
 - Redis for BullMQ queues
+- `DATAJUD_API_KEY` configured with the current CNJ public API key
 - `pnpm worker` running continuously
 - Scheduler process enabled with the HTTP app
+
+Default bootstrap users use password `Juridicai!2026` and must be rotated or disabled before a
+public beta:
+
+| Email                      | Role                    |
+| -------------------------- | ----------------------- |
+| `owner@juridicai.local`    | Sócio gestor            |
+| `advogado@juridicai.local` | Advogado responsável    |
+| `operador@juridicai.local` | Operador de atendimento |
+| `analyst@juridicai.local`  | Analista jurídico       |
 
 ## Real Data Jobs
 
 The beta must rely on public source ingestion:
 
+- `datajud-national-precatorio-sync`: scans all official DataJud court aliases for CNJ class
+  `1265` (Precatório) and `1266` (Requisição de Pequeno Valor), using `search_after`
+  pagination and persisting raw process payloads.
 - `siop-open-data-sync`: discovers SIOP open-data files, downloads official annual files, creates
   pending imports, and enqueues SIOP processing jobs.
 - `siop-imports`: parses downloaded SIOP files into source records, debtors, assets, scores, and
@@ -35,8 +49,20 @@ The beta must rely on public source ingestion:
 - `datajud-enrich-assets`: enriches assets through CNJ DataJud per inferred court alias.
 - `siop-reconcile`: marks stale imports as failed for operator visibility.
 
-Federal data starts from SIOP open data. State and municipal coverage is incremental per tribunal
-adapter because each court publishes lists in a different format.
+National discovery starts from DataJud metadata across federal, state, labor, electoral, military,
+and superior court aliases. Federal financial data starts from SIOP open data. State and municipal
+financial coverage is incremental per tribunal adapter because each court publishes lists in a
+different format, often CSV, XLS, XLSX, PDF, HTML, or dashboard exports.
+
+For a new production workspace, run an initial controlled national scan:
+
+```bash
+node ace datajud:sync-precatorios --tenant-id=<tenant-id> --page-size=100 --max-pages-per-court=1
+node ace siop:sync-open-data --tenant-id=<tenant-id> --enqueue
+```
+
+Increase `--max-pages-per-court` gradually after checking job duration, DataJud response stability,
+and database growth.
 
 ## Development Demo Workspace
 
@@ -44,18 +70,13 @@ Run a clean local beta database with:
 
 ```bash
 docker compose up -d
-node ace migration:fresh --drop-views --drop-types --seed
+psql "$DATABASE_URL" -c "drop schema if exists pii cascade"
+node ace migration:fresh --drop-views --drop-types
 pnpm dev
 ```
 
-Seeded users share the same password: `Juridicai!2026`.
-
-| Email                      | Role                    | Use case                           |
-| -------------------------- | ----------------------- | ---------------------------------- |
-| `owner@juridicai.local`    | Sócio gestor            | Full beta review and configuration |
-| `advogado@juridicai.local` | Advogado responsável    | Client-facing legal analysis       |
-| `operador@juridicai.local` | Operador de atendimento | Follow-up, stages, and deadlines   |
-| `analyst@juridicai.local`  | Analista jurídico       | Research and supporting checks     |
+The `pii` schema cleanup is only needed when reusing a local database because Adonis fresh drops
+tables, views, and types but does not drop custom schemas. Do not run seeders for beta validation.
 
 ## Golden Path
 
