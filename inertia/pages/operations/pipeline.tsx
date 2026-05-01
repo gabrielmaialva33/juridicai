@@ -16,6 +16,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '~/components/shared/page-header'
 import { fmtBRL, fmtNum, fmtRelative } from '~/lib/helpers'
 import { cn } from '@/lib/utils'
+import { jsonRequest } from '~/lib/http'
+import { toast } from 'sonner'
 
 type Opportunity = {
   id: string
@@ -39,7 +41,7 @@ type Opportunity = {
   pricing: {
     riskAdjustedIrr: number
     grade: string
-    offerValue: number
+    acquisitionCost: number
     paymentProbability: number
   }
 }
@@ -54,6 +56,10 @@ type Stage = {
 
 type Props = {
   stages: Stage[]
+}
+
+type PipelineMoveResponse = {
+  opportunity: Opportunity
 }
 
 const STAGE_META: Record<
@@ -144,7 +150,7 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
     setActiveOp(found?.op ?? null)
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     setActiveOp(null)
     const { active, over } = event
     if (!over) return
@@ -153,7 +159,11 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
     if (!sourceFound) return
 
     const targetStage = String(over.id)
-    if (sourceFound.stage === targetStage) return
+    if (sourceFound.stage === targetStage || !stages.some((stage) => stage.stage === targetStage)) {
+      return
+    }
+
+    const previousStages = stages
 
     // Apply an optimistic local update before the server round trip.
     setStages((prev) => {
@@ -179,21 +189,21 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
       return next
     })
 
-    // Persist through the JSON endpoint.
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-    fetch(`/operations/opportunities/${active.id}/pipeline`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrf,
-        'Accept': 'application/json',
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify({ stage: targetStage }),
-    }).catch(() => {
-      // Roll back the optimistic update if persistence fails.
-      router.reload({ only: ['stages'] })
-    })
+    try {
+      const data = await jsonRequest<PipelineMoveResponse>(
+        `/operations/opportunities/${active.id}/pipeline`,
+        {
+          method: 'POST',
+          body: { stage: targetStage },
+        }
+      )
+
+      setStages((prev) => replaceMovedOpportunity(prev, sourceFound.op.asset.id, data.opportunity))
+      toast.success(`Movido para ${STAGE_META[targetStage]?.label ?? targetStage}.`)
+    } catch {
+      setStages(previousStages)
+      toast.error('Não foi possível salvar a mudança no pipeline.')
+    }
   }
 
   return (
@@ -219,6 +229,32 @@ export default function PipelineKanban({ stages: initialStages }: Props) {
       </DndContext>
     </>
   )
+}
+
+function replaceMovedOpportunity(stages: Stage[], assetId: string, opportunity: Opportunity) {
+  const next = stages.map((stage) => ({
+    ...stage,
+    items: stage.items
+      .filter((item) => item.asset.id !== assetId)
+      .map((item) => (item.asset.id === opportunity.asset.id ? opportunity : item)),
+  }))
+  const target = next.find((stage) => stage.stage === opportunity.pipeline.stage)
+
+  if (target && !target.items.some((item) => item.asset.id === opportunity.asset.id)) {
+    target.items = [opportunity, ...target.items]
+  }
+
+  for (const stage of next) {
+    stage.count = stage.items.length
+    stage.faceValueTotal = stage.items.reduce((sum, item) => sum + item.asset.faceValue, 0)
+    stage.averageRiskAdjustedIrr =
+      stage.items.length > 0
+        ? stage.items.reduce((sum, item) => sum + item.pricing.riskAdjustedIrr, 0) /
+          stage.items.length
+        : 0
+  }
+
+  return next
 }
 
 function KanbanColumn({ stage }: { stage: Stage }) {
@@ -330,7 +366,7 @@ function PipelineCard({
           {op.asset.cnjNumber ?? op.asset.id.slice(0, 8)}
         </div>
         <div className="flex items-baseline justify-between pt-1 text-xs">
-          <span className="tabular-nums font-medium">{fmtBRL(op.pricing.offerValue)}</span>
+          <span className="tabular-nums font-medium">{fmtBRL(op.pricing.acquisitionCost)}</span>
           <span className="tabular-nums text-emerald-600 dark:text-emerald-400 font-bold">
             {fmtPct(op.pricing.riskAdjustedIrr)}
           </span>
