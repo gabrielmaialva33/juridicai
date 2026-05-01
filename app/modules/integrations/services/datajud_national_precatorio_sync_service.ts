@@ -20,6 +20,9 @@ export type DataJudNationalPrecatorioCourtMetrics = {
   persisted: number
   created: number
   updated: number
+  subjects: number
+  movements: number
+  movementComplements: number
   errors: number
   errorMessages: string[]
 }
@@ -36,6 +39,9 @@ export type DataJudNationalPrecatorioSyncResult = {
     persisted: number
     created: number
     updated: number
+    subjects: number
+    movements: number
+    movementComplements: number
     errors: number
   }
 }
@@ -66,9 +72,22 @@ class DataJudNationalPrecatorioSyncService {
           persisted: totals.persisted + court.persisted,
           created: totals.created + court.created,
           updated: totals.updated + court.updated,
+          subjects: totals.subjects + court.subjects,
+          movements: totals.movements + court.movements,
+          movementComplements: totals.movementComplements + court.movementComplements,
           errors: totals.errors + court.errors,
         }),
-        { pages: 0, hits: 0, persisted: 0, created: 0, updated: 0, errors: 0 }
+        {
+          pages: 0,
+          hits: 0,
+          persisted: 0,
+          created: 0,
+          updated: 0,
+          subjects: 0,
+          movements: 0,
+          movementComplements: 0,
+          errors: 0,
+        }
       ),
     }
   }
@@ -87,6 +106,9 @@ class DataJudNationalPrecatorioSyncService {
       persisted: 0,
       created: 0,
       updated: 0,
+      subjects: 0,
+      movements: 0,
+      movementComplements: 0,
       errors: 0,
       errorMessages: [],
     }
@@ -119,6 +141,9 @@ class DataJudNationalPrecatorioSyncService {
           }
 
           metrics.persisted += 1
+          metrics.subjects += persisted.subjectsUpserted
+          metrics.movements += persisted.movementsUpserted
+          metrics.movementComplements += persisted.movementComplementsUpserted
           if (persisted.created) {
             metrics.created += 1
           } else {

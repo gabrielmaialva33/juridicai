@@ -3,6 +3,9 @@ import { DateTime } from 'luxon'
 import env from '#start/env'
 import governmentSourceCatalog from '#modules/integrations/services/government_source_catalog'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
+import JudicialProcessMovement from '#modules/precatorios/models/judicial_process_movement'
+import JudicialProcessMovementComplement from '#modules/precatorios/models/judicial_process_movement_complement'
+import JudicialProcessSubject from '#modules/precatorios/models/judicial_process_subject'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
@@ -58,6 +61,9 @@ export type DataJudSyncedProcess = {
   sourceRecord: SourceRecord
   judicialProcess: JudicialProcess
   created: boolean
+  subjectsUpserted: number
+  movementsUpserted: number
+  movementComplementsUpserted: number
 }
 
 class DataJudPublicApiAdapter {
@@ -147,7 +153,14 @@ class DataJudPublicApiAdapter {
         })
 
         if (persisted) {
-          synced.push({ courtAlias, hit, sourceRecord, ...persisted })
+          const metadata = await this.upsertJudicialProcessMetadata({
+            tenantId: options.tenantId,
+            sourceRecord,
+            hit,
+            judicialProcess: persisted.judicialProcess,
+          })
+
+          synced.push({ courtAlias, hit, sourceRecord, ...persisted, ...metadata })
         }
       }
     }
@@ -177,11 +190,19 @@ class DataJudPublicApiAdapter {
       return null
     }
 
+    const metadata = await this.upsertJudicialProcessMetadata({
+      tenantId: options.tenantId,
+      sourceRecord,
+      hit: options.hit,
+      judicialProcess: persisted.judicialProcess,
+    })
+
     return {
       courtAlias: options.courtAlias,
       hit: options.hit,
       sourceRecord,
       ...persisted,
+      ...metadata,
     }
   }
 
@@ -257,11 +278,28 @@ class DataJudPublicApiAdapter {
       sourceRecordId: input.sourceRecord.id,
       source: 'datajud' as const,
       cnjNumber,
+      datajudId: input.hit._id,
+      datajudIndex: input.hit._index,
+      courtAlias: input.courtAlias.toLowerCase(),
       courtCode: stringOrNull(source.tribunal) ?? input.courtAlias.toUpperCase(),
       courtName: stringOrNull(readNested(source, ['orgaoJulgador', 'nome'])),
+      degree: stringOrNull(source.grau),
+      secrecyLevel: numberOrNull(source.nivelSigilo),
+      systemCode: numberOrNull(readNested(source, ['sistema', 'codigo'])),
+      systemName: stringOrNull(readNested(source, ['sistema', 'nome'])),
+      formatCode: numberOrNull(readNested(source, ['formato', 'codigo'])),
+      formatName: stringOrNull(readNested(source, ['formato', 'nome'])),
+      classCode: numberOrNull(readNested(source, ['classe', 'codigo'])),
       className: stringOrNull(readNested(source, ['classe', 'nome'])),
       subject: firstSubject(source.assuntos),
+      judgingBodyCode: stringFromUnknown(readNested(source, ['orgaoJulgador', 'codigo'])),
+      judgingBodyName: stringOrNull(readNested(source, ['orgaoJulgador', 'nome'])),
+      judgingBodyMunicipalityIbgeCode: numberOrNull(
+        readNested(source, ['orgaoJulgador', 'codigoMunicipioIBGE'])
+      ),
       filedAt: parseDataJudDate(source.dataAjuizamento),
+      datajudUpdatedAt: parseDataJudDateTime(source.dataHoraUltimaAtualizacao),
+      datajudIndexedAt: parseDataJudDateTime(source['@timestamp']),
       rawData: {
         datajudId: input.hit._id,
         index: input.hit._index,
@@ -278,6 +316,131 @@ class DataJudPublicApiAdapter {
 
     const judicialProcess = await JudicialProcess.create(payload)
     return { judicialProcess, created: true }
+  }
+
+  private async upsertJudicialProcessMetadata(input: {
+    tenantId: string
+    sourceRecord: SourceRecord
+    hit: DataJudHit
+    judicialProcess: JudicialProcess
+  }) {
+    const subjectsUpserted = await this.upsertJudicialProcessSubjects(input)
+    const movementMetrics = await this.upsertJudicialProcessMovements(input)
+
+    return {
+      subjectsUpserted,
+      movementsUpserted: movementMetrics.movementsUpserted,
+      movementComplementsUpserted: movementMetrics.complementsUpserted,
+    }
+  }
+
+  private async upsertJudicialProcessSubjects(input: {
+    tenantId: string
+    sourceRecord: SourceRecord
+    hit: DataJudHit
+    judicialProcess: JudicialProcess
+  }) {
+    const subjects = extractDataJudSubjects(input.hit._source, input.judicialProcess.cnjNumber)
+    let upserted = 0
+
+    for (const subject of subjects) {
+      await JudicialProcessSubject.updateOrCreate(
+        {
+          tenantId: input.tenantId,
+          idempotencyKey: subject.idempotencyKey,
+        },
+        {
+          tenantId: input.tenantId,
+          processId: input.judicialProcess.id,
+          sourceRecordId: input.sourceRecord.id,
+          subjectCode: subject.code,
+          subjectName: subject.name,
+          sequence: subject.sequence,
+          rawData: subject.rawData,
+          idempotencyKey: subject.idempotencyKey,
+        }
+      )
+      upserted += 1
+    }
+
+    return upserted
+  }
+
+  private async upsertJudicialProcessMovements(input: {
+    tenantId: string
+    sourceRecord: SourceRecord
+    hit: DataJudHit
+    judicialProcess: JudicialProcess
+  }) {
+    const movements = extractDataJudMovements(input.hit._source, input.judicialProcess.cnjNumber)
+    let movementsUpserted = 0
+    let complementsUpserted = 0
+
+    for (const movement of movements) {
+      const movementRow = await JudicialProcessMovement.updateOrCreate(
+        {
+          tenantId: input.tenantId,
+          idempotencyKey: movement.idempotencyKey,
+        },
+        {
+          tenantId: input.tenantId,
+          processId: input.judicialProcess.id,
+          sourceRecordId: input.sourceRecord.id,
+          source: 'datajud',
+          movementCode: movement.code,
+          movementName: movement.name,
+          occurredAt: movement.occurredAt,
+          sequence: movement.sequence,
+          judgingBodyCode: movement.judgingBodyCode,
+          judgingBodyName: movement.judgingBodyName,
+          judgingBodyMunicipalityIbgeCode: movement.judgingBodyMunicipalityIbgeCode,
+          rawData: movement.rawData,
+          idempotencyKey: movement.idempotencyKey,
+        }
+      )
+      movementsUpserted += 1
+      complementsUpserted += await this.upsertJudicialProcessMovementComplements({
+        tenantId: input.tenantId,
+        sourceRecord: input.sourceRecord,
+        movement: movementRow,
+        complements: movement.complements,
+      })
+    }
+
+    return { movementsUpserted, complementsUpserted }
+  }
+
+  private async upsertJudicialProcessMovementComplements(input: {
+    tenantId: string
+    sourceRecord: SourceRecord
+    movement: JudicialProcessMovement
+    complements: DataJudMovementComplement[]
+  }) {
+    let upserted = 0
+
+    for (const complement of input.complements) {
+      await JudicialProcessMovementComplement.updateOrCreate(
+        {
+          tenantId: input.tenantId,
+          idempotencyKey: complement.idempotencyKey,
+        },
+        {
+          tenantId: input.tenantId,
+          movementId: input.movement.id,
+          sourceRecordId: input.sourceRecord.id,
+          complementCode: complement.code,
+          complementValue: complement.value,
+          complementName: complement.name,
+          complementDescription: complement.description,
+          sequence: complement.sequence,
+          rawData: complement.rawData,
+          idempotencyKey: complement.idempotencyKey,
+        }
+      )
+      upserted += 1
+    }
+
+    return upserted
   }
 
   private endpointFor(courtAlias: string) {
@@ -322,6 +485,14 @@ function stringOrNull(value: unknown) {
   return trimmed || null
 }
 
+function stringFromUnknown(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(Math.trunc(value))
+  }
+
+  return stringOrNull(value)
+}
+
 function firstSubject(value: unknown) {
   if (!Array.isArray(value)) {
     return null
@@ -333,6 +504,148 @@ function firstSubject(value: unknown) {
   )
 
   return stringOrNull(subject?.nome)
+}
+
+type DataJudMovementComplement = {
+  code: number | null
+  value: number | null
+  name: string | null
+  description: string | null
+  sequence: number | null
+  rawData: JsonRecord
+  idempotencyKey: string
+}
+
+function extractDataJudSubjects(source: JsonRecord, cnjNumber: string) {
+  if (!Array.isArray(source.assuntos)) {
+    return []
+  }
+
+  return source.assuntos
+    .flat(2)
+    .filter((subject): subject is JsonRecord => {
+      return !!subject && typeof subject === 'object' && !Array.isArray(subject)
+    })
+    .map((subject, index) => {
+      const code = numberOrNull(subject.codigo)
+      const name = stringOrNull(subject.nome) ?? 'Unknown subject'
+      const sequence = index + 1
+      const idempotencyKey = createHash('sha256')
+        .update(JSON.stringify({ source: 'datajud', cnjNumber, code, name }))
+        .digest('hex')
+
+      return {
+        code,
+        name,
+        sequence,
+        rawData: subject,
+        idempotencyKey,
+      }
+    })
+}
+
+function extractDataJudMovements(source: JsonRecord, cnjNumber: string) {
+  if (!Array.isArray(source.movimentos)) {
+    return []
+  }
+
+  return source.movimentos
+    .filter((movement): movement is JsonRecord => {
+      return !!movement && typeof movement === 'object' && !Array.isArray(movement)
+    })
+    .map((movement, index) => {
+      const code = numberOrNull(movement.codigo)
+      const name = stringOrNull(movement.nome) ?? 'Unknown movement'
+      const occurredAt = parseDataJudDateTime(movement.dataHora)
+      const sequence = numberOrNull(movement.identificadorMovimento) ?? index + 1
+      const judgingBodyCode = stringFromUnknown(readNested(movement, ['orgaoJulgador', 'codigo']))
+      const judgingBodyName = stringOrNull(readNested(movement, ['orgaoJulgador', 'nome']))
+      const judgingBodyMunicipalityIbgeCode = numberOrNull(
+        readNested(movement, ['orgaoJulgador', 'codigoMunicipioIBGE'])
+      )
+      const idempotencyKey = createHash('sha256')
+        .update(
+          JSON.stringify({
+            source: 'datajud',
+            cnjNumber,
+            sequence,
+            code,
+            name,
+            occurredAt: occurredAt?.toISO() ?? null,
+          })
+        )
+        .digest('hex')
+
+      return {
+        code,
+        name,
+        occurredAt,
+        sequence,
+        judgingBodyCode,
+        judgingBodyName,
+        judgingBodyMunicipalityIbgeCode,
+        complements: extractDataJudMovementComplements(movement, idempotencyKey),
+        rawData: movement,
+        idempotencyKey,
+      }
+    })
+}
+
+function extractDataJudMovementComplements(
+  movement: JsonRecord,
+  movementIdempotencyKey: string
+): DataJudMovementComplement[] {
+  if (!Array.isArray(movement.complementosTabelados)) {
+    return []
+  }
+
+  return movement.complementosTabelados
+    .filter((complement): complement is JsonRecord => {
+      return !!complement && typeof complement === 'object' && !Array.isArray(complement)
+    })
+    .map((complement, index) => {
+      const code = numberOrNull(complement.codigo)
+      const value = numberOrNull(complement.valor)
+      const name = stringOrNull(complement.nome)
+      const description = stringOrNull(complement.descricao)
+      const sequence = index + 1
+      const idempotencyKey = createHash('sha256')
+        .update(
+          JSON.stringify({
+            source: 'datajud',
+            movementIdempotencyKey,
+            sequence,
+            code,
+            value,
+            name,
+            description,
+          })
+        )
+        .digest('hex')
+
+      return {
+        code,
+        value,
+        name,
+        description,
+        sequence,
+        rawData: complement,
+        idempotencyKey,
+      }
+    })
+}
+
+function numberOrNull(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value)
+  }
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return null
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null
 }
 
 function parseDataJudDate(value: unknown) {
@@ -348,6 +661,21 @@ function parseDataJudDate(value: unknown) {
       : DateTime.fromISO(trimmed)
 
   return parsed.isValid ? parsed.startOf('day') : null
+}
+
+function parseDataJudDateTime(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  const parsed = /^\d{14}$/.test(trimmed)
+    ? DateTime.fromFormat(trimmed, 'yyyyLLddHHmmss', { zone: 'utc' })
+    : /^\d{8}$/.test(trimmed)
+      ? DateTime.fromFormat(trimmed, 'yyyyLLdd', { zone: 'utc' })
+      : DateTime.fromISO(trimmed, { setZone: true })
+
+  return parsed.isValid ? parsed.toUTC() : null
 }
 
 export default new DataJudPublicApiAdapter()
