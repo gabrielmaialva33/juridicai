@@ -475,6 +475,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['liquidity']>>>
     }
   }
+  'operations.opportunities.dossier': {
+    methods: ["GET","HEAD"]
+    pattern: '/operations/opportunities/:id/dossier'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['dossier']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['dossier']>>>
+    }
+  }
   'operations.opportunities.pricing': {
     methods: ["POST"]
     pattern: '/operations/opportunities/:id/pricing'

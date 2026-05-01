@@ -10,6 +10,7 @@ import cessionPricingEngine, {
   type PricingInput,
 } from '#modules/operations/services/cession_pricing_engine'
 import liquidityAdvisoryService from '#modules/operations/services/liquidity_advisory_service'
+import liquidityDossierService from '#modules/operations/services/liquidity_dossier_service'
 import marketRateService from '#modules/market/services/market_rate_service'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
@@ -140,6 +141,17 @@ class OperationsService {
       judicialProcesses: asset.judicialProcesses.map((process) => process.serialize()),
       publications: asset.publications.map((publication) => publication.serialize()),
       events: asset.events.map((event) => event.serialize()),
+    }
+  }
+
+  async dossier(tenantId: string, assetId: string) {
+    const details = await this.show(tenantId, assetId)
+
+    return {
+      dossier: liquidityDossierService.build({
+        opportunity: details.opportunity,
+        liquidity: details.liquidity,
+      }),
     }
   }
 

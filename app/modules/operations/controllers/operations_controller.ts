@@ -53,6 +53,10 @@ export default class OperationsController {
     return response.ok({ liquidity: data.liquidity })
   }
 
+  async dossier({ params, response }: HttpContext) {
+    return response.ok(await operationsService.dossier(tenantContext.requireTenantId(), params.id))
+  }
+
   async pricing({ params, request, response }: HttpContext) {
     return response.ok(
       await operationsService.show(

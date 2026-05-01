@@ -27,6 +27,19 @@ export type LiquidityChannel = {
   nextAction: string
 }
 
+export type ClientAdvisory = {
+  posture: 'prepare_offer' | 'complete_diligence' | 'hold' | 'blocked'
+  headline: string
+  clientMessage: string
+  operatorNextSteps: string[]
+  requiredDocuments: string[]
+  revenueOpportunity: {
+    key: 'success_fee' | 'diligence_package' | 'monitoring_retainer' | 'legal_cleanup'
+    label: string
+    rationale: string
+  }
+}
+
 export type LiquidityAdvisory = {
   readiness: {
     status: LiquidityReadiness
@@ -37,6 +50,7 @@ export type LiquidityAdvisory = {
   checklist: LiquidityChecklistItem[]
   channels: LiquidityChannel[]
   insights: string[]
+  clientAdvisory: ClientAdvisory
   assumptions: {
     version: 'liquidity-advisory-v1'
     directAgreementDiscountRate: number
@@ -56,6 +70,7 @@ class LiquidityAdvisoryService {
       checklist,
       channels,
       insights: buildInsights(opportunity, readiness, channels),
+      clientAdvisory: buildClientAdvisory(readiness, checklist, channels),
       assumptions: {
         version: 'liquidity-advisory-v1',
         directAgreementDiscountRate: 0.4,
@@ -294,6 +309,92 @@ function buildInsights(
   }
 
   return insights.slice(0, 5)
+}
+
+function buildClientAdvisory(
+  readiness: LiquidityAdvisory['readiness'],
+  checklist: LiquidityChecklistItem[],
+  channels: LiquidityChannel[]
+): ClientAdvisory {
+  const recommended = channels.find((channel) => channel.recommended)
+  const blockedItems = checklist.filter((item) => item.status === 'blocked')
+  const reviewItems = checklist.filter((item) => item.status === 'review')
+  const requiredDocuments = [
+    'Documento e procuração atualizada do beneficiário',
+    'Certidão de titularidade e dados bancários',
+    'Cópia do ofício requisitório e cálculo homologado',
+    'Consulta de cessões, penhoras e honorários destacados',
+  ]
+
+  if (readiness.status === 'blocked') {
+    return {
+      posture: 'blocked',
+      headline: 'Regularizar antes de falar em venda',
+      clientMessage:
+        'Neste momento o melhor serviço é limpar a trava jurídica. Uma oferta agora tende a sair pior ou nem avançar.',
+      operatorNextSteps: blockedItems.map((item) => item.action).slice(0, 3),
+      requiredDocuments,
+      revenueOpportunity: {
+        key: 'legal_cleanup',
+        label: 'Projeto de regularização',
+        rationale: 'Há trava impeditiva que exige atuação jurídica antes de liquidez.',
+      },
+    }
+  }
+
+  if (readiness.status === 'review') {
+    return {
+      posture: 'complete_diligence',
+      headline: 'Montar dossiê antes de ofertar',
+      clientMessage:
+        'Existe possibilidade de liquidez, mas a proposta só deve ser apresentada após confirmar o valor líquido e as pendências.',
+      operatorNextSteps: reviewItems.map((item) => item.action).slice(0, 3),
+      requiredDocuments,
+      revenueOpportunity: {
+        key: 'diligence_package',
+        label: 'Dossiê de liquidez',
+        rationale: 'O escritório pode cobrar pela organização documental e validação pré-oferta.',
+      },
+    }
+  }
+
+  if (recommended?.key === 'hold_and_wait') {
+    return {
+      posture: 'hold',
+      headline: 'Esperar pode preservar mais valor',
+      clientMessage:
+        'A venda imediata não parece ser o melhor caminho econômico agora. O ganho está em monitorar eventos que acelerem a fila.',
+      operatorNextSteps: [
+        'Registrar tese de espera e custo de oportunidade.',
+        'Configurar monitoramento de acordo direto, pagamento e superpreferência.',
+        'Reavaliar proposta quando houver novo evento relevante.',
+      ],
+      requiredDocuments,
+      revenueOpportunity: {
+        key: 'monitoring_retainer',
+        label: 'Acompanhamento recorrente',
+        rationale: 'O valor está em monitorar gatilhos de liquidez e reprecificar o ativo.',
+      },
+    }
+  }
+
+  return {
+    posture: 'prepare_offer',
+    headline: 'Preparar proposta e comprador qualificado',
+    clientMessage:
+      'O ativo tem sinais suficientes para iniciar uma conversa de liquidez com tese objetiva e faixa de preço defensável.',
+    operatorNextSteps: [
+      recommended?.nextAction ?? 'Enviar dossiê para compradores qualificados.',
+      'Validar valor líquido cedível antes de apresentar preço final.',
+      'Registrar faixa mínima aceitável e prazo de decisão do cliente.',
+    ],
+    requiredDocuments,
+    revenueOpportunity: {
+      key: 'success_fee',
+      label: 'Originação com success fee',
+      rationale: 'O escritório pode capturar valor conectando ativo validado a comprador ou FIDC.',
+    },
+  }
 }
 
 function proceduralStatus(signalCodes: Set<string>, opportunity: OpportunityProjection) {

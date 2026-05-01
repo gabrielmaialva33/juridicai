@@ -240,6 +240,12 @@ const routes = {
     tokens: [{"old":"/operations/opportunities/:id/liquidity","type":0,"val":"operations","end":""},{"old":"/operations/opportunities/:id/liquidity","type":0,"val":"opportunities","end":""},{"old":"/operations/opportunities/:id/liquidity","type":1,"val":"id","end":""},{"old":"/operations/opportunities/:id/liquidity","type":0,"val":"liquidity","end":""}],
     types: placeholder as Registry['operations.opportunities.liquidity']['types'],
   },
+  'operations.opportunities.dossier': {
+    methods: ["GET","HEAD"],
+    pattern: '/operations/opportunities/:id/dossier',
+    tokens: [{"old":"/operations/opportunities/:id/dossier","type":0,"val":"operations","end":""},{"old":"/operations/opportunities/:id/dossier","type":0,"val":"opportunities","end":""},{"old":"/operations/opportunities/:id/dossier","type":1,"val":"id","end":""},{"old":"/operations/opportunities/:id/dossier","type":0,"val":"dossier","end":""}],
+    types: placeholder as Registry['operations.opportunities.dossier']['types'],
+  },
   'operations.opportunities.pricing': {
     methods: ["POST"],
     pattern: '/operations/opportunities/:id/pricing',

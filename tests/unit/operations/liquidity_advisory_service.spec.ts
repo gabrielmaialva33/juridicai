@@ -1,24 +1,29 @@
 import { test } from '@japa/runner'
 import liquidityAdvisoryService from '#modules/operations/services/liquidity_advisory_service'
+import liquidityDossierService from '#modules/operations/services/liquidity_dossier_service'
 import type { OpportunityProjection } from '#modules/operations/services/cession_pricing_engine'
 
 test.group('liquidity advisory service', () => {
   test('recommends private cession when the opportunity is liquid and commercially attractive', ({
     assert,
   }) => {
-    const advisory = liquidityAdvisoryService.evaluate(
-      opportunityFixture({
-        positiveSignals: ['payment_available', 'calculation_homologated'],
-        riskAdjustedIrr: 0.34,
-        paymentProbability: 0.93,
-        finalScore: 0.9,
-      })
-    )
+    const opportunity = opportunityFixture({
+      positiveSignals: ['payment_available', 'calculation_homologated'],
+      riskAdjustedIrr: 0.34,
+      paymentProbability: 0.93,
+      finalScore: 0.9,
+    })
+    const advisory = liquidityAdvisoryService.evaluate(opportunity)
+    const dossier = liquidityDossierService.build({ opportunity, liquidity: advisory })
 
     assert.equal(advisory.readiness.status, 'ready')
     assert.isAtLeast(advisory.readiness.score, 80)
     assert.equal(advisory.channels.find((channel) => channel.recommended)?.key, 'private_cession')
+    assert.equal(advisory.clientAdvisory.posture, 'prepare_offer')
+    assert.equal(advisory.clientAdvisory.revenueOpportunity.key, 'success_fee')
     assert.include(advisory.insights.join(' '), 'TIR ajustada')
+    assert.equal(dossier.pricing.grade, 'A+')
+    assert.include(dossier.markdown, 'Dossiê de liquidez')
   })
 
   test('blocks liquidity when a prior cession is detected', ({ assert }) => {
@@ -29,6 +34,8 @@ test.group('liquidity advisory service', () => {
     )
 
     assert.equal(advisory.readiness.status, 'blocked')
+    assert.equal(advisory.clientAdvisory.posture, 'blocked')
+    assert.equal(advisory.clientAdvisory.revenueOpportunity.key, 'legal_cleanup')
     assert.equal(advisory.checklist.find((item) => item.key === 'cession_chain')?.status, 'blocked')
     assert.equal(
       advisory.channels.find((channel) => channel.key === 'private_cession')?.fitScore,
