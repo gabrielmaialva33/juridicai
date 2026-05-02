@@ -4,6 +4,7 @@ import coverageRunService from '#modules/integrations/services/coverage_run_serv
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import genericTribunalPublicSourceAdapter from '#modules/integrations/services/generic_tribunal_public_source_adapter'
+import tjrjAnnualMapImportService from '#modules/integrations/services/tjrj_annual_map_import_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf1PrecatorioAdapter, {
   type Trf1PrecatorioLinkKind,
@@ -66,6 +67,7 @@ export type TribunalSourceSyncOptions = {
   tjspImportDocuments?: boolean | null
   genericTribunalLimit?: number | null
   genericTribunalDownloadLinkedDocuments?: boolean | null
+  tjrjAnnualMapImportLimit?: number | null
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
   trf1Limit?: number | null
@@ -375,18 +377,66 @@ class TribunalSourceSyncService {
         metadata: target.metadata,
       },
       limit: options.genericTribunalLimit ?? 25,
+      nestedLimit: options.genericTribunalLimit ?? 25,
       downloadLinkedDocuments: options.genericTribunalDownloadLinkedDocuments ?? true,
     })
+    const imports =
+      target.courtAlias === 'tjrj'
+        ? await this.importTjrjAnnualMapSourceRecords(result.items, options)
+        : []
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0 }
+    )
 
     return completedResult(target, {
       discoveredCount: result.discovered,
       sourceRecordsCount: result.persisted,
-      createdAssetsCount: 0,
-      linkedAssetsCount: 0,
-      enrichedAssetsCount: result.sourceRecordsCreated,
-      errorCount: 0,
-      metrics: result as unknown as JsonRecord,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: result.sourceRecordsCreated + imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...result,
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
+        })),
+        importTotals,
+      } as unknown as JsonRecord,
     })
+  }
+
+  private async importTjrjAnnualMapSourceRecords(
+    items: Array<{ link: { title: string; url: string; format: string }; sourceRecordId: string }>,
+    options: TribunalSourceSyncOptions
+  ) {
+    const imports: Awaited<ReturnType<typeof tjrjAnnualMapImportService.importSourceRecord>>[] = []
+
+    for (const item of items) {
+      if (!isTjrjAnnualMapDocument(item.link)) {
+        continue
+      }
+
+      imports.push(
+        await tjrjAnnualMapImportService.importSourceRecord(item.sourceRecordId, {
+          maxRows: options.tjrjAnnualMapImportLimit,
+        })
+      )
+    }
+
+    return imports
   }
 
   private async syncTrf1Target(
@@ -900,6 +950,19 @@ function coverageScoreFor(result: TargetResult) {
 
 function normalizeList(values: string[]) {
   return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))]
+}
+
+function isTjrjAnnualMapDocument(link: { title: string; url: string; format: string }) {
+  const value = `${link.title} ${link.url}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  return (
+    value.includes('mapa_anual_de_precatorios') ||
+    value.includes('mapa-anual-de-precatorios') ||
+    value.includes('mapa anual de precatorios')
+  )
 }
 
 export default new TribunalSourceSyncService()
