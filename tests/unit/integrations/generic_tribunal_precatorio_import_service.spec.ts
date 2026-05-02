@@ -11,7 +11,7 @@ import SourceRecord from '#modules/siop/models/source_record'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import type Tenant from '#modules/tenant/models/tenant'
 
-const CNJ_NUMBER = '0001234-94.2024.8.05.0001'
+const CNJ_NUMBER = '0013000-04.2013.8.05.0000'
 
 test.group('Generic tribunal precatorio import service', () => {
   test('imports extracted tribunal rows with CNJ into canonical assets', async ({ assert }) => {
