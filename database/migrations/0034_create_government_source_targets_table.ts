@@ -129,13 +129,15 @@ const COURT_PUBLIC_SOURCE_OVERRIDES: Record<
     status: 'generic_supported' | 'manual_review' | 'blocked_captcha' | 'unknown'
     coverageScore: string
     notes: string
+    adapterKey?: string
   }
 > = {
   tjba: {
     sourceUrl: 'https://listaprecatorios.tjba.jus.br/#/lista-unificada-precatorios',
     status: 'generic_supported',
-    coverageScore: '0.3500',
-    notes: 'TJBA public unified precatorio list application.',
+    coverageScore: '0.7000',
+    notes: 'TJBA public unified precatorio API with structured JSON rows.',
+    adapterKey: 'tjba_precatorio_api_sync',
   },
   tjes: {
     sourceUrl: 'https://www.tjes.jus.br/precatorios-2/consultas/listas-de-precatorios/',
@@ -813,7 +815,8 @@ function buildTargets(): TargetSeed[] {
         courtAlias: court.alias,
         branch: court.branch,
         priority: 'primary' as const,
-        adapterKey: publicSource ? 'generic_tribunal_public_source_sync' : null,
+        adapterKey:
+          publicSource?.adapterKey ?? (publicSource ? 'generic_tribunal_public_source_sync' : null),
         sourceUrl: publicSource?.sourceUrl ?? null,
         sourceFormat: 'html/pdf/xls/xlsx/csv',
         status: publicSource?.status ?? ('unknown' as const),
