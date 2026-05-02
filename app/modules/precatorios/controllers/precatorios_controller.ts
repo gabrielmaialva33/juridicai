@@ -28,6 +28,10 @@ export default class PrecatoriosController {
       asset: asset.serialize() as any,
     })
   }
+
+  async timeline({ params, response }: HttpContext) {
+    return response.ok(await precatorioService.timeline(tenantContext.requireTenantId(), params.id))
+  }
 }
 
 function normalizeFilters(query: Record<string, unknown>): PrecatorioListFilters {
