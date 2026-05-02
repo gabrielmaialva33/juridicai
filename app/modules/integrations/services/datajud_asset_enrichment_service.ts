@@ -80,6 +80,7 @@ type CandidateRow = {
 
 export type DataJudAssetEnrichmentOptions = {
   tenantId: string
+  sourceRecordId?: string | null
   limit?: number | null
   source?: SourceType | null
   missingOnly?: boolean
@@ -176,6 +177,10 @@ class DataJudAssetEnrichmentService {
 
     if (options.source) {
       query.where('source', options.source)
+    }
+
+    if (options.sourceRecordId) {
+      query.where('source_record_id', options.sourceRecordId)
     }
 
     if (options.missingOnly ?? true) {

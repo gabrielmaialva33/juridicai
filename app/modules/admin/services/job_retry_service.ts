@@ -96,6 +96,7 @@ class JobRetryService {
           payload: {
             tenantId: run.tenantId!,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
             limit: numberMetadata(run.metadata, 'limit'),
             source: stringMetadata(run.metadata, 'source'),
             missingOnly: booleanMetadata(run.metadata, 'missingOnly') ?? true,
@@ -113,6 +114,7 @@ class JobRetryService {
           payload: {
             tenantId: run.tenantId!,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
             source: stringMetadata(run.metadata, 'source'),
             limit: numberMetadata(run.metadata, 'limit'),
             candidatesPerAsset: numberMetadata(run.metadata, 'candidatesPerAsset'),

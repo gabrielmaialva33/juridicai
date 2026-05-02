@@ -7,6 +7,7 @@ export const DATAJUD_ENRICH_ASSETS_QUEUE = 'datajud-enrich-assets'
 
 export type DataJudEnrichAssetsPayload = {
   tenantId: string
+  sourceRecordId?: string | null
   limit?: number | null
   source?: SourceType | null
   missingOnly?: boolean
@@ -28,6 +29,7 @@ export async function handleDataJudEnrichAssets(payload: DataJudEnrichAssetsPayl
     origin: payload.origin ?? 'system',
     metadata: {
       requestId: payload.requestId ?? null,
+      sourceRecordId: payload.sourceRecordId ?? null,
       limit: payload.limit ?? null,
       source: payload.source ?? null,
       missingOnly: payload.missingOnly ?? true,
@@ -45,6 +47,7 @@ export async function handleDataJudEnrichAssets(payload: DataJudEnrichAssetsPayl
       () =>
         dataJudAssetEnrichmentService.enrich({
           tenantId: payload.tenantId,
+          sourceRecordId: payload.sourceRecordId,
           limit: payload.limit,
           source: payload.source,
           missingOnly: payload.missingOnly,

@@ -31,6 +31,7 @@ type CandidateAssetRow = {
 
 export type DataJudCandidateMatchOptions = {
   tenantId: string
+  sourceRecordId?: string | null
   source?: SourceType | null
   limit?: number | null
   candidatesPerAsset?: number | null
@@ -161,6 +162,10 @@ class DataJudCandidateMatchService {
 
     if (options.source) {
       query.where('precatorio_assets.source', options.source)
+    }
+
+    if (options.sourceRecordId) {
+      query.where('precatorio_assets.source_record_id', options.sourceRecordId)
     }
 
     return query as Promise<CandidateAssetRow[]>

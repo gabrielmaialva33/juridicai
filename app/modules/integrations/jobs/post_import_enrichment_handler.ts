@@ -67,6 +67,7 @@ export async function handlePostImportEnrichment(payload: PostImportEnrichmentPa
 async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
   const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
     tenantId: payload.tenantId,
+    sourceRecordId: payload.sourceRecordId,
     source: payload.source,
     limit: payload.enrichmentLimit ?? 1_000,
     missingOnly: true,
@@ -89,6 +90,7 @@ async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
   })
   const dataJudCandidateMatching = await dataJudCandidateMatchService.match({
     tenantId: payload.tenantId,
+    sourceRecordId: payload.sourceRecordId,
     source: payload.source,
     limit: payload.matchLimit ?? 500,
     candidatesPerAsset: payload.candidatesPerAsset ?? 3,
