@@ -1,10 +1,18 @@
-import { readFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { mkdir, writeFile, readFile } from 'node:fs/promises'
+import { basename } from 'node:path'
+import { DateTime } from 'luxon'
+import app from '@adonisjs/core/services/app'
 import auditService from '#shared/services/audit_service'
 import queueService from '#shared/services/queue_service'
 import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
+import { TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL } from '#modules/integrations/services/trf6_precatorio_adapter'
+import trf6PrecatorioImportService from '#modules/integrations/services/trf6_precatorio_import_service'
+import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import siopImportService from '#modules/siop/services/siop_import_service'
+import SourceRecord from '#modules/siop/models/source_record'
 import { uploadValidator } from '#modules/siop/validators/upload_validator'
 import tenantContext from '#shared/helpers/tenant_context'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -28,7 +36,13 @@ export default class ImportController {
   }
 
   async newForm({ inertia }: HttpContext) {
-    return inertia.render('siop/imports/new', {})
+    return inertia.render('siop/imports/new', {
+      manualSources: {
+        trf6FederalPrecatorios: {
+          exportUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
+        },
+      },
+    })
   }
 
   async store({ auth, request, response }: HttpContext) {
@@ -81,6 +95,54 @@ export default class ImportController {
         id: job.id,
         name: job.name,
       },
+    })
+  }
+
+  async storeTrf6Export({ auth, request, response }: HttpContext) {
+    auth.getUserOrFail()
+    const tenantId = tenantContext.requireTenantId()
+    const payload = await request.validateUsing(uploadValidator)
+    const file = request.file('file') as UploadedFile | null
+
+    if (!file || !file.tmpPath || file.isValid === false) {
+      return response.status(422).send({
+        code: 'E_INVALID_UPLOAD',
+        message: 'A valid TRF6 CSV export is required.',
+        errors: file?.errors ?? [],
+      })
+    }
+
+    const filename = file.clientName ?? 'relatorio_precatorios_orcamentarios.csv'
+    if (!filename.toLowerCase().endsWith('.csv')) {
+      return response.status(422).send({
+        code: 'E_INVALID_UPLOAD_TYPE',
+        message: 'TRF6 manual exports must be uploaded as CSV files.',
+      })
+    }
+
+    const buffer = await readFile(file.tmpPath)
+    const sourceRecord = await this.persistTrf6ManualExport({
+      tenantId,
+      exerciseYear: payload.exerciseYear,
+      buffer,
+      originalFilename: filename,
+      mimeType: file.type ?? 'text/csv',
+      fileSizeBytes: file.size ?? buffer.byteLength,
+    })
+    const result = await trf6PrecatorioImportService.importSourceRecord(sourceRecord.id, {
+      chunkSize: 500,
+    })
+
+    return response.accepted({
+      sourceRecordId: result.sourceRecord.id,
+      extraction: {
+        format: result.extraction.format,
+        status: result.extraction.status,
+        rows: result.extraction.rows.length,
+        errors: result.extraction.errors,
+      },
+      stats: result.stats,
+      chunking: result.chunking,
     })
   }
 
@@ -196,5 +258,69 @@ export default class ImportController {
         },
       }
     )
+  }
+
+  private async persistTrf6ManualExport(payload: {
+    tenantId: string
+    exerciseYear: number
+    buffer: Buffer
+    originalFilename: string
+    mimeType?: string | null
+    fileSizeBytes?: number | bigint | null
+  }) {
+    const checksum = createHash('sha256').update(payload.buffer).digest('hex')
+    const filename = basename(payload.originalFilename)
+    const directory = app.makePath('storage', 'tribunal', 'trf6', payload.tenantId)
+    const storedPath = app.makePath('storage', 'tribunal', 'trf6', payload.tenantId, filename)
+    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
+      'trf6-federal-precatorio-orders'
+    )
+    const rawData = {
+      providerId: 'trf6-federal-precatorio-orders',
+      courtAlias: 'trf6',
+      sourceKind: 'federal_budget_order',
+      year: payload.exerciseYear,
+      sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
+      format: 'csv',
+      originalFilename: filename,
+      manualExport: true,
+    }
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(storedPath, payload.buffer)
+
+    const existing = await SourceRecord.query()
+      .where('tenant_id', payload.tenantId)
+      .where('source', 'tribunal')
+      .where('source_checksum', checksum)
+      .first()
+
+    if (existing) {
+      existing.merge({
+        sourceDatasetId,
+        sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
+        sourceFilePath: storedPath,
+        originalFilename: filename,
+        mimeType: payload.mimeType ?? 'text/csv',
+        fileSizeBytes: payload.fileSizeBytes ?? payload.buffer.byteLength,
+        rawData,
+      })
+      await existing.save()
+      return existing
+    }
+
+    return SourceRecord.create({
+      tenantId: payload.tenantId,
+      sourceDatasetId,
+      source: 'tribunal',
+      sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
+      sourceFilePath: storedPath,
+      sourceChecksum: checksum,
+      originalFilename: filename,
+      mimeType: payload.mimeType ?? 'text/csv',
+      fileSizeBytes: payload.fileSizeBytes ?? payload.buffer.byteLength,
+      collectedAt: DateTime.now(),
+      rawData,
+    })
   }
 }

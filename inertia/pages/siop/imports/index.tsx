@@ -36,16 +36,16 @@ type Props = {
 export default function SiopImportsIndex({ imports }: Props) {
   return (
     <>
-      <Head title="Imports SIOP" />
+      <Head title="Fontes de Dados" />
       <PageHeader
-        title="Imports SIOP"
-        description="Histórico recente de importações do SIOP federal."
-        breadcrumbs={[{ label: 'Imports SIOP' }]}
+        title="Fontes de Dados"
+        description="Importações oficiais e fluxos assistidos de dados governamentais."
+        breadcrumbs={[{ label: 'Fontes de Dados' }]}
       >
         <Button asChild size="sm">
           <Link href="/siop/imports/new">
             <Plus className="me-1 size-3.5" />
-            Novo import
+            Nova importação
           </Link>
         </Button>
       </PageHeader>
@@ -56,12 +56,12 @@ export default function SiopImportsIndex({ imports }: Props) {
             <EmptyState
               icon={<FileSpreadsheet className="size-12" />}
               message="Nenhum import ainda"
-              description="Suba um arquivo XLSX/CSV do SIOP para popular a base."
+              description="Suba um arquivo oficial para popular a base canônica."
             >
               <Button asChild size="sm">
                 <Link href="/siop/imports/new">
                   <Plus className="me-1 size-3.5" />
-                  Novo import
+                  Nova importação
                 </Link>
               </Button>
             </EmptyState>

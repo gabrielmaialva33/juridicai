@@ -18,6 +18,10 @@ router
       .as('imports.store')
       .use(middleware.permission('imports.manage'))
     router
+      .post('siop/imports/trf6-export', [ImportController, 'storeTrf6Export'])
+      .as('imports.trf6_export.store')
+      .use(middleware.permission('imports.manage'))
+    router
       .get('siop/imports/:id', [ImportController, 'show'])
       .as('imports.show')
       .use(middleware.permission('imports.read'))
