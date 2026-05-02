@@ -217,6 +217,29 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
       importsCanonicalAssets: true,
     },
   },
+  {
+    key: 'tribunal:trf6-federal-precatorio-orders',
+    sourceDatasetKey: 'trf6-federal-precatorio-orders',
+    name: 'TRF6 ordem cronológica de precatórios federais',
+    source: 'tribunal',
+    federativeLevel: 'federal',
+    stateCode: null,
+    courtAlias: 'trf6',
+    branch: 'federal_regional',
+    priority: 'primary',
+    adapterKey: 'trf6_precatorio_sync',
+    sourceUrl: 'https://portal.trf6.jus.br/rpv-e-precatorios/precatorios-federais/',
+    sourceFormat: 'html/pdf',
+    status: 'implemented',
+    cadence: 'daily',
+    coverageScore: '0.7500',
+    metadata: {
+      levels: ['federal'],
+      reportKinds: ['federal_budget_order'],
+      importsCanonicalAssets: true,
+      blockedLinks: ['eproc_2026_captcha'],
+    },
+  },
 ]
 
 export default class extends BaseSchema {
@@ -464,11 +487,63 @@ export default class extends BaseSchema {
         court_alias: 'trf5',
         format: 'html/pdf',
         notes:
-          'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
+          'TRF5 public map page and PDF reports for paid precatorios, federal debt, and state/municipal chronological and special-regime queues.',
         metadata: {
           levels: ['federal', 'state', 'municipal'],
           coverage: 'pdf_reports',
-          reportKinds: ['paid_precatorios', 'federal_debt'],
+          reportKinds: [
+            'paid_precatorios',
+            'federal_debt',
+            'state_municipal_chronological_order',
+            'state_municipal_special_regime_ec94',
+            'state_municipal_special_regime_ec136',
+          ],
+        },
+        updated_at: this.raw('now()'),
+      })
+
+    await this.db
+      .table('source_datasets')
+      .insert({
+        key: 'trf6-federal-precatorio-orders',
+        name: 'TRF6 ordem cronológica de precatórios federais',
+        owner: 'Tribunal Regional Federal da 6ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://portal.trf6.jus.br/rpv-e-precatorios/precatorios-federais/',
+        court_alias: 'trf6',
+        format: 'html/pdf',
+        notes:
+          'TRF6 public federal budget-order precatorio PDFs. The 2026 eproc endpoint currently requires CAPTCHA and is tracked as blocked metadata.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'chronological_queue',
+          reportKinds: ['federal_budget_order'],
+          blockedLinks: ['eproc_2026_captcha'],
+        },
+      })
+      .onConflict('key')
+      .merge({
+        name: 'TRF6 ordem cronológica de precatórios federais',
+        owner: 'Tribunal Regional Federal da 6ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://portal.trf6.jus.br/rpv-e-precatorios/precatorios-federais/',
+        court_alias: 'trf6',
+        format: 'html/pdf',
+        notes:
+          'TRF6 public federal budget-order precatorio PDFs. The 2026 eproc endpoint currently requires CAPTCHA and is tracked as blocked metadata.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'chronological_queue',
+          reportKinds: ['federal_budget_order'],
+          blockedLinks: ['eproc_2026_captcha'],
         },
         updated_at: this.raw('now()'),
       })

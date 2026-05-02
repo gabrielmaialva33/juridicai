@@ -81,6 +81,7 @@ class GovernmentDataSyncOrchestratorService {
         'trf2_precatorio_sync',
         'trf4_precatorio_sync',
         'trf5_precatorio_sync',
+        'trf6_precatorio_sync',
       ],
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
@@ -88,6 +89,8 @@ class GovernmentDataSyncOrchestratorService {
       trf2Years: years,
       trf5Years: years,
       trf5Limit: 10,
+      trf6Years: years,
+      trf6Limit: 10,
       origin: options.origin ?? 'scheduler',
     })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
@@ -173,6 +176,7 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
         'trf2_precatorio_sync',
         'trf4_precatorio_sync',
         'trf5_precatorio_sync',
+        'trf6_precatorio_sync',
       ],
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
@@ -180,6 +184,8 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       trf2Years: years,
       trf5Years: years,
       trf5Limit: 10,
+      trf6Years: years,
+      trf6Limit: 10,
     },
     dataJudAssetEnrichment: {
       limit: options.enrichLimit ?? 500,

@@ -76,7 +76,7 @@ For targeted troubleshooting, run individual phases:
 ```bash
 node ace datajud:sync-precatorios --tenant-id=<tenant-id> --courts=tjsp --page-size=100 --max-pages-per-court=1 --run-inline
 node ace datajud:classify-signals --tenant-id=<tenant-id> --limit=2000 --run-inline
-node ace tribunal:sync-sources --tenant-id=<tenant-id> --adapters=tjsp_precatorio_sync,trf2_precatorio_sync,trf4_precatorio_sync,trf5_precatorio_sync --trf-4-import-chunk-size=500 --trf-5-limit=10 --trf-5-import-chunk-size=250 --run-inline
+node ace tribunal:sync-sources --tenant-id=<tenant-id> --adapters=tjsp_precatorio_sync,trf2_precatorio_sync,trf4_precatorio_sync,trf5_precatorio_sync,trf6_precatorio_sync --trf-4-import-chunk-size=500 --trf-5-limit=10 --trf-5-import-chunk-size=250 --trf-6-limit=10 --trf-6-import-chunk-size=250 --run-inline
 node ace tribunal:sync-sources --tenant-id=<tenant-id> --datasets=court-annual-map-pages --dry-run --run-inline
 ```
 
@@ -85,7 +85,9 @@ and database growth. For TRF4, use `--trf-4-import-limit=<n>` only for controlle
 runs; production imports should prefer chunking through `--trf-4-import-chunk-size=500` so the full
 file is processed with bounded batches. For TRF5, keep `--trf-5-limit=<n>` conservative at first
 because the public page exposes federal paid/debt PDFs plus state and municipal chronological and
-special-regime reports; raise it after checking `pdftotext` duration and row quality.
+special-regime reports; raise it after checking `pdftotext` duration and row quality. TRF6 exposes
+public 2024/2025 PDFs and a 2026 eproc link that currently requires CAPTCHA, so automation imports
+only the public PDFs until that source offers a non-interactive export.
 
 ## Development Demo Workspace
 

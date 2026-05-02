@@ -148,6 +148,21 @@ export default class extends BaseSchema {
             '{"levels":["federal","state","municipal"],"coverage":"pdf_reports","reportKinds":["paid_precatorios","federal_debt","state_municipal_chronological_order","state_municipal_special_regime_ec94","state_municipal_special_regime_ec136"]}'::jsonb
           ),
           (
+            'trf6-federal-precatorio-orders',
+            'TRF6 ordem cronológica de precatórios federais',
+            'Tribunal Regional Federal da 6ª Região',
+            'tribunal',
+            'federal',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://portal.trf6.jus.br/rpv-e-precatorios/precatorios-federais/',
+            'trf6',
+            'html/pdf',
+            'TRF6 public federal budget-order precatorio PDFs. The 2026 eproc endpoint currently requires CAPTCHA and is tracked as blocked metadata.',
+            '{"levels":["federal"],"coverage":"chronological_queue","reportKinds":["federal_budget_order"],"blockedLinks":["eproc_2026_captcha"]}'::jsonb
+          ),
+          (
             'cnj-annual-precatorios-map',
             'CNJ Mapa Anual dos Precatórios',
             'Conselho Nacional de Justiça',

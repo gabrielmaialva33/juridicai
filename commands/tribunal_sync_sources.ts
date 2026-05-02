@@ -101,6 +101,26 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare trf5ImportChunkSize?: number
 
+  @flags.string({
+    description: 'Comma-separated TRF6 years',
+  })
+  declare trf6Years?: string
+
+  @flags.number({
+    description: 'Maximum TRF6 files to download',
+  })
+  declare trf6Limit?: number
+
+  @flags.number({
+    description: 'Maximum TRF6 rows to import per downloaded file',
+  })
+  declare trf6ImportLimit?: number
+
+  @flags.number({
+    description: 'TRF6 parsed rows processed per import batch',
+  })
+  declare trf6ImportChunkSize?: number
+
   @flags.boolean({
     description: 'Preview selected targets without downloading or mutating data',
   })
@@ -136,6 +156,10 @@ export default class TribunalSyncSources extends BaseCommand {
       trf5Limit: this.trf5Limit,
       trf5ImportLimit: this.trf5ImportLimit,
       trf5ImportChunkSize: this.trf5ImportChunkSize,
+      trf6Years: parseYears(this.trf6Years),
+      trf6Limit: this.trf6Limit,
+      trf6ImportLimit: this.trf6ImportLimit,
+      trf6ImportChunkSize: this.trf6ImportChunkSize,
       dryRun: this.dryRun,
       origin: 'manual_retry',
     }
