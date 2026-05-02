@@ -29,6 +29,7 @@ export type GenericTribunalPublicSourceSyncOptions = {
   fetcher?: typeof fetch
   downloadLinkedDocuments?: boolean
   limit?: number | null
+  nestedLimit?: number | null
 }
 
 export type GenericTribunalPublicSourceSyncResult = {
@@ -59,7 +60,7 @@ class GenericTribunalPublicSourceAdapter {
         ? []
         : parsePublicSourceLinks(landingPage.text, options.target.sourceUrl)
     const selected = limitLinks(discovered, options.limit)
-    const links = [
+    const links: GenericTribunalPublicSourceLink[] = [
       {
         title: options.target.name,
         url: options.target.sourceUrl,
@@ -76,13 +77,18 @@ class GenericTribunalPublicSourceAdapter {
       items: [],
     }
 
-    for (const link of links) {
+    for (let index = 0; index < links.length; index += 1) {
+      const link = links[index]
       const fetched =
         link.sourceKind === 'landing_page' ? landingPage : await this.fetchLink(fetcher, link)
+      const effectiveLink = {
+        ...link,
+        format: formatFromContentType(fetched.contentType) ?? link.format,
+      }
       const persisted = await this.persistFetchedSource({
         tenantId: options.tenantId,
         target: options.target,
-        link,
+        link: effectiveLink,
         buffer: fetched.buffer,
         contentType: fetched.contentType,
       })
@@ -90,10 +96,28 @@ class GenericTribunalPublicSourceAdapter {
       result.persisted += 1
       result.sourceRecordsCreated += persisted.created ? 1 : 0
       result.items.push({
-        link,
+        link: effectiveLink,
         sourceRecordId: persisted.sourceRecord.id,
         created: persisted.created,
       })
+
+      if (
+        options.downloadLinkedDocuments !== false &&
+        effectiveLink.sourceKind === 'linked_document' &&
+        effectiveLink.format === 'html'
+      ) {
+        const nestedLinks = limitLinks(
+          parsePublicSourceLinks(fetched.text, effectiveLink.url),
+          options.nestedLimit ?? options.limit
+        )
+        result.discovered += nestedLinks.length
+
+        for (const nestedLink of nestedLinks) {
+          if (!links.some((candidate) => candidate.url === nestedLink.url)) {
+            links.push(nestedLink)
+          }
+        }
+      }
     }
 
     return result

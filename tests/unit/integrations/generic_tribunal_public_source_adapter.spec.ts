@@ -10,15 +10,26 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 const LANDING_URL = 'https://example.test/precatorios'
 const PDF_URL = 'https://example.test/files/lista-cronologica-2026.pdf'
 const CSV_URL = 'https://example.test/files/mapa-anual-precatorios.csv'
+const MAP_PAGE_URL = 'https://example.test/mapa-anual'
+const NESTED_PDF_URL = 'https://example.test/documents/d/precatorios/mapa_anual_de_precatorios_2026'
 
 const LANDING_HTML = `
   <html>
     <body>
       <a href="/files/lista-cronologica-2026.pdf">Lista Cronológica de Precatórios 2026</a>
       <a href="/files/mapa-anual-precatorios.csv">Mapa anual de precatórios CSV</a>
+      <a href="/mapa-anual">Mapa Anual de Precatórios (CNJ)</a>
       <a href="#main-content">Pular para o conteúdo principal</a>
       <a href="/precatorios">Home</a>
       <a href="/noticias">Notícias gerais</a>
+    </body>
+  </html>
+`
+
+const MAP_PAGE_HTML = `
+  <html>
+    <body>
+      <a href="/documents/d/precatorios/mapa_anual_de_precatorios_2026">2026 &gt;&gt;&gt;</a>
     </body>
   </html>
 `
@@ -39,6 +50,11 @@ test.group('Generic tribunal public source adapter', () => {
           title: 'Mapa anual de precatórios CSV',
           url: CSV_URL,
           format: 'csv',
+        },
+        {
+          title: 'Mapa Anual de Precatórios (CNJ)',
+          url: MAP_PAGE_URL,
+          format: 'html',
         },
       ]
     )
@@ -69,6 +85,18 @@ test.group('Generic tribunal public source adapter', () => {
         })
       }
 
+      if (value === MAP_PAGE_URL) {
+        return new Response(MAP_PAGE_HTML, {
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        })
+      }
+
+      if (value === NESTED_PDF_URL) {
+        return new Response(Buffer.from('%PDF-1.4 nested fake'), {
+          headers: { 'content-type': 'application/pdf' },
+        })
+      }
+
       return new Response('not found', { status: 404 })
     }
 
@@ -86,10 +114,10 @@ test.group('Generic tribunal public source adapter', () => {
       },
     })
 
-    assert.equal(result.discovered, 2)
-    assert.equal(result.selected, 2)
-    assert.equal(result.persisted, 3)
-    assert.equal(result.sourceRecordsCreated, 3)
+    assert.equal(result.discovered, 4)
+    assert.equal(result.selected, 3)
+    assert.equal(result.persisted, 5)
+    assert.equal(result.sourceRecordsCreated, 5)
 
     const sourceRecords = await SourceRecord.query()
       .where('tenant_id', tenant.id)
@@ -103,8 +131,10 @@ test.group('Generic tribunal public source adapter', () => {
         courtAlias: record.rawData?.courtAlias,
       })),
       [
+        { sourceUrl: NESTED_PDF_URL, sourceKind: 'linked_document', courtAlias: 'tjxx' },
         { sourceUrl: PDF_URL, sourceKind: 'linked_document', courtAlias: 'tjxx' },
         { sourceUrl: CSV_URL, sourceKind: 'linked_document', courtAlias: 'tjxx' },
+        { sourceUrl: MAP_PAGE_URL, sourceKind: 'linked_document', courtAlias: 'tjxx' },
         { sourceUrl: LANDING_URL, sourceKind: 'landing_page', courtAlias: 'tjxx' },
       ]
     )
@@ -124,7 +154,7 @@ test.group('Generic tribunal public source adapter', () => {
     })
 
     assert.equal(secondRun.sourceRecordsCreated, 0)
-    assert.equal(await countSourceRecords(tenant.id), 3)
+    assert.equal(await countSourceRecords(tenant.id), 5)
 
     await SourceRecord.query().where('tenant_id', tenant.id).delete()
     await rm(app.makePath('storage', 'tribunal', 'tjxx', tenant.id), {
