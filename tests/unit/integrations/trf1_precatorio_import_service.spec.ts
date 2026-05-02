@@ -22,6 +22,39 @@ const TRF1_CSV = [
   '2;SEM PROCESSO;Comum;Estado do Amazonas AM;120.000,00;2026;13/04/2025;REQ-TRF1-2;Estado do Amazonas;Saúde',
 ].join('\n')
 
+const TRF1_EXCEL_HTML = `
+<table>
+  <tr><td colspan="7">RELAÇÃO DE PRECATÓRIOS DOS DEVEDORES ESTADUAIS</td></tr>
+  <tr>
+    <td>PROPOSTA</td>
+    <td>PRECATÓRIO</td>
+    <td>NATUREZA</td>
+    <td>PREFERÊNCIA</td>
+    <td>DATA DA APRESENTAÇÃO</td>
+    <td>VALOR DEVIDO EM 04/2025 (R$)</td>
+    <td>DEVEDOR</td>
+  </tr>
+  <tr>
+    <td>2026</td>
+    <td>054421-49.2025.4.01.9198</td>
+    <td>Comum</td>
+    <td>Não</td>
+    <td>19/02/2025</td>
+    <td>388.197,55</td>
+    <td>ESTADO DO ACRE - AC</td>
+  </tr>
+  <tr>
+    <td>2026</td>
+    <td>402660-45.2024.4.01.9198</td>
+    <td>Comum</td>
+    <td>Não</td>
+    <td>08/07/2024</td>
+    <td>452.053,94</td>
+    <td>MUNICIPIO DE CAPIXABA - AC</td>
+  </tr>
+</table>
+`
+
 test.group('TRF1 precatorio import service', () => {
   test('imports TRF1 report rows into canonical assets and evidence', async ({ assert }) => {
     const tenant = await TenantFactory.create()
@@ -99,6 +132,56 @@ test.group('TRF1 precatorio import service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('imports TRF1 Excel HTML rows with shortened process numbers from official reports', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createHtmlSourceRecord(tenant)
+
+    const result = await trf1PrecatorioImportService.importSourceRecord(sourceRecord.id, {
+      maxRows: 2,
+      chunkSize: 1,
+    })
+
+    assert.equal(result.extraction.format, 'html')
+    assert.deepEqual(result.stats, {
+      totalRows: 2,
+      validRows: 2,
+      selectedRows: 2,
+      inserted: 2,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    })
+
+    const acreAsset = await PrecatorioAsset.query()
+      .where('tenant_id', tenant.id)
+      .where('asset_number', '054421-49.2025.4.01.9198')
+      .firstOrFail()
+    assert.equal(acreAsset.lifecycleStatus, 'discovered')
+    assert.equal(acreAsset.exerciseYear, 2026)
+
+    const valuation = await AssetValuation.query()
+      .where('tenant_id', tenant.id)
+      .where('asset_id', acreAsset.id)
+      .firstOrFail()
+    assert.equal(valuation.estimatedUpdatedValue, '388197.55')
+
+    const debtors = await Debtor.query().where('tenant_id', tenant.id).orderBy('name', 'asc')
+    assert.deepEqual(
+      debtors.map((debtor) => [debtor.name, debtor.debtorType, debtor.stateCode]),
+      [
+        ['ESTADO DO ACRE - AC', 'state', 'AC'],
+        ['MUNICIPIO DE CAPIXABA - AC', 'municipality', 'AC'],
+      ]
+    )
+
+    assert.equal(await countRows(PrecatorioAsset, tenant.id), 2)
+    assert.equal(await countRows(AssetSourceLink, tenant.id), 2)
+
+    await cleanupTenantData(tenant)
+  })
 })
 
 async function createSourceRecord(tenant: Tenant) {
@@ -125,6 +208,34 @@ async function createSourceRecord(tenant: Tenant) {
       title: 'Repasses Entidades Devedoras Estaduais e Municipais de 2026',
       year: 2026,
       pathId: 'repasses-2026',
+    },
+  })
+}
+
+async function createHtmlSourceRecord(tenant: Tenant) {
+  const directory = app.makePath('storage', 'tribunal', 'trf1', tenant.id)
+  const filePath = join(directory, 'trf1-subnational-proposal-2026.htm')
+
+  await mkdir(directory, { recursive: true })
+  await writeFile(filePath, TRF1_EXCEL_HTML)
+
+  return SourceRecord.create({
+    tenantId: tenant.id,
+    source: 'tribunal',
+    sourceUrl: 'https://www.trf1.jus.br/trf1/conteudo/relacao-precatorios-2026.htm',
+    sourceFilePath: filePath,
+    sourceChecksum: `trf1-html-import-test-${tenant.id}`,
+    originalFilename: 'trf1-subnational-proposal-2026.htm',
+    mimeType: 'text/html',
+    fileSizeBytes: Buffer.byteLength(TRF1_EXCEL_HTML),
+    collectedAt: DateTime.now(),
+    rawData: {
+      providerId: 'trf1-precatorio-reports',
+      courtAlias: 'trf1',
+      sourceKind: 'subnational_budget_proposal',
+      title: 'Proposta de 2026',
+      year: 2026,
+      pathId: 'relacao-precatorios-2026',
     },
   })
 }

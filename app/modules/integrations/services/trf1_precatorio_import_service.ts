@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
@@ -68,19 +69,20 @@ class Trf1PrecatorioImportService {
         annotateSourceRecord: true,
       }
     )
-    const rows = extraction.rows.map((row) => normalizeRow(sourceRecord, row))
+    const extractedRows = await rowsForImport(sourceRecord, extraction.rows, extraction.format)
+    const rows = extractedRows.map((row) => normalizeRow(sourceRecord, row))
     const validRows = rows.filter((row): row is Trf1ImportRow => Boolean(row))
     const selectedRows = limitRows(validRows, options.maxRows)
     const chunkSize = normalizeChunkSize(options.chunkSize)
     const batches = chunkRows(selectedRows, chunkSize)
     const context = await this.buildContext()
     const stats: Trf1PrecatorioImportStats = {
-      totalRows: extraction.rows.length,
+      totalRows: extractedRows.length,
       validRows: validRows.length,
       selectedRows: selectedRows.length,
       inserted: 0,
       updated: 0,
-      skipped: extraction.rows.length - validRows.length,
+      skipped: extractedRows.length - validRows.length,
       errors: 0,
     }
 
@@ -485,7 +487,7 @@ function normalizeRow(sourceRecord: SourceRecord, row: TribunalExtractedRow): Tr
     'requisicao',
     'prc',
   ])
-  const cnjNumber = row.normalizedCnj ?? normalizeCnj(processNumber)
+  const cnjNumber = row.normalizedCnj ?? normalizeTrf1ProcessNumber(processNumber)
   const value = firstMoney(row.rawData, [
     'valor_atualizado',
     'valor_requisitado',
@@ -563,6 +565,82 @@ function normalizeRow(sourceRecord: SourceRecord, row: TribunalExtractedRow): Tr
     causeType: firstString(row.rawData, ['assunto', 'causa', 'natureza_da_acao']),
     rawData: row.rawData,
   }
+}
+
+async function rowsForImport(
+  sourceRecord: SourceRecord,
+  rows: TribunalExtractedRow[],
+  format: string
+) {
+  if (format !== 'html' || !sourceRecord.sourceFilePath) {
+    return rows
+  }
+
+  const parsedRows = parseTrf1ExcelHtmlRows(decodeText(await readFile(sourceRecord.sourceFilePath)))
+  return parsedRows.length ? parsedRows : rows
+}
+
+function parseTrf1ExcelHtmlRows(html: string): TribunalExtractedRow[] {
+  const tableRows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map((match) => match[0])
+  const rows: TribunalExtractedRow[] = []
+
+  for (const tableRow of tableRows) {
+    const cells = [...tableRow.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)]
+      .map((match) => compactText(decodeHtml(stripTags(match[1]))))
+      .filter((cell) => cell && cell !== '&nbsp;')
+
+    if (cells.length < 7 || !/^\d{4}$/.test(cells[0]) || !looksLikeTrf1Process(cells[1])) {
+      continue
+    }
+
+    const rawData: JsonRecord = {
+      proposta: cells[0],
+      precatorio: cells[1],
+      natureza: cells[2] ?? null,
+      preferencia: cells[3] ?? null,
+      data_da_apresentacao: cells[4] ?? null,
+      valor_devido: cells[5] ?? null,
+      devedor: cells.slice(6).join(' '),
+    }
+    const normalizedCnj = normalizeTrf1ProcessNumber(cells[1])
+    const normalizedValue = parseBrazilianMoney(cells[5] ?? null)
+    const normalizedYear = numberField(cells[0])
+
+    rows.push({
+      rowNumber: rows.length + 1,
+      rawData,
+      normalizedCnj,
+      normalizedValue,
+      normalizedYear,
+      rowFingerprint: stableHash({ rawData, normalizedCnj, normalizedValue, normalizedYear }),
+    })
+  }
+
+  return rows
+}
+
+function looksLikeTrf1Process(value: string | null) {
+  return Boolean(value?.match(/^\d{6,7}-\d{2}\.\d{4}\.4\.01\.\d{4}$/))
+}
+
+function normalizeTrf1ProcessNumber(value: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const direct = normalizeCnj(value)
+  if (direct) {
+    return direct
+  }
+
+  const shortened = value.match(/^(\d{6})-(\d{2})\.(\d{4})\.(\d)\.(\d{2})\.(\d{4})$/)
+  if (!shortened) {
+    return null
+  }
+
+  return normalizeCnj(
+    `0${shortened[1]}-${shortened[2]}.${shortened[3]}.${shortened[4]}.${shortened[5]}.${shortened[6]}`
+  )
 }
 
 function buildExternalId(sourceRecord: SourceRecord, row: Trf1ImportRow) {
@@ -871,6 +949,30 @@ function chunkRows(rows: Trf1ImportRow[], chunkSize: number) {
 
 function compactText(value: string) {
   return value.replace(/\s+/g, ' ').trim()
+}
+
+function stripTags(value: string) {
+  return value.replace(/<[^>]*>/g, ' ')
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+}
+
+function decodeText(buffer: Buffer) {
+  const utf8 = buffer.toString('utf8')
+
+  if (!utf8.includes('\uFFFD')) {
+    return utf8
+  }
+
+  return new TextDecoder('windows-1252').decode(buffer)
 }
 
 function normalizeKey(value: string) {
