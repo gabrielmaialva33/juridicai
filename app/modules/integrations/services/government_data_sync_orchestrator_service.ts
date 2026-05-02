@@ -76,7 +76,7 @@ class GovernmentDataSyncOrchestratorService {
     })
     const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
       tenantId: options.tenantId,
-      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync'],
+      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync', 'trf4_precatorio_sync'],
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
@@ -161,7 +161,7 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
     },
     tribunalSourceDiscovery: {
-      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync'],
+      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync', 'trf4_precatorio_sync'],
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,

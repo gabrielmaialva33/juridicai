@@ -166,6 +166,29 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
       importsCanonicalAssets: true,
     },
   },
+  {
+    key: 'tribunal:trf4-chronological-precatorios',
+    sourceDatasetKey: 'trf4-chronological-precatorios',
+    name: 'TRF4 ordem cronológica de precatórios',
+    source: 'tribunal',
+    federativeLevel: 'federal',
+    stateCode: null,
+    courtAlias: 'trf4',
+    branch: 'federal_regional',
+    priority: 'primary',
+    adapterKey: 'trf4_precatorio_sync',
+    sourceUrl:
+      'https://www.trf4.jus.br/trf4/controlador.php?acao=consulta_precatorios_ordem_cronologica_externa',
+    sourceFormat: 'csv',
+    status: 'implemented',
+    cadence: 'daily',
+    coverageScore: '0.8500',
+    metadata: {
+      levels: ['federal'],
+      queueKinds: ['federal_budget', 'extra_budget_general', 'extra_budget_special'],
+      importsCanonicalAssets: true,
+    },
+  },
 ]
 
 export default class extends BaseSchema {
@@ -324,6 +347,50 @@ export default class extends BaseSchema {
         metadata: {
           levels: ['federal', 'state', 'municipal', 'multi_level'],
           coverage: 'per_court_discovery_registry',
+        },
+        updated_at: this.raw('now()'),
+      })
+
+    await this.db
+      .table('source_datasets')
+      .insert({
+        key: 'trf4-chronological-precatorios',
+        name: 'TRF4 ordem cronológica de precatórios',
+        owner: 'Tribunal Regional Federal da 4ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url:
+          'https://www.trf4.jus.br/trf4/controlador.php?acao=consulta_precatorios_ordem_cronologica_externa',
+        court_alias: 'trf4',
+        format: 'csv',
+        notes: 'TRF4 public chronological queues generated as CSV from the official public form.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'chronological_queue',
+          queueKinds: ['federal_budget', 'extra_budget_general', 'extra_budget_special'],
+        },
+      })
+      .onConflict('key')
+      .merge({
+        name: 'TRF4 ordem cronológica de precatórios',
+        owner: 'Tribunal Regional Federal da 4ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url:
+          'https://www.trf4.jus.br/trf4/controlador.php?acao=consulta_precatorios_ordem_cronologica_externa',
+        court_alias: 'trf4',
+        format: 'csv',
+        notes: 'TRF4 public chronological queues generated as CSV from the official public form.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'chronological_queue',
+          queueKinds: ['federal_budget', 'extra_budget_general', 'extra_budget_special'],
         },
         updated_at: this.raw('now()'),
       })

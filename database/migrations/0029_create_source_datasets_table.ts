@@ -118,6 +118,21 @@ export default class extends BaseSchema {
             '{"levels":["federal"],"coverage":"chronological_queue"}'::jsonb
           ),
           (
+            'trf4-chronological-precatorios',
+            'TRF4 ordem cronológica de precatórios',
+            'Tribunal Regional Federal da 4ª Região',
+            'tribunal',
+            'federal',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://www.trf4.jus.br/trf4/controlador.php?acao=consulta_precatorios_ordem_cronologica_externa',
+            'trf4',
+            'csv',
+            'TRF4 public chronological queues generated as CSV from the official public form.',
+            '{"levels":["federal"],"coverage":"chronological_queue","queueKinds":["federal_budget","extra_budget_general","extra_budget_special"]}'::jsonb
+          ),
+          (
             'cnj-annual-precatorios-map',
             'CNJ Mapa Anual dos Precatórios',
             'Conselho Nacional de Justiça',

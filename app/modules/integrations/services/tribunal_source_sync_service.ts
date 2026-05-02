@@ -6,6 +6,8 @@ import djenPublicationSyncService from '#modules/integrations/services/djen_publ
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf2PrecatorioAdapter from '#modules/integrations/services/trf2_precatorio_adapter'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
+import trf4PrecatorioAdapter from '#modules/integrations/services/trf4_precatorio_adapter'
+import trf4PrecatorioImportService from '#modules/integrations/services/trf4_precatorio_import_service'
 import SourceDataset from '#modules/integrations/models/source_dataset'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type {
@@ -32,6 +34,7 @@ export type TribunalSourceSyncOptions = {
   tjspLimit?: number | null
   tjspImportDocuments?: boolean | null
   trf2Years?: number[] | null
+  trf4ImportLimit?: number | null
   dryRun?: boolean
   origin?: JobRunOrigin
 }
@@ -192,6 +195,10 @@ class TribunalSourceSyncService {
       return this.syncTrf2Target(target, options)
     }
 
+    if (target.adapterKey === 'trf4_precatorio_sync') {
+      return this.syncTrf4Target(target, options)
+    }
+
     return skippedResult(target, `Unknown adapter key ${target.adapterKey}.`)
   }
 
@@ -291,6 +298,56 @@ class TribunalSourceSyncService {
       }
 
       imports.push(await trf2PrecatorioImportService.importSourceRecord(item.sourceRecord.id))
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+        })),
+        importTotals,
+      },
+    })
+  }
+
+  private async syncTrf4Target(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await trf4PrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      download: true,
+    })
+    const imports: Awaited<ReturnType<typeof trf4PrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord) {
+        continue
+      }
+
+      imports.push(
+        await trf4PrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
+          maxGroups: options.trf4ImportLimit,
+        })
+      )
     }
 
     const importTotals = imports.reduce(

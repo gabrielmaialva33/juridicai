@@ -64,6 +64,11 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare trf2Years?: string
 
+  @flags.number({
+    description: 'Maximum grouped TRF4 precatorios to import per downloaded queue file',
+  })
+  declare trf4ImportLimit?: number
+
   @flags.boolean({
     description: 'Preview selected targets without downloading or mutating data',
   })
@@ -92,6 +97,7 @@ export default class TribunalSyncSources extends BaseCommand {
       djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
       tjspLimit: this.tjspLimit,
       trf2Years: parseYears(this.trf2Years),
+      trf4ImportLimit: this.trf4ImportLimit,
       dryRun: this.dryRun,
       origin: 'manual_retry',
     }
