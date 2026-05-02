@@ -170,7 +170,7 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
         'subnational_consolidated_debt',
         'subnational_debt_map',
       ],
-      importsCanonicalAssets: false,
+      importsCanonicalAssets: true,
     },
   },
   {
