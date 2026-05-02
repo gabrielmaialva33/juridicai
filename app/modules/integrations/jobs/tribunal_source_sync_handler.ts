@@ -28,6 +28,9 @@ export async function handleTribunalSourceSync(payload: TribunalSourceSyncPayloa
       adapterKeys: payload.adapterKeys ?? null,
       statuses: payload.statuses ?? null,
       limit: payload.limit ?? null,
+      genericTribunalLimit: payload.genericTribunalLimit ?? null,
+      genericTribunalDownloadLinkedDocuments:
+        payload.genericTribunalDownloadLinkedDocuments ?? null,
       trf1Years: payload.trf1Years ?? null,
       trf1Kinds: payload.trf1Kinds ?? null,
       trf1Limit: payload.trf1Limit ?? null,

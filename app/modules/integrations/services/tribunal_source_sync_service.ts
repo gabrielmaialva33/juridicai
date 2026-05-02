@@ -3,6 +3,7 @@ import GovernmentSourceTarget from '#modules/integrations/models/government_sour
 import coverageRunService from '#modules/integrations/services/coverage_run_service'
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
+import genericTribunalPublicSourceAdapter from '#modules/integrations/services/generic_tribunal_public_source_adapter'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf1PrecatorioAdapter, {
   type Trf1PrecatorioLinkKind,
@@ -63,6 +64,8 @@ export type TribunalSourceSyncOptions = {
   tjspCategories?: TjspPrecatorioCommunicationCategory[] | null
   tjspLimit?: number | null
   tjspImportDocuments?: boolean | null
+  genericTribunalLimit?: number | null
+  genericTribunalDownloadLinkedDocuments?: boolean | null
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
   trf1Limit?: number | null
@@ -131,7 +134,7 @@ class TribunalSourceSyncService {
   }
 
   private async findTargets(options: TribunalSourceSyncOptions) {
-    const query = GovernmentSourceTarget.query().where('is_active', true)
+    const query = GovernmentSourceTarget.query().where('is_active', true).preload('sourceDataset')
 
     if (options.targetKeys?.length) {
       query.whereIn('key', normalizeList(options.targetKeys))
@@ -242,6 +245,10 @@ class TribunalSourceSyncService {
       return this.syncTjspTarget(target, options)
     }
 
+    if (target.adapterKey === 'generic_tribunal_public_source_sync') {
+      return this.syncGenericTribunalPublicSourceTarget(target, options)
+    }
+
     if (target.adapterKey === 'trf1_precatorio_sync') {
       return this.syncTrf1Target(target, options)
     }
@@ -344,6 +351,40 @@ class TribunalSourceSyncService {
       linkedAssetsCount: result.assetsInserted + result.assetsUpdated,
       enrichedAssetsCount: result.importedDocuments,
       errorCount: result.errors,
+      metrics: result as unknown as JsonRecord,
+    })
+  }
+
+  private async syncGenericTribunalPublicSourceTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    if (!target.sourceUrl) {
+      return skippedResult(target, 'Generic tribunal public source target has no source URL.')
+    }
+
+    const result = await genericTribunalPublicSourceAdapter.sync({
+      tenantId: options.tenantId,
+      target: {
+        key: target.key,
+        sourceDatasetKey: target.sourceDataset.key,
+        name: target.name,
+        sourceUrl: target.sourceUrl,
+        courtAlias: target.courtAlias,
+        stateCode: target.stateCode,
+        metadata: target.metadata,
+      },
+      limit: options.genericTribunalLimit ?? 25,
+      downloadLinkedDocuments: options.genericTribunalDownloadLinkedDocuments ?? true,
+    })
+
+    return completedResult(target, {
+      discoveredCount: result.discovered,
+      sourceRecordsCount: result.persisted,
+      createdAssetsCount: 0,
+      linkedAssetsCount: 0,
+      enrichedAssetsCount: result.sourceRecordsCreated,
+      errorCount: 0,
       metrics: result as unknown as JsonRecord,
     })
   }

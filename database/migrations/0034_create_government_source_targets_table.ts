@@ -122,6 +122,65 @@ const DATAJUD_COURTS = [
   })),
 ] as const
 
+const COURT_PUBLIC_SOURCE_OVERRIDES: Record<
+  string,
+  {
+    sourceUrl: string
+    status: 'generic_supported' | 'manual_review' | 'blocked_captcha' | 'unknown'
+    coverageScore: string
+    notes: string
+  }
+> = {
+  tjba: {
+    sourceUrl: 'https://listaprecatorios.tjba.jus.br/#/lista-unificada-precatorios',
+    status: 'generic_supported',
+    coverageScore: '0.3500',
+    notes: 'TJBA public unified precatorio list application.',
+  },
+  tjes: {
+    sourceUrl: 'https://www.tjes.jus.br/precatorios-2/consultas/listas-de-precatorios/',
+    status: 'generic_supported',
+    coverageScore: '0.4500',
+    notes: 'TJES public precatorio debtor-list and annual map landing page.',
+  },
+  tjma: {
+    sourceUrl: 'https://www.tjma.jus.br/hotsite/prec/item/6847/0/listas-cronologicas',
+    status: 'generic_supported',
+    coverageScore: '0.5000',
+    notes: 'TJMA chronological lists landing page for state, São Luís and other debtors.',
+  },
+  tjmg: {
+    sourceUrl: 'https://www8.tjmg.jus.br/juridico/pe/listaCronologia.jsf',
+    status: 'generic_supported',
+    coverageScore: '0.4000',
+    notes: 'TJMG public chronological payment consultation by debtor.',
+  },
+  tjpr: {
+    sourceUrl: 'https://www.tjpr.jus.br/precatorios',
+    status: 'generic_supported',
+    coverageScore: '0.3000',
+    notes: 'TJPR public precatorio portal and linked chronological publications.',
+  },
+  tjrj: {
+    sourceUrl: 'https://www.tjrj.jus.br/web/precatorios',
+    status: 'generic_supported',
+    coverageScore: '0.4500',
+    notes: 'TJRJ public precatorio portal with active transparency, debtor and agreement links.',
+  },
+  tjrs: {
+    sourceUrl: 'https://www.tjrs.jus.br/novo/processos-e-servicos/precatorios-e-rpvs/',
+    status: 'generic_supported',
+    coverageScore: '0.3000',
+    notes: 'TJRS public precatorio and RPV portal.',
+  },
+  tjsc: {
+    sourceUrl: 'https://www.tjsc.jus.br/web/precatorios',
+    status: 'generic_supported',
+    coverageScore: '0.3000',
+    notes: 'TJSC public precatorio portal.',
+  },
+}
+
 const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
   {
     key: 'tribunal:tjsp-precatorio-communications',
@@ -741,27 +800,33 @@ function buildTargets(): TargetSeed[] {
         purpose: 'publication_events_and_liquidity_signals',
       },
     })),
-    ...DATAJUD_COURTS.map((court) => ({
-      key: `court-map:${court.alias}`,
-      sourceDatasetKey: 'court-annual-map-pages',
-      name: `Mapa/lista pública de precatórios ${court.alias.toUpperCase()}`,
-      source: 'tribunal' as const,
-      federativeLevel: court.federativeLevel,
-      stateCode: court.stateCode,
-      courtAlias: court.alias,
-      branch: court.branch,
-      priority: 'primary' as const,
-      adapterKey: null,
-      sourceUrl: null,
-      sourceFormat: 'html/pdf/xls/xlsx/csv',
-      status: 'unknown' as const,
-      cadence: 'weekly' as const,
-      coverageScore: '0.1000',
-      metadata: {
-        purpose: 'raw_state_and_municipal_precatorio_discovery',
-        needsAdapter: true,
-      },
-    })),
+    ...DATAJUD_COURTS.map((court) => {
+      const publicSource = COURT_PUBLIC_SOURCE_OVERRIDES[court.alias]
+
+      return {
+        key: `court-map:${court.alias}`,
+        sourceDatasetKey: 'court-annual-map-pages',
+        name: `Mapa/lista pública de precatórios ${court.alias.toUpperCase()}`,
+        source: 'tribunal' as const,
+        federativeLevel: court.federativeLevel,
+        stateCode: court.stateCode,
+        courtAlias: court.alias,
+        branch: court.branch,
+        priority: 'primary' as const,
+        adapterKey: publicSource ? 'generic_tribunal_public_source_sync' : null,
+        sourceUrl: publicSource?.sourceUrl ?? null,
+        sourceFormat: 'html/pdf/xls/xlsx/csv',
+        status: publicSource?.status ?? ('unknown' as const),
+        cadence: 'weekly' as const,
+        coverageScore: publicSource?.coverageScore ?? '0.1000',
+        metadata: {
+          purpose: 'raw_state_and_municipal_precatorio_discovery',
+          needsAdapter: !publicSource,
+          genericCapture: Boolean(publicSource),
+          notes: publicSource?.notes ?? null,
+        },
+      }
+    }),
     ...SPECIFIC_TRIBUNAL_TARGETS,
   ]
 }

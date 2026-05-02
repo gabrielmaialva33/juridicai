@@ -62,6 +62,16 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare tjspLimit?: number
 
+  @flags.number({
+    description: 'Maximum linked documents to download from generic tribunal public sources',
+  })
+  declare genericTribunalLimit?: number
+
+  @flags.boolean({
+    description: 'Skip linked document downloads for generic tribunal public sources',
+  })
+  declare genericTribunalLandingOnly: boolean
+
   @flags.string({
     description: 'Comma-separated TRF2 years',
   })
@@ -206,6 +216,8 @@ export default class TribunalSyncSources extends BaseCommand {
       dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
       djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
       tjspLimit: this.tjspLimit,
+      genericTribunalLimit: this.genericTribunalLimit,
+      genericTribunalDownloadLinkedDocuments: !this.genericTribunalLandingOnly,
       trf1Years: parseYears(this.trf1Years),
       trf1Kinds: parseTrf1Kinds(this.trf1Kinds),
       trf1Limit: this.trf1Limit,

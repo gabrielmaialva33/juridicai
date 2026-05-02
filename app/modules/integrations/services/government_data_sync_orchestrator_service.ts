@@ -78,6 +78,7 @@ class GovernmentDataSyncOrchestratorService {
       tenantId: options.tenantId,
       adapterKeys: [
         'tjsp_precatorio_sync',
+        'generic_tribunal_public_source_sync',
         'trf1_precatorio_sync',
         'trf2_precatorio_sync',
         'trf3_precatorio_sync',
@@ -88,6 +89,8 @@ class GovernmentDataSyncOrchestratorService {
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
+      genericTribunalLimit: 25,
+      genericTribunalDownloadLinkedDocuments: true,
       trf1Years: years,
       trf1Limit: 25,
       trf1ImportLimit: 5_000,
@@ -184,6 +187,7 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
     tribunalSourceDiscovery: {
       adapterKeys: [
         'tjsp_precatorio_sync',
+        'generic_tribunal_public_source_sync',
         'trf1_precatorio_sync',
         'trf2_precatorio_sync',
         'trf3_precatorio_sync',
@@ -194,6 +198,8 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
+      genericTribunalLimit: 25,
+      genericTribunalDownloadLinkedDocuments: true,
       trf1Years: years,
       trf1Limit: 25,
       trf1ImportLimit: 5_000,
