@@ -104,6 +104,16 @@ export default class TribunalSyncSources extends BaseCommand {
   declare trf3Limit?: number
 
   @flags.number({
+    description: 'Maximum TRF3 rows to import per downloaded CSV/XLSX file',
+  })
+  declare trf3ImportLimit?: number
+
+  @flags.number({
+    description: 'TRF3 rows processed per import batch',
+  })
+  declare trf3ImportChunkSize?: number
+
+  @flags.number({
     description: 'Maximum grouped TRF4 precatorios to import per downloaded queue file',
   })
   declare trf4ImportLimit?: number
@@ -194,6 +204,8 @@ export default class TribunalSyncSources extends BaseCommand {
       trf3Months: parsePositiveIntegers(this.trf3Months),
       trf3Formats: parseTrf3Formats(this.trf3Formats),
       trf3Limit: this.trf3Limit,
+      trf3ImportLimit: this.trf3ImportLimit,
+      trf3ImportChunkSize: this.trf3ImportChunkSize,
       trf4ImportLimit: this.trf4ImportLimit,
       trf4ImportChunkSize: this.trf4ImportChunkSize,
       trf5Years: parseYears(this.trf5Years),

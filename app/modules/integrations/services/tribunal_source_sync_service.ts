@@ -12,6 +12,7 @@ import trf2PrecatorioImportService from '#modules/integrations/services/trf2_pre
 import trf3PrecatorioAdapter, {
   type Trf3PrecatorioFileFormat,
 } from '#modules/integrations/services/trf3_precatorio_adapter'
+import trf3PrecatorioImportService from '#modules/integrations/services/trf3_precatorio_import_service'
 import trf4PrecatorioAdapter from '#modules/integrations/services/trf4_precatorio_adapter'
 import trf4PrecatorioImportService from '#modules/integrations/services/trf4_precatorio_import_service'
 import trf5PrecatorioAdapter, {
@@ -69,6 +70,8 @@ export type TribunalSourceSyncOptions = {
   trf3Months?: number[] | null
   trf3Formats?: Trf3PrecatorioFileFormat[] | null
   trf3Limit?: number | null
+  trf3ImportLimit?: number | null
+  trf3ImportChunkSize?: number | null
   trf4ImportLimit?: number | null
   trf4ImportChunkSize?: number | null
   trf5Years?: number[] | null
@@ -431,14 +434,40 @@ class TribunalSourceSyncService {
       limit: options.trf3Limit ?? 12,
       download: true,
     })
+    const imports: Awaited<ReturnType<typeof trf3PrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord || item.link.format === 'pdf') {
+        continue
+      }
+
+      imports.push(
+        await trf3PrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
+          maxRows: options.trf3ImportLimit,
+          chunkSize: options.trf3ImportChunkSize,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+        processedBatches: totals.processedBatches + item.chunking.processedBatches,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
+    )
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
-      createdAssetsCount: 0,
-      linkedAssetsCount: 0,
-      enrichedAssetsCount: syncResult.downloaded,
-      errorCount: 0,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
         items: syncResult.items.map((item) => ({
@@ -446,6 +475,18 @@ class TribunalSourceSyncService {
           sourceRecordId: item.sourceRecord?.id ?? null,
           sourceRecordCreated: item.sourceRecordCreated ?? false,
         })),
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          chunking: item.chunking,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
+        })),
+        importTotals,
       },
     })
   }
