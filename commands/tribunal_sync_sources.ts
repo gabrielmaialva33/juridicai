@@ -97,6 +97,26 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare tjbaImportLimit?: number
 
+  @flags.number({
+    description: 'Maximum TJES LUP debtor entities to fetch',
+  })
+  declare tjesDebtorLimit?: number
+
+  @flags.number({
+    description: 'TJES LUP API precatorio rows requested per debtor page',
+  })
+  declare tjesPageSize?: number
+
+  @flags.number({
+    description: 'Maximum TJES LUP API pages to fetch per debtor',
+  })
+  declare tjesMaxPagesPerDebtor?: number
+
+  @flags.number({
+    description: 'Maximum TJES LUP API rows to import per fetched page',
+  })
+  declare tjesImportLimit?: number
+
   @flags.string({
     description: 'Comma-separated TRF2 years',
   })
@@ -247,6 +267,10 @@ export default class TribunalSyncSources extends BaseCommand {
       tjbaPageSize: this.tjbaPageSize,
       tjbaMaxPages: this.tjbaMaxPages,
       tjbaImportLimit: this.tjbaImportLimit,
+      tjesDebtorLimit: this.tjesDebtorLimit,
+      tjesPageSize: this.tjesPageSize,
+      tjesMaxPagesPerDebtor: this.tjesMaxPagesPerDebtor,
+      tjesImportLimit: this.tjesImportLimit,
       tjrjAnnualMapImportLimit: this.tjrjAnnualMapImportLimit,
       trf1Years: parseYears(this.trf1Years),
       trf1Kinds: parseTrf1Kinds(this.trf1Kinds),

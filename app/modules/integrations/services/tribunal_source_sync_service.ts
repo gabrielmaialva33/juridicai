@@ -7,6 +7,8 @@ import genericTribunalPublicSourceAdapter from '#modules/integrations/services/g
 import genericTribunalPrecatorioImportService from '#modules/integrations/services/generic_tribunal_precatorio_import_service'
 import tjbaPrecatorioApiAdapter from '#modules/integrations/services/tjba_precatorio_api_adapter'
 import tjbaPrecatorioImportService from '#modules/integrations/services/tjba_precatorio_import_service'
+import tjesLupPrecatorioApiAdapter from '#modules/integrations/services/tjes_lup_precatorio_api_adapter'
+import tjesLupPrecatorioImportService from '#modules/integrations/services/tjes_lup_precatorio_import_service'
 import tjrjAnnualMapImportService from '#modules/integrations/services/tjrj_annual_map_import_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf1PrecatorioAdapter, {
@@ -74,6 +76,10 @@ export type TribunalSourceSyncOptions = {
   tjbaPageSize?: number | null
   tjbaMaxPages?: number | null
   tjbaImportLimit?: number | null
+  tjesDebtorLimit?: number | null
+  tjesPageSize?: number | null
+  tjesMaxPagesPerDebtor?: number | null
+  tjesImportLimit?: number | null
   tjrjAnnualMapImportLimit?: number | null
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
@@ -258,6 +264,10 @@ class TribunalSourceSyncService {
       return this.syncTjbaTarget(target, options)
     }
 
+    if (target.adapterKey === 'tjes_lup_precatorio_api_sync') {
+      return this.syncTjesLupTarget(target, options)
+    }
+
     if (target.adapterKey === 'generic_tribunal_public_source_sync') {
       return this.syncGenericTribunalPublicSourceTarget(target, options)
     }
@@ -383,6 +393,61 @@ class TribunalSourceSyncService {
       imports.push(
         await tjbaPrecatorioImportService.importSourceRecord(sourceRecord.id, {
           maxRows: options.tjbaImportLimit,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.totalElements,
+      sourceRecordsCount: syncResult.pagesFetched,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        sourceRecords: syncResult.sourceRecords.map((sourceRecord) => ({
+          id: sourceRecord.id,
+          sourceUrl: sourceRecord.sourceUrl,
+          createdAt: sourceRecord.createdAt?.toISO?.() ?? null,
+        })),
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+        })),
+        importTotals,
+      } as unknown as JsonRecord,
+    })
+  }
+
+  private async syncTjesLupTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await tjesLupPrecatorioApiAdapter.sync({
+      tenantId: options.tenantId,
+      debtorLimit: options.tjesDebtorLimit ?? 250,
+      pageSize: options.tjesPageSize ?? 500,
+      maxPagesPerDebtor: options.tjesMaxPagesPerDebtor ?? 50,
+    })
+    const imports: Awaited<ReturnType<typeof tjesLupPrecatorioImportService.importSourceRecord>>[] =
+      []
+
+    for (const sourceRecord of syncResult.sourceRecords) {
+      imports.push(
+        await tjesLupPrecatorioImportService.importSourceRecord(sourceRecord.id, {
+          maxRows: options.tjesImportLimit,
         })
       )
     }
