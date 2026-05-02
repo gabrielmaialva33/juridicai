@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a product, backend, ingestion, or data-quality improvement.
+title: 'feat: '
+labels: ['enhancement', 'needs-triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user, operator, or data-quality problem should this solve?
+      placeholder: We need richer metadata for...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the expected behavior, workflow, API, job, or data model.
+    validations:
+      required: true
+  - type: textarea
+    id: data_sources
+    attributes:
+      label: Data sources
+      description: Link public government pages, APIs, CSV/XLS/PDF files, or specs when relevant.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - Imports are idempotent.
+        - Tenant isolation is preserved.
+        - Focused tests cover parser edge cases.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and constraints
+      description: Note PII, security, performance, legal, or data-quality constraints.
