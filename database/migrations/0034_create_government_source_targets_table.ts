@@ -149,8 +149,10 @@ const COURT_PUBLIC_SOURCE_OVERRIDES: Record<
   tjma: {
     sourceUrl: 'https://www.tjma.jus.br/hotsite/prec/item/6847/0/listas-cronologicas',
     status: 'generic_supported',
-    coverageScore: '0.5000',
-    notes: 'TJMA chronological lists landing page for state, São Luís and other debtors.',
+    coverageScore: '0.7500',
+    notes:
+      'TJMA public chronological list pages expose official PDF reports for state, São Luís, other municipalities, payments, direct agreement and preference lots.',
+    adapterKey: 'tjma_precatorio_sync',
   },
   tjmg: {
     sourceUrl: 'https://www8.tjmg.jus.br/juridico/pe/listaCronologia.jsf',

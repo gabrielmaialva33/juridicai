@@ -5,6 +5,7 @@ import {
   handleTribunalSourceSync,
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
+import type { TjmaPrecatorioLinkKind } from '#modules/integrations/services/tjma_precatorio_adapter'
 import type { Trf1PrecatorioLinkKind } from '#modules/integrations/services/trf1_precatorio_adapter'
 import type { Trf3PrecatorioFileFormat } from '#modules/integrations/services/trf3_precatorio_adapter'
 import type { Trf5PrecatorioLinkKind } from '#modules/integrations/services/trf5_precatorio_adapter'
@@ -116,6 +117,27 @@ export default class TribunalSyncSources extends BaseCommand {
     description: 'Maximum TJES LUP API rows to import per fetched page',
   })
   declare tjesImportLimit?: number
+
+  @flags.string({
+    description: 'Comma-separated TJMA report years',
+  })
+  declare tjmaYears?: string
+
+  @flags.string({
+    description:
+      'Comma-separated TJMA report kinds: chronological_list,paid_or_payment_process,direct_agreement,preferential_lot,change_notice,other_precatorio_report',
+  })
+  declare tjmaKinds?: string
+
+  @flags.number({
+    description: 'Maximum TJMA PDFs to download',
+  })
+  declare tjmaLimit?: number
+
+  @flags.number({
+    description: 'Maximum TJMA rows to import per downloaded PDF',
+  })
+  declare tjmaImportLimit?: number
 
   @flags.string({
     description: 'Comma-separated TRF2 years',
@@ -271,6 +293,10 @@ export default class TribunalSyncSources extends BaseCommand {
       tjesPageSize: this.tjesPageSize,
       tjesMaxPagesPerDebtor: this.tjesMaxPagesPerDebtor,
       tjesImportLimit: this.tjesImportLimit,
+      tjmaYears: parseYears(this.tjmaYears),
+      tjmaKinds: parseTjmaKinds(this.tjmaKinds),
+      tjmaLimit: this.tjmaLimit,
+      tjmaImportLimit: this.tjmaImportLimit,
       tjrjAnnualMapImportLimit: this.tjrjAnnualMapImportLimit,
       trf1Years: parseYears(this.trf1Years),
       trf1Kinds: parseTrf1Kinds(this.trf1Kinds),
@@ -373,6 +399,21 @@ function parseTrf1Kinds(value?: string) {
 
   return splitList(value)?.filter((kind): kind is Trf1PrecatorioLinkKind =>
     allowed.has(kind as Trf1PrecatorioLinkKind)
+  )
+}
+
+function parseTjmaKinds(value?: string) {
+  const allowed = new Set<TjmaPrecatorioLinkKind>([
+    'chronological_list',
+    'paid_or_payment_process',
+    'direct_agreement',
+    'preferential_lot',
+    'change_notice',
+    'other_precatorio_report',
+  ])
+
+  return splitList(value)?.filter((kind): kind is TjmaPrecatorioLinkKind =>
+    allowed.has(kind as TjmaPrecatorioLinkKind)
   )
 }
 

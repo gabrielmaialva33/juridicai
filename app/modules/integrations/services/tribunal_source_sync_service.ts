@@ -9,6 +9,9 @@ import tjbaPrecatorioApiAdapter from '#modules/integrations/services/tjba_precat
 import tjbaPrecatorioImportService from '#modules/integrations/services/tjba_precatorio_import_service'
 import tjesLupPrecatorioApiAdapter from '#modules/integrations/services/tjes_lup_precatorio_api_adapter'
 import tjesLupPrecatorioImportService from '#modules/integrations/services/tjes_lup_precatorio_import_service'
+import tjmaPrecatorioAdapter, {
+  type TjmaPrecatorioLinkKind,
+} from '#modules/integrations/services/tjma_precatorio_adapter'
 import tjrjAnnualMapImportService from '#modules/integrations/services/tjrj_annual_map_import_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf1PrecatorioAdapter, {
@@ -80,6 +83,10 @@ export type TribunalSourceSyncOptions = {
   tjesPageSize?: number | null
   tjesMaxPagesPerDebtor?: number | null
   tjesImportLimit?: number | null
+  tjmaYears?: number[] | null
+  tjmaKinds?: TjmaPrecatorioLinkKind[] | null
+  tjmaLimit?: number | null
+  tjmaImportLimit?: number | null
   tjrjAnnualMapImportLimit?: number | null
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
@@ -266,6 +273,10 @@ class TribunalSourceSyncService {
 
     if (target.adapterKey === 'tjes_lup_precatorio_api_sync') {
       return this.syncTjesLupTarget(target, options)
+    }
+
+    if (target.adapterKey === 'tjma_precatorio_sync') {
+      return this.syncTjmaTarget(target, options)
     }
 
     if (target.adapterKey === 'generic_tribunal_public_source_sync') {
@@ -566,6 +577,73 @@ class TribunalSourceSyncService {
         tjrjImportTotals,
         genericImportTotals,
       } as unknown as JsonRecord,
+    })
+  }
+
+  private async syncTjmaTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await tjmaPrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      years: options.tjmaYears ?? undefined,
+      kinds: options.tjmaKinds ?? undefined,
+      limit: options.tjmaLimit ?? 80,
+      download: true,
+    })
+    const imports: Awaited<
+      ReturnType<typeof genericTribunalPrecatorioImportService.importSourceRecord>
+    >[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord) {
+        continue
+      }
+
+      imports.push(
+        await genericTribunalPrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
+          maxRows: options.tjmaImportLimit ?? options.genericTribunalImportLimit,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: syncResult.sourceRecordsCreated + imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        items: syncResult.items.map((item) => ({
+          link: item.link,
+          sourceRecordId: item.sourceRecord?.id ?? null,
+          sourceRecordCreated: item.sourceRecordCreated ?? false,
+        })),
+        genericPrecatorioImports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
+        })),
+        importTotals,
+      },
     })
   }
 
