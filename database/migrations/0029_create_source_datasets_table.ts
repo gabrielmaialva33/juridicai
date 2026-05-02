@@ -103,6 +103,21 @@ export default class extends BaseSchema {
             '{"levels":["state","municipal"],"coverage":"precatorio_communications","state_code":"SP","categories":["state_entities","municipal_entities","inss","statistics"]}'::jsonb
           ),
           (
+            'trf1-precatorio-reports',
+            'TRF1 relatórios públicos de precatórios',
+            'Tribunal Regional Federal da 1ª Região',
+            'tribunal',
+            'federal',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://www.trf1.jus.br/trf1/rpv-e-precatorios/rpv-e-precatorioss',
+            'trf1',
+            'html/pdf/xls/xlsx/csv',
+            'TRF1 public page for federal proposals, subnational/entity proposals, repasses, consolidated debt and annual debt maps.',
+            '{"levels":["federal","state","municipal"],"coverage":"proposal_repasses_and_debt_maps"}'::jsonb
+          ),
+          (
             'trf2-chronological-precatorios',
             'TRF2 ordem cronológica de precatórios',
             'Tribunal Regional Federal da 2ª Região',
@@ -116,6 +131,21 @@ export default class extends BaseSchema {
             'csv',
             'TRF2 chronological queue and payment-status files.',
             '{"levels":["federal"],"coverage":"chronological_queue"}'::jsonb
+          ),
+          (
+            'trf3-cnj-102-precatorios-rpv',
+            'TRF3 Precatórios e RPV Anexo II CNJ 102/2009',
+            'Tribunal Regional Federal da 3ª Região',
+            'tribunal',
+            'federal',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://www.trf3.jus.br/transparencia-e-prestacao-de-contas/orcamento/precatorios-e-rpv-trf3r-anexo-ii-da-resolucao-cnj-no-1022009',
+            'trf3',
+            'csv/pdf/xlsx',
+            'TRF3 monthly public files for precatorios and RPVs published under CNJ Resolution 102/2009 Annex II.',
+            '{"levels":["federal"],"coverage":"monthly_cnj_102_reports","formats":["csv","pdf","xlsx"]}'::jsonb
           ),
           (
             'trf4-chronological-precatorios',

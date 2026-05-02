@@ -4,8 +4,14 @@ import coverageRunService from '#modules/integrations/services/coverage_run_serv
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
+import trf1PrecatorioAdapter, {
+  type Trf1PrecatorioLinkKind,
+} from '#modules/integrations/services/trf1_precatorio_adapter'
 import trf2PrecatorioAdapter from '#modules/integrations/services/trf2_precatorio_adapter'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
+import trf3PrecatorioAdapter, {
+  type Trf3PrecatorioFileFormat,
+} from '#modules/integrations/services/trf3_precatorio_adapter'
 import trf4PrecatorioAdapter from '#modules/integrations/services/trf4_precatorio_adapter'
 import trf4PrecatorioImportService from '#modules/integrations/services/trf4_precatorio_import_service'
 import trf5PrecatorioAdapter, {
@@ -55,7 +61,14 @@ export type TribunalSourceSyncOptions = {
   tjspCategories?: TjspPrecatorioCommunicationCategory[] | null
   tjspLimit?: number | null
   tjspImportDocuments?: boolean | null
+  trf1Years?: number[] | null
+  trf1Kinds?: Trf1PrecatorioLinkKind[] | null
+  trf1Limit?: number | null
   trf2Years?: number[] | null
+  trf3Years?: number[] | null
+  trf3Months?: number[] | null
+  trf3Formats?: Trf3PrecatorioFileFormat[] | null
+  trf3Limit?: number | null
   trf4ImportLimit?: number | null
   trf4ImportChunkSize?: number | null
   trf5Years?: number[] | null
@@ -223,8 +236,16 @@ class TribunalSourceSyncService {
       return this.syncTjspTarget(target, options)
     }
 
+    if (target.adapterKey === 'trf1_precatorio_sync') {
+      return this.syncTrf1Target(target, options)
+    }
+
     if (target.adapterKey === 'trf2_precatorio_sync') {
       return this.syncTrf2Target(target, options)
+    }
+
+    if (target.adapterKey === 'trf3_precatorio_sync') {
+      return this.syncTrf3Target(target, options)
     }
 
     if (target.adapterKey === 'trf4_precatorio_sync') {
@@ -321,6 +342,36 @@ class TribunalSourceSyncService {
     })
   }
 
+  private async syncTrf1Target(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await trf1PrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      years: options.trf1Years ?? undefined,
+      kinds: options.trf1Kinds ?? undefined,
+      limit: options.trf1Limit ?? 25,
+      download: true,
+    })
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: 0,
+      linkedAssetsCount: 0,
+      enrichedAssetsCount: syncResult.downloaded,
+      errorCount: 0,
+      metrics: {
+        ...syncResult,
+        items: syncResult.items.map((item) => ({
+          link: item.link,
+          sourceRecordId: item.sourceRecord?.id ?? null,
+          sourceRecordCreated: item.sourceRecordCreated ?? false,
+        })),
+      },
+    })
+  }
+
   private async syncTrf2Target(
     target: GovernmentSourceTarget,
     options: TribunalSourceSyncOptions
@@ -364,6 +415,37 @@ class TribunalSourceSyncService {
           stats: item.stats,
         })),
         importTotals,
+      },
+    })
+  }
+
+  private async syncTrf3Target(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await trf3PrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      years: options.trf3Years ?? undefined,
+      months: options.trf3Months ?? undefined,
+      formats: options.trf3Formats ?? ['csv', 'xlsx'],
+      limit: options.trf3Limit ?? 12,
+      download: true,
+    })
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: 0,
+      linkedAssetsCount: 0,
+      enrichedAssetsCount: syncResult.downloaded,
+      errorCount: 0,
+      metrics: {
+        ...syncResult,
+        items: syncResult.items.map((item) => ({
+          link: item.link,
+          sourceRecordId: item.sourceRecord?.id ?? null,
+          sourceRecordCreated: item.sourceRecordCreated ?? false,
+        })),
       },
     })
   }

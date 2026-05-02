@@ -5,6 +5,8 @@ import {
   handleTribunalSourceSync,
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
+import type { Trf1PrecatorioLinkKind } from '#modules/integrations/services/trf1_precatorio_adapter'
+import type { Trf3PrecatorioFileFormat } from '#modules/integrations/services/trf3_precatorio_adapter'
 import type { Trf5PrecatorioLinkKind } from '#modules/integrations/services/trf5_precatorio_adapter'
 import queueService from '#shared/services/queue_service'
 
@@ -64,6 +66,42 @@ export default class TribunalSyncSources extends BaseCommand {
     description: 'Comma-separated TRF2 years',
   })
   declare trf2Years?: string
+
+  @flags.string({
+    description: 'Comma-separated TRF1 years',
+  })
+  declare trf1Years?: string
+
+  @flags.string({
+    description:
+      'Comma-separated TRF1 source kinds: federal_budget_proposal,federal_debt_map,subnational_budget_proposal,subnational_repasses,subnational_consolidated_debt,subnational_debt_map',
+  })
+  declare trf1Kinds?: string
+
+  @flags.number({
+    description: 'Maximum TRF1 files to download',
+  })
+  declare trf1Limit?: number
+
+  @flags.string({
+    description: 'Comma-separated TRF3 years',
+  })
+  declare trf3Years?: string
+
+  @flags.string({
+    description: 'Comma-separated TRF3 month numbers',
+  })
+  declare trf3Months?: string
+
+  @flags.string({
+    description: 'Comma-separated TRF3 file formats: csv,pdf,xlsx',
+  })
+  declare trf3Formats?: string
+
+  @flags.number({
+    description: 'Maximum TRF3 files to download',
+  })
+  declare trf3Limit?: number
 
   @flags.number({
     description: 'Maximum grouped TRF4 precatorios to import per downloaded queue file',
@@ -148,7 +186,14 @@ export default class TribunalSyncSources extends BaseCommand {
       dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
       djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
       tjspLimit: this.tjspLimit,
+      trf1Years: parseYears(this.trf1Years),
+      trf1Kinds: parseTrf1Kinds(this.trf1Kinds),
+      trf1Limit: this.trf1Limit,
       trf2Years: parseYears(this.trf2Years),
+      trf3Years: parseYears(this.trf3Years),
+      trf3Months: parsePositiveIntegers(this.trf3Months),
+      trf3Formats: parseTrf3Formats(this.trf3Formats),
+      trf3Limit: this.trf3Limit,
       trf4ImportLimit: this.trf4ImportLimit,
       trf4ImportChunkSize: this.trf4ImportChunkSize,
       trf5Years: parseYears(this.trf5Years),
@@ -210,6 +255,35 @@ function parseYears(value?: string) {
   return splitList(value)
     ?.map((year) => Number(year))
     .filter((year) => Number.isInteger(year))
+}
+
+function parsePositiveIntegers(value?: string) {
+  return splitList(value)
+    ?.map((item) => Number(item))
+    .filter((item) => Number.isInteger(item) && item > 0)
+}
+
+function parseTrf3Formats(value?: string) {
+  const allowed = new Set<Trf3PrecatorioFileFormat>(['csv', 'pdf', 'xlsx'])
+
+  return splitList(value)?.filter((format): format is Trf3PrecatorioFileFormat =>
+    allowed.has(format as Trf3PrecatorioFileFormat)
+  )
+}
+
+function parseTrf1Kinds(value?: string) {
+  const allowed = new Set<Trf1PrecatorioLinkKind>([
+    'federal_budget_proposal',
+    'federal_debt_map',
+    'subnational_budget_proposal',
+    'subnational_repasses',
+    'subnational_consolidated_debt',
+    'subnational_debt_map',
+  ])
+
+  return splitList(value)?.filter((kind): kind is Trf1PrecatorioLinkKind =>
+    allowed.has(kind as Trf1PrecatorioLinkKind)
+  )
 }
 
 function parseTrf5Kinds(value?: string) {

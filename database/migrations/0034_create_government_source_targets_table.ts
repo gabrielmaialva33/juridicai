@@ -145,6 +145,35 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
     },
   },
   {
+    key: 'tribunal:trf1-precatorio-reports',
+    sourceDatasetKey: 'trf1-precatorio-reports',
+    name: 'TRF1 relatórios públicos de precatórios',
+    source: 'tribunal',
+    federativeLevel: 'federal',
+    stateCode: null,
+    courtAlias: 'trf1',
+    branch: 'federal_regional',
+    priority: 'primary',
+    adapterKey: 'trf1_precatorio_sync',
+    sourceUrl: 'https://www.trf1.jus.br/trf1/rpv-e-precatorios/rpv-e-precatorioss',
+    sourceFormat: 'html/pdf/xls/xlsx/csv',
+    status: 'implemented',
+    cadence: 'daily',
+    coverageScore: '0.7500',
+    metadata: {
+      levels: ['federal', 'state', 'municipal'],
+      reportKinds: [
+        'federal_budget_proposal',
+        'federal_debt_map',
+        'subnational_budget_proposal',
+        'subnational_repasses',
+        'subnational_consolidated_debt',
+        'subnational_debt_map',
+      ],
+      importsCanonicalAssets: false,
+    },
+  },
+  {
     key: 'tribunal:trf2-chronological-precatorios',
     sourceDatasetKey: 'trf2-chronological-precatorios',
     name: 'TRF2 ordem cronológica de precatórios',
@@ -164,6 +193,30 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
     metadata: {
       levels: ['federal'],
       importsCanonicalAssets: true,
+    },
+  },
+  {
+    key: 'tribunal:trf3-cnj-102-precatorios-rpv',
+    sourceDatasetKey: 'trf3-cnj-102-precatorios-rpv',
+    name: 'TRF3 Precatórios e RPV Anexo II CNJ 102/2009',
+    source: 'tribunal',
+    federativeLevel: 'federal',
+    stateCode: null,
+    courtAlias: 'trf3',
+    branch: 'federal_regional',
+    priority: 'primary',
+    adapterKey: 'trf3_precatorio_sync',
+    sourceUrl:
+      'https://www.trf3.jus.br/transparencia-e-prestacao-de-contas/orcamento/precatorios-e-rpv-trf3r-anexo-ii-da-resolucao-cnj-no-1022009',
+    sourceFormat: 'csv/pdf/xlsx',
+    status: 'implemented',
+    cadence: 'daily',
+    coverageScore: '0.7500',
+    metadata: {
+      levels: ['federal'],
+      formats: ['csv', 'pdf', 'xlsx'],
+      reportKind: 'monthly_cnj_102_reports',
+      importsCanonicalAssets: false,
     },
   },
   {
@@ -400,6 +453,94 @@ export default class extends BaseSchema {
         metadata: {
           levels: ['federal', 'state', 'municipal', 'multi_level'],
           coverage: 'per_court_discovery_registry',
+        },
+        updated_at: this.raw('now()'),
+      })
+
+    await this.db
+      .table('source_datasets')
+      .insert({
+        key: 'trf1-precatorio-reports',
+        name: 'TRF1 relatórios públicos de precatórios',
+        owner: 'Tribunal Regional Federal da 1ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://www.trf1.jus.br/trf1/rpv-e-precatorios/rpv-e-precatorioss',
+        court_alias: 'trf1',
+        format: 'html/pdf/xls/xlsx/csv',
+        notes:
+          'TRF1 public page for federal proposals, subnational/entity proposals, repasses, consolidated debt and annual debt maps.',
+        metadata: {
+          levels: ['federal', 'state', 'municipal'],
+          coverage: 'proposal_repasses_and_debt_maps',
+        },
+      })
+      .onConflict('key')
+      .merge({
+        name: 'TRF1 relatórios públicos de precatórios',
+        owner: 'Tribunal Regional Federal da 1ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://www.trf1.jus.br/trf1/rpv-e-precatorios/rpv-e-precatorioss',
+        court_alias: 'trf1',
+        format: 'html/pdf/xls/xlsx/csv',
+        notes:
+          'TRF1 public page for federal proposals, subnational/entity proposals, repasses, consolidated debt and annual debt maps.',
+        metadata: {
+          levels: ['federal', 'state', 'municipal'],
+          coverage: 'proposal_repasses_and_debt_maps',
+        },
+        updated_at: this.raw('now()'),
+      })
+
+    await this.db
+      .table('source_datasets')
+      .insert({
+        key: 'trf3-cnj-102-precatorios-rpv',
+        name: 'TRF3 Precatórios e RPV Anexo II CNJ 102/2009',
+        owner: 'Tribunal Regional Federal da 3ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url:
+          'https://www.trf3.jus.br/transparencia-e-prestacao-de-contas/orcamento/precatorios-e-rpv-trf3r-anexo-ii-da-resolucao-cnj-no-1022009',
+        court_alias: 'trf3',
+        format: 'csv/pdf/xlsx',
+        notes:
+          'TRF3 monthly public files for precatorios and RPVs published under CNJ Resolution 102/2009 Annex II.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'monthly_cnj_102_reports',
+          formats: ['csv', 'pdf', 'xlsx'],
+        },
+      })
+      .onConflict('key')
+      .merge({
+        name: 'TRF3 Precatórios e RPV Anexo II CNJ 102/2009',
+        owner: 'Tribunal Regional Federal da 3ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url:
+          'https://www.trf3.jus.br/transparencia-e-prestacao-de-contas/orcamento/precatorios-e-rpv-trf3r-anexo-ii-da-resolucao-cnj-no-1022009',
+        court_alias: 'trf3',
+        format: 'csv/pdf/xlsx',
+        notes:
+          'TRF3 monthly public files for precatorios and RPVs published under CNJ Resolution 102/2009 Annex II.',
+        metadata: {
+          levels: ['federal'],
+          coverage: 'monthly_cnj_102_reports',
+          formats: ['csv', 'pdf', 'xlsx'],
         },
         updated_at: this.raw('now()'),
       })
