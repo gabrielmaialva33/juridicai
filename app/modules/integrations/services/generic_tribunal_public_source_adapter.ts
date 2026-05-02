@@ -285,6 +285,9 @@ function isNoisePublicNavigationLink(title: string, url: string, baseUrl: string
     'faq',
     'contato',
     'noticias',
+    'entenda o precatorio',
+    'o que e o precatorio',
+    'calculo',
     'pular para o conteudo principal',
     'ir para o conteudo principal',
     'pular para conteudo',
@@ -296,6 +299,13 @@ function rankPublicSourceLink(link: GenericTribunalPublicSourceLink) {
   let score = 0
 
   if (hasImportableFormat(link.url)) score += 100
+  if (haystack.includes('documents/d/precatorios')) score += 80
+  if (
+    haystack.includes('mapa_anual_de_precatorios') ||
+    haystack.includes('mapa-anual-de-precatorios')
+  ) {
+    score += 70
+  }
   if (haystack.includes('mapa anual')) score += 50
   if (haystack.includes('lista cronologica')) score += 50
   if (haystack.includes('ordem cronologica')) score += 50
