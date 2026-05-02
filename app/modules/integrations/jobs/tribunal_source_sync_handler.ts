@@ -31,6 +31,8 @@ export async function handleTribunalSourceSync(payload: TribunalSourceSyncPayloa
       trf1Years: payload.trf1Years ?? null,
       trf1Kinds: payload.trf1Kinds ?? null,
       trf1Limit: payload.trf1Limit ?? null,
+      trf1ImportLimit: payload.trf1ImportLimit ?? null,
+      trf1ImportChunkSize: payload.trf1ImportChunkSize ?? null,
       trf3Years: payload.trf3Years ?? null,
       trf3Months: payload.trf3Months ?? null,
       trf3Formats: payload.trf3Formats ?? null,

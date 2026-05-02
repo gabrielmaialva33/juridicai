@@ -7,6 +7,7 @@ import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_preca
 import trf1PrecatorioAdapter, {
   type Trf1PrecatorioLinkKind,
 } from '#modules/integrations/services/trf1_precatorio_adapter'
+import trf1PrecatorioImportService from '#modules/integrations/services/trf1_precatorio_import_service'
 import trf2PrecatorioAdapter from '#modules/integrations/services/trf2_precatorio_adapter'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
 import trf3PrecatorioAdapter, {
@@ -65,6 +66,8 @@ export type TribunalSourceSyncOptions = {
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
   trf1Limit?: number | null
+  trf1ImportLimit?: number | null
+  trf1ImportChunkSize?: number | null
   trf2Years?: number[] | null
   trf3Years?: number[] | null
   trf3Months?: number[] | null
@@ -356,14 +359,40 @@ class TribunalSourceSyncService {
       limit: options.trf1Limit ?? 25,
       download: true,
     })
+    const imports: Awaited<ReturnType<typeof trf1PrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord) {
+        continue
+      }
+
+      imports.push(
+        await trf1PrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
+          maxRows: options.trf1ImportLimit,
+          chunkSize: options.trf1ImportChunkSize,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+        processedBatches: totals.processedBatches + item.chunking.processedBatches,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
+    )
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
-      createdAssetsCount: 0,
-      linkedAssetsCount: 0,
-      enrichedAssetsCount: syncResult.downloaded,
-      errorCount: 0,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
         items: syncResult.items.map((item) => ({
@@ -371,6 +400,18 @@ class TribunalSourceSyncService {
           sourceRecordId: item.sourceRecord?.id ?? null,
           sourceRecordCreated: item.sourceRecordCreated ?? false,
         })),
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          chunking: item.chunking,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
+        })),
+        importTotals,
       },
     })
   }
