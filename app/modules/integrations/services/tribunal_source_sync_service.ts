@@ -498,8 +498,20 @@ class TribunalSourceSyncService {
         validRows: totals.validRows + item.stats.validRows,
         selectedRows: totals.selectedRows + item.stats.selectedRows,
         processedBatches: totals.processedBatches + item.chunking.processedBatches,
+        budgetExecutionInserted:
+          totals.budgetExecutionInserted + item.stats.budgetExecutionInserted,
+        budgetExecutionUpdated: totals.budgetExecutionUpdated + item.stats.budgetExecutionUpdated,
       }),
-      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
+      {
+        inserted: 0,
+        updated: 0,
+        errors: 0,
+        validRows: 0,
+        selectedRows: 0,
+        processedBatches: 0,
+        budgetExecutionInserted: 0,
+        budgetExecutionUpdated: 0,
+      }
     )
 
     return completedResult(target, {

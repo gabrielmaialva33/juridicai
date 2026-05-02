@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
+import BudgetUnit from '#modules/reference/models/budget_unit'
 import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import Debtor from '#modules/debtors/models/debtor'
+import TribunalBudgetExecution from '#modules/integrations/models/tribunal_budget_execution'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
@@ -15,7 +18,7 @@ import tribunalDocumentExtractionService, {
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
-import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
+import { parseBrazilianDecimal, parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
@@ -32,6 +35,8 @@ export type Trf3PrecatorioImportStats = {
   updated: number
   skipped: number
   errors: number
+  budgetExecutionInserted: number
+  budgetExecutionUpdated: number
 }
 
 type Trf3ImportRow = {
@@ -54,6 +59,35 @@ type ImportContext = {
   judicialClassId: string | null
 }
 
+type Trf3BudgetExecutionRow = {
+  budgetUnitCode: string
+  budgetUnitName: string
+  functionSubfunction: string | null
+  programmaticCode: string | null
+  programName: string | null
+  actionName: string | null
+  sphereCode: string | null
+  fundingSourceCode: string | null
+  fundingSourceName: string | null
+  expenseGroupCode: string | null
+  initialAllocation: string | null
+  additionalCreditsIncrease: string | null
+  additionalCreditsDecrease: string | null
+  updatedAllocation: string | null
+  contingencyAmount: string | null
+  creditProvisionAmount: string | null
+  creditHighlightAmount: string | null
+  netAllocation: string | null
+  committedAmount: string | null
+  committedPercent: string | null
+  liquidatedAmount: string | null
+  liquidatedPercent: string | null
+  paidAmount: string | null
+  paidPercent: string | null
+  rawData: JsonRecord
+  rowFingerprint: string
+}
+
 class Trf3PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: Trf3PrecatorioImportOptions = {}) {
     const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
@@ -66,6 +100,7 @@ class Trf3PrecatorioImportService {
     const rows = extraction.rows.map((row) => normalizeRow(sourceRecord, row))
     const validRows = rows.filter((row): row is Trf3ImportRow => Boolean(row))
     const selectedRows = limitRows(validRows, options.maxRows)
+    const budgetExecutionRows = await parseBudgetExecutionRows(sourceRecord)
     const chunkSize = normalizeChunkSize(options.chunkSize)
     const batches = chunkRows(selectedRows, chunkSize)
     const context = await this.buildContext()
@@ -77,6 +112,19 @@ class Trf3PrecatorioImportService {
       updated: 0,
       skipped: extraction.rows.length - validRows.length,
       errors: 0,
+      budgetExecutionInserted: 0,
+      budgetExecutionUpdated: 0,
+    }
+
+    for (const row of budgetExecutionRows) {
+      try {
+        await db.transaction(async (trx) => {
+          const result = await this.upsertBudgetExecution(sourceRecord, row, context, trx)
+          stats[result === 'inserted' ? 'budgetExecutionInserted' : 'budgetExecutionUpdated'] += 1
+        })
+      } catch {
+        stats.errors += 1
+      }
     }
 
     for (const batch of batches) {
@@ -173,6 +221,90 @@ class Trf3PrecatorioImportService {
     const asset = await PrecatorioAsset.create(payload, { client: trx })
     await this.upsertRelatedRecords(sourceRecord, asset, row, context, trx)
     return 'inserted' as const
+  }
+
+  private async upsertBudgetExecution(
+    sourceRecord: SourceRecord,
+    row: Trf3BudgetExecutionRow,
+    context: ImportContext,
+    trx: TransactionClientContract
+  ) {
+    const budgetUnit = await this.findOrCreateBudgetUnit(row, trx)
+    const existing = await TribunalBudgetExecution.query({ client: trx })
+      .where('tenant_id', sourceRecord.tenantId)
+      .where('source_record_id', sourceRecord.id)
+      .where('row_fingerprint', row.rowFingerprint)
+      .first()
+    const payload = {
+      tenantId: sourceRecord.tenantId,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetId: sourceRecord.sourceDatasetId,
+      courtId: context.courtId,
+      budgetUnitId: budgetUnit?.id ?? null,
+      courtAlias: 'trf3',
+      sourceKind: String(sourceRecord.rawData?.sourceKind ?? 'cnj_102_monthly_report'),
+      referenceYear: numberField(sourceRecord.rawData?.year),
+      referenceMonth: numberField(sourceRecord.rawData?.month),
+      budgetUnitCode: row.budgetUnitCode,
+      budgetUnitName: row.budgetUnitName,
+      functionSubfunction: row.functionSubfunction,
+      programmaticCode: row.programmaticCode,
+      programName: row.programName,
+      actionName: row.actionName,
+      sphereCode: row.sphereCode,
+      fundingSourceCode: row.fundingSourceCode,
+      fundingSourceName: row.fundingSourceName,
+      expenseGroupCode: row.expenseGroupCode,
+      initialAllocation: row.initialAllocation,
+      additionalCreditsIncrease: row.additionalCreditsIncrease,
+      additionalCreditsDecrease: row.additionalCreditsDecrease,
+      updatedAllocation: row.updatedAllocation,
+      contingencyAmount: row.contingencyAmount,
+      creditProvisionAmount: row.creditProvisionAmount,
+      creditHighlightAmount: row.creditHighlightAmount,
+      netAllocation: row.netAllocation,
+      committedAmount: row.committedAmount,
+      committedPercent: row.committedPercent,
+      liquidatedAmount: row.liquidatedAmount,
+      liquidatedPercent: row.liquidatedPercent,
+      paidAmount: row.paidAmount,
+      paidPercent: row.paidPercent,
+      rowFingerprint: row.rowFingerprint,
+      rawData: row.rawData,
+    }
+
+    if (existing) {
+      existing.useTransaction(trx)
+      existing.merge(payload)
+      await existing.save()
+      return 'updated' as const
+    }
+
+    await TribunalBudgetExecution.create(payload, { client: trx })
+    return 'inserted' as const
+  }
+
+  private async findOrCreateBudgetUnit(
+    row: Trf3BudgetExecutionRow,
+    trx: TransactionClientContract
+  ) {
+    const existing = await BudgetUnit.query({ client: trx })
+      .where('code', row.budgetUnitCode)
+      .first()
+
+    if (existing) {
+      existing.merge({ name: row.budgetUnitName })
+      await existing.save()
+      return existing
+    }
+
+    return BudgetUnit.create(
+      {
+        code: row.budgetUnitCode,
+        name: row.budgetUnitName,
+      },
+      { client: trx }
+    )
   }
 
   private async findOrCreateDebtor(
@@ -520,6 +652,97 @@ function normalizeRow(sourceRecord: SourceRecord, row: TribunalExtractedRow): Tr
   }
 }
 
+async function parseBudgetExecutionRows(sourceRecord: SourceRecord) {
+  if (
+    sourceRecord.rawData?.sourceKind !== 'cnj_102_monthly_report' ||
+    !sourceRecord.sourceFilePath
+  ) {
+    return []
+  }
+
+  const content = decodeText(await readFile(sourceRecord.sourceFilePath))
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => splitDelimitedLine(line, ';'))
+    .filter((cells) => cells.some((cell) => cell.trim()))
+  const rows: Trf3BudgetExecutionRow[] = []
+
+  for (const cells of lines) {
+    const row = budgetExecutionRowFromCells(cells)
+    if (row) {
+      rows.push(row)
+    }
+  }
+
+  return rows
+}
+
+function budgetExecutionRowFromCells(cells: string[]): Trf3BudgetExecutionRow | null {
+  const budgetUnitCode = stringField(cells[0])
+  const budgetUnitName = stringField(cells[1])
+
+  if (!budgetUnitCode?.match(/^\d{5}$/) || !budgetUnitName || budgetUnitName === 'Total') {
+    return null
+  }
+
+  const rawData = {
+    budgetUnitCode,
+    budgetUnitName,
+    functionSubfunction: stringField(cells[2]),
+    programmaticCode: stringField(cells[3]),
+    programName: stringField(cells[4]),
+    actionName: stringField(cells[5]),
+    sphereCode: stringField(cells[6]),
+    fundingSourceCode: stringField(cells[7]),
+    fundingSourceName: stringField(cells[8]),
+    expenseGroupCode: stringField(cells[9]),
+    initialAllocation: moneyField(cells[10]),
+    additionalCreditsIncrease: moneyField(cells[11]),
+    additionalCreditsDecrease: moneyField(cells[12]),
+    updatedAllocation: moneyField(cells[13]),
+    contingencyAmount: moneyField(cells[14]),
+    creditProvisionAmount: moneyField(cells[15]),
+    creditHighlightAmount: moneyField(cells[16]),
+    netAllocation: moneyField(cells[17]),
+    committedAmount: moneyField(cells[18]),
+    committedPercent: percentField(cells[19]),
+    liquidatedAmount: moneyField(cells[20]),
+    liquidatedPercent: percentField(cells[21]),
+    paidAmount: moneyField(cells[22]),
+    paidPercent: percentField(cells[23]),
+    rawCells: cells,
+  } satisfies JsonRecord
+
+  return {
+    budgetUnitCode,
+    budgetUnitName,
+    functionSubfunction: stringField(cells[2]),
+    programmaticCode: stringField(cells[3]),
+    programName: stringField(cells[4]),
+    actionName: stringField(cells[5]),
+    sphereCode: stringField(cells[6]),
+    fundingSourceCode: stringField(cells[7]),
+    fundingSourceName: stringField(cells[8]),
+    expenseGroupCode: stringField(cells[9]),
+    initialAllocation: moneyField(cells[10]),
+    additionalCreditsIncrease: moneyField(cells[11]),
+    additionalCreditsDecrease: moneyField(cells[12]),
+    updatedAllocation: moneyField(cells[13]),
+    contingencyAmount: moneyField(cells[14]),
+    creditProvisionAmount: moneyField(cells[15]),
+    creditHighlightAmount: moneyField(cells[16]),
+    netAllocation: moneyField(cells[17]),
+    committedAmount: moneyField(cells[18]),
+    committedPercent: percentField(cells[19]),
+    liquidatedAmount: moneyField(cells[20]),
+    liquidatedPercent: percentField(cells[21]),
+    paidAmount: moneyField(cells[22]),
+    paidPercent: percentField(cells[23]),
+    rawData,
+    rowFingerprint: stableHash(rawData),
+  }
+}
+
 function buildExternalId(sourceRecord: SourceRecord, row: Trf3ImportRow) {
   return [
     'trf3',
@@ -667,6 +890,29 @@ function firstMoney(rawData: JsonRecord, keys: string[]) {
   return null
 }
 
+function moneyField(value: unknown) {
+  const text = stringField(value)
+  if (!text || text === '-') {
+    return null
+  }
+
+  return parseBrazilianMoney(text.replace(/%$/, ''))
+}
+
+function percentField(value: unknown) {
+  const text = stringField(value)
+  if (!text || text === '-') {
+    return null
+  }
+
+  const parsed = parseBrazilianDecimal(text.replace(/%$/, ''))
+  if (!parsed) {
+    return null
+  }
+
+  return (Number(parsed) / 100).toFixed(4)
+}
+
 function firstNumber(rawData: JsonRecord, keys: string[]) {
   for (const key of keys) {
     const value = numberField(rawData[key])
@@ -731,6 +977,30 @@ function parseDate(value: string | null) {
   return iso.isValid ? iso : null
 }
 
+function splitDelimitedLine(line: string, delimiter: string) {
+  const values: string[] = []
+  let current = ''
+  let quoted = false
+
+  for (const char of line) {
+    if (char === '"') {
+      quoted = !quoted
+      continue
+    }
+
+    if (char === delimiter && !quoted) {
+      values.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += char
+  }
+
+  values.push(current.trim())
+  return values
+}
+
 function limitRows(rows: Trf3ImportRow[], maxRows?: number | null) {
   if (!maxRows || maxRows <= 0) {
     return rows
@@ -762,6 +1032,16 @@ function normalizeText(value: string) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+}
+
+function decodeText(buffer: Buffer) {
+  const utf8 = buffer.toString('utf8')
+
+  if (!utf8.includes('\uFFFD')) {
+    return utf8
+  }
+
+  return new TextDecoder('windows-1252').decode(buffer)
 }
 
 function stableHash(value: unknown) {
