@@ -13,6 +13,7 @@ export const TRF6_MANUAL_EXPORT_IMPORT_QUEUE = 'trf6-manual-export-import'
 export type Trf6ManualExportImportPayload = {
   tenantId: string
   sourceRecordId: string
+  maxRows?: number | null
   chunkSize?: number | null
   requestId?: string | null
   bullmqJobId?: string | null
@@ -32,6 +33,7 @@ export async function handleTrf6ManualExportImport(payload: Trf6ManualExportImpo
     metadata: {
       requestId: payload.requestId ?? null,
       sourceRecordId: payload.sourceRecordId,
+      maxRows: payload.maxRows ?? null,
       chunkSize: payload.chunkSize ?? null,
     },
   })
@@ -44,6 +46,7 @@ export async function handleTrf6ManualExportImport(payload: Trf6ManualExportImpo
       },
       () =>
         trf6PrecatorioImportService.importSourceRecord(payload.sourceRecordId, {
+          maxRows: payload.maxRows ?? undefined,
           chunkSize: payload.chunkSize ?? 500,
         })
     )

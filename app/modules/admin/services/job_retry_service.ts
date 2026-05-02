@@ -137,6 +137,7 @@ class JobRetryService {
           payload: {
             tenantId: run.tenantId!,
             sourceRecordId,
+            maxRows: numberMetadata(run.metadata, 'maxRows'),
             chunkSize: numberMetadata(run.metadata, 'chunkSize') ?? 500,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
             origin: 'manual_retry' as const,

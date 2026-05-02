@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
+import {
+  TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+  type Trf6ManualExportImportPayload,
+} from '#modules/integrations/jobs/trf6_manual_export_import_handler'
 import trf6PrecatorioImportService from '#modules/integrations/services/trf6_precatorio_import_service'
 import trf6ManualExportService from '#modules/integrations/services/trf6_manual_export_service'
+import queueService from '#shared/services/queue_service'
 
 export default class Trf6ImportPrecatorios extends BaseCommand {
   static commandName = 'trf6:import-precatorios'
@@ -40,9 +45,57 @@ export default class Trf6ImportPrecatorios extends BaseCommand {
   })
   declare chunkSize?: number
 
+  @flags.boolean({
+    description:
+      'Persist the source file and enqueue the BullMQ import job instead of running inline',
+  })
+  declare enqueue: boolean
+
   async run() {
     const sourceRecordId = await this.resolveSourceRecordId()
     if (!sourceRecordId) {
+      return
+    }
+
+    if (this.enqueue) {
+      const tenantId = this.tenantId
+      if (!tenantId) {
+        this.logger.error('--tenant-id is required when using --enqueue.')
+        this.exitCode = 1
+        return
+      }
+
+      const job = await queueService.add<Trf6ManualExportImportPayload>(
+        TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+        'trf6-manual-export-import',
+        {
+          tenantId,
+          sourceRecordId,
+          maxRows: this.limit,
+          chunkSize: this.chunkSize ?? 500,
+          origin: 'system',
+          enqueuePostImportEnrichment: true,
+        },
+        {
+          jobId: `trf6-manual-export-import-${tenantId}-${sourceRecordId}-${Date.now()}`,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        }
+      )
+
+      this.logger.info(
+        `TRF6 precatorio import enqueued: ${JSON.stringify({
+          queueName: TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+          jobId: job.id,
+          sourceRecordId,
+          maxRows: this.limit ?? null,
+          chunkSize: this.chunkSize ?? 500,
+        })}`
+      )
+      await queueService.shutdown()
       return
     }
 
