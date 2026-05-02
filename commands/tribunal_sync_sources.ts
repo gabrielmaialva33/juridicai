@@ -73,9 +73,29 @@ export default class TribunalSyncSources extends BaseCommand {
   declare genericTribunalLandingOnly: boolean
 
   @flags.number({
+    description: 'Maximum generic tribunal rows to import per downloaded source',
+  })
+  declare genericTribunalImportLimit?: number
+
+  @flags.number({
     description: 'Maximum TJRJ annual map debtor rows to import per PDF',
   })
   declare tjrjAnnualMapImportLimit?: number
+
+  @flags.number({
+    description: 'TJBA API precatorio rows requested per page',
+  })
+  declare tjbaPageSize?: number
+
+  @flags.number({
+    description: 'Maximum TJBA API pages to fetch',
+  })
+  declare tjbaMaxPages?: number
+
+  @flags.number({
+    description: 'Maximum TJBA API rows to import per fetched page',
+  })
+  declare tjbaImportLimit?: number
 
   @flags.string({
     description: 'Comma-separated TRF2 years',
@@ -223,6 +243,10 @@ export default class TribunalSyncSources extends BaseCommand {
       tjspLimit: this.tjspLimit,
       genericTribunalLimit: this.genericTribunalLimit,
       genericTribunalDownloadLinkedDocuments: !this.genericTribunalLandingOnly,
+      genericTribunalImportLimit: this.genericTribunalImportLimit,
+      tjbaPageSize: this.tjbaPageSize,
+      tjbaMaxPages: this.tjbaMaxPages,
+      tjbaImportLimit: this.tjbaImportLimit,
       tjrjAnnualMapImportLimit: this.tjrjAnnualMapImportLimit,
       trf1Years: parseYears(this.trf1Years),
       trf1Kinds: parseTrf1Kinds(this.trf1Kinds),

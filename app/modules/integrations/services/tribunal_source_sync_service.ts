@@ -4,6 +4,9 @@ import coverageRunService from '#modules/integrations/services/coverage_run_serv
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import genericTribunalPublicSourceAdapter from '#modules/integrations/services/generic_tribunal_public_source_adapter'
+import genericTribunalPrecatorioImportService from '#modules/integrations/services/generic_tribunal_precatorio_import_service'
+import tjbaPrecatorioApiAdapter from '#modules/integrations/services/tjba_precatorio_api_adapter'
+import tjbaPrecatorioImportService from '#modules/integrations/services/tjba_precatorio_import_service'
 import tjrjAnnualMapImportService from '#modules/integrations/services/tjrj_annual_map_import_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
 import trf1PrecatorioAdapter, {
@@ -67,6 +70,10 @@ export type TribunalSourceSyncOptions = {
   tjspImportDocuments?: boolean | null
   genericTribunalLimit?: number | null
   genericTribunalDownloadLinkedDocuments?: boolean | null
+  genericTribunalImportLimit?: number | null
+  tjbaPageSize?: number | null
+  tjbaMaxPages?: number | null
+  tjbaImportLimit?: number | null
   tjrjAnnualMapImportLimit?: number | null
   trf1Years?: number[] | null
   trf1Kinds?: Trf1PrecatorioLinkKind[] | null
@@ -247,6 +254,10 @@ class TribunalSourceSyncService {
       return this.syncTjspTarget(target, options)
     }
 
+    if (target.adapterKey === 'tjba_precatorio_api_sync') {
+      return this.syncTjbaTarget(target, options)
+    }
+
     if (target.adapterKey === 'generic_tribunal_public_source_sync') {
       return this.syncGenericTribunalPublicSourceTarget(target, options)
     }
@@ -357,6 +368,59 @@ class TribunalSourceSyncService {
     })
   }
 
+  private async syncTjbaTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await tjbaPrecatorioApiAdapter.sync({
+      tenantId: options.tenantId,
+      pageSize: options.tjbaPageSize ?? 200,
+      maxPages: options.tjbaMaxPages ?? 1,
+    })
+    const imports: Awaited<ReturnType<typeof tjbaPrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const sourceRecord of syncResult.sourceRecords) {
+      imports.push(
+        await tjbaPrecatorioImportService.importSourceRecord(sourceRecord.id, {
+          maxRows: options.tjbaImportLimit,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.totalElements,
+      sourceRecordsCount: syncResult.pagesFetched,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        sourceRecords: syncResult.sourceRecords.map((sourceRecord) => ({
+          id: sourceRecord.id,
+          sourceUrl: sourceRecord.sourceUrl,
+          createdAt: sourceRecord.createdAt?.toISO?.() ?? null,
+        })),
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+        })),
+        importTotals,
+      } as unknown as JsonRecord,
+    })
+  }
+
   private async syncGenericTribunalPublicSourceTarget(
     target: GovernmentSourceTarget,
     options: TribunalSourceSyncOptions
@@ -380,11 +444,12 @@ class TribunalSourceSyncService {
       nestedLimit: options.genericTribunalLimit ?? 25,
       downloadLinkedDocuments: options.genericTribunalDownloadLinkedDocuments ?? true,
     })
-    const imports =
+    const tjrjImports =
       target.courtAlias === 'tjrj'
         ? await this.importTjrjAnnualMapSourceRecords(result.items, options)
         : []
-    const importTotals = imports.reduce(
+    const genericImports = await this.importGenericTribunalSourceRecords(result.items, options)
+    const tjrjImportTotals = tjrjImports.reduce(
       (totals, item) => ({
         inserted: totals.inserted + item.stats.inserted,
         updated: totals.updated + item.stats.updated,
@@ -393,17 +458,27 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0 }
     )
+    const genericImportTotals = genericImports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
+    )
 
     return completedResult(target, {
       discoveredCount: result.discovered,
       sourceRecordsCount: result.persisted,
-      createdAssetsCount: importTotals.inserted,
-      linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: result.sourceRecordsCreated + imports.length,
-      errorCount: importTotals.errors,
+      createdAssetsCount: genericImportTotals.inserted,
+      linkedAssetsCount: genericImportTotals.inserted + genericImportTotals.updated,
+      enrichedAssetsCount: result.sourceRecordsCreated + tjrjImports.length + genericImports.length,
+      errorCount: tjrjImportTotals.errors + genericImportTotals.errors,
       metrics: {
         ...result,
-        imports: imports.map((item) => ({
+        tjrjAnnualMapImports: tjrjImports.map((item) => ({
           sourceRecordId: item.sourceRecord.id,
           stats: item.stats,
           extraction: {
@@ -413,7 +488,18 @@ class TribunalSourceSyncService {
             errors: item.extraction.errors,
           },
         })),
-        importTotals,
+        genericPrecatorioImports: genericImports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
+        })),
+        tjrjImportTotals,
+        genericImportTotals,
       } as unknown as JsonRecord,
     })
   }
@@ -432,6 +518,25 @@ class TribunalSourceSyncService {
       imports.push(
         await tjrjAnnualMapImportService.importSourceRecord(item.sourceRecordId, {
           maxRows: options.tjrjAnnualMapImportLimit,
+        })
+      )
+    }
+
+    return imports
+  }
+
+  private async importGenericTribunalSourceRecords(
+    items: Array<{ sourceRecordId: string }>,
+    options: TribunalSourceSyncOptions
+  ) {
+    const imports: Awaited<
+      ReturnType<typeof genericTribunalPrecatorioImportService.importSourceRecord>
+    >[] = []
+
+    for (const item of items) {
+      imports.push(
+        await genericTribunalPrecatorioImportService.importSourceRecord(item.sourceRecordId, {
+          maxRows: options.genericTribunalImportLimit,
         })
       )
     }
