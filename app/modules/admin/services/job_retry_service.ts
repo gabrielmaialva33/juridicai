@@ -3,6 +3,7 @@ import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_
 import { DATAJUD_MATCH_CANDIDATES_QUEUE } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import { TRF6_MANUAL_EXPORT_IMPORT_QUEUE } from '#modules/integrations/jobs/trf6_manual_export_import_handler'
+import { POST_IMPORT_ENRICHMENT_QUEUE } from '#modules/integrations/jobs/post_import_enrichment_handler'
 import queueService from '#shared/services/queue_service'
 import type RadarJobRun from '#modules/admin/models/radar_job_run'
 import type { JobRunStatus, JsonRecord } from '#shared/types/model_enums'
@@ -62,6 +63,7 @@ class JobRetryService {
             importId,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
             origin: 'manual_retry' as const,
+            enqueuePostImportEnrichment: true,
           },
         }
       }
@@ -136,6 +138,27 @@ class JobRetryService {
             tenantId: run.tenantId!,
             sourceRecordId,
             chunkSize: numberMetadata(run.metadata, 'chunkSize') ?? 500,
+            requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            origin: 'manual_retry' as const,
+            enqueuePostImportEnrichment: true,
+          },
+        }
+      }
+
+      case 'post-import-enrichment': {
+        return {
+          queueName: POST_IMPORT_ENRICHMENT_QUEUE,
+          jobName: 'post-import-enrichment',
+          payload: {
+            tenantId: run.tenantId!,
+            sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
+            source: stringMetadata(run.metadata, 'source'),
+            enrichmentLimit: numberMetadata(run.metadata, 'enrichmentLimit'),
+            linkLimit: numberMetadata(run.metadata, 'linkLimit'),
+            signalLimit: numberMetadata(run.metadata, 'signalLimit'),
+            publicationLimit: numberMetadata(run.metadata, 'publicationLimit'),
+            matchLimit: numberMetadata(run.metadata, 'matchLimit'),
+            candidatesPerAsset: numberMetadata(run.metadata, 'candidatesPerAsset'),
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
             origin: 'manual_retry' as const,
           },

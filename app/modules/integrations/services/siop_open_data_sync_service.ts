@@ -110,6 +110,7 @@ class SiopOpenDataSyncService {
           tenantId,
           importId: importRow.id,
           origin: 'system',
+          enqueuePostImportEnrichment: true,
         },
         {
           jobId: `siop-open-data-import-${tenantId}-${importRow.id}`,
