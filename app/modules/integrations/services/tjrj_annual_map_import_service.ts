@@ -422,7 +422,15 @@ function reliabilityScoreFor(row: TjrjAnnualMapRow) {
 }
 
 function shouldAppendToPreviousRow(row: TjrjAnnualMapRow) {
-  return row.entityTypeCode === 'I' && Boolean(row.cnpj)
+  return (
+    row.entityTypeCode === 'I' &&
+    Boolean(row.cnpj) &&
+    (pendingNameLineCount(row) > 0 || row.debtorName.length < 25)
+  )
+}
+
+function pendingNameLineCount(row: TjrjAnnualMapRow) {
+  return Array.isArray(row.rawData.pendingNameLines) ? row.rawData.pendingNameLines.length : 0
 }
 
 function appendDebtorName(row: TjrjAnnualMapRow, value: string) {
