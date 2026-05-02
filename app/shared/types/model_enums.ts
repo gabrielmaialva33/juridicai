@@ -44,6 +44,16 @@ export type SourceDatasetKind =
 
 export type SourceDatasetPriority = 'primary' | 'enrichment' | 'cross_check'
 
+export type GovernmentSourceTargetStatus =
+  | 'implemented'
+  | 'generic_supported'
+  | 'manual_review'
+  | 'blocked_captcha'
+  | 'unknown'
+  | 'disabled'
+
+export type GovernmentSourceTargetCadence = 'daily' | 'weekly' | 'monthly' | 'manual'
+
 export type LifecycleStatus =
   | 'unknown'
   | 'discovered'

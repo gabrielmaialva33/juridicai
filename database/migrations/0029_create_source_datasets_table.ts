@@ -131,6 +131,21 @@ export default class extends BaseSchema {
             'html/pdf/xls',
             'National annual consolidation for coverage validation.',
             '{"levels":["federal","state","municipal","multi_level"],"coverage":"aggregate_validation"}'::jsonb
+          ),
+          (
+            'court-annual-map-pages',
+            'Court annual precatorio map publications',
+            'State, federal, labor, electoral, military and superior courts',
+            'tribunal',
+            'multi_level',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://www.cnj.jus.br/sistema-de-gestao-de-precatorios/',
+            null,
+            'html/pdf/xls/xlsx/csv',
+            'Registry placeholder for per-court public maps, queues and transparency pages.',
+            '{"levels":["federal","state","municipal","multi_level"],"coverage":"per_court_discovery_registry"}'::jsonb
           )
         on conflict (key) do update set
           name = excluded.name,

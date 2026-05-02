@@ -54,6 +54,10 @@ The beta must rely on public source ingestion:
   complements into legal signals such as requisition issued, payment available, prior cession,
   lien, suspension, objection, and superpreference. Linked processes are projected into
   `asset_events` for pricing and advisory, then recompute `legal-signals-v1` score snapshots.
+- `tribunal-source-sync`: reads the national `government_source_targets` registry and executes
+  implemented adapters such as TJSP communications, TRF2 chronological files, DataJud court
+  discovery, and DJEN publication discovery. Targets without stable adapters remain tracked as
+  coverage gaps instead of disappearing from the roadmap.
 - `siop-reconcile`: marks stale imports as failed for operator visibility.
 
 National discovery starts from DataJud metadata across federal, state, labor, electoral, military,
@@ -72,6 +76,8 @@ For targeted troubleshooting, run individual phases:
 ```bash
 node ace datajud:sync-precatorios --tenant-id=<tenant-id> --courts=tjsp --page-size=100 --max-pages-per-court=1 --run-inline
 node ace datajud:classify-signals --tenant-id=<tenant-id> --limit=2000 --run-inline
+node ace tribunal:sync-sources --tenant-id=<tenant-id> --adapters=tjsp_precatorio_sync,trf2_precatorio_sync --run-inline
+node ace tribunal:sync-sources --tenant-id=<tenant-id> --datasets=court-annual-map-pages --dry-run --run-inline
 ```
 
 Increase `--max-pages-per-court` gradually after checking job duration, DataJud response stability,

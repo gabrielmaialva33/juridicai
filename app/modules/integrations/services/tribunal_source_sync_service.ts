@@ -1,0 +1,455 @@
+import { DateTime } from 'luxon'
+import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import coverageRunService from '#modules/integrations/services/coverage_run_service'
+import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
+import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
+import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
+import trf2PrecatorioAdapter from '#modules/integrations/services/trf2_precatorio_adapter'
+import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
+import SourceDataset from '#modules/integrations/models/source_dataset'
+import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
+import type {
+  GovernmentSourceTargetStatus,
+  JobRunOrigin,
+  JsonRecord,
+} from '#shared/types/model_enums'
+
+export type TribunalSourceSyncOptions = {
+  tenantId: string
+  targetKeys?: string[] | null
+  sourceDatasetKeys?: string[] | null
+  courtAliases?: string[] | null
+  adapterKeys?: string[] | null
+  statuses?: GovernmentSourceTargetStatus[] | null
+  limit?: number | null
+  dataJudPageSize?: number | null
+  dataJudMaxPagesPerCourt?: number | null
+  djenSearchTexts?: string[] | null
+  djenStartDate?: string | null
+  djenEndDate?: string | null
+  djenMaxPagesPerCourt?: number | null
+  tjspCategories?: TjspPrecatorioCommunicationCategory[] | null
+  tjspLimit?: number | null
+  tjspImportDocuments?: boolean | null
+  trf2Years?: number[] | null
+  dryRun?: boolean
+  origin?: JobRunOrigin
+}
+
+type TargetResult = {
+  targetKey: string
+  adapterKey: string | null
+  status: 'completed' | 'failed' | 'skipped'
+  discoveredCount: number
+  sourceRecordsCount: number
+  createdAssetsCount: number
+  linkedAssetsCount: number
+  enrichedAssetsCount: number
+  errorCount: number
+  message: string | null
+  metrics: JsonRecord
+}
+
+class TribunalSourceSyncService {
+  async sync(options: TribunalSourceSyncOptions) {
+    const targets = await this.findTargets(options)
+
+    if (options.dryRun) {
+      return {
+        dryRun: true,
+        selectedTargets: targets.length,
+        targets: targets.map((target) => describeTarget(target)),
+      }
+    }
+
+    const results: TargetResult[] = []
+
+    for (const target of targets) {
+      results.push(await this.syncTarget(target, options))
+    }
+
+    return {
+      dryRun: false,
+      selectedTargets: targets.length,
+      totals: sumResults(results),
+      results,
+    }
+  }
+
+  private async findTargets(options: TribunalSourceSyncOptions) {
+    const query = GovernmentSourceTarget.query().where('is_active', true)
+
+    if (options.targetKeys?.length) {
+      query.whereIn('key', normalizeList(options.targetKeys))
+    }
+
+    if (options.courtAliases?.length) {
+      query.whereIn('court_alias', normalizeList(options.courtAliases))
+    }
+
+    if (options.adapterKeys?.length) {
+      query.whereIn('adapter_key', normalizeList(options.adapterKeys))
+    }
+
+    if (options.statuses?.length) {
+      query.whereIn('status', options.statuses)
+    }
+
+    if (options.sourceDatasetKeys?.length) {
+      const datasetIds = await this.sourceDatasetIds(options.sourceDatasetKeys)
+      query.whereIn('source_dataset_id', datasetIds)
+    }
+
+    query.orderByRaw(`
+      case priority
+        when 'primary' then 1
+        when 'enrichment' then 2
+        else 3
+      end
+    `)
+    query.orderBy('court_alias', 'asc')
+    query.orderBy('key', 'asc')
+
+    if (options.limit && options.limit > 0) {
+      query.limit(Math.trunc(options.limit))
+    }
+
+    return query.exec()
+  }
+
+  private async sourceDatasetIds(keys: string[]) {
+    const datasets = await SourceDataset.query().whereIn('key', normalizeList(keys)).select('id')
+    return datasets.map((dataset) => dataset.id)
+  }
+
+  private async syncTarget(target: GovernmentSourceTarget, options: TribunalSourceSyncOptions) {
+    const coverageRun = await coverageRunService.start({
+      tenantId: options.tenantId,
+      sourceDatasetId: target.sourceDatasetId,
+      origin: options.origin ?? 'system',
+      scope: {
+        targetKey: target.key,
+        courtAlias: target.courtAlias,
+        adapterKey: target.adapterKey,
+        status: target.status,
+      },
+    })
+
+    try {
+      const result = await this.executeTarget(target, options)
+
+      await coverageRunService.finish(coverageRun, result.status, {
+        discoveredCount: result.discoveredCount,
+        sourceRecordsCount: result.sourceRecordsCount,
+        createdAssetsCount: result.createdAssetsCount,
+        linkedAssetsCount: result.linkedAssetsCount,
+        enrichedAssetsCount: result.enrichedAssetsCount,
+        errorCount: result.errorCount,
+        metrics: result.metrics,
+      })
+      await this.persistTargetResult(target, result)
+
+      return result
+    } catch (error) {
+      const result = failedResult(target, error)
+
+      await coverageRunService.finish(coverageRun, 'failed', {
+        error,
+        errorCount: 1,
+        metrics: result.metrics,
+      })
+      await this.persistTargetResult(target, result)
+
+      return result
+    }
+  }
+
+  private async executeTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    if (target.status === 'disabled' || !target.adapterKey) {
+      return skippedResult(target, 'No executable adapter is configured for this source target.')
+    }
+
+    if (target.status !== 'implemented' && target.status !== 'generic_supported') {
+      return skippedResult(target, `Target status ${target.status} requires manual adapter work.`)
+    }
+
+    if (target.adapterKey === 'datajud_precatorio_discovery') {
+      return this.syncDataJudTarget(target, options)
+    }
+
+    if (target.adapterKey === 'djen_publication_sync') {
+      return this.syncDjenTarget(target, options)
+    }
+
+    if (target.adapterKey === 'tjsp_precatorio_sync') {
+      return this.syncTjspTarget(target, options)
+    }
+
+    if (target.adapterKey === 'trf2_precatorio_sync') {
+      return this.syncTrf2Target(target, options)
+    }
+
+    return skippedResult(target, `Unknown adapter key ${target.adapterKey}.`)
+  }
+
+  private async syncDataJudTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    if (!target.courtAlias) {
+      return skippedResult(target, 'DataJud target has no court alias.')
+    }
+
+    const result = await dataJudNationalPrecatorioSyncService.sync({
+      tenantId: options.tenantId,
+      courtAliases: [target.courtAlias],
+      pageSize: options.dataJudPageSize ?? 100,
+      maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+      origin: options.origin ?? 'system',
+    })
+
+    return completedResult(target, {
+      discoveredCount: result.totals.hits,
+      sourceRecordsCount: result.totals.pages,
+      createdAssetsCount: result.totals.created,
+      linkedAssetsCount: result.totals.persisted,
+      enrichedAssetsCount: result.totals.updated,
+      errorCount: result.totals.errors,
+      metrics: result as unknown as JsonRecord,
+    })
+  }
+
+  private async syncDjenTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    if (!target.courtAlias) {
+      return skippedResult(target, 'DJEN target has no court alias.')
+    }
+
+    const result = await djenPublicationSyncService.sync({
+      tenantId: options.tenantId,
+      courtAliases: [target.courtAlias],
+      searchTexts: options.djenSearchTexts,
+      startDate: options.djenStartDate,
+      endDate: options.djenEndDate,
+      maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+      origin: options.origin ?? 'system',
+    })
+
+    return completedResult(target, {
+      discoveredCount: result.totals.count,
+      sourceRecordsCount: result.totals.sourceRecordsCreated + result.totals.sourceRecordsReused,
+      createdAssetsCount: result.totals.processesCreated,
+      linkedAssetsCount: result.totals.linkedAssets,
+      enrichedAssetsCount: result.totals.publicationsCreated + result.totals.publicationsUpdated,
+      errorCount: result.totals.errors,
+      metrics: result as unknown as JsonRecord,
+    })
+  }
+
+  private async syncTjspTarget(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const result = await tjspPrecatorioSyncService.sync({
+      tenantId: options.tenantId,
+      categories: options.tjspCategories,
+      limit: options.tjspLimit ?? 25,
+      importDocuments: options.tjspImportDocuments ?? true,
+      origin: options.origin ?? 'system',
+    })
+
+    return completedResult(target, {
+      discoveredCount: result.discovered,
+      sourceRecordsCount: result.sourceRecordsPersisted,
+      createdAssetsCount: result.assetsInserted,
+      linkedAssetsCount: result.assetsInserted + result.assetsUpdated,
+      enrichedAssetsCount: result.importedDocuments,
+      errorCount: result.errors,
+      metrics: result as unknown as JsonRecord,
+    })
+  }
+
+  private async syncTrf2Target(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await trf2PrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      years: options.trf2Years ?? undefined,
+      download: true,
+    })
+    const imports: Awaited<ReturnType<typeof trf2PrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord || item.link.kind !== 'paid_precatorios') {
+        continue
+      }
+
+      imports.push(await trf2PrecatorioImportService.importSourceRecord(item.sourceRecord.id))
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+        })),
+        importTotals,
+      },
+    })
+  }
+
+  private async persistTargetResult(target: GovernmentSourceTarget, result: TargetResult) {
+    if (result.status === 'skipped') {
+      target.merge({
+        lastDiscoveredCount: result.discoveredCount,
+        lastSourceRecordsCount: result.sourceRecordsCount,
+      })
+      await target.save()
+      return
+    }
+
+    target.merge({
+      lastSuccessAt: result.status === 'completed' ? DateTime.utc() : target.lastSuccessAt,
+      lastErrorAt: result.status === 'failed' ? DateTime.utc() : null,
+      lastErrorMessage: result.status === 'failed' ? result.message : null,
+      lastDiscoveredCount: result.discoveredCount,
+      lastSourceRecordsCount: result.sourceRecordsCount,
+      coverageScore: coverageScoreFor(result),
+    })
+    await target.save()
+  }
+}
+
+function describeTarget(target: GovernmentSourceTarget) {
+  return {
+    key: target.key,
+    name: target.name,
+    source: target.source,
+    courtAlias: target.courtAlias,
+    stateCode: target.stateCode,
+    priority: target.priority,
+    status: target.status,
+    adapterKey: target.adapterKey,
+    sourceUrl: target.sourceUrl,
+    sourceFormat: target.sourceFormat,
+  }
+}
+
+function completedResult(
+  target: GovernmentSourceTarget,
+  input: Omit<TargetResult, 'targetKey' | 'adapterKey' | 'status' | 'message'>
+): TargetResult {
+  return {
+    targetKey: target.key,
+    adapterKey: target.adapterKey,
+    status: 'completed',
+    message: null,
+    ...input,
+  }
+}
+
+function skippedResult(target: GovernmentSourceTarget, message: string): TargetResult {
+  return {
+    targetKey: target.key,
+    adapterKey: target.adapterKey,
+    status: 'skipped',
+    discoveredCount: 0,
+    sourceRecordsCount: 0,
+    createdAssetsCount: 0,
+    linkedAssetsCount: 0,
+    enrichedAssetsCount: 0,
+    errorCount: 0,
+    message,
+    metrics: { message },
+  }
+}
+
+function failedResult(target: GovernmentSourceTarget, error: unknown): TargetResult {
+  const message = error instanceof Error ? error.message : String(error)
+
+  return {
+    targetKey: target.key,
+    adapterKey: target.adapterKey,
+    status: 'failed',
+    discoveredCount: 0,
+    sourceRecordsCount: 0,
+    createdAssetsCount: 0,
+    linkedAssetsCount: 0,
+    enrichedAssetsCount: 0,
+    errorCount: 1,
+    message,
+    metrics: { message },
+  }
+}
+
+function sumResults(results: TargetResult[]) {
+  return results.reduce(
+    (totals, result) => ({
+      completed: totals.completed + (result.status === 'completed' ? 1 : 0),
+      skipped: totals.skipped + (result.status === 'skipped' ? 1 : 0),
+      failed: totals.failed + (result.status === 'failed' ? 1 : 0),
+      discoveredCount: totals.discoveredCount + result.discoveredCount,
+      sourceRecordsCount: totals.sourceRecordsCount + result.sourceRecordsCount,
+      createdAssetsCount: totals.createdAssetsCount + result.createdAssetsCount,
+      linkedAssetsCount: totals.linkedAssetsCount + result.linkedAssetsCount,
+      enrichedAssetsCount: totals.enrichedAssetsCount + result.enrichedAssetsCount,
+      errorCount: totals.errorCount + result.errorCount,
+    }),
+    {
+      completed: 0,
+      skipped: 0,
+      failed: 0,
+      discoveredCount: 0,
+      sourceRecordsCount: 0,
+      createdAssetsCount: 0,
+      linkedAssetsCount: 0,
+      enrichedAssetsCount: 0,
+      errorCount: 0,
+    }
+  )
+}
+
+function coverageScoreFor(result: TargetResult) {
+  if (result.status === 'failed') {
+    return '0.0000'
+  }
+
+  if (result.errorCount > 0) {
+    return '0.5000'
+  }
+
+  if (result.sourceRecordsCount > 0 || result.linkedAssetsCount > 0) {
+    return '1.0000'
+  }
+
+  return result.discoveredCount > 0 ? '0.7500' : '0.2500'
+}
+
+function normalizeList(values: string[]) {
+  return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))]
+}
+
+export default new TribunalSourceSyncService()

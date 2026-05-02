@@ -809,6 +809,87 @@ export class ExternalIdentifierSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class GovernmentSourceTargetSchema extends BaseModel {
+  static $columns = [
+    'adapterKey',
+    'branch',
+    'cadence',
+    'courtAlias',
+    'coverageScore',
+    'createdAt',
+    'federativeLevel',
+    'id',
+    'isActive',
+    'key',
+    'lastDiscoveredCount',
+    'lastErrorAt',
+    'lastErrorMessage',
+    'lastSourceRecordsCount',
+    'lastSuccessAt',
+    'metadata',
+    'name',
+    'priority',
+    'source',
+    'sourceDatasetId',
+    'sourceFormat',
+    'sourceUrl',
+    'stateCode',
+    'status',
+    'updatedAt',
+  ] as const
+  $columns = GovernmentSourceTargetSchema.$columns
+  @column()
+  declare adapterKey: string | null
+  @column()
+  declare branch: string
+  @column()
+  declare cadence: string
+  @column()
+  declare courtAlias: string | null
+  @column()
+  declare coverageScore: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare federativeLevel: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare isActive: boolean
+  @column()
+  declare key: string
+  @column()
+  declare lastDiscoveredCount: number
+  @column.dateTime()
+  declare lastErrorAt: DateTime | null
+  @column()
+  declare lastErrorMessage: string | null
+  @column()
+  declare lastSourceRecordsCount: number
+  @column.dateTime()
+  declare lastSuccessAt: DateTime | null
+  @column()
+  declare metadata: any | null
+  @column()
+  declare name: string
+  @column()
+  declare priority: string
+  @column()
+  declare source: any
+  @column()
+  declare sourceDatasetId: string
+  @column()
+  declare sourceFormat: string | null
+  @column()
+  declare sourceUrl: string | null
+  @column()
+  declare stateCode: string | null
+  @column()
+  declare status: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class JudgingBodySchema extends BaseModel {
   static $columns = [
     'code',
