@@ -237,6 +237,8 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
       levels: ['federal'],
       reportKinds: ['federal_budget_order'],
       importsCanonicalAssets: true,
+      manualExportUrl:
+        'https://eproc2g.trf6.jus.br/eproc/externo_controlador.php?acao=gerar_arquivo_precatorio&hash=7f9e1fbd97915e3bce36b6bd2528b0d3',
       blockedLinks: ['eproc_2026_captcha'],
     },
   },
@@ -522,6 +524,8 @@ export default class extends BaseSchema {
           levels: ['federal'],
           coverage: 'chronological_queue',
           reportKinds: ['federal_budget_order'],
+          manualExportUrl:
+            'https://eproc2g.trf6.jus.br/eproc/externo_controlador.php?acao=gerar_arquivo_precatorio&hash=7f9e1fbd97915e3bce36b6bd2528b0d3',
           blockedLinks: ['eproc_2026_captcha'],
         },
       })
@@ -543,6 +547,8 @@ export default class extends BaseSchema {
           levels: ['federal'],
           coverage: 'chronological_queue',
           reportKinds: ['federal_budget_order'],
+          manualExportUrl:
+            'https://eproc2g.trf6.jus.br/eproc/externo_controlador.php?acao=gerar_arquivo_precatorio&hash=7f9e1fbd97915e3bce36b6bd2528b0d3',
           blockedLinks: ['eproc_2026_captcha'],
         },
         updated_at: this.raw('now()'),

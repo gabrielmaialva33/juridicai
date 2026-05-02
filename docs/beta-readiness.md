@@ -87,7 +87,9 @@ file is processed with bounded batches. For TRF5, keep `--trf-5-limit=<n>` conse
 because the public page exposes federal paid/debt PDFs plus state and municipal chronological and
 special-regime reports; raise it after checking `pdftotext` duration and row quality. TRF6 exposes
 public 2024/2025 PDFs and a 2026 eproc link that currently requires CAPTCHA, so automation imports
-only the public PDFs until that source offers a non-interactive export.
+only the public PDFs until that source offers a non-interactive export. Send operators to the direct
+manual export URL when a fresh CSV is needed:
+`https://eproc2g.trf6.jus.br/eproc/externo_controlador.php?acao=gerar_arquivo_precatorio&hash=7f9e1fbd97915e3bce36b6bd2528b0d3`.
 
 ## Development Demo Workspace
 

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import tribunalDocumentExtractionService from '#modules/integrations/services/tribunal_document_extraction_service'
@@ -33,12 +34,21 @@ export type Trf6PrecatorioImportStats = {
 
 type Trf6ParsedRow = {
   order: number
+  proposalYear: number | null
+  legalBasis: string | null
   processNumber: string
   cnjNumber: string | null
+  beneficiaryDocumentMasked: string | null
+  filedAt: string | null
+  updatedUntil: string | null
   value: string | null
+  originalPaidValue: string | null
+  paidAt: string | null
+  paidValue: string | null
   preference: string | null
   nature: AssetNature
   rawText: string
+  rawData: JsonRecord
 }
 
 type ImportContext = {
@@ -56,7 +66,7 @@ class Trf6PrecatorioImportService {
         annotateSourceRecord: true,
       }
     )
-    const rows = parseTrf6FederalBudgetText(extraction.text ?? '')
+    const rows = await this.parseRows(sourceRecord, extraction.text ?? '')
     const validRows = rows.filter((row) => row.cnjNumber || row.value)
     const selectedRows = limitRows(validRows, options.maxRows)
     const chunkSize = normalizeChunkSize(options.chunkSize)
@@ -96,6 +106,15 @@ class Trf6PrecatorioImportService {
         processedBatches: batches.length,
       },
     }
+  }
+
+  private async parseRows(sourceRecord: SourceRecord, text: string) {
+    if (isCsvSource(sourceRecord)) {
+      const buffer = await readFile(sourceRecord.sourceFilePath!)
+      return parseTrf6FederalBudgetCsv(decodeText(buffer))
+    }
+
+    return parseTrf6FederalBudgetText(text)
   }
 
   private async buildContext(): Promise<ImportContext> {
@@ -145,11 +164,11 @@ class Trf6PrecatorioImportService {
       debtorId: debtor.id,
       courtId: context.courtId,
       assetNumber: row.processNumber,
-      exerciseYear: numberFrom(sourceRecord.rawData?.year),
-      budgetYear: numberFrom(sourceRecord.rawData?.year),
+      exerciseYear: row.proposalYear ?? numberFrom(sourceRecord.rawData?.year),
+      budgetYear: row.proposalYear ?? numberFrom(sourceRecord.rawData?.year),
       nature: row.nature,
-      lifecycleStatus: 'discovered' as const,
-      piiStatus: 'none' as const,
+      lifecycleStatus: row.paidValue ? ('paid' as const) : ('discovered' as const),
+      piiStatus: row.beneficiaryDocumentMasked ? ('pseudonymous' as const) : ('none' as const),
       complianceStatus: 'approved_for_analysis' as const,
       rawData,
       rowFingerprint: stableHash(rawData),
@@ -220,7 +239,9 @@ class Trf6PrecatorioImportService {
         tenantId: sourceRecord.tenantId,
         assetId,
         faceValue: row.value,
-        estimatedUpdatedValue: row.value,
+        estimatedUpdatedValue: row.paidValue ?? row.value,
+        baseDate: parseBrazilianDateTime(row.filedAt),
+        correctionEndedAt: parseMonthYear(row.updatedUntil),
         queuePosition: row.order,
         sourceRecordId: sourceRecord.id,
         rawData: buildAssetRawData(sourceRecord, row),
@@ -254,6 +275,7 @@ class Trf6PrecatorioImportService {
         courtAlias: 'trf6',
         sourceRecordId: sourceRecord.id,
         order: row.order,
+        proposalYear: row.proposalYear,
       },
     }
     const existing = await JudicialProcess.query({ client: trx })
@@ -321,17 +343,21 @@ class Trf6PrecatorioImportService {
         cnjNumber: row.cnjNumber,
         processNumber: row.processNumber,
         order: row.order,
+        proposalYear: row.proposalYear,
       },
       normalizedPayload: {
         cnjNumber: row.cnjNumber,
         processNumber: row.processNumber,
         value: row.value,
+        paidValue: row.paidValue,
+        paidAt: row.paidAt,
         preference: row.preference,
         nature: row.nature,
       },
       rawPointer: {
         sourceRecordId: sourceRecord.id,
         order: row.order,
+        proposalYear: row.proposalYear,
       },
       trx,
     })
@@ -364,6 +390,61 @@ class Trf6PrecatorioImportService {
       })
     }
   }
+}
+
+export function parseTrf6FederalBudgetCsv(contents: string | Buffer): Trf6ParsedRow[] {
+  const text = typeof contents === 'string' ? contents : decodeText(contents)
+  const lines = text.split(/\r?\n/)
+  const headerIndex = lines.findIndex((line) =>
+    normalizeHeaderLine(line).includes('numero_do_precatorio')
+  )
+
+  if (headerIndex === -1) {
+    return []
+  }
+
+  const headers = splitDelimitedLine(lines[headerIndex], ';').map(normalizeHeader)
+  const rows: Trf6ParsedRow[] = []
+
+  for (const line of lines.slice(headerIndex + 1)) {
+    if (!line.trim()) {
+      continue
+    }
+
+    const values = splitDelimitedLine(line, ';')
+    const rawData = headers.reduce<JsonRecord>((payload, header, index) => {
+      payload[header || `column_${index + 1}`] = values[index]?.trim() || null
+      return payload
+    }, {})
+    const processNumber = stringField(rawData.numero_do_precatorio)
+
+    if (!processNumber) {
+      continue
+    }
+
+    rows.push({
+      order: numberField(rawData.n_de_ordem_cronologica) ?? rows.length + 1,
+      proposalYear: numberField(rawData.proposta),
+      legalBasis: stringField(rawData.base_legal_para_enquadramento_na_ordem_cronologica),
+      processNumber,
+      cnjNumber: normalizeCnj(processNumber),
+      beneficiaryDocumentMasked: stringField(rawData.cpf_cnpj_parcial_do_beneficiario),
+      filedAt: stringField(rawData.data_de_autuacao_no_trf6),
+      updatedUntil: stringField(rawData.atualizado_ate),
+      value: parseBrazilianMoney(stringField(rawData.parcela_devida)),
+      originalPaidValue: parseBrazilianMoney(stringField(rawData.valor_original_pago)),
+      paidAt: stringField(rawData.data_pagamento),
+      paidValue: parseBrazilianMoney(stringField(rawData.valor_pago)),
+      preference: detectPreference(
+        stringField(rawData.base_legal_para_enquadramento_na_ordem_cronologica)
+      ),
+      nature: detectNature(stringField(rawData.base_legal_para_enquadramento_na_ordem_cronologica)),
+      rawText: line.replace(/\s+/g, ' ').trim(),
+      rawData,
+    })
+  }
+
+  return rows
 }
 
 export function parseTrf6FederalBudgetText(text: string): Trf6ParsedRow[] {
@@ -403,10 +484,21 @@ function parseLine(line: string, nature: AssetNature): Trf6ParsedRow | null {
     order: Number(match[1]),
     processNumber: match[2],
     cnjNumber: normalizeTrf6ProcessNumber(match[2]),
+    proposalYear: null,
+    legalBasis: null,
+    beneficiaryDocumentMasked: null,
+    filedAt: null,
+    updatedUntil: null,
     value: parseBrazilianMoney(match[3]),
+    originalPaidValue: null,
+    paidAt: null,
+    paidValue: null,
     preference: rawPreference || null,
     nature,
     rawText: line.replace(/\s+/g, ' ').trim(),
+    rawData: {
+      line: line.replace(/\s+/g, ' ').trim(),
+    },
   }
 }
 
@@ -428,8 +520,17 @@ function buildAssetRawData(sourceRecord: SourceRecord, row: Trf6ParsedRow): Json
     sourceKind: sourceRecord.rawData?.sourceKind ?? null,
     year: sourceRecord.rawData?.year ?? null,
     processNumber: row.processNumber,
+    proposalYear: row.proposalYear,
+    legalBasis: row.legalBasis,
+    beneficiaryDocumentMasked: row.beneficiaryDocumentMasked,
+    filedAt: row.filedAt,
+    updatedUntil: row.updatedUntil,
     preference: row.preference,
     nature: row.nature,
+    originalPaidValue: row.originalPaidValue,
+    paidAt: row.paidAt,
+    paidValue: row.paidValue,
+    rowRawData: row.rawData,
     rawText: row.rawText,
   }
 }
@@ -439,10 +540,28 @@ function buildEventRawData(row: Trf6ParsedRow): JsonRecord {
     providerId: 'trf6-federal-precatorio-orders',
     processNumber: row.processNumber,
     cnjNumber: row.cnjNumber,
+    proposalYear: row.proposalYear,
     value: row.value,
+    paidValue: row.paidValue,
+    paidAt: row.paidAt,
     preference: row.preference,
     nature: row.nature,
   }
+}
+
+function isCsvSource(sourceRecord: SourceRecord) {
+  const name = [
+    sourceRecord.mimeType,
+    sourceRecord.originalFilename,
+    sourceRecord.sourceFilePath,
+    sourceRecord.sourceUrl,
+    sourceRecord.rawData?.format,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return name.includes('csv') || /\.csv(?:$|\?)/i.test(name)
 }
 
 function normalizeText(value: string) {
@@ -450,6 +569,122 @@ function normalizeText(value: string) {
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toUpperCase()
+}
+
+function detectPreference(value: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const normalized = normalizeText(value)
+  if (normalized.includes('INCISO II')) {
+    return 'superpreferential'
+  }
+
+  if (normalized.includes('INCISO III')) {
+    return 'alimentar_preferential'
+  }
+
+  if (normalized.includes('INCISO IV')) {
+    return 'alimentar_balance'
+  }
+
+  if (normalized.includes('INCISO V')) {
+    return 'common'
+  }
+
+  return null
+}
+
+function detectNature(value: string | null): AssetNature {
+  const normalized = normalizeText(value ?? '')
+  return normalized.includes('NAO ALIMENTARES') || normalized.includes('INCISO V')
+    ? 'comum'
+    : 'alimentar'
+}
+
+function parseBrazilianDateTime(value: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const parsed = DateTime.fromFormat(value, 'dd/LL/yyyy HH:mm:ss')
+  if (parsed.isValid) {
+    return parsed
+  }
+
+  const dateOnly = DateTime.fromFormat(value, 'dd/LL/yyyy')
+  return dateOnly.isValid ? dateOnly : null
+}
+
+function parseMonthYear(value: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const parsed = DateTime.fromFormat(value, 'LL/yyyy').endOf('month')
+  return parsed.isValid ? parsed : null
+}
+
+function stringField(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function numberField(value: unknown) {
+  const number = Number(
+    String(value ?? '')
+      .trim()
+      .replace(/\D/g, '')
+  )
+  return Number.isInteger(number) && number > 0 ? number : null
+}
+
+function normalizeHeaderLine(line: string) {
+  return normalizeHeader(line.replace(/;/g, ' '))
+}
+
+function normalizeHeader(header: string) {
+  return header
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
+
+function splitDelimitedLine(line: string, delimiter: string) {
+  const values: string[] = []
+  let current = ''
+  let quoted = false
+
+  for (const char of line) {
+    if (char === '"') {
+      quoted = !quoted
+      continue
+    }
+
+    if (char === delimiter && !quoted) {
+      values.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += char
+  }
+
+  values.push(current.trim())
+  return values
+}
+
+function decodeText(buffer: Buffer) {
+  const utf8 = buffer.toString('utf8')
+
+  if (!utf8.includes('\uFFFD')) {
+    return utf8
+  }
+
+  return new TextDecoder('windows-1252').decode(buffer)
 }
 
 function limitRows(rows: Trf6ParsedRow[], maxRows?: number | null) {

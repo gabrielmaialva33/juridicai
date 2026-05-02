@@ -136,33 +136,49 @@ class TribunalDocumentExtractionService {
 
 export function detectDocumentFormat(sourceRecord: SourceRecord): TribunalDocumentFormat {
   const mimeType = sourceRecord.mimeType?.toLowerCase() ?? ''
-  const name = [
+  const storedName = [
     sourceRecord.originalFilename,
     sourceRecord.sourceFilePath,
-    sourceRecord.sourceUrl,
     sourceRecord.rawData?.format,
   ]
     .filter(Boolean)
     .join(' ')
     .toLowerCase()
+  const sourceUrl = sourceRecord.sourceUrl?.toLowerCase() ?? ''
 
-  if (mimeType.includes('pdf') || /\.pdf(?:$|\?)/i.test(name)) {
+  if (mimeType.includes('pdf') || /\.pdf(?:$|\?)/i.test(storedName)) {
     return 'pdf'
   }
 
   if (
     mimeType.includes('spreadsheetml') ||
     mimeType.includes('excel') ||
-    /\.xlsx(?:$|\?)/i.test(name)
+    /\.xlsx(?:$|\?)/i.test(storedName)
   ) {
     return 'xlsx'
   }
 
-  if (mimeType.includes('csv') || /\.csv(?:$|\?)/i.test(name)) {
+  if (mimeType.includes('csv') || /\.csv(?:$|\?)/i.test(storedName)) {
     return 'csv'
   }
 
-  if (mimeType.includes('html') || /\.html?(?:$|\?)/i.test(name)) {
+  if (mimeType.includes('html') || /\.html?(?:$|\?)/i.test(storedName)) {
+    return 'html'
+  }
+
+  if (/\.pdf(?:$|\?)/i.test(sourceUrl)) {
+    return 'pdf'
+  }
+
+  if (/\.xlsx(?:$|\?)/i.test(sourceUrl)) {
+    return 'xlsx'
+  }
+
+  if (/\.csv(?:$|\?)/i.test(sourceUrl)) {
+    return 'csv'
+  }
+
+  if (/\.html?(?:$|\?)/i.test(sourceUrl)) {
     return 'html'
   }
 

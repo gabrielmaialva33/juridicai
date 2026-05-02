@@ -8,6 +8,8 @@ import type { JsonRecord } from '#shared/types/model_enums'
 
 export const TRF6_FEDERAL_PRECATORIO_URL =
   'https://portal.trf6.jus.br/rpv-e-precatorios/precatorios-federais/'
+export const TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL =
+  'https://eproc2g.trf6.jus.br/eproc/externo_controlador.php?acao=gerar_arquivo_precatorio&hash=7f9e1fbd97915e3bce36b6bd2528b0d3'
 
 export type Trf6PrecatorioLinkKind = 'federal_budget_order'
 
