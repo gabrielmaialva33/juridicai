@@ -958,11 +958,7 @@ function isTjrjAnnualMapDocument(link: { title: string; url: string; format: str
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
 
-  return (
-    value.includes('mapa_anual_de_precatorios') ||
-    value.includes('mapa-anual-de-precatorios') ||
-    value.includes('mapa anual de precatorios')
-  )
+  return link.format === 'pdf' && value.includes('mapa') && value.includes('precatorio')
 }
 
 export default new TribunalSourceSyncService()
