@@ -140,10 +140,11 @@ const COURT_PUBLIC_SOURCE_OVERRIDES: Record<
     adapterKey: 'tjba_precatorio_api_sync',
   },
   tjes: {
-    sourceUrl: 'https://www.tjes.jus.br/precatorios-2/consultas/listas-de-precatorios/',
+    sourceUrl: 'https://sistemas.tjes.jus.br/lup/f/',
     status: 'generic_supported',
-    coverageScore: '0.4500',
-    notes: 'TJES public precatorio debtor-list and annual map landing page.',
+    coverageScore: '0.8000',
+    notes: 'TJES LUP public API exposes debtor entities and individual precatorio rows.',
+    adapterKey: 'tjes_lup_precatorio_api_sync',
   },
   tjma: {
     sourceUrl: 'https://www.tjma.jus.br/hotsite/prec/item/6847/0/listas-cronologicas',
