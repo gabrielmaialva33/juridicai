@@ -3,9 +3,15 @@ import { middleware } from '#start/kernel'
 
 const DataJudCandidatesController = () =>
   import('#modules/integrations/controllers/datajud_candidates_controller')
+const TribunalBudgetExecutionsController = () =>
+  import('#modules/integrations/controllers/tribunal_budget_executions_controller')
 
 router
   .group(() => {
+    router
+      .get('admin/tribunal/budget-executions', [TribunalBudgetExecutionsController, 'index'])
+      .as('tribunal.budget_executions.index')
+      .use(middleware.permission('imports.read'))
     router
       .get('admin/datajud/candidates', [DataJudCandidatesController, 'index'])
       .as('datajud.candidates.index')

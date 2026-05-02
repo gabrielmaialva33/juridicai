@@ -2008,6 +2008,126 @@ export class TenantSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class TribunalBudgetExecutionSchema extends BaseModel {
+  static $columns = [
+    'actionName',
+    'additionalCreditsDecrease',
+    'additionalCreditsIncrease',
+    'budgetUnitCode',
+    'budgetUnitId',
+    'budgetUnitName',
+    'committedAmount',
+    'committedPercent',
+    'contingencyAmount',
+    'courtAlias',
+    'courtId',
+    'createdAt',
+    'creditHighlightAmount',
+    'creditProvisionAmount',
+    'expenseGroupCode',
+    'functionSubfunction',
+    'fundingSourceCode',
+    'fundingSourceName',
+    'id',
+    'initialAllocation',
+    'liquidatedAmount',
+    'liquidatedPercent',
+    'netAllocation',
+    'paidAmount',
+    'paidPercent',
+    'programName',
+    'programmaticCode',
+    'rawData',
+    'referenceMonth',
+    'referenceYear',
+    'rowFingerprint',
+    'sourceDatasetId',
+    'sourceKind',
+    'sourceRecordId',
+    'sphereCode',
+    'tenantId',
+    'updatedAllocation',
+    'updatedAt',
+  ] as const
+  $columns = TribunalBudgetExecutionSchema.$columns
+  @column()
+  declare actionName: string | null
+  @column()
+  declare additionalCreditsDecrease: string | null
+  @column()
+  declare additionalCreditsIncrease: string | null
+  @column()
+  declare budgetUnitCode: string | null
+  @column()
+  declare budgetUnitId: string | null
+  @column()
+  declare budgetUnitName: string | null
+  @column()
+  declare committedAmount: string | null
+  @column()
+  declare committedPercent: string | null
+  @column()
+  declare contingencyAmount: string | null
+  @column()
+  declare courtAlias: string
+  @column()
+  declare courtId: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare creditHighlightAmount: string | null
+  @column()
+  declare creditProvisionAmount: string | null
+  @column()
+  declare expenseGroupCode: string | null
+  @column()
+  declare functionSubfunction: string | null
+  @column()
+  declare fundingSourceCode: string | null
+  @column()
+  declare fundingSourceName: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare initialAllocation: string | null
+  @column()
+  declare liquidatedAmount: string | null
+  @column()
+  declare liquidatedPercent: string | null
+  @column()
+  declare netAllocation: string | null
+  @column()
+  declare paidAmount: string | null
+  @column()
+  declare paidPercent: string | null
+  @column()
+  declare programName: string | null
+  @column()
+  declare programmaticCode: string | null
+  @column()
+  declare rawData: any | null
+  @column()
+  declare referenceMonth: number | null
+  @column()
+  declare referenceYear: number | null
+  @column()
+  declare rowFingerprint: string
+  @column()
+  declare sourceDatasetId: string | null
+  @column()
+  declare sourceKind: string
+  @column()
+  declare sourceRecordId: string
+  @column()
+  declare sphereCode: string | null
+  @column()
+  declare tenantId: string
+  @column()
+  declare updatedAllocation: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class UserRoleSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'roleId', 'tenantId', 'updatedAt', 'userId'] as const
   $columns = UserRoleSchema.$columns
