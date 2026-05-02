@@ -74,6 +74,31 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare trf4ImportChunkSize?: number
 
+  @flags.string({
+    description: 'Comma-separated TRF5 years',
+  })
+  declare trf5Years?: string
+
+  @flags.string({
+    description: 'Comma-separated TRF5 source kinds: paid_precatorios,federal_debt',
+  })
+  declare trf5Kinds?: string
+
+  @flags.number({
+    description: 'Maximum TRF5 PDFs to download',
+  })
+  declare trf5Limit?: number
+
+  @flags.number({
+    description: 'Maximum TRF5 rows to import per downloaded PDF',
+  })
+  declare trf5ImportLimit?: number
+
+  @flags.number({
+    description: 'TRF5 parsed rows processed per import batch',
+  })
+  declare trf5ImportChunkSize?: number
+
   @flags.boolean({
     description: 'Preview selected targets without downloading or mutating data',
   })
@@ -104,6 +129,11 @@ export default class TribunalSyncSources extends BaseCommand {
       trf2Years: parseYears(this.trf2Years),
       trf4ImportLimit: this.trf4ImportLimit,
       trf4ImportChunkSize: this.trf4ImportChunkSize,
+      trf5Years: parseYears(this.trf5Years),
+      trf5Kinds: parseTrf5Kinds(this.trf5Kinds),
+      trf5Limit: this.trf5Limit,
+      trf5ImportLimit: this.trf5ImportLimit,
+      trf5ImportChunkSize: this.trf5ImportChunkSize,
       dryRun: this.dryRun,
       origin: 'manual_retry',
     }
@@ -154,4 +184,12 @@ function parseYears(value?: string) {
   return splitList(value)
     ?.map((year) => Number(year))
     .filter((year) => Number.isInteger(year))
+}
+
+function parseTrf5Kinds(value?: string) {
+  const allowed = new Set(['paid_precatorios', 'federal_debt'])
+
+  return splitList(value)?.filter((kind) => allowed.has(kind)) as
+    | Array<'paid_precatorios' | 'federal_debt'>
+    | undefined
 }

@@ -133,6 +133,21 @@ export default class extends BaseSchema {
             '{"levels":["federal"],"coverage":"chronological_queue","queueKinds":["federal_budget","extra_budget_general","extra_budget_special"]}'::jsonb
           ),
           (
+            'trf5-precatorio-reports',
+            'TRF5 relatórios públicos de precatórios',
+            'Tribunal Regional Federal da 5ª Região',
+            'tribunal',
+            'federal',
+            'tribunal_publication',
+            'public',
+            'primary',
+            'https://rpvprecatorio.trf5.jus.br/mapa',
+            'trf5',
+            'html/pdf',
+            'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
+            '{"levels":["federal","state","municipal"],"coverage":"pdf_reports","reportKinds":["paid_precatorios","federal_debt"]}'::jsonb
+          ),
+          (
             'cnj-annual-precatorios-map',
             'CNJ Mapa Anual dos Precatórios',
             'Conselho Nacional de Justiça',

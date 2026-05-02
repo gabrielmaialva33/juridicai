@@ -76,11 +76,18 @@ class GovernmentDataSyncOrchestratorService {
     })
     const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
       tenantId: options.tenantId,
-      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync', 'trf4_precatorio_sync'],
+      adapterKeys: [
+        'tjsp_precatorio_sync',
+        'trf2_precatorio_sync',
+        'trf4_precatorio_sync',
+        'trf5_precatorio_sync',
+      ],
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
       trf2Years: years,
+      trf5Years: years,
+      trf5Limit: 10,
       origin: options.origin ?? 'scheduler',
     })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
@@ -161,11 +168,18 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
     },
     tribunalSourceDiscovery: {
-      adapterKeys: ['tjsp_precatorio_sync', 'trf2_precatorio_sync', 'trf4_precatorio_sync'],
+      adapterKeys: [
+        'tjsp_precatorio_sync',
+        'trf2_precatorio_sync',
+        'trf4_precatorio_sync',
+        'trf5_precatorio_sync',
+      ],
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
       trf2Years: years,
+      trf5Years: years,
+      trf5Limit: 10,
     },
     dataJudAssetEnrichment: {
       limit: options.enrichLimit ?? 500,

@@ -8,6 +8,10 @@ import trf2PrecatorioAdapter from '#modules/integrations/services/trf2_precatori
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
 import trf4PrecatorioAdapter from '#modules/integrations/services/trf4_precatorio_adapter'
 import trf4PrecatorioImportService from '#modules/integrations/services/trf4_precatorio_import_service'
+import trf5PrecatorioAdapter, {
+  type Trf5PrecatorioLinkKind,
+} from '#modules/integrations/services/trf5_precatorio_adapter'
+import trf5PrecatorioImportService from '#modules/integrations/services/trf5_precatorio_import_service'
 import SourceDataset from '#modules/integrations/models/source_dataset'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type {
@@ -36,6 +40,11 @@ export type TribunalSourceSyncOptions = {
   trf2Years?: number[] | null
   trf4ImportLimit?: number | null
   trf4ImportChunkSize?: number | null
+  trf5Years?: number[] | null
+  trf5Kinds?: Trf5PrecatorioLinkKind[] | null
+  trf5Limit?: number | null
+  trf5ImportLimit?: number | null
+  trf5ImportChunkSize?: number | null
   dryRun?: boolean
   origin?: JobRunOrigin
 }
@@ -198,6 +207,10 @@ class TribunalSourceSyncService {
 
     if (target.adapterKey === 'trf4_precatorio_sync') {
       return this.syncTrf4Target(target, options)
+    }
+
+    if (target.adapterKey === 'trf5_precatorio_sync') {
+      return this.syncTrf5Target(target, options)
     }
 
     return skippedResult(target, `Unknown adapter key ${target.adapterKey}.`)
@@ -384,6 +397,69 @@ class TribunalSourceSyncService {
           sourceRecordId: item.sourceRecord.id,
           stats: item.stats,
           chunking: item.chunking,
+        })),
+        importTotals,
+      },
+    })
+  }
+
+  private async syncTrf5Target(
+    target: GovernmentSourceTarget,
+    options: TribunalSourceSyncOptions
+  ): Promise<TargetResult> {
+    const syncResult = await trf5PrecatorioAdapter.sync({
+      tenantId: options.tenantId,
+      years: options.trf5Years ?? undefined,
+      kinds: options.trf5Kinds ?? ['paid_precatorios', 'federal_debt'],
+      limit: options.trf5Limit ?? 10,
+      download: true,
+    })
+    const imports: Awaited<ReturnType<typeof trf5PrecatorioImportService.importSourceRecord>>[] = []
+
+    for (const item of syncResult.items) {
+      if (!item.sourceRecord || !['paid_precatorios', 'federal_debt'].includes(item.link.kind)) {
+        continue
+      }
+
+      imports.push(
+        await trf5PrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
+          maxRows: options.trf5ImportLimit,
+          chunkSize: options.trf5ImportChunkSize,
+        })
+      )
+    }
+
+    const importTotals = imports.reduce(
+      (totals, item) => ({
+        inserted: totals.inserted + item.stats.inserted,
+        updated: totals.updated + item.stats.updated,
+        errors: totals.errors + item.stats.errors,
+        validRows: totals.validRows + item.stats.validRows,
+        selectedRows: totals.selectedRows + item.stats.selectedRows,
+        processedBatches: totals.processedBatches + item.chunking.processedBatches,
+      }),
+      { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
+    )
+
+    return completedResult(target, {
+      discoveredCount: syncResult.discovered,
+      sourceRecordsCount: syncResult.downloaded,
+      createdAssetsCount: importTotals.inserted,
+      linkedAssetsCount: importTotals.inserted + importTotals.updated,
+      enrichedAssetsCount: imports.length,
+      errorCount: importTotals.errors,
+      metrics: {
+        ...syncResult,
+        imports: imports.map((item) => ({
+          sourceRecordId: item.sourceRecord.id,
+          stats: item.stats,
+          chunking: item.chunking,
+          extraction: {
+            format: item.extraction.format,
+            status: item.extraction.status,
+            rows: item.extraction.rows.length,
+            errors: item.extraction.errors,
+          },
         })),
         importTotals,
       },

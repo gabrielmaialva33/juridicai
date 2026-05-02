@@ -189,6 +189,28 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
       importsCanonicalAssets: true,
     },
   },
+  {
+    key: 'tribunal:trf5-precatorio-reports',
+    sourceDatasetKey: 'trf5-precatorio-reports',
+    name: 'TRF5 relatórios públicos de precatórios',
+    source: 'tribunal',
+    federativeLevel: 'federal',
+    stateCode: null,
+    courtAlias: 'trf5',
+    branch: 'federal_regional',
+    priority: 'primary',
+    adapterKey: 'trf5_precatorio_sync',
+    sourceUrl: 'https://rpvprecatorio.trf5.jus.br/mapa',
+    sourceFormat: 'html/pdf',
+    status: 'implemented',
+    cadence: 'daily',
+    coverageScore: '0.8000',
+    metadata: {
+      levels: ['federal', 'state', 'municipal'],
+      reportKinds: ['paid_precatorios', 'federal_debt'],
+      importsCanonicalAssets: true,
+    },
+  },
 ]
 
 export default class extends BaseSchema {
@@ -391,6 +413,50 @@ export default class extends BaseSchema {
           levels: ['federal'],
           coverage: 'chronological_queue',
           queueKinds: ['federal_budget', 'extra_budget_general', 'extra_budget_special'],
+        },
+        updated_at: this.raw('now()'),
+      })
+
+    await this.db
+      .table('source_datasets')
+      .insert({
+        key: 'trf5-precatorio-reports',
+        name: 'TRF5 relatórios públicos de precatórios',
+        owner: 'Tribunal Regional Federal da 5ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://rpvprecatorio.trf5.jus.br/mapa',
+        court_alias: 'trf5',
+        format: 'html/pdf',
+        notes:
+          'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
+        metadata: {
+          levels: ['federal', 'state', 'municipal'],
+          coverage: 'pdf_reports',
+          reportKinds: ['paid_precatorios', 'federal_debt'],
+        },
+      })
+      .onConflict('key')
+      .merge({
+        name: 'TRF5 relatórios públicos de precatórios',
+        owner: 'Tribunal Regional Federal da 5ª Região',
+        source: 'tribunal',
+        federative_level: 'federal',
+        kind: 'tribunal_publication',
+        access: 'public',
+        priority: 'primary',
+        base_url: 'https://rpvprecatorio.trf5.jus.br/mapa',
+        court_alias: 'trf5',
+        format: 'html/pdf',
+        notes:
+          'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
+        metadata: {
+          levels: ['federal', 'state', 'municipal'],
+          coverage: 'pdf_reports',
+          reportKinds: ['paid_precatorios', 'federal_debt'],
         },
         updated_at: this.raw('now()'),
       })
