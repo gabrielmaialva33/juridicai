@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import ExcelJS from 'exceljs'
+import * as XLSX from 'xlsx'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
@@ -10,7 +11,7 @@ import type { JsonRecord } from '#shared/types/model_enums'
 
 const execFileAsync = promisify(execFile)
 
-export type TribunalDocumentFormat = 'csv' | 'xlsx' | 'html' | 'pdf' | 'unsupported'
+export type TribunalDocumentFormat = 'csv' | 'xls' | 'xlsx' | 'html' | 'pdf' | 'unsupported'
 
 export type TribunalExtractedRow = {
   rowNumber: number
@@ -95,6 +96,11 @@ class TribunalDocumentExtractionService {
       return resultFor(sourceRecord, format, rows.length ? 'extracted' : 'empty', rows, null, [])
     }
 
+    if (format === 'xls') {
+      const rows = rowsFromRecords(parseLegacyWorkbook(buffer))
+      return resultFor(sourceRecord, format, rows.length ? 'extracted' : 'empty', rows, null, [])
+    }
+
     const parsedHtml = parseHtmlTables(decodeText(buffer))
     const rows = rowsFromRecords(parsedHtml.rows)
 
@@ -150,12 +156,12 @@ export function detectDocumentFormat(sourceRecord: SourceRecord): TribunalDocume
     return 'pdf'
   }
 
-  if (
-    mimeType.includes('spreadsheetml') ||
-    mimeType.includes('excel') ||
-    /\.xlsx(?:$|\?)/i.test(storedName)
-  ) {
+  if (mimeType.includes('spreadsheetml') || /\.xlsx(?:$|\?)/i.test(storedName)) {
     return 'xlsx'
+  }
+
+  if (mimeType.includes('excel') || /\.xls(?:$|\?)/i.test(storedName)) {
+    return 'xls'
   }
 
   if (mimeType.includes('csv') || /\.csv(?:$|\?)/i.test(storedName)) {
@@ -172,6 +178,10 @@ export function detectDocumentFormat(sourceRecord: SourceRecord): TribunalDocume
 
   if (/\.xlsx(?:$|\?)/i.test(sourceUrl)) {
     return 'xlsx'
+  }
+
+  if (/\.xls(?:$|\?)/i.test(sourceUrl)) {
+    return 'xls'
   }
 
   if (/\.csv(?:$|\?)/i.test(sourceUrl)) {
@@ -240,6 +250,53 @@ async function parseWorkbook(buffer: Buffer) {
     const values = worksheetRowValues(worksheet.getRow(rowNumber))
     const row = headers.reduce<JsonRecord>((payload, header, index) => {
       payload[header || `column_${index + 1}`] = values[index] ?? null
+      return payload
+    }, {})
+
+    if (Object.values(row).some((value) => value !== null && value !== '')) {
+      rows.push(row)
+    }
+  }
+
+  return rows
+}
+
+function parseLegacyWorkbook(buffer: Buffer) {
+  const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true })
+  const firstSheetName = workbook.SheetNames[0]
+
+  if (!firstSheetName) {
+    return []
+  }
+
+  const matrix = XLSX.utils.sheet_to_json<Array<string | number | boolean | Date | null>>(
+    workbook.Sheets[firstSheetName],
+    {
+      header: 1,
+      blankrows: false,
+      raw: false,
+      defval: null,
+    }
+  )
+
+  return recordsFromMatrix(matrix)
+}
+
+function recordsFromMatrix(matrix: Array<Array<string | number | boolean | Date | null>>) {
+  const firstUsefulRow = matrix.findIndex((row) =>
+    row.some((value) => value !== null && String(value).trim() !== '')
+  )
+
+  if (firstUsefulRow < 0) {
+    return []
+  }
+
+  const headers = matrix[firstUsefulRow].map((header) => normalizeHeader(String(header ?? '')))
+  const rows: JsonRecord[] = []
+
+  for (const values of matrix.slice(firstUsefulRow + 1)) {
+    const row = headers.reduce<JsonRecord>((payload, header, index) => {
+      payload[header || `column_${index + 1}`] = normalizeCellValue(values[index] ?? null)
       return payload
     }, {})
 

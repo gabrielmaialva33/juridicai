@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
+import * as XLSX from 'xlsx'
 import SourceRecord from '#modules/siop/models/source_record'
 import tribunalDocumentExtractionService, {
   parseDelimitedText,
@@ -59,6 +60,23 @@ test.group('Tribunal document extraction service', () => {
     assert.include(parsed.text, 'Número do processo')
   })
 
+  test('extracts normalized rows from legacy XLS source records', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createBinarySourceRecord(tenant, 'xls', legacyXlsBuffer())
+
+    const result = await tribunalDocumentExtractionService.extractSourceRecord(sourceRecord.id)
+
+    assert.equal(result.format, 'xls')
+    assert.equal(result.status, 'extracted')
+    assert.lengthOf(result.rows, 1)
+    assert.equal(result.rows[0].normalizedCnj, VALID_CNJ)
+    assert.equal(result.rows[0].normalizedValue, '98765.43')
+    assert.equal(result.rows[0].normalizedYear, 2025)
+    assert.equal(result.rows[0].rawData.ente_devedor, 'Estado do Espírito Santo')
+
+    await cleanupTenantData(tenant)
+  })
+
   test('extracts candidate rows from PDF text using an injectable extractor', async ({
     assert,
   }) => {
@@ -110,6 +128,41 @@ async function createSourceRecord(tenant: Tenant, extension: 'csv' | 'pdf', cont
       recordKind: 'attached_document',
     },
   })
+}
+
+async function createBinarySourceRecord(tenant: Tenant, extension: 'xls', contents: Buffer) {
+  const directory = app.makePath('storage', 'tests', 'tribunal-extraction', tenant.id)
+  const filePath = join(directory, `source.${extension}`)
+
+  await mkdir(directory, { recursive: true })
+  await writeFile(filePath, contents)
+
+  return SourceRecord.create({
+    tenantId: tenant.id,
+    source: 'tribunal',
+    sourceUrl: `https://example.test/source.${extension}`,
+    sourceFilePath: filePath,
+    originalFilename: `source.${extension}`,
+    mimeType: 'application/vnd.ms-excel',
+    sourceChecksum: `${extension}-${tenant.id}`,
+    collectedAt: DateTime.now(),
+    rawData: {
+      providerId: 'test-tribunal',
+      recordKind: 'attached_document',
+    },
+  })
+}
+
+function legacyXlsBuffer() {
+  const worksheet = XLSX.utils.aoa_to_sheet([
+    ['Processo', 'Ente Devedor', 'Valor', 'Ano'],
+    [VALID_CNJ, 'Estado do Espírito Santo', 'R$ 98.765,43', 2025],
+  ])
+  const workbook = XLSX.utils.book_new()
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Mapa')
+
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xls' }) as Buffer
 }
 
 async function cleanupTenantData(tenant: Tenant) {
