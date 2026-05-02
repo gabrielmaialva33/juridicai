@@ -64,6 +64,28 @@ class QueueService {
     }
   }
 
+  async getJobSnapshot(queueName: string, jobId: string) {
+    const job = await this.getQueue(queueName).getJob(jobId)
+
+    if (!job) {
+      return null
+    }
+
+    return {
+      id: job.id ? String(job.id) : null,
+      name: job.name,
+      queueName,
+      state: await job.getState(),
+      progress: job.progress,
+      attemptsMade: job.attemptsMade,
+      failedReason: job.failedReason ?? null,
+      timestamp: job.timestamp,
+      processedOn: job.processedOn ?? null,
+      finishedOn: job.finishedOn ?? null,
+      returnvalue: job.returnvalue ?? null,
+    }
+  }
+
   async getSnapshots(names: string[]) {
     return Promise.all(names.map((name) => this.getQueueSnapshot(name)))
   }

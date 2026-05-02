@@ -14,6 +14,14 @@ router
       .as('imports.new')
       .use(middleware.permission('imports.manage'))
     router
+      .get('siop/imports/sources', [ImportController, 'sources'])
+      .as('imports.sources')
+      .use(middleware.permission('imports.read'))
+    router
+      .get('siop/imports/jobs/:id/status', [ImportController, 'jobStatus'])
+      .as('imports.jobs.status')
+      .use(middleware.permission('imports.read'))
+    router
       .post('siop/imports', [ImportController, 'store'])
       .as('imports.store')
       .use(middleware.permission('imports.manage'))
