@@ -69,6 +69,11 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare trf4ImportLimit?: number
 
+  @flags.number({
+    description: 'TRF4 grouped precatorios processed per import batch',
+  })
+  declare trf4ImportChunkSize?: number
+
   @flags.boolean({
     description: 'Preview selected targets without downloading or mutating data',
   })
@@ -98,6 +103,7 @@ export default class TribunalSyncSources extends BaseCommand {
       tjspLimit: this.tjspLimit,
       trf2Years: parseYears(this.trf2Years),
       trf4ImportLimit: this.trf4ImportLimit,
+      trf4ImportChunkSize: this.trf4ImportChunkSize,
       dryRun: this.dryRun,
       origin: 'manual_retry',
     }

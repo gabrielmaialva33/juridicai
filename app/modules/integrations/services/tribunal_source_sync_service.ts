@@ -35,6 +35,7 @@ export type TribunalSourceSyncOptions = {
   tjspImportDocuments?: boolean | null
   trf2Years?: number[] | null
   trf4ImportLimit?: number | null
+  trf4ImportChunkSize?: number | null
   dryRun?: boolean
   origin?: JobRunOrigin
 }
@@ -346,6 +347,7 @@ class TribunalSourceSyncService {
       imports.push(
         await trf4PrecatorioImportService.importSourceRecord(item.sourceRecord.id, {
           maxGroups: options.trf4ImportLimit,
+          chunkSize: options.trf4ImportChunkSize,
         })
       )
     }
@@ -356,8 +358,17 @@ class TribunalSourceSyncService {
         updated: totals.updated + item.stats.updated,
         errors: totals.errors + item.stats.errors,
         validRows: totals.validRows + item.stats.validRows,
+        groupedPrecatorios: totals.groupedPrecatorios + item.stats.groupedPrecatorios,
+        processedBatches: totals.processedBatches + item.chunking.processedBatches,
       }),
-      { inserted: 0, updated: 0, errors: 0, validRows: 0 }
+      {
+        inserted: 0,
+        updated: 0,
+        errors: 0,
+        validRows: 0,
+        groupedPrecatorios: 0,
+        processedBatches: 0,
+      }
     )
 
     return completedResult(target, {
@@ -372,6 +383,7 @@ class TribunalSourceSyncService {
         imports: imports.map((item) => ({
           sourceRecordId: item.sourceRecord.id,
           stats: item.stats,
+          chunking: item.chunking,
         })),
         importTotals,
       },

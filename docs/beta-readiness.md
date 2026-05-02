@@ -76,12 +76,14 @@ For targeted troubleshooting, run individual phases:
 ```bash
 node ace datajud:sync-precatorios --tenant-id=<tenant-id> --courts=tjsp --page-size=100 --max-pages-per-court=1 --run-inline
 node ace datajud:classify-signals --tenant-id=<tenant-id> --limit=2000 --run-inline
-node ace tribunal:sync-sources --tenant-id=<tenant-id> --adapters=tjsp_precatorio_sync,trf2_precatorio_sync,trf4_precatorio_sync --run-inline
+node ace tribunal:sync-sources --tenant-id=<tenant-id> --adapters=tjsp_precatorio_sync,trf2_precatorio_sync,trf4_precatorio_sync --trf-4-import-chunk-size=500 --run-inline
 node ace tribunal:sync-sources --tenant-id=<tenant-id> --datasets=court-annual-map-pages --dry-run --run-inline
 ```
 
 Increase `--max-pages-per-court` gradually after checking job duration, DataJud response stability,
-and database growth.
+and database growth. For TRF4, use `--trf-4-import-limit=<n>` only for controlled validation
+runs; production imports should prefer chunking through `--trf-4-import-chunk-size=500` so the full
+file is processed with bounded batches.
 
 ## Development Demo Workspace
 

@@ -41,6 +41,12 @@ test.group('TRF4 precatorio import service', () => {
       skipped: 0,
       errors: 0,
     })
+    assert.deepEqual(result.chunking, {
+      availableGroups: 2,
+      selectedGroups: 2,
+      chunkSize: 500,
+      processedBatches: 1,
+    })
 
     const asset = await PrecatorioAsset.query()
       .where('tenant_id', tenant.id)
@@ -80,7 +86,42 @@ test.group('TRF4 precatorio import service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('processes TRF4 groups in bounded chunks with an optional import limit', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createSourceRecord(tenant, TRF4_CHUNKED_CSV)
+
+    const result = await trf4PrecatorioImportService.importSourceRecord(sourceRecord.id, {
+      maxGroups: 2,
+      chunkSize: 1,
+    })
+
+    assert.equal(result.stats.totalRows, 3)
+    assert.equal(result.stats.validRows, 3)
+    assert.equal(result.stats.groupedPrecatorios, 2)
+    assert.equal(result.stats.inserted, 2)
+    assert.deepEqual(result.chunking, {
+      availableGroups: 3,
+      selectedGroups: 2,
+      chunkSize: 1,
+      processedBatches: 2,
+    })
+    assert.equal(await countRows(PrecatorioAsset, tenant.id), 2)
+
+    await cleanupTenantData(tenant)
+  })
 })
+
+const TRF4_CHUNKED_CSV = `
+Notas explicativas:;;;;;;;;;;;
+;;;;;;;;;;;
+Nº de Ordem Cronológica; Proposta; Base legal para enquadramento na ordem cronológica; Número do Precatório; CPF/CNPJ parcial do beneficiário; Data de Autuação no TRF4; Atualizado Até; Parcela Devida; Valor Original Pago; Data Pagamento; Valor Pago;
+1;2026;Comuns;5004650-50.2022.4.04.9388;109********;15/04/2022 19:05;abr/26;110.649,95;;;;
+2;2026;Comuns;5004651-35.2022.4.04.9388;773********;16/04/2022 16:49;abr/26;45.443,75;;;;
+3;2026;Comuns;5004652-20.2022.4.04.9388;420********;17/04/2022 10:10;abr/26;10.000,00;;;;
+`
 
 async function createSourceRecord(tenant: Tenant, contents: string) {
   const directory = app.makePath('storage', 'tribunal', 'trf4', tenant.id)

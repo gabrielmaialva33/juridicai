@@ -19,6 +19,7 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 export type Trf4PrecatorioImportOptions = {
   maxGroups?: number | null
+  chunkSize?: number | null
 }
 
 export type Trf4PrecatorioImportStats = {
@@ -29,6 +30,13 @@ export type Trf4PrecatorioImportStats = {
   updated: number
   skipped: number
   errors: number
+}
+
+export type Trf4PrecatorioImportChunking = {
+  availableGroups: number
+  selectedGroups: number
+  chunkSize: number
+  processedBatches: number
 }
 
 type GroupedPrecatorio = {
@@ -60,7 +68,10 @@ class Trf4PrecatorioImportService {
 
     const rows = parseTrf2ChronologicalCsv(await readFile(sourceRecord.sourceFilePath))
     const validRows = rows.filter((row) => row.cnjNumber)
-    const groups = limitGroups(groupRows(validRows), options.maxGroups)
+    const availableGroups = groupRows(validRows)
+    const groups = limitGroups(availableGroups, options.maxGroups)
+    const chunkSize = normalizeChunkSize(options.chunkSize)
+    const batches = chunkGroups(groups, chunkSize)
     const context = await this.buildContext()
     const stats: Trf4PrecatorioImportStats = {
       totalRows: rows.length,
@@ -72,18 +83,29 @@ class Trf4PrecatorioImportService {
       errors: 0,
     }
 
-    for (const group of groups) {
-      try {
-        await db.transaction(async (trx) => {
-          const result = await this.upsertGroup(sourceRecord, group, context, trx)
-          stats[result] += 1
-        })
-      } catch {
-        stats.errors += 1
+    for (const batch of batches) {
+      for (const group of batch) {
+        try {
+          await db.transaction(async (trx) => {
+            const result = await this.upsertGroup(sourceRecord, group, context, trx)
+            stats[result] += 1
+          })
+        } catch {
+          stats.errors += 1
+        }
       }
     }
 
-    return { sourceRecord, stats }
+    return {
+      sourceRecord,
+      stats,
+      chunking: {
+        availableGroups: availableGroups.length,
+        selectedGroups: groups.length,
+        chunkSize,
+        processedBatches: batches.length,
+      } satisfies Trf4PrecatorioImportChunking,
+    }
   }
 
   private async buildContext(): Promise<ImportContext> {
@@ -383,6 +405,24 @@ function limitGroups(groups: GroupedPrecatorio[], maxGroups?: number | null) {
   }
 
   return groups.slice(0, Math.trunc(maxGroups))
+}
+
+function normalizeChunkSize(chunkSize?: number | null) {
+  if (!chunkSize || chunkSize < 1) {
+    return 500
+  }
+
+  return Math.trunc(chunkSize)
+}
+
+function chunkGroups(groups: GroupedPrecatorio[], chunkSize: number) {
+  const chunks: GroupedPrecatorio[][] = []
+
+  for (let index = 0; index < groups.length; index += chunkSize) {
+    chunks.push(groups.slice(index, index + chunkSize))
+  }
+
+  return chunks
 }
 
 function debtorProfileFor(sourceRecord: SourceRecord): {
