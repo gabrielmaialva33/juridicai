@@ -2,6 +2,7 @@ import { EXPORT_PRECATORIOS_QUEUE } from '#modules/exports/jobs/export_precatori
 import { DATAJUD_ENRICH_ASSETS_QUEUE } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { DATAJUD_MATCH_CANDIDATES_QUEUE } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
+import { TRF6_MANUAL_EXPORT_IMPORT_QUEUE } from '#modules/integrations/jobs/trf6_manual_export_import_handler'
 import queueService from '#shared/services/queue_service'
 import type RadarJobRun from '#modules/admin/models/radar_job_run'
 import type { JobRunStatus, JsonRecord } from '#shared/types/model_enums'
@@ -114,6 +115,28 @@ class JobRetryService {
             limit: numberMetadata(run.metadata, 'limit'),
             candidatesPerAsset: numberMetadata(run.metadata, 'candidatesPerAsset'),
             persist: booleanMetadata(run.metadata, 'persist') ?? true,
+            origin: 'manual_retry' as const,
+          },
+        }
+      }
+
+      case 'trf6-manual-export-import': {
+        const sourceRecordId = stringMetadata(run.metadata, 'sourceRecordId')
+        if (!sourceRecordId) {
+          throw new JobRetryError(
+            'missing_metadata',
+            'TRF6 manual export retry requires sourceRecordId metadata.'
+          )
+        }
+
+        return {
+          queueName: TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+          jobName: 'trf6-manual-export-import',
+          payload: {
+            tenantId: run.tenantId!,
+            sourceRecordId,
+            chunkSize: numberMetadata(run.metadata, 'chunkSize') ?? 500,
+            requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
             origin: 'manual_retry' as const,
           },
         }

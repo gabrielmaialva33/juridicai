@@ -56,6 +56,11 @@ import {
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
 import {
+  TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+  handleTrf6ManualExportImport,
+  type Trf6ManualExportImportPayload,
+} from '#modules/integrations/jobs/trf6_manual_export_import_handler'
+import {
   GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
   handleGovernmentDataSyncOrchestrator,
   type GovernmentDataSyncOrchestratorPayload,
@@ -92,6 +97,7 @@ export const queues = {
   siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
   tjspPrecatorioSync: { name: TJSP_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   tribunalSourceSync: { name: TRIBUNAL_SOURCE_SYNC_QUEUE, concurrency: 1 },
+  trf6ManualExportImport: { name: TRF6_MANUAL_EXPORT_IMPORT_QUEUE, concurrency: 1 },
   governmentDataSyncOrchestrator: { name: GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE, concurrency: 1 },
   dataJudNationalPrecatorioSync: { name: DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
@@ -228,6 +234,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.tribunalSourceSync.concurrency }
+  )
+
+  queueService.registerWorker<Trf6ManualExportImportPayload>(
+    queues.trf6ManualExportImport.name,
+    async (job) => {
+      await handleTrf6ManualExportImport({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.trf6ManualExportImport.concurrency }
   )
 
   queueService.registerWorker<GovernmentDataSyncOrchestratorPayload>(

@@ -1,18 +1,16 @@
-import { createHash } from 'node:crypto'
-import { mkdir, writeFile, readFile } from 'node:fs/promises'
-import { basename } from 'node:path'
-import { DateTime } from 'luxon'
-import app from '@adonisjs/core/services/app'
+import { readFile } from 'node:fs/promises'
+import db from '@adonisjs/lucid/services/db'
 import auditService from '#shared/services/audit_service'
 import queueService from '#shared/services/queue_service'
 import SiopImport from '#modules/siop/models/siop_import'
 import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
+import { TRF6_MANUAL_EXPORT_IMPORT_QUEUE } from '#modules/integrations/jobs/trf6_manual_export_import_handler'
 import { TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL } from '#modules/integrations/services/trf6_precatorio_adapter'
-import trf6PrecatorioImportService from '#modules/integrations/services/trf6_precatorio_import_service'
-import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
+import trf6ManualExportService from '#modules/integrations/services/trf6_manual_export_service'
+import SourceDataset from '#modules/integrations/models/source_dataset'
+import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
 import siopImportService from '#modules/siop/services/siop_import_service'
-import SourceRecord from '#modules/siop/models/source_record'
 import { uploadValidator } from '#modules/siop/validators/upload_validator'
 import tenantContext from '#shared/helpers/tenant_context'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -28,11 +26,13 @@ type UploadedFile = {
 
 export default class ImportController {
   async index({ inertia }: HttpContext) {
-    const imports = await siopImportService.listRecentImports(tenantContext.requireTenantId())
+    const tenantId = tenantContext.requireTenantId()
+    const imports = await siopImportService.listRecentImports(tenantId)
 
     return inertia.render('siop/imports/index', {
       imports: imports.map((importRow) => importRow.serialize()) as any,
-    })
+      sources: await this.listGovernmentSources(tenantId),
+    } as any)
   }
 
   async newForm({ inertia }: HttpContext) {
@@ -121,7 +121,7 @@ export default class ImportController {
     }
 
     const buffer = await readFile(file.tmpPath)
-    const sourceRecord = await this.persistTrf6ManualExport({
+    const persisted = await trf6ManualExportService.persistExport({
       tenantId,
       exerciseYear: payload.exerciseYear,
       buffer,
@@ -129,20 +129,37 @@ export default class ImportController {
       mimeType: file.type ?? 'text/csv',
       fileSizeBytes: file.size ?? buffer.byteLength,
     })
-    const result = await trf6PrecatorioImportService.importSourceRecord(sourceRecord.id, {
-      chunkSize: 500,
-    })
+    const job = await queueService.add(
+      TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+      'trf6-manual-export-import',
+      {
+        tenantId,
+        sourceRecordId: persisted.sourceRecord.id,
+        chunkSize: 500,
+        requestId: tenantContext.get()?.requestId ?? null,
+        origin: 'http' as const,
+      },
+      {
+        jobId: `trf6-manual-export-import-${tenantId}-${persisted.sourceRecord.id}-${Date.now()}`,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+      }
+    )
 
     return response.accepted({
-      sourceRecordId: result.sourceRecord.id,
-      extraction: {
-        format: result.extraction.format,
-        status: result.extraction.status,
-        rows: result.extraction.rows.length,
-        errors: result.extraction.errors,
+      sourceRecord: {
+        id: persisted.sourceRecord.id,
+        created: persisted.created,
+        originalFilename: persisted.sourceRecord.originalFilename,
       },
-      stats: result.stats,
-      chunking: result.chunking,
+      job: {
+        id: job.id,
+        name: job.name,
+        queueName: TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
+      },
     })
   }
 
@@ -260,67 +277,143 @@ export default class ImportController {
     )
   }
 
-  private async persistTrf6ManualExport(payload: {
-    tenantId: string
-    exerciseYear: number
-    buffer: Buffer
-    originalFilename: string
-    mimeType?: string | null
-    fileSizeBytes?: number | bigint | null
-  }) {
-    const checksum = createHash('sha256').update(payload.buffer).digest('hex')
-    const filename = basename(payload.originalFilename)
-    const directory = app.makePath('storage', 'tribunal', 'trf6', payload.tenantId)
-    const storedPath = app.makePath('storage', 'tribunal', 'trf6', payload.tenantId, filename)
-    const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
-      'trf6-federal-precatorio-orders'
+  private async listGovernmentSources(tenantId: string) {
+    const [targets, datasets, sourceRecordCounts, lastRuns] = await Promise.all([
+      GovernmentSourceTarget.query()
+        .preload('sourceDataset')
+        .where('is_active', true)
+        .orderBy('priority', 'asc')
+        .orderBy('name', 'asc'),
+      SourceDataset.query()
+        .where('is_active', true)
+        .orderBy('priority', 'asc')
+        .orderBy('name', 'asc'),
+      db
+        .from('source_records')
+        .select('source_dataset_id')
+        .count('* as records_count')
+        .max('collected_at as last_collected_at')
+        .where('tenant_id', tenantId)
+        .whereNotNull('source_dataset_id')
+        .groupBy('source_dataset_id'),
+      db
+        .from('radar_job_runs')
+        .select('job_name')
+        .max('created_at as last_created_at')
+        .where('tenant_id', tenantId)
+        .groupBy('job_name'),
+    ])
+    const countsByDataset = new Map(
+      sourceRecordCounts.map((row) => [
+        String(row.source_dataset_id),
+        {
+          recordsCount: Number(row.records_count ?? 0),
+          lastCollectedAt: row.last_collected_at,
+        },
+      ])
     )
-    const rawData = {
-      providerId: 'trf6-federal-precatorio-orders',
-      courtAlias: 'trf6',
-      sourceKind: 'federal_budget_order',
-      year: payload.exerciseYear,
-      sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
-      format: 'csv',
-      originalFilename: filename,
-      manualExport: true,
-    }
+    const lastRunByJob = new Map(
+      lastRuns.map((row) => [
+        String(row.job_name),
+        {
+          lastRunAt: row.last_created_at,
+        },
+      ])
+    )
+    const targetDatasetIds = new Set(targets.map((target) => target.sourceDatasetId))
+    const sourceTargets = targets.map((target) => {
+      const sourceUrl = target.sourceUrl ?? target.sourceDataset.baseUrl
+      const metadata = target.metadata ?? target.sourceDataset.metadata ?? {}
+      const counts = countsByDataset.get(target.sourceDatasetId)
 
-    await mkdir(directory, { recursive: true })
-    await writeFile(storedPath, payload.buffer)
-
-    const existing = await SourceRecord.query()
-      .where('tenant_id', payload.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
-        sourceFilePath: storedPath,
-        originalFilename: filename,
-        mimeType: payload.mimeType ?? 'text/csv',
-        fileSizeBytes: payload.fileSizeBytes ?? payload.buffer.byteLength,
-        rawData,
-      })
-      await existing.save()
-      return existing
-    }
-
-    return SourceRecord.create({
-      tenantId: payload.tenantId,
-      sourceDatasetId,
-      source: 'tribunal',
-      sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
-      sourceFilePath: storedPath,
-      sourceChecksum: checksum,
-      originalFilename: filename,
-      mimeType: payload.mimeType ?? 'text/csv',
-      fileSizeBytes: payload.fileSizeBytes ?? payload.buffer.byteLength,
-      collectedAt: DateTime.now(),
-      rawData,
+      return {
+        id: target.id,
+        key: target.key,
+        name: target.name,
+        owner: target.sourceDataset.owner,
+        level: target.federativeLevel,
+        source: target.source,
+        priority: target.priority,
+        status: target.status,
+        cadence: target.cadence,
+        courtAlias: target.courtAlias,
+        stateCode: target.stateCode,
+        format: target.sourceFormat ?? target.sourceDataset.format,
+        sourceUrl,
+        manualExportUrl: stringFrom(metadata.manualExportUrl),
+        blockedLinks: stringArrayFrom(metadata.blockedLinks),
+        coverageScore: target.coverageScore,
+        lastSuccessAt: target.lastSuccessAt?.toISO() ?? null,
+        lastErrorAt: target.lastErrorAt?.toISO() ?? null,
+        lastErrorMessage: target.lastErrorMessage,
+        lastDiscoveredCount: target.lastDiscoveredCount,
+        lastSourceRecordsCount: target.lastSourceRecordsCount,
+        tenantSourceRecordsCount: counts?.recordsCount ?? 0,
+        tenantLastCollectedAt: counts?.lastCollectedAt ?? null,
+        adapterKey: target.adapterKey,
+        lastJobRunAt: lastRunByJob.get(jobNameForTarget(target.adapterKey))?.lastRunAt ?? null,
+      }
     })
+    const datasetOnlySources = datasets
+      .filter((dataset) => !targetDatasetIds.has(dataset.id))
+      .map((dataset) => {
+        const counts = countsByDataset.get(dataset.id)
+
+        return {
+          id: dataset.id,
+          key: dataset.key,
+          name: dataset.name,
+          owner: dataset.owner,
+          level: dataset.federativeLevel,
+          source: dataset.source,
+          priority: dataset.priority,
+          status: 'pending',
+          cadence: null,
+          courtAlias: dataset.courtAlias,
+          stateCode: dataset.stateCode,
+          format: dataset.format,
+          sourceUrl: dataset.baseUrl,
+          manualExportUrl: stringFrom(dataset.metadata?.manualExportUrl),
+          blockedLinks: stringArrayFrom(dataset.metadata?.blockedLinks),
+          coverageScore: null,
+          lastSuccessAt: null,
+          lastErrorAt: null,
+          lastErrorMessage: null,
+          lastDiscoveredCount: 0,
+          lastSourceRecordsCount: 0,
+          tenantSourceRecordsCount: counts?.recordsCount ?? 0,
+          tenantLastCollectedAt: counts?.lastCollectedAt ?? null,
+          adapterKey: null,
+          lastJobRunAt: null,
+        }
+      })
+
+    return [...sourceTargets, ...datasetOnlySources]
   }
+}
+
+function stringFrom(value: unknown) {
+  return typeof value === 'string' && value.trim() !== '' ? value : null
+}
+
+function stringArrayFrom(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : []
+}
+
+function jobNameForTarget(adapterKey: string | null) {
+  if (adapterKey === 'siop_open_data_sync') {
+    return 'siop-open-data-sync'
+  }
+
+  if (adapterKey === 'tjsp_precatorio_sync') {
+    return 'tjsp-precatorio-sync'
+  }
+
+  if (adapterKey?.includes('trf')) {
+    return 'tribunal-source-sync'
+  }
+
+  return 'government-data-sync-orchestrator'
 }

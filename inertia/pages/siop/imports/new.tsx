@@ -19,16 +19,15 @@ type Props = {
 }
 
 type Trf6ImportResult = {
-  sourceRecordId: string
-  extraction: {
-    rows: number
-    status: string
+  sourceRecord: {
+    id: string
+    created: boolean
+    originalFilename: string | null
   }
-  stats: {
-    selectedRows: number
-    inserted: number
-    updated: number
-    errors: number
+  job: {
+    id: string | number | null
+    name: string
+    queueName: string
   }
 }
 
@@ -314,11 +313,10 @@ export default function SiopImportsNew({ manualSources }: Props) {
               {trf6Error && <p className="text-sm text-destructive">{trf6Error}</p>}
               {trf6Result && (
                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                  <div className="font-medium">Import concluído</div>
+                  <div className="font-medium">Import enfileirado</div>
                   <div className="mt-1 text-muted-foreground">
-                    {trf6Result.stats.selectedRows.toLocaleString('pt-BR')} linhas processadas ·{' '}
-                    {trf6Result.stats.inserted.toLocaleString('pt-BR')} novas ·{' '}
-                    {trf6Result.stats.updated.toLocaleString('pt-BR')} atualizadas
+                    Arquivo {trf6Result.sourceRecord.originalFilename ?? 'CSV'} salvo e job{' '}
+                    {trf6Result.job.id ?? trf6Result.job.name} enviado para processamento.
                   </div>
                 </div>
               )}
