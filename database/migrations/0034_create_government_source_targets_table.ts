@@ -207,7 +207,13 @@ const SPECIFIC_TRIBUNAL_TARGETS: TargetSeed[] = [
     coverageScore: '0.8000',
     metadata: {
       levels: ['federal', 'state', 'municipal'],
-      reportKinds: ['paid_precatorios', 'federal_debt'],
+      reportKinds: [
+        'paid_precatorios',
+        'federal_debt',
+        'state_municipal_chronological_order',
+        'state_municipal_special_regime_ec94',
+        'state_municipal_special_regime_ec136',
+      ],
       importsCanonicalAssets: true,
     },
   },
@@ -432,11 +438,17 @@ export default class extends BaseSchema {
         court_alias: 'trf5',
         format: 'html/pdf',
         notes:
-          'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
+          'TRF5 public map page and PDF reports for paid precatorios, federal debt, and state/municipal chronological and special-regime queues.',
         metadata: {
           levels: ['federal', 'state', 'municipal'],
           coverage: 'pdf_reports',
-          reportKinds: ['paid_precatorios', 'federal_debt'],
+          reportKinds: [
+            'paid_precatorios',
+            'federal_debt',
+            'state_municipal_chronological_order',
+            'state_municipal_special_regime_ec94',
+            'state_municipal_special_regime_ec136',
+          ],
         },
       })
       .onConflict('key')

@@ -538,6 +538,27 @@ function debtorProfileFor(input: string | null): {
   const name = compactText(input ?? 'Entidade devedora não identificada - TRF5')
   const normalizedKey = normalizeKey(name)
   const normalized = normalizedKey
+  const stateCode = inferStateCode(name)
+
+  if (looksLikeStateMunicipalDebtor(name)) {
+    return {
+      name,
+      normalizedKey,
+      debtorType: 'municipality',
+      paymentRegime: 'other',
+      stateCode: stateCode ?? 'BR',
+    }
+  }
+
+  if (looksLikeStateDebtor(name)) {
+    return {
+      name,
+      normalizedKey,
+      debtorType: 'state',
+      paymentRegime: 'other',
+      stateCode: stateCode ?? 'BR',
+    }
+  }
 
   if (normalized.includes('UNIAO')) {
     return {
@@ -555,7 +576,7 @@ function debtorProfileFor(input: string | null): {
       normalizedKey,
       debtorType: 'municipality',
       paymentRegime: 'other',
-      stateCode: inferStateCode(name) ?? 'BR',
+      stateCode: stateCode ?? 'BR',
     }
   }
 
@@ -565,7 +586,7 @@ function debtorProfileFor(input: string | null): {
       normalizedKey,
       debtorType: 'state',
       paymentRegime: 'other',
-      stateCode: inferStateCode(name) ?? 'BR',
+      stateCode: stateCode ?? 'BR',
     }
   }
 
@@ -660,7 +681,71 @@ function normalizeKey(value: string) {
 }
 
 function inferStateCode(value: string) {
-  return value.match(/\b(AL|CE|PB|PE|RN|SE|BA|PI|SP)\b/i)?.[1]?.toUpperCase() ?? null
+  const abbreviation = value
+    .match(
+      /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i
+    )?.[1]
+    ?.toUpperCase()
+  if (abbreviation) {
+    return abbreviation
+  }
+
+  const normalized = normalizeKey(value)
+  const exact = BRAZILIAN_STATE_CODES[normalized]
+  if (exact) {
+    return exact
+  }
+
+  const prefix = Object.entries(BRAZILIAN_STATE_CODES).find(([stateName]) =>
+    normalized.startsWith(`${stateName}_`)
+  )
+  if (prefix) {
+    return prefix[1]
+  }
+
+  const contained = Object.entries(BRAZILIAN_STATE_CODES).find(([stateName]) =>
+    normalized.includes(stateName)
+  )
+
+  return contained?.[1] ?? null
+}
+
+function looksLikeStateMunicipalDebtor(value: string) {
+  return Boolean(inferStateCode(value) && /\s+-\s+/.test(value))
+}
+
+function looksLikeStateDebtor(value: string) {
+  return Boolean(inferStateCode(value) && BRAZILIAN_STATE_CODES[normalizeKey(value)])
+}
+
+const BRAZILIAN_STATE_CODES: Record<string, string> = {
+  ACRE: 'AC',
+  ALAGOAS: 'AL',
+  AMAPA: 'AP',
+  AMAZONAS: 'AM',
+  BAHIA: 'BA',
+  CEARA: 'CE',
+  DISTRITO_FEDERAL: 'DF',
+  ESPIRITO_SANTO: 'ES',
+  GOIAS: 'GO',
+  MARANHAO: 'MA',
+  MATO_GROSSO: 'MT',
+  MATO_GROSSO_DO_SUL: 'MS',
+  MINAS_GERAIS: 'MG',
+  PARA: 'PA',
+  PARAIBA: 'PB',
+  PARANA: 'PR',
+  PERNAMBUCO: 'PE',
+  PIAUI: 'PI',
+  RIO_DE_JANEIRO: 'RJ',
+  RIO_GRANDE_DO_NORTE: 'RN',
+  RIO_GRANDE_DO_SUL: 'RS',
+  RONDONIA: 'RO',
+  RORAIMA: 'RR',
+  SANTA_CATARINA: 'SC',
+  SAO_PAULO: 'SP',
+  SERGIPE: 'SE',
+  TOCANTINS: 'TO',
 }
 
 function numberFrom(value: unknown) {

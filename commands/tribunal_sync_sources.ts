@@ -5,6 +5,7 @@ import {
   handleTribunalSourceSync,
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
+import type { Trf5PrecatorioLinkKind } from '#modules/integrations/services/trf5_precatorio_adapter'
 import queueService from '#shared/services/queue_service'
 
 export default class TribunalSyncSources extends BaseCommand {
@@ -80,7 +81,8 @@ export default class TribunalSyncSources extends BaseCommand {
   declare trf5Years?: string
 
   @flags.string({
-    description: 'Comma-separated TRF5 source kinds: paid_precatorios,federal_debt',
+    description:
+      'Comma-separated TRF5 source kinds: paid_precatorios,federal_debt,state_municipal_chronological_order,state_municipal_special_regime_ec94,state_municipal_special_regime_ec136',
   })
   declare trf5Kinds?: string
 
@@ -187,9 +189,15 @@ function parseYears(value?: string) {
 }
 
 function parseTrf5Kinds(value?: string) {
-  const allowed = new Set(['paid_precatorios', 'federal_debt'])
+  const allowed = new Set<Trf5PrecatorioLinkKind>([
+    'paid_precatorios',
+    'federal_debt',
+    'state_municipal_chronological_order',
+    'state_municipal_special_regime_ec94',
+    'state_municipal_special_regime_ec136',
+  ])
 
-  return splitList(value)?.filter((kind) => allowed.has(kind)) as
-    | Array<'paid_precatorios' | 'federal_debt'>
-    | undefined
+  return splitList(value)?.filter((kind): kind is Trf5PrecatorioLinkKind =>
+    allowed.has(kind as Trf5PrecatorioLinkKind)
+  )
 }

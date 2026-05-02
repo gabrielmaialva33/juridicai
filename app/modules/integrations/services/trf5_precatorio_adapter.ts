@@ -14,6 +14,9 @@ export type Trf5PrecatorioLinkKind =
   | 'indicators'
   | 'paid_precatorios'
   | 'federal_debt'
+  | 'state_municipal_chronological_order'
+  | 'state_municipal_special_regime_ec94'
+  | 'state_municipal_special_regime_ec136'
 
 export type Trf5PrecatorioLink = {
   kind: Trf5PrecatorioLinkKind
@@ -140,7 +143,11 @@ class Trf5PrecatorioAdapter {
 }
 
 export function parseTrf5PrecatorioLinks(html: string, baseUrl: string): Trf5PrecatorioLink[] {
-  return dedupeLinks([...parseMapLinks(html, baseUrl), ...parseFederalDebtLinks(html, baseUrl)])
+  return dedupeLinks([
+    ...parseMapLinks(html, baseUrl),
+    ...parseFederalDebtLinks(html, baseUrl),
+    ...parseStateMunicipalDebtLinks(html, baseUrl),
+  ])
 }
 
 function parseMapLinks(html: string, baseUrl: string) {
@@ -172,6 +179,60 @@ function parseMapLinks(html: string, baseUrl: string) {
 
 function parseFederalDebtLinks(html: string, baseUrl: string) {
   const section = sliceBetween(html, '<h3>Federais</h3>', '<h3>Estaduais e Municipais</h3>')
+  return parsePanelOptionLinks(
+    section,
+    baseUrl,
+    'federal_debt',
+    'downloadDividaFederal',
+    'TRF5 dívida federal'
+  )
+}
+
+function parseStateMunicipalDebtLinks(html: string, baseUrl: string) {
+  const section = sliceBetween(
+    html,
+    '<h3>Estaduais e Municipais</h3>',
+    '<div class="row" id="footer">'
+  )
+
+  return [
+    ...parsePanelOptionLinks(
+      sliceHeadingSection(section, /<h4\b[^>]*>\s*Ordem Cronol[óo]gica[\s\S]*?<\/h4>/i),
+      baseUrl,
+      'state_municipal_chronological_order',
+      'downloadDividaEstOrdem',
+      'TRF5 ordem cronológica estadual/municipal'
+    ),
+    ...parsePanelOptionLinks(
+      sliceHeadingSection(
+        section,
+        /<h4\b[^>]*>\s*Ente Devedor - Regime Especial \(EC94\/2016\)\s*<\/h4>/i
+      ),
+      baseUrl,
+      'state_municipal_special_regime_ec94',
+      'downloadDividaEstEntespc',
+      'TRF5 regime especial EC94 estadual/municipal'
+    ),
+    ...parsePanelOptionLinks(
+      sliceHeadingSection(
+        section,
+        /<h4\b[^>]*>\s*Ente Devedor - Regime Especial \(EC136\/2025\)\s*<\/h4>/i
+      ),
+      baseUrl,
+      'state_municipal_special_regime_ec136',
+      'downloadDividaEstEnte',
+      'TRF5 regime especial EC136 estadual/municipal'
+    ),
+  ]
+}
+
+function parsePanelOptionLinks(
+  section: string,
+  baseUrl: string,
+  kind: Trf5PrecatorioLinkKind,
+  endpoint: string,
+  titlePrefix: string
+) {
   const links: Trf5PrecatorioLink[] = []
   const panelPattern =
     /<div class=["']panel-heading["']>\s*(\d{4})\s*<\/div>[\s\S]*?<select[\s\S]*?<\/select>/gi
@@ -179,8 +240,10 @@ function parseFederalDebtLinks(html: string, baseUrl: string) {
 
   while ((panelMatch = panelPattern.exec(section))) {
     const year = Number(panelMatch[1])
-    const optionPattern =
-      /<option\s+value=["']([^"']*\/downloadDividaFederal\/(\d+))["'][^>]*>([\s\S]*?)<\/option>/gi
+    const optionPattern = new RegExp(
+      `<option\\s+value=["']([^"']*\\/${endpoint}\\/(\\d+))["'][^>]*>([\\s\\S]*?)<\\/option>`,
+      'gi'
+    )
     let optionMatch: RegExpExecArray | null
 
     while ((optionMatch = optionPattern.exec(panelMatch[0]))) {
@@ -190,8 +253,8 @@ function parseFederalDebtLinks(html: string, baseUrl: string) {
       }
 
       links.push({
-        kind: 'federal_debt',
-        title: `TRF5 dívida federal ${year} - ${debtorName}`,
+        kind,
+        title: `${titlePrefix} ${year} - ${debtorName}`,
         url: new URL(optionMatch[1], baseUrl).toString(),
         year,
         debtorName,
@@ -289,6 +352,22 @@ function sliceBetween(text: string, startMarker: string, endMarker: string) {
 
   const end = text.indexOf(endMarker, start)
   return text.slice(start, end === -1 ? text.length : end)
+}
+
+function sliceHeadingSection(text: string, headingPattern: RegExp) {
+  const match = headingPattern.exec(text)
+  if (!match) {
+    return ''
+  }
+
+  const start = match.index
+  const tail = text.slice(start + match[0].length)
+  const nextHeadingIndex = tail.search(/<h4\b/i)
+
+  return text.slice(
+    start,
+    nextHeadingIndex === -1 ? text.length : start + match[0].length + nextHeadingIndex
+  )
 }
 
 function stripTags(value: string) {

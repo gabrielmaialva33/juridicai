@@ -6,6 +6,7 @@ import app from '@adonisjs/core/services/app'
 import trf5PrecatorioImportService, {
   parseTrf5ReportText,
 } from '#modules/integrations/services/trf5_precatorio_import_service'
+import Debtor from '#modules/debtors/models/debtor'
 import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import AssetValuation from '#modules/precatorios/models/asset_valuation'
@@ -120,9 +121,73 @@ test.group('TRF5 precatorio import service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('classifies TRF5 state and municipal debtors from report metadata', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createSourceRecord(
+      tenant,
+      'state_municipal_chronological_order',
+      'Pernambuco - Recife'
+    )
+
+    await trf5PrecatorioImportService.importSourceRecord(sourceRecord.id, {
+      maxRows: 1,
+      chunkSize: 1,
+      pdfTextExtractor: async () =>
+        TRF5_TEXT.replace('Entidade Devedora: INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL', ''),
+    })
+
+    const debtor = await Debtor.query().where('tenant_id', tenant.id).firstOrFail()
+
+    assert.equal(debtor.name, 'Pernambuco - Recife')
+    assert.equal(debtor.debtorType, 'municipality')
+    assert.equal(debtor.stateCode, 'PE')
+    assert.equal(debtor.paymentRegime, 'other')
+
+    await cleanupTenantData(tenant)
+  })
+
+  test('classifies explicit state debtor names from TRF5 report headers', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createSourceRecord(
+      tenant,
+      'state_municipal_special_regime_ec136',
+      'Alagoas'
+    )
+
+    await trf5PrecatorioImportService.importSourceRecord(sourceRecord.id, {
+      maxRows: 1,
+      chunkSize: 1,
+      pdfTextExtractor: async () =>
+        TRF5_TEXT.replace(
+          'Entidade Devedora: INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL',
+          'Entidade Devedora: ESTADO DE ALAGOAS'
+        ),
+    })
+
+    const debtor = await Debtor.query().where('tenant_id', tenant.id).firstOrFail()
+
+    assert.equal(debtor.name, 'ESTADO DE ALAGOAS')
+    assert.equal(debtor.debtorType, 'state')
+    assert.equal(debtor.stateCode, 'AL')
+    assert.equal(debtor.paymentRegime, 'other')
+
+    await cleanupTenantData(tenant)
+  })
 })
 
-async function createSourceRecord(tenant: Tenant, sourceKind: 'federal_debt' | 'paid_precatorios') {
+type Trf5TestSourceKind =
+  | 'federal_debt'
+  | 'paid_precatorios'
+  | 'state_municipal_chronological_order'
+  | 'state_municipal_special_regime_ec94'
+  | 'state_municipal_special_regime_ec136'
+
+async function createSourceRecord(
+  tenant: Tenant,
+  sourceKind: Trf5TestSourceKind,
+  debtorName = 'INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL - ALIMENTAR'
+) {
   const directory = app.makePath('storage', 'tribunal', 'trf5', tenant.id)
   const filePath = join(directory, 'test-trf5.pdf')
 
@@ -144,7 +209,7 @@ async function createSourceRecord(tenant: Tenant, sourceKind: 'federal_debt' | '
       courtAlias: 'trf5',
       sourceKind,
       year: 2025,
-      debtorName: 'INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL - ALIMENTAR',
+      debtorName,
     },
   })
 }

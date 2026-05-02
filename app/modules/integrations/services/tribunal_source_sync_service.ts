@@ -20,6 +20,22 @@ import type {
   JsonRecord,
 } from '#shared/types/model_enums'
 
+const TRF5_DEFAULT_KINDS: Trf5PrecatorioLinkKind[] = [
+  'paid_precatorios',
+  'federal_debt',
+  'state_municipal_chronological_order',
+  'state_municipal_special_regime_ec94',
+  'state_municipal_special_regime_ec136',
+]
+
+const TRF5_IMPORTABLE_KINDS = new Set<Trf5PrecatorioLinkKind>([
+  'paid_precatorios',
+  'federal_debt',
+  'state_municipal_chronological_order',
+  'state_municipal_special_regime_ec94',
+  'state_municipal_special_regime_ec136',
+])
+
 export type TribunalSourceSyncOptions = {
   tenantId: string
   targetKeys?: string[] | null
@@ -410,14 +426,14 @@ class TribunalSourceSyncService {
     const syncResult = await trf5PrecatorioAdapter.sync({
       tenantId: options.tenantId,
       years: options.trf5Years ?? undefined,
-      kinds: options.trf5Kinds ?? ['paid_precatorios', 'federal_debt'],
+      kinds: options.trf5Kinds ?? TRF5_DEFAULT_KINDS,
       limit: options.trf5Limit ?? 10,
       download: true,
     })
     const imports: Awaited<ReturnType<typeof trf5PrecatorioImportService.importSourceRecord>>[] = []
 
     for (const item of syncResult.items) {
-      if (!item.sourceRecord || !['paid_precatorios', 'federal_debt'].includes(item.link.kind)) {
+      if (!item.sourceRecord || !TRF5_IMPORTABLE_KINDS.has(item.link.kind)) {
         continue
       }
 

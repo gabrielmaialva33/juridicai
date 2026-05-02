@@ -144,8 +144,8 @@ export default class extends BaseSchema {
             'https://rpvprecatorio.trf5.jus.br/mapa',
             'trf5',
             'html/pdf',
-            'TRF5 public map page and PDF reports for paid precatorios and federal debt by debtor.',
-            '{"levels":["federal","state","municipal"],"coverage":"pdf_reports","reportKinds":["paid_precatorios","federal_debt"]}'::jsonb
+            'TRF5 public map page and PDF reports for paid precatorios, federal debt, and state/municipal chronological and special-regime queues.',
+            '{"levels":["federal","state","municipal"],"coverage":"pdf_reports","reportKinds":["paid_precatorios","federal_debt","state_municipal_chronological_order","state_municipal_special_regime_ec94","state_municipal_special_regime_ec136"]}'::jsonb
           ),
           (
             'cnj-annual-precatorios-map',

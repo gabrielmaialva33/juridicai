@@ -84,8 +84,8 @@ Increase `--max-pages-per-court` gradually after checking job duration, DataJud 
 and database growth. For TRF4, use `--trf-4-import-limit=<n>` only for controlled validation
 runs; production imports should prefer chunking through `--trf-4-import-chunk-size=500` so the full
 file is processed with bounded batches. For TRF5, keep `--trf-5-limit=<n>` conservative at first
-because the public page exposes many PDF reports; raise it after checking `pdftotext` duration and
-row quality.
+because the public page exposes federal paid/debt PDFs plus state and municipal chronological and
+special-regime reports; raise it after checking `pdftotext` duration and row quality.
 
 ## Development Demo Workspace
 

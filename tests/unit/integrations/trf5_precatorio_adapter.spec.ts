@@ -24,13 +24,54 @@ const TRF5_HTML = `
   </div>
 </div>
 <h3>Estaduais e Municipais</h3>
+<div class="row">
+  <div class="col-sm-12">
+    <h4 style="margin-top: 10px;">Ordem Cronológica (por Natureza do Crédito)</h4>
+  </div>
+  <div class="panel panel-primary">
+    <div class="panel-heading">2026</div>
+    <div class="panel-body">
+      <select>
+        <option value="">Selecione o estado ou município</option>
+        <option value="/downloadDividaEstOrdem/376">Pernambuco - Recife</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-12">
+    <h4 style="margin-top: 10px;">Ente Devedor - Regime Especial (EC94/2016)</h4>
+  </div>
+  <div class="panel panel-primary">
+    <div class="panel-heading">2026</div>
+    <div class="panel-body">
+      <select>
+        <option value="/downloadDividaEstEntespc/222">Alagoas</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-12">
+    <h4 style="margin-top: 10px;">Ente Devedor - Regime Especial (EC136/2025)</h4>
+  </div>
+  <div class="panel panel-primary">
+    <div class="panel-heading">2026</div>
+    <div class="panel-body">
+      <select>
+        <option value="/downloadDividaEstEnte/153">Ceará</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="row" id="footer"></div>
 `
 
 test.group('TRF5 precatorio adapter', () => {
-  test('discovers paid and federal debt PDF links from the public map page', ({ assert }) => {
+  test('discovers federal and state/municipal PDF links from the public map page', ({ assert }) => {
     const links = parseTrf5PrecatorioLinks(TRF5_HTML, TRF5_PRECATORIO_MAP_URL)
 
-    assert.lengthOf(links, 2)
+    assert.lengthOf(links, 5)
     assert.deepInclude(links, {
       kind: 'paid_precatorios',
       title: 'LISTA PRECATÓRIOS_FEDERAIS_PAGOS_2026 _ARTs. 12, § 4º e 82_RES.303_2019',
@@ -47,6 +88,30 @@ test.group('TRF5 precatorio adapter', () => {
       debtorName: 'INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL - ALIMENTAR',
       pathId: '554',
     })
+    assert.deepInclude(links, {
+      kind: 'state_municipal_chronological_order',
+      title: 'TRF5 ordem cronológica estadual/municipal 2026 - Pernambuco - Recife',
+      url: 'https://rpvprecatorio.trf5.jus.br/downloadDividaEstOrdem/376',
+      year: 2026,
+      debtorName: 'Pernambuco - Recife',
+      pathId: '376',
+    })
+    assert.deepInclude(links, {
+      kind: 'state_municipal_special_regime_ec94',
+      title: 'TRF5 regime especial EC94 estadual/municipal 2026 - Alagoas',
+      url: 'https://rpvprecatorio.trf5.jus.br/downloadDividaEstEntespc/222',
+      year: 2026,
+      debtorName: 'Alagoas',
+      pathId: '222',
+    })
+    assert.deepInclude(links, {
+      kind: 'state_municipal_special_regime_ec136',
+      title: 'TRF5 regime especial EC136 estadual/municipal 2026 - Ceará',
+      url: 'https://rpvprecatorio.trf5.jus.br/downloadDividaEstEnte/153',
+      year: 2026,
+      debtorName: 'Ceará',
+      pathId: '153',
+    })
   })
 
   test('downloads selected PDFs into tribunal source records idempotently', async ({ assert }) => {
@@ -59,7 +124,7 @@ test.group('TRF5 precatorio adapter', () => {
       fetcher: fakeTrf5Fetch,
     })
 
-    assert.equal(result.discovered, 2)
+    assert.equal(result.discovered, 5)
     assert.equal(result.selected, 1)
     assert.equal(result.downloaded, 1)
     assert.isTrue(result.items[0].sourceRecordCreated)
