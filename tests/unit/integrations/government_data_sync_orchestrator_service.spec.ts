@@ -66,9 +66,15 @@ test.group('Government data sync orchestrator service', () => {
     assert.exists(result.coveragePlan)
 
     const coveragePlan = result.coveragePlan!
+    const tribunalPhase = result.phases.tribunalSourceDiscovery as {
+      targetKeys: string[]
+      adapterKeys: string[] | null
+    }
     const acreTarget = coveragePlan.primarySyncTargets.find((target) => target.stateCode === 'AC')
 
     assert.equal(coveragePlan.summary.statesCount, 27)
+    assert.include(tribunalPhase.targetKeys, primaryTarget.key)
+    assert.isNull(tribunalPhase.adapterKeys)
     assert.equal(acreTarget?.targetKey, primaryTarget.key)
     assert.equal(acreTarget?.tenantSourceRecordsCount, 1)
     assert.isTrue(

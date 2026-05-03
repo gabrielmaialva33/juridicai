@@ -45,16 +45,16 @@ class GovernmentDataSyncOrchestratorService {
   async run(options: GovernmentDataSyncOptions) {
     const startedAt = DateTime.utc()
     const years = normalizeYears(options.years)
+    const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
+    const coveragePlan = buildCoveragePlan(coverageMatrix)
 
     if (options.dryRun) {
-      const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
-
       return {
         dryRun: true,
         startedAt: startedAt.toISO(),
         years,
-        phases: plannedPhases(options, years),
-        coveragePlan: buildCoveragePlan(coverageMatrix),
+        phases: plannedPhases(options, years, coveragePlan),
+        coveragePlan,
       }
     }
 
@@ -83,19 +83,8 @@ class GovernmentDataSyncOrchestratorService {
     })
     const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
       tenantId: options.tenantId,
-      adapterKeys: [
-        'tjsp_precatorio_sync',
-        'tjba_precatorio_api_sync',
-        'tjes_lup_precatorio_api_sync',
-        'tjma_precatorio_sync',
-        'generic_tribunal_public_source_sync',
-        'trf1_precatorio_sync',
-        'trf2_precatorio_sync',
-        'trf3_precatorio_sync',
-        'trf4_precatorio_sync',
-        'trf5_precatorio_sync',
-        'trf6_precatorio_sync',
-      ],
+      targetKeys: targetKeysForCoveragePlan(coveragePlan),
+      adapterKeys: targetKeysForCoveragePlan(coveragePlan).length > 0 ? null : defaultAdapterKeys(),
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
@@ -164,6 +153,7 @@ class GovernmentDataSyncOrchestratorService {
       startedAt: startedAt.toISO(),
       finishedAt: DateTime.utc().toISO(),
       years,
+      coveragePlan,
       phases: {
         siopOpenData,
         dataJudNationalDiscovery,
@@ -187,7 +177,11 @@ function normalizeYears(years?: number[] | null) {
   return governmentDataSyncScheduleService.siopBackfillYears()
 }
 
-function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
+function plannedPhases(
+  options: GovernmentDataSyncOptions,
+  years: number[],
+  coveragePlan?: GovernmentCoveragePlan
+) {
   return {
     siopOpenData: {
       years,
@@ -207,19 +201,8 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
     },
     tribunalSourceDiscovery: {
-      adapterKeys: [
-        'tjsp_precatorio_sync',
-        'tjba_precatorio_api_sync',
-        'tjes_lup_precatorio_api_sync',
-        'tjma_precatorio_sync',
-        'generic_tribunal_public_source_sync',
-        'trf1_precatorio_sync',
-        'trf2_precatorio_sync',
-        'trf3_precatorio_sync',
-        'trf4_precatorio_sync',
-        'trf5_precatorio_sync',
-        'trf6_precatorio_sync',
-      ],
+      targetKeys: coveragePlan ? targetKeysForCoveragePlan(coveragePlan) : 'coverage_plan',
+      adapterKeys: coveragePlan ? null : defaultAdapterKeys(),
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
@@ -323,6 +306,33 @@ function buildCoveragePlan(matrix: GovernmentCoverageMatrix) {
       nextActions: item.nextActions,
     })),
   }
+}
+
+type GovernmentCoveragePlan = ReturnType<typeof buildCoveragePlan>
+
+function targetKeysForCoveragePlan(plan: GovernmentCoveragePlan) {
+  return [
+    ...plan.primarySyncTargets.map((target) => target.targetKey),
+    ...plan.federalPrimaryTargets
+      .filter((target) => shouldSyncPrimary(target.status))
+      .map((target) => target.targetKey),
+  ].filter((targetKey): targetKey is string => typeof targetKey === 'string' && targetKey !== '')
+}
+
+function defaultAdapterKeys() {
+  return [
+    'tjsp_precatorio_sync',
+    'tjba_precatorio_api_sync',
+    'tjes_lup_precatorio_api_sync',
+    'tjma_precatorio_sync',
+    'generic_tribunal_public_source_sync',
+    'trf1_precatorio_sync',
+    'trf2_precatorio_sync',
+    'trf3_precatorio_sync',
+    'trf4_precatorio_sync',
+    'trf5_precatorio_sync',
+    'trf6_precatorio_sync',
+  ]
 }
 
 function shouldSyncPrimary(status: CoverageLayerStatus) {
