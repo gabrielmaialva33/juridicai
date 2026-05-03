@@ -64,17 +64,32 @@ test.group('Government data sync orchestrator service', () => {
     assert.equal(result.dryRun, true)
     assert.deepEqual(result.years, [2026])
     assert.exists(result.coveragePlan)
+    assert.exists(result.coverageRecoveryPlan)
 
     const coveragePlan = result.coveragePlan!
+    const coverageRecoveryPlan = result.coverageRecoveryPlan!
     const tribunalPhase = result.phases.tribunalSourceDiscovery as {
       targetKeys: string[]
       adapterKeys: string[] | null
+      recoveryPriority: Array<{
+        targetKey: string
+        priority: string
+        priorityScore: number
+        reasons: string[]
+      }>
     }
     const acreTarget = coveragePlan.primarySyncTargets.find((target) => target.stateCode === 'AC')
+    const recoveryTarget = coverageRecoveryPlan.targets.find(
+      (target) => target.targetKey === primaryTarget.key
+    )
 
     assert.equal(coveragePlan.summary.statesCount, 27)
     assert.include(tribunalPhase.targetKeys, primaryTarget.key)
     assert.isNull(tribunalPhase.adapterKeys)
+    assert.isArray(tribunalPhase.recoveryPriority)
+    assert.include(coverageRecoveryPlan.executableTargetKeys, primaryTarget.key)
+    assert.equal(recoveryTarget?.priority, 'low')
+    assert.isAbove(recoveryTarget?.priorityScore ?? 0, 0)
     assert.equal(acreTarget?.targetKey, primaryTarget.key)
     assert.equal(acreTarget?.tenantSourceRecordsCount, 1)
     assert.isTrue(

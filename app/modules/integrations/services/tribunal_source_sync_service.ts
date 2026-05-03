@@ -199,7 +199,11 @@ class TribunalSourceSyncService {
       query.limit(Math.trunc(options.limit))
     }
 
-    return query.exec()
+    const targets = await query.exec()
+
+    return options.targetKeys?.length
+      ? sortTargetsByTargetKey(targets, options.targetKeys)
+      : targets
   }
 
   private async sourceDatasetIds(keys: string[]) {
@@ -1264,6 +1268,17 @@ function coverageScoreFor(result: TargetResult) {
 
 function normalizeList(values: string[]) {
   return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))]
+}
+
+function sortTargetsByTargetKey(targets: GovernmentSourceTarget[], targetKeys: string[]) {
+  const priorityByKey = new Map(normalizeList(targetKeys).map((key, index) => [key, index]))
+
+  return [...targets].sort((left, right) => {
+    const leftPriority = priorityByKey.get(left.key.toLowerCase()) ?? Number.MAX_SAFE_INTEGER
+    const rightPriority = priorityByKey.get(right.key.toLowerCase()) ?? Number.MAX_SAFE_INTEGER
+
+    return leftPriority - rightPriority || left.key.localeCompare(right.key)
+  })
 }
 
 function isTjrjAnnualMapDocument(link: { title: string; url: string; format: string }) {

@@ -5,6 +5,9 @@ import dataJudLegalSignalClassifierService from '#modules/integrations/services/
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import dataJudProcessAssetLinkService from '#modules/integrations/services/datajud_process_asset_link_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
+import governmentCoverageRecoveryPlanService, {
+  type CoverageRecoveryPlan,
+} from '#modules/integrations/services/government_coverage_recovery_plan_service'
 import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import governmentCoverageMatrixService, {
   type GovernmentCoverageMatrix,
@@ -47,14 +50,17 @@ class GovernmentDataSyncOrchestratorService {
     const years = normalizeYears(options.years)
     const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
     const coveragePlan = buildCoveragePlan(coverageMatrix)
+    const coverageRecoveryPlan = governmentCoverageRecoveryPlanService.build(coverageMatrix)
+    const coverageTargetKeys = targetKeysForCoverageRecoveryPlan(coverageRecoveryPlan)
 
     if (options.dryRun) {
       return {
         dryRun: true,
         startedAt: startedAt.toISO(),
         years,
-        phases: plannedPhases(options, years, coveragePlan),
+        phases: plannedPhases(options, years, coveragePlan, coverageRecoveryPlan),
         coveragePlan,
+        coverageRecoveryPlan,
       }
     }
 
@@ -83,8 +89,8 @@ class GovernmentDataSyncOrchestratorService {
     })
     const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
       tenantId: options.tenantId,
-      targetKeys: targetKeysForCoveragePlan(coveragePlan),
-      adapterKeys: targetKeysForCoveragePlan(coveragePlan).length > 0 ? null : defaultAdapterKeys(),
+      targetKeys: coverageTargetKeys,
+      adapterKeys: coverageTargetKeys.length > 0 ? null : defaultAdapterKeys(),
       tjspCategories: options.tjspCategories,
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
@@ -154,6 +160,7 @@ class GovernmentDataSyncOrchestratorService {
       finishedAt: DateTime.utc().toISO(),
       years,
       coveragePlan,
+      coverageRecoveryPlan,
       phases: {
         siopOpenData,
         dataJudNationalDiscovery,
@@ -180,8 +187,15 @@ function normalizeYears(years?: number[] | null) {
 function plannedPhases(
   options: GovernmentDataSyncOptions,
   years: number[],
-  coveragePlan?: GovernmentCoveragePlan
+  coveragePlan?: GovernmentCoveragePlan,
+  coverageRecoveryPlan?: CoverageRecoveryPlan
 ) {
+  const plannedTargetKeys = coverageRecoveryPlan
+    ? targetKeysForCoverageRecoveryPlan(coverageRecoveryPlan)
+    : coveragePlan
+      ? targetKeysForCoveragePlan(coveragePlan)
+      : []
+
   return {
     siopOpenData: {
       years,
@@ -201,8 +215,15 @@ function plannedPhases(
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
     },
     tribunalSourceDiscovery: {
-      targetKeys: coveragePlan ? targetKeysForCoveragePlan(coveragePlan) : 'coverage_plan',
-      adapterKeys: coveragePlan ? null : defaultAdapterKeys(),
+      targetKeys: plannedTargetKeys.length > 0 ? plannedTargetKeys : 'coverage_plan',
+      adapterKeys: plannedTargetKeys.length > 0 ? null : defaultAdapterKeys(),
+      recoveryPriority:
+        coverageRecoveryPlan?.targets.slice(0, 10).map((target) => ({
+          targetKey: target.targetKey,
+          priority: target.priority,
+          priorityScore: target.priorityScore,
+          reasons: target.reasons,
+        })) ?? null,
       tjspCategories: options.tjspCategories ?? ['state_entities', 'municipal_entities'],
       tjspLimit: options.tjspLimit ?? 25,
       tjspImportDocuments: options.tjspImportDocuments ?? true,
@@ -319,6 +340,10 @@ function targetKeysForCoveragePlan(plan: GovernmentCoveragePlan) {
       .filter((target) => shouldSyncPrimary(target.status))
       .map((target) => target.targetKey),
   ].filter((targetKey): targetKey is string => typeof targetKey === 'string' && targetKey !== '')
+}
+
+function targetKeysForCoverageRecoveryPlan(plan: CoverageRecoveryPlan) {
+  return plan.executableTargetKeys
 }
 
 function defaultAdapterKeys() {
