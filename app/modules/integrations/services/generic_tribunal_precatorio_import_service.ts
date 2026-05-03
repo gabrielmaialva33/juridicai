@@ -10,7 +10,7 @@ import sourceEvidenceService from '#modules/integrations/services/source_evidenc
 import tribunalDocumentExtractionService from '#modules/integrations/services/tribunal_document_extraction_service'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
-import type { DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
+import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import type {
   TribunalDocumentExtractionOptions,
@@ -40,6 +40,10 @@ type GenericImportRow = {
   debtorType: DebtorType | null
   paymentRegime: PaymentRegime | null
   exerciseYear: number | null
+  nature: AssetNature
+  receivedAt: DateTime | null
+  queuePosition: number | null
+  preferenceLabel: string | null
   faceValue: string | null
   rowFingerprint: string
   rawData: JsonRecord
@@ -142,7 +146,8 @@ class GenericTribunalPrecatorioImportService {
       assetNumber: row.cnjNumber,
       exerciseYear: row.exerciseYear,
       budgetYear: row.exerciseYear,
-      nature: 'unknown' as const,
+      nature: row.nature,
+      originFiledAt: row.receivedAt,
       lifecycleStatus: 'discovered' as const,
       piiStatus: 'pseudonymous' as const,
       complianceStatus: 'approved_for_analysis' as const,
@@ -206,6 +211,7 @@ class GenericTribunalPrecatorioImportService {
     await this.upsertValuation(sourceRecord, asset.id, row, trx)
     await this.upsertJudicialProcess(sourceRecord, asset, row, context, trx)
     await this.upsertImportEvent(sourceRecord, asset.id, row, context, trx)
+    await this.upsertPreferenceEvent(sourceRecord, asset.id, row, context, trx)
     await this.recordEvidence(sourceRecord, asset, row, context, trx)
   }
 
@@ -230,6 +236,7 @@ class GenericTribunalPrecatorioImportService {
       assetId,
       faceValue: row.faceValue,
       estimatedUpdatedValue: row.faceValue,
+      queuePosition: row.queuePosition,
       sourceRecordId: sourceRecord.id,
       computedAt: DateTime.now(),
       rawData: buildValuationRawData(row),
@@ -310,6 +317,53 @@ class GenericTribunalPrecatorioImportService {
     )
   }
 
+  private async upsertPreferenceEvent(
+    sourceRecord: SourceRecord,
+    assetId: string,
+    row: GenericImportRow,
+    context: ImportContext,
+    trx: TransactionClientContract
+  ) {
+    if (!isSuperpreference(row.preferenceLabel)) {
+      return null
+    }
+
+    const idempotencyKey = `generic-tribunal:superpreference:${sourceRecord.id}:${row.rowFingerprint}`
+    const existing = await AssetEvent.query({ client: trx })
+      .where('tenant_id', sourceRecord.tenantId)
+      .where('asset_id', assetId)
+      .where('event_type', 'superpreference_granted')
+      .where('idempotency_key', idempotencyKey)
+      .first()
+
+    if (existing) {
+      return existing
+    }
+
+    return AssetEvent.create(
+      {
+        tenantId: sourceRecord.tenantId,
+        assetId,
+        eventType: 'superpreference_granted',
+        eventDate: row.receivedAt ?? DateTime.now(),
+        source: 'tribunal',
+        payload: {
+          providerId: 'generic-tribunal-document-import',
+          sourceRecordId: sourceRecord.id,
+          sourceUrl: sourceRecord.sourceUrl,
+          courtAlias: context.courtAlias,
+          stateCode: context.stateCode,
+          preferenceLabel: row.preferenceLabel,
+          queuePosition: row.queuePosition,
+          rowFingerprint: row.rowFingerprint,
+          extractedRow: row.extractedRow.rawData,
+        },
+        idempotencyKey,
+      },
+      { client: trx }
+    )
+  }
+
   private async recordEvidence(
     sourceRecord: SourceRecord,
     asset: PrecatorioAsset,
@@ -333,6 +387,9 @@ class GenericTribunalPrecatorioImportService {
         value: row.faceValue,
         exerciseYear: row.exerciseYear,
         debtorName: row.debtorName,
+        nature: row.nature,
+        queuePosition: row.queuePosition,
+        preferenceLabel: row.preferenceLabel,
       },
       rawPointer: {
         sourceRecordId: sourceRecord.id,
@@ -354,6 +411,19 @@ class GenericTribunalPrecatorioImportService {
       rawData: row.rawData,
       trx,
     })
+
+    await sourceEvidenceService.upsertIdentifier({
+      tenantId: sourceRecord.tenantId,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      sourceDatasetKey: context.sourceDatasetKey,
+      identifierType: 'chronological_order',
+      identifierValue: row.queuePosition,
+      issuer: context.courtAlias?.toUpperCase() ?? 'TRIBUNAL',
+      isPrimary: false,
+      rawData: row.rawData,
+      trx,
+    })
   }
 }
 
@@ -366,7 +436,7 @@ function buildImportRow(
     return null
   }
 
-  const debtorName = debtorNameFromRow(row.rawData)
+  const debtorName = debtorNameFromRow(row.rawData, context)
   const debtorProfile = debtorName ? debtorProfileFor(debtorName, context.stateCode) : null
   const rawData = {
     providerId: 'generic-tribunal-document-import',
@@ -387,29 +457,59 @@ function buildImportRow(
     debtorType: debtorProfile?.debtorType ?? null,
     paymentRegime: debtorProfile?.paymentRegime ?? null,
     exerciseYear: row.normalizedYear,
+    nature: natureFromRow(row.rawData),
+    receivedAt: dateTimeFromRow(row.rawData),
+    queuePosition: queuePositionFromRow(row.rawData),
+    preferenceLabel: preferenceFromRow(row.rawData),
     faceValue: row.normalizedValue,
     rowFingerprint: row.rowFingerprint,
     rawData,
   }
 }
 
-function debtorNameFromRow(row: JsonRecord) {
+function debtorNameFromRow(row: JsonRecord, context: ImportContext) {
+  const preferred =
+    stringField(row.ente_devedor) ??
+    stringField(row.entidade_devedora) ??
+    stringField(row.devedor) ??
+    stringField(row.entidade)
+
+  if (preferred && !preferred.match(/^\d+$/)) {
+    return normalizeDebtorDisplayName(preferred, context)
+  }
+
   for (const [key, value] of Object.entries(row)) {
     const normalizedKey = normalizeKey(key)
     if (
       !/(DEVEDOR|ENTIDADE|ENTE|FAZENDA|REQUERID)/.test(normalizedKey) ||
-      /BENEFICIARIO|CREDOR|AUTOR|ADVOGADO/.test(normalizedKey)
+      /BENEFICIARIO|CREDOR|AUTOR|ADVOGADO|GRUPO_DEVEDOR|FONTE|SOURCE|TARGET/.test(normalizedKey)
     ) {
       continue
     }
 
     const text = stringField(value)
     if (text && !text.match(/^\d+$/)) {
-      return text
+      return normalizeDebtorDisplayName(text, context)
     }
   }
 
   return null
+}
+
+function normalizeDebtorDisplayName(value: string, context: ImportContext) {
+  const normalized = normalizeKey(value)
+
+  if (context.courtAlias === 'tjma' && context.stateCode === 'MA') {
+    if (normalized === 'ESTADO') {
+      return 'Estado do Maranhão'
+    }
+
+    if (normalized === 'IPREV') {
+      return 'IPREV Maranhão'
+    }
+  }
+
+  return value
 }
 
 function debtorProfileFor(
@@ -424,6 +524,10 @@ function debtorProfileFor(
 
   if (normalized.includes('INSS')) {
     return { debtorType: 'autarchy', paymentRegime: 'federal_unique' }
+  }
+
+  if (normalized.includes('IPREV')) {
+    return { debtorType: 'autarchy', paymentRegime: 'special' }
   }
 
   if (
@@ -443,6 +547,58 @@ function debtorProfileFor(
   }
 
   return { debtorType: 'autarchy', paymentRegime: 'special' }
+}
+
+function natureFromRow(row: JsonRecord): AssetNature {
+  const rawNature = stringField(row.natureza) ?? stringField(row.nature) ?? ''
+  const normalized = normalizeKey(rawNature)
+
+  if (normalized.includes('ALIMENTAR')) {
+    return 'alimentar'
+  }
+
+  if (normalized.includes('TRIBUT')) {
+    return 'tributario'
+  }
+
+  if (normalized.includes('COMUM') || normalized.includes('NAO_ALIMENTAR')) {
+    return 'comum'
+  }
+
+  return 'unknown'
+}
+
+function queuePositionFromRow(row: JsonRecord) {
+  return numberField(row.ordem) ?? numberField(row.queue_position) ?? numberField(row.queuePosition)
+}
+
+function preferenceFromRow(row: JsonRecord) {
+  return stringField(row.prioridade) ?? stringField(row.priority) ?? stringField(row.preference)
+}
+
+function dateTimeFromRow(row: JsonRecord) {
+  const value = stringField(row.recebido_em) ?? stringField(row.received_at)
+  if (!value) {
+    return null
+  }
+
+  const parsed = DateTime.fromISO(value)
+  return parsed.isValid ? parsed : null
+}
+
+function isSuperpreference(value: string | null) {
+  if (!value) {
+    return false
+  }
+
+  const normalized = normalizeKey(value)
+  return (
+    normalized.includes('IDADE') ||
+    normalized.includes('IDOS') ||
+    normalized.includes('DOENCA_GRAVE') ||
+    normalized.includes('PREFERENCIAL') ||
+    normalized.includes('SUPERPREFER')
+  )
 }
 
 function buildAssetRawData(
@@ -465,6 +621,9 @@ function buildValuationRawData(row: GenericImportRow): JsonRecord {
     rowFingerprint: row.rowFingerprint,
     value: row.faceValue,
     exerciseYear: row.exerciseYear,
+    nature: row.nature,
+    queuePosition: row.queuePosition,
+    preferenceLabel: row.preferenceLabel,
     extractedRow: row.extractedRow.rawData,
   }
 }
@@ -499,6 +658,19 @@ function stringField(value: unknown) {
 
   const text = value.trim()
   return text || null
+}
+
+function numberField(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value)
+  }
+
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const number = Number(value.trim())
+  return Number.isInteger(number) ? number : null
 }
 
 function limitRows<T>(rows: T[], limit?: number | null) {
