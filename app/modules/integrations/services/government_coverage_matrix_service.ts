@@ -1,6 +1,10 @@
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
+import CoverageRun from '#modules/integrations/models/coverage_run'
 import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import sourceDataQualityService, {
+  type SourceDataQualitySummary,
+} from '#modules/integrations/services/source_data_quality_service'
 import type { GovernmentSourceTargetStatus, JsonRecord } from '#shared/types/model_enums'
 
 const STATE_COURTS = [
@@ -89,6 +93,7 @@ export type CoverageLayer = {
   lastSourceRecordsCount: number
   tenantSourceRecordsCount: number
   evidenceScore: number
+  quality: SourceDataQualitySummary | null
   metadata: JsonRecord | null
 }
 
@@ -112,7 +117,7 @@ export type CoverageGap = {
 
 class GovernmentCoverageMatrixService {
   async build(tenantId: string): Promise<GovernmentCoverageMatrix> {
-    const [targets, sourceRecordCounts] = await Promise.all([
+    const [targets, sourceRecordCounts, recentCoverageRuns] = await Promise.all([
       GovernmentSourceTarget.query()
         .where('is_active', true)
         .orderBy('priority', 'asc')
@@ -124,6 +129,11 @@ class GovernmentCoverageMatrixService {
         .where('tenant_id', tenantId)
         .whereNotNull('source_dataset_id')
         .groupBy('source_dataset_id'),
+      CoverageRun.query()
+        .where('tenant_id', tenantId)
+        .whereNotNull('metrics')
+        .orderBy('started_at', 'desc')
+        .limit(500),
     ])
     const countsByDataset = new Map(
       sourceRecordCounts.map((row) => [
@@ -131,14 +141,21 @@ class GovernmentCoverageMatrixService {
         Number(row.records_count ?? 0),
       ])
     )
+    const qualityByTarget = latestQualityByTarget(recentCoverageRuns)
     const targetsByCourt = groupTargetsByCourt(targets)
     const states = STATE_COURTS.map(([stateCode, courtAlias]) => {
       const courtTargets = targetsByCourt.get(courtAlias) ?? []
-      return this.buildStateItem(stateCode, courtAlias, courtTargets, countsByDataset)
+      return this.buildStateItem(
+        stateCode,
+        courtAlias,
+        courtTargets,
+        countsByDataset,
+        qualityByTarget
+      )
     })
     const federal = FEDERAL_COURTS.map((courtAlias) => {
       const courtTargets = targetsByCourt.get(courtAlias) ?? []
-      return this.buildFederalItem(courtAlias, courtTargets, countsByDataset)
+      return this.buildFederalItem(courtAlias, courtTargets, countsByDataset, qualityByTarget)
     })
     const gaps = [
       ...states.flatMap((state) => state.nextActionsToGaps()),
@@ -158,11 +175,16 @@ class GovernmentCoverageMatrixService {
     stateCode: string,
     courtAlias: string,
     targets: GovernmentSourceTarget[],
-    countsByDataset: Map<string, number>
+    countsByDataset: Map<string, number>,
+    qualityByTarget: Map<string, SourceDataQualitySummary>
   ) {
-    const primary = buildLayer(selectPrimaryTarget(targets), countsByDataset)
-    const datajud = buildLayer(selectTargetBySource(targets, 'datajud'), countsByDataset)
-    const djen = buildLayer(selectTargetBySource(targets, 'djen'), countsByDataset)
+    const primary = buildLayer(selectPrimaryTarget(targets), countsByDataset, qualityByTarget)
+    const datajud = buildLayer(
+      selectTargetBySource(targets, 'datajud'),
+      countsByDataset,
+      qualityByTarget
+    )
+    const djen = buildLayer(selectTargetBySource(targets, 'djen'), countsByDataset, qualityByTarget)
     const intelligence = buildStateIntelligence(primary, datajud, djen)
     const overallStatus = weakestStatus([primary.status, datajud.status, djen.status])
     const nextActions = stateNextActions({
@@ -191,11 +213,16 @@ class GovernmentCoverageMatrixService {
   private buildFederalItem(
     courtAlias: string,
     targets: GovernmentSourceTarget[],
-    countsByDataset: Map<string, number>
+    countsByDataset: Map<string, number>,
+    qualityByTarget: Map<string, SourceDataQualitySummary>
   ) {
-    const primary = buildLayer(selectPrimaryTarget(targets), countsByDataset)
-    const datajud = buildLayer(selectTargetBySource(targets, 'datajud'), countsByDataset)
-    const djen = buildLayer(selectTargetBySource(targets, 'djen'), countsByDataset)
+    const primary = buildLayer(selectPrimaryTarget(targets), countsByDataset, qualityByTarget)
+    const datajud = buildLayer(
+      selectTargetBySource(targets, 'datajud'),
+      countsByDataset,
+      qualityByTarget
+    )
+    const djen = buildLayer(selectTargetBySource(targets, 'djen'), countsByDataset, qualityByTarget)
     const overallStatus = weakestStatus([primary.status, datajud.status, djen.status])
     const nextActions = federalNextActions({ courtAlias, primary, datajud, djen })
 
@@ -242,7 +269,8 @@ function selectTargetBySource(targets: GovernmentSourceTarget[], source: 'dataju
 
 function buildLayer(
   target: GovernmentSourceTarget | null,
-  countsByDataset: Map<string, number>
+  countsByDataset: Map<string, number>,
+  qualityByTarget: Map<string, SourceDataQualitySummary>
 ): CoverageLayer {
   if (!target) {
     return emptyLayer()
@@ -266,6 +294,7 @@ function buildLayer(
     lastSourceRecordsCount: target.lastSourceRecordsCount,
     tenantSourceRecordsCount,
     evidenceScore,
+    quality: qualityByTarget.get(target.key) ?? null,
     metadata: target.metadata,
   }
 }
@@ -283,8 +312,35 @@ function emptyLayer(): CoverageLayer {
     lastSourceRecordsCount: 0,
     tenantSourceRecordsCount: 0,
     evidenceScore: 0,
+    quality: null,
     metadata: null,
   }
+}
+
+function latestQualityByTarget(runs: CoverageRun[]) {
+  const qualities = new Map<string, SourceDataQualitySummary>()
+
+  for (const run of runs) {
+    const targetKey = stringField(run.scope?.targetKey)
+
+    if (!targetKey || qualities.has(targetKey)) {
+      continue
+    }
+
+    qualities.set(targetKey, qualityFromMetrics(run.metrics))
+  }
+
+  return qualities
+}
+
+function qualityFromMetrics(metrics: JsonRecord | null) {
+  const quality = metrics?.quality
+
+  if (quality && typeof quality === 'object' && !Array.isArray(quality)) {
+    return quality as SourceDataQualitySummary
+  }
+
+  return sourceDataQualityService.summarizeMetrics(metrics)
 }
 
 function resolveLayerStatus(
@@ -537,6 +593,10 @@ function stripGapHelper<T extends { nextActionsToGaps: () => CoverageGap[] }>(
   void omittedGapHelper
 
   return payload
+}
+
+function stringField(value: unknown) {
+  return typeof value === 'string' && value.trim() !== '' ? value : null
 }
 
 export default new GovernmentCoverageMatrixService()

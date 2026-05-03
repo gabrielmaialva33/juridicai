@@ -274,6 +274,7 @@ function buildCoveragePlan(matrix: GovernmentCoverageMatrix) {
         status: state.primary.status,
         lastSuccessAt: state.primary.lastSuccessAt,
         tenantSourceRecordsCount: state.primary.tenantSourceRecordsCount,
+        quality: state.primary.quality,
         nextActions: state.nextActions,
       })),
     enrichmentTargets: matrix.states
@@ -303,6 +304,7 @@ function buildCoveragePlan(matrix: GovernmentCoverageMatrix) {
       targetKey: item.primary.targetKey,
       adapterKey: item.primary.adapterKey,
       lastSuccessAt: item.primary.lastSuccessAt,
+      quality: item.primary.quality,
       nextActions: item.nextActions,
     })),
   }

@@ -5,6 +5,7 @@ import dataJudNationalPrecatorioSyncService from '#modules/integrations/services
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import genericTribunalPublicSourceAdapter from '#modules/integrations/services/generic_tribunal_public_source_adapter'
 import genericTribunalPrecatorioImportService from '#modules/integrations/services/generic_tribunal_precatorio_import_service'
+import sourceDataQualityService from '#modules/integrations/services/source_data_quality_service'
 import tjbaPrecatorioApiAdapter from '#modules/integrations/services/tjba_precatorio_api_adapter'
 import tjbaPrecatorioImportService from '#modules/integrations/services/tjba_precatorio_import_service'
 import tjesLupPrecatorioApiAdapter from '#modules/integrations/services/tjes_lup_precatorio_api_adapter'
@@ -220,7 +221,7 @@ class TribunalSourceSyncService {
     })
 
     try {
-      const result = await this.executeTarget(target, options)
+      const result = withQualityMetrics(await this.executeTarget(target, options))
 
       await coverageRunService.finish(coverageRun, result.status, {
         discoveredCount: result.discoveredCount,
@@ -235,7 +236,7 @@ class TribunalSourceSyncService {
 
       return result
     } catch (error) {
-      const result = failedResult(target, error)
+      const result = withQualityMetrics(failedResult(target, error))
 
       await coverageRunService.finish(coverageRun, 'failed', {
         error,
@@ -576,6 +577,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         genericPrecatorioImports: genericImports.map((item) => ({
@@ -586,6 +588,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         tjrjImportTotals,
@@ -657,6 +660,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         importTotals,
@@ -767,6 +771,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         importTotals,
@@ -899,6 +904,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         importTotals,
@@ -1027,6 +1033,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         importTotals,
@@ -1091,6 +1098,7 @@ class TribunalSourceSyncService {
             status: item.extraction.status,
             rows: item.extraction.rows.length,
             errors: item.extraction.errors,
+            completeness: item.extraction.completeness,
           },
         })),
         importTotals,
@@ -1198,6 +1206,16 @@ function failedResult(target: GovernmentSourceTarget, error: unknown): TargetRes
     errorCount: 1,
     message,
     metrics: { message },
+  }
+}
+
+function withQualityMetrics(result: TargetResult): TargetResult {
+  return {
+    ...result,
+    metrics: {
+      ...result.metrics,
+      quality: sourceDataQualityService.summarizeMetrics(result.metrics),
+    },
   }
 }
 

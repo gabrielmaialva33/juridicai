@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import governmentCoverageMatrixService from '#modules/integrations/services/government_coverage_matrix_service'
+import CoverageRun from '#modules/integrations/models/coverage_run'
 import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
 import SourceDataset from '#modules/integrations/models/source_dataset'
 import SourceRecord from '#modules/siop/models/source_record'
@@ -69,6 +70,45 @@ test.group('Government coverage matrix service', () => {
       collectedAt: DateTime.now(),
       rawData: { courtAlias: 'tjac' },
     })
+    const coverageRun = await CoverageRun.create({
+      tenantId: tenant.id,
+      sourceDatasetId: primaryDataset.id,
+      status: 'completed',
+      origin: 'system',
+      scope: {
+        targetKey: primaryTarget.key,
+        courtAlias: 'tjac',
+      },
+      startedAt: DateTime.now().minus({ minutes: 2 }),
+      finishedAt: DateTime.now().minus({ minutes: 1 }),
+      discoveredCount: 10,
+      sourceRecordsCount: 1,
+      createdAssetsCount: 7,
+      linkedAssetsCount: 7,
+      enrichedAssetsCount: 0,
+      errorCount: 1,
+      metrics: {
+        quality: {
+          score: 0.91,
+          grade: 'A',
+          totalRows: 10,
+          validRows: 9,
+          selectedRows: 9,
+          importedRows: 8,
+          errorRows: 1,
+          validRowCoverage: 0.9,
+          importYield: 0.8889,
+          errorRate: 0.1,
+          fieldCoverage: {
+            cnj: 0.9,
+            value: 0.9,
+            year: 0.9,
+            debtor: 0.9,
+            average: 0.9,
+          },
+        },
+      },
+    })
 
     const matrix = await governmentCoverageMatrixService.build(tenant.id)
     const acre = matrix.states.find((state) => state.stateCode === 'AC')
@@ -78,6 +118,8 @@ test.group('Government coverage matrix service', () => {
     assert.equal(acre?.primary.status, 'validated')
     assert.equal(acre?.primary.targetKey, primaryTarget.key)
     assert.equal(acre?.primary.tenantSourceRecordsCount, 1)
+    assert.equal(acre?.primary.quality?.score, 0.91)
+    assert.equal(acre?.primary.quality?.grade, 'A')
     assert.equal(acre?.datajud.targetKey, dataJudTarget.key)
     assert.equal(acre?.djen.targetKey, djenTarget.key)
     assert.deepEqual(acre?.intelligence, {
@@ -92,6 +134,7 @@ test.group('Government coverage matrix service', () => {
       'tjac:primary_source_missing'
     )
 
+    await coverageRun.delete()
     await sourceRecord.delete()
     await primaryTarget.delete()
     await dataJudTarget.delete()

@@ -23,6 +23,18 @@ export type TribunalExtractedRow = {
   rowFingerprint: string
 }
 
+export type TribunalDocumentCompleteness = {
+  totalRows: number
+  rowsWithCnj: number
+  rowsWithValue: number
+  rowsWithYear: number
+  rowsWithDebtor: number
+  cnjCoverage: number
+  valueCoverage: number
+  yearCoverage: number
+  debtorCoverage: number
+}
+
 export type TribunalDocumentExtractionResult = {
   sourceRecord: SourceRecord
   format: TribunalDocumentFormat
@@ -30,6 +42,7 @@ export type TribunalDocumentExtractionResult = {
   rows: TribunalExtractedRow[]
   text: string | null
   errors: string[]
+  completeness: TribunalDocumentCompleteness
 }
 
 export type TribunalDocumentExtractionOptions = {
@@ -589,6 +602,7 @@ function resultFor(
     rows,
     text,
     errors,
+    completeness: summarizeCompleteness(rows),
   }
 }
 
