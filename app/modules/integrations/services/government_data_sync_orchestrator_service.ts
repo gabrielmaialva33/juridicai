@@ -16,6 +16,7 @@ import governmentCoverageMatrixService, {
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
 import tribunalSourceSyncService from '#modules/integrations/services/tribunal_source_sync_service'
+import { governmentTimedFetch } from '#modules/integrations/services/government_timed_fetch'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
@@ -40,6 +41,7 @@ export type GovernmentDataSyncOptions = {
   matchLimit?: number | null
   candidatesPerAsset?: number | null
   source?: SourceType | null
+  fetchTimeoutMs?: number | null
   origin?: JobRunOrigin
   dryRun?: boolean
 }
@@ -52,6 +54,9 @@ class GovernmentDataSyncOrchestratorService {
     const coveragePlan = buildCoveragePlan(coverageMatrix)
     const coverageRecoveryPlan = governmentCoverageRecoveryPlanService.build(coverageMatrix)
     const coverageTargetKeys = targetKeysForCoverageRecoveryPlan(coverageRecoveryPlan)
+    const fetcher = options.fetchTimeoutMs
+      ? governmentTimedFetch({ timeoutMs: options.fetchTimeoutMs })
+      : undefined
 
     if (options.dryRun) {
       return {
@@ -69,6 +74,7 @@ class GovernmentDataSyncOrchestratorService {
       years,
       download: true,
       enqueueImports: true,
+      fetcher,
       origin: options.origin ?? 'scheduler',
     })
     const dataJudNationalDiscovery = await dataJudNationalPrecatorioSyncService.sync({
@@ -76,6 +82,7 @@ class GovernmentDataSyncOrchestratorService {
       courtAliases: options.dataJudCourtAliases,
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+      fetcher,
       origin: options.origin ?? 'scheduler',
     })
     const djenPublicationDiscovery = await djenPublicationSyncService.sync({
@@ -85,6 +92,7 @@ class GovernmentDataSyncOrchestratorService {
       startDate: options.djenStartDate,
       endDate: options.djenEndDate,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+      fetcher,
       origin: options.origin ?? 'scheduler',
     })
     const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
@@ -122,6 +130,7 @@ class GovernmentDataSyncOrchestratorService {
       trf5Limit: 10,
       trf6Years: years,
       trf6Limit: 10,
+      fetcher,
       origin: options.origin ?? 'scheduler',
     })
     const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
@@ -130,6 +139,7 @@ class GovernmentDataSyncOrchestratorService {
       source: options.source,
       missingOnly: true,
       dryRun: false,
+      fetcher,
     })
     const dataJudExactAssetLinking = await dataJudProcessAssetLinkService.link({
       tenantId: options.tenantId,
@@ -152,6 +162,7 @@ class GovernmentDataSyncOrchestratorService {
       limit: options.matchLimit ?? 500,
       candidatesPerAsset: options.candidatesPerAsset ?? 3,
       persist: true,
+      fetcher,
     })
 
     return {
@@ -201,11 +212,13 @@ function plannedPhases(
       years,
       download: true,
       enqueueImports: true,
+      fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     dataJudNationalDiscovery: {
       courtAliases: options.dataJudCourtAliases ?? 'all',
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+      fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     djenPublicationDiscovery: {
       courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases ?? 'all',
@@ -213,6 +226,7 @@ function plannedPhases(
       startDate: options.djenStartDate ?? null,
       endDate: options.djenEndDate ?? null,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+      fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     tribunalSourceDiscovery: {
       targetKeys: plannedTargetKeys.length > 0 ? plannedTargetKeys : 'coverage_plan',
@@ -255,6 +269,7 @@ function plannedPhases(
       trf5Limit: 10,
       trf6Years: years,
       trf6Limit: 10,
+      fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     dataJudAssetEnrichment: {
       limit: options.enrichLimit ?? 500,

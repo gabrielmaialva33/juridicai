@@ -109,6 +109,11 @@ export default class BetaIngestionDrill extends BaseCommand {
   })
   declare candidatesPerAsset?: number
 
+  @flags.number({
+    description: 'HTTP timeout in seconds for each government source request.',
+  })
+  declare fetchTimeoutSeconds?: number
+
   @flags.string({
     description:
       'Optional asset source filter for enrichment/matching, for example siop or tribunal.',
@@ -131,56 +136,59 @@ export default class BetaIngestionDrill extends BaseCommand {
   declare strict: boolean
 
   async run() {
-    const report = await betaIngestionDrillService.run({
-      tenantId: this.tenantId,
-      tenantSlug: this.tenantSlug,
-      years: parseYears(this.years),
-      fullBackfill: this.fullBackfill,
-      dataJudCourtAliases: parseList(this.courts),
-      dataJudPageSize: this.datajudPageSize,
-      dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
-      djenCourtAliases: parseList(this.djenCourts),
-      djenSearchTexts: parseList(this.djenTexts),
-      djenStartDate: this.djenStartDate,
-      djenEndDate: this.djenEndDate,
-      djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
-      tjspLimit: this.tjspLimit,
-      enrichLimit: this.enrichLimit,
-      linkLimit: this.linkLimit,
-      signalLimit: this.signalLimit,
-      publicationLimit: this.publicationLimit,
-      matchLimit: this.matchLimit,
-      candidatesPerAsset: this.candidatesPerAsset,
-      source: this.source,
-      dryRun: this.dryRun,
-      origin: 'manual_retry',
-    })
+    try {
+      const report = await betaIngestionDrillService.run({
+        tenantId: this.tenantId,
+        tenantSlug: this.tenantSlug,
+        years: parseYears(this.years),
+        fullBackfill: this.fullBackfill,
+        dataJudCourtAliases: parseList(this.courts),
+        dataJudPageSize: this.datajudPageSize,
+        dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
+        djenCourtAliases: parseList(this.djenCourts),
+        djenSearchTexts: parseList(this.djenTexts),
+        djenStartDate: this.djenStartDate,
+        djenEndDate: this.djenEndDate,
+        djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
+        tjspLimit: this.tjspLimit,
+        enrichLimit: this.enrichLimit,
+        linkLimit: this.linkLimit,
+        signalLimit: this.signalLimit,
+        publicationLimit: this.publicationLimit,
+        matchLimit: this.matchLimit,
+        candidatesPerAsset: this.candidatesPerAsset,
+        fetchTimeoutSeconds: this.fetchTimeoutSeconds,
+        source: this.source,
+        dryRun: this.dryRun,
+        origin: 'manual_retry',
+      })
 
-    if (this.json) {
-      this.logger.info(JSON.stringify(report, null, 2))
-    } else {
-      this.logger.info(`Beta ingestion drill completed: ${report.readiness.after.status}`)
-      this.logger.info(
-        `Readiness: ${JSON.stringify({
-          before: report.readiness.before.status,
-          after: report.readiness.after.status,
-          dryRun: report.dryRun,
-        })}`
-      )
-      this.logger.info(`Data deltas: ${JSON.stringify(report.deltas)}`)
+      if (this.json) {
+        this.logger.info(JSON.stringify(report, null, 2))
+      } else {
+        this.logger.info(`Beta ingestion drill completed: ${report.readiness.after.status}`)
+        this.logger.info(
+          `Readiness: ${JSON.stringify({
+            before: report.readiness.before.status,
+            after: report.readiness.after.status,
+            dryRun: report.dryRun,
+          })}`
+        )
+        this.logger.info(`Data deltas: ${JSON.stringify(report.deltas)}`)
 
-      if (report.readiness.after.nextActions.length > 0) {
-        this.logger.info(`Next actions: ${JSON.stringify(report.readiness.after.nextActions)}`)
+        if (report.readiness.after.nextActions.length > 0) {
+          this.logger.info(`Next actions: ${JSON.stringify(report.readiness.after.nextActions)}`)
+        }
       }
-    }
 
-    await queueService.shutdown()
-
-    if (
-      report.readiness.after.status === 'fail' ||
-      (this.strict && report.readiness.after.status !== 'pass')
-    ) {
-      this.exitCode = 1
+      if (
+        report.readiness.after.status === 'fail' ||
+        (this.strict && report.readiness.after.status !== 'pass')
+      ) {
+        this.exitCode = 1
+      }
+    } finally {
+      await queueService.shutdown()
     }
   }
 }

@@ -28,7 +28,7 @@ test.group('Beta readiness service', () => {
     assert.equal(bootstrap?.status, 'pass')
     assert.equal(operations?.status, 'warn')
     assert.isAtLeast(dataEvidence?.checks.length ?? 0, 10)
-    assert.isTrue(queued.nextActions.some((action) => action.section === 'data_evidence'))
+    assert.isTrue(queued.nextActions.some((action) => action.section === 'operations'))
   })
 
   test('fails clearly when the requested tenant is missing', async ({ assert }) => {

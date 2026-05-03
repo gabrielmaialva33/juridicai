@@ -117,6 +117,7 @@ export type TribunalSourceSyncOptions = {
   trf6ImportChunkSize?: number | null
   postImportOperationalLimit?: number | null
   postImportCreateOpportunities?: boolean | null
+  fetcher?: typeof fetch
   dryRun?: boolean
   origin?: JobRunOrigin
 }
@@ -333,6 +334,7 @@ class TribunalSourceSyncService {
       courtAliases: [target.courtAlias],
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+      fetcher: options.fetcher,
       origin: options.origin ?? 'system',
     })
 
@@ -362,6 +364,7 @@ class TribunalSourceSyncService {
       startDate: options.djenStartDate,
       endDate: options.djenEndDate,
       maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+      fetcher: options.fetcher,
       origin: options.origin ?? 'system',
     })
 
@@ -385,6 +388,7 @@ class TribunalSourceSyncService {
       categories: options.tjspCategories,
       limit: options.tjspLimit ?? 25,
       importDocuments: options.tjspImportDocuments ?? true,
+      fetcher: options.fetcher,
       origin: options.origin ?? 'system',
     })
 
@@ -407,6 +411,7 @@ class TribunalSourceSyncService {
       tenantId: options.tenantId,
       pageSize: options.tjbaPageSize ?? 200,
       maxPages: options.tjbaMaxPages ?? 1,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof tjbaPrecatorioImportService.importSourceRecord>>[] = []
 
@@ -463,6 +468,7 @@ class TribunalSourceSyncService {
       debtorLimit: options.tjesDebtorLimit ?? 250,
       pageSize: options.tjesPageSize ?? 500,
       maxPagesPerDebtor: options.tjesMaxPagesPerDebtor ?? 50,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof tjesLupPrecatorioImportService.importSourceRecord>>[] =
       []
@@ -533,6 +539,7 @@ class TribunalSourceSyncService {
       limit: options.genericTribunalLimit ?? 25,
       nestedLimit: options.genericTribunalLimit ?? 25,
       downloadLinkedDocuments: options.genericTribunalDownloadLinkedDocuments ?? true,
+      fetcher: options.fetcher,
     })
     const tjrjImports =
       target.courtAlias === 'tjrj'
@@ -612,6 +619,7 @@ class TribunalSourceSyncService {
       kinds: options.tjmaKinds ?? undefined,
       limit: options.tjmaLimit ?? 80,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<
       ReturnType<typeof genericTribunalPrecatorioImportService.importSourceRecord>
@@ -723,6 +731,7 @@ class TribunalSourceSyncService {
       kinds: options.trf1Kinds ?? undefined,
       limit: options.trf1Limit ?? 25,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf1PrecatorioImportService.importSourceRecord>>[] = []
 
@@ -792,6 +801,7 @@ class TribunalSourceSyncService {
       tenantId: options.tenantId,
       years: options.trf2Years ?? undefined,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf2PrecatorioImportService.importSourceRecord>>[] = []
 
@@ -844,6 +854,7 @@ class TribunalSourceSyncService {
       formats: options.trf3Formats ?? ['csv', 'xlsx'],
       limit: options.trf3Limit ?? 12,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf3PrecatorioImportService.importSourceRecord>>[] = []
 
@@ -924,6 +935,7 @@ class TribunalSourceSyncService {
     const syncResult = await trf4PrecatorioAdapter.sync({
       tenantId: options.tenantId,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf4PrecatorioImportService.importSourceRecord>>[] = []
 
@@ -990,6 +1002,7 @@ class TribunalSourceSyncService {
       kinds: options.trf5Kinds ?? TRF5_DEFAULT_KINDS,
       limit: options.trf5Limit ?? 10,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf5PrecatorioImportService.importSourceRecord>>[] = []
 
@@ -1055,6 +1068,7 @@ class TribunalSourceSyncService {
       years: options.trf6Years ?? undefined,
       limit: options.trf6Limit ?? 10,
       download: true,
+      fetcher: options.fetcher,
     })
     const imports: Awaited<ReturnType<typeof trf6PrecatorioImportService.importSourceRecord>>[] = []
 

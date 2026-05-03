@@ -113,6 +113,11 @@ export default class GovernmentSyncData extends BaseCommand {
   })
   declare matchLimit?: number
 
+  @flags.number({
+    description: 'HTTP timeout in seconds for each government source request',
+  })
+  declare fetchTimeoutSeconds?: number
+
   @flags.boolean({
     description: 'Preview pipeline phases without downloading or mutating data',
   })
@@ -124,63 +129,66 @@ export default class GovernmentSyncData extends BaseCommand {
   declare runInline: boolean
 
   async run() {
-    if (!this.tenantId) {
-      this.logger.error('--tenant-id is required.')
-      this.exitCode = 1
-      return
-    }
-
-    const payload: GovernmentDataSyncOrchestratorPayload = {
-      tenantId: this.tenantId,
-      years: parseYears(this.years),
-      dataJudCourtAliases: normalizeAliases(this.courts?.split(',')),
-      dataJudPageSize: this.datajudPageSize,
-      dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
-      djenCourtAliases: normalizeAliases(this.djenCourts?.split(',')),
-      djenSearchTexts: normalizeSearchTexts(this.djenTexts),
-      djenStartDate: this.djenStartDate,
-      djenEndDate: this.djenEndDate,
-      djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
-      tjspCategories: parseTjspCategories(this.tjspCategories),
-      tjspLimit: this.tjspLimit,
-      tjspImportDocuments: !this.tjspSkipImport,
-      enrichLimit: this.enrichLimit,
-      linkLimit: this.linkLimit,
-      signalLimit: this.signalLimit,
-      publicationLimit: this.publicationLimit,
-      matchLimit: this.matchLimit,
-      dryRun: this.dryRun,
-      origin: 'manual_retry',
-    }
-
-    if (this.runInline) {
-      const result = await handleGovernmentDataSyncOrchestrator(payload)
-      this.logger.info(`Government data sync completed inline: ${JSON.stringify(result)}`)
-      return
-    }
-
-    const job = await queueService.add(
-      GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
-      'government-data-sync-orchestrator',
-      payload,
-      {
-        jobId: `government-data-sync-${this.tenantId}-${DateTime.utc().toMillis()}`,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
+    try {
+      if (!this.tenantId) {
+        this.logger.error('--tenant-id is required.')
+        this.exitCode = 1
+        return
       }
-    )
 
-    this.logger.info(
-      `Government data sync enqueued: ${JSON.stringify({
+      const payload: GovernmentDataSyncOrchestratorPayload = {
         tenantId: this.tenantId,
-        jobId: job.id,
-      })}`
-    )
+        years: parseYears(this.years),
+        dataJudCourtAliases: normalizeAliases(this.courts?.split(',')),
+        dataJudPageSize: this.datajudPageSize,
+        dataJudMaxPagesPerCourt: this.datajudMaxPagesPerCourt,
+        djenCourtAliases: normalizeAliases(this.djenCourts?.split(',')),
+        djenSearchTexts: normalizeSearchTexts(this.djenTexts),
+        djenStartDate: this.djenStartDate,
+        djenEndDate: this.djenEndDate,
+        djenMaxPagesPerCourt: this.djenMaxPagesPerCourt,
+        tjspCategories: parseTjspCategories(this.tjspCategories),
+        tjspLimit: this.tjspLimit,
+        tjspImportDocuments: !this.tjspSkipImport,
+        enrichLimit: this.enrichLimit,
+        linkLimit: this.linkLimit,
+        signalLimit: this.signalLimit,
+        publicationLimit: this.publicationLimit,
+        matchLimit: this.matchLimit,
+        fetchTimeoutMs: secondsToMs(this.fetchTimeoutSeconds),
+        dryRun: this.dryRun,
+        origin: 'manual_retry',
+      }
 
-    await queueService.shutdown()
+      if (this.runInline) {
+        const result = await handleGovernmentDataSyncOrchestrator(payload)
+        this.logger.info(`Government data sync completed inline: ${JSON.stringify(result)}`)
+        return
+      }
+
+      const job = await queueService.add(
+        GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
+        'government-data-sync-orchestrator',
+        payload,
+        {
+          jobId: `government-data-sync-${this.tenantId}-${DateTime.utc().toMillis()}`,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        }
+      )
+
+      this.logger.info(
+        `Government data sync enqueued: ${JSON.stringify({
+          tenantId: this.tenantId,
+          jobId: job.id,
+        })}`
+      )
+    } finally {
+      await queueService.shutdown()
+    }
   }
 }
 
@@ -217,4 +225,12 @@ function normalizeSearchTexts(value?: string) {
     .split(',')
     .map((text) => text.trim())
     .filter(Boolean)
+}
+
+function secondsToMs(value?: number) {
+  if (!value || value <= 0) {
+    return undefined
+  }
+
+  return Math.trunc(value * 1000)
 }

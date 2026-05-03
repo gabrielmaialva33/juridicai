@@ -27,6 +27,7 @@ export type GovernmentDataSyncOrchestratorPayload = {
   matchLimit?: number | null
   candidatesPerAsset?: number | null
   source?: SourceType | null
+  fetchTimeoutMs?: number | null
   dryRun?: boolean
   requestId?: string | null
   bullmqJobId?: string | null
@@ -65,6 +66,7 @@ export async function handleGovernmentDataSyncOrchestrator(
       matchLimit: payload.matchLimit ?? null,
       candidatesPerAsset: payload.candidatesPerAsset ?? null,
       source: payload.source ?? null,
+      fetchTimeoutMs: payload.fetchTimeoutMs ?? null,
       dryRun: payload.dryRun ?? false,
     },
   })

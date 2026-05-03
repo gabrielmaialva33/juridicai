@@ -19,6 +19,7 @@ const DEFAULT_SIGNAL_LIMIT = 500
 const DEFAULT_PUBLICATION_LIMIT = 500
 const DEFAULT_MATCH_LIMIT = 100
 const DEFAULT_CANDIDATES_PER_ASSET = 2
+const DEFAULT_FETCH_TIMEOUT_SECONDS = 20
 
 type PipelineRunner = (payload: GovernmentDataSyncOrchestratorPayload) => Promise<JsonRecord>
 
@@ -42,6 +43,7 @@ export type BetaIngestionDrillOptions = {
   publicationLimit?: number | null
   matchLimit?: number | null
   candidatesPerAsset?: number | null
+  fetchTimeoutSeconds?: number | null
   source?: SourceType | null
   dryRun?: boolean
   requestId?: string | null
@@ -149,11 +151,16 @@ function buildPipelinePayload(
     publicationLimit: options.publicationLimit ?? DEFAULT_PUBLICATION_LIMIT,
     matchLimit: options.matchLimit ?? DEFAULT_MATCH_LIMIT,
     candidatesPerAsset: options.candidatesPerAsset ?? DEFAULT_CANDIDATES_PER_ASSET,
+    fetchTimeoutMs: timeoutMs(options.fetchTimeoutSeconds),
     source: options.source ?? null,
     dryRun: options.dryRun,
     requestId: options.requestId ?? null,
     origin: options.origin ?? 'manual_retry',
   }
+}
+
+function timeoutMs(seconds: number | null | undefined) {
+  return Math.trunc((seconds ?? DEFAULT_FETCH_TIMEOUT_SECONDS) * 1000)
 }
 
 async function resolveTenant(options: BetaIngestionDrillOptions) {

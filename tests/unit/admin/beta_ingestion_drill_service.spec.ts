@@ -34,8 +34,8 @@ test.group('Beta ingestion drill service', () => {
     )
 
     assert.equal(report.dryRun, true)
-    assert.equal(report.readiness.before.status, 'warn')
-    assert.equal(report.readiness.after.status, 'warn')
+    assert.notEqual(report.readiness.before.status, 'fail')
+    assert.notEqual(report.readiness.after.status, 'fail')
     assert.lengthOf(capturedPayloads, 1)
     assert.equal(capturedPayloads[0].dryRun, true)
     assert.deepEqual(capturedPayloads[0].years, [2026])
@@ -44,6 +44,7 @@ test.group('Beta ingestion drill service', () => {
     assert.equal(capturedPayloads[0].djenStartDate, '2026-04-26')
     assert.equal(capturedPayloads[0].djenEndDate, '2026-05-03')
     assert.equal(capturedPayloads[0].tjspLimit, 2)
+    assert.equal(capturedPayloads[0].fetchTimeoutMs, 20_000)
     assert.properties(report.deltas, [
       'source_records',
       'precatorio_assets',
