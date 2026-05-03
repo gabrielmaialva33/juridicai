@@ -66,6 +66,8 @@ export async function handleTribunalSourceSync(payload: TribunalSourceSyncPayloa
       trf6Limit: payload.trf6Limit ?? null,
       trf6ImportLimit: payload.trf6ImportLimit ?? null,
       trf6ImportChunkSize: payload.trf6ImportChunkSize ?? null,
+      postImportOperationalLimit: payload.postImportOperationalLimit ?? null,
+      postImportCreateOpportunities: payload.postImportCreateOpportunities ?? true,
       dryRun: payload.dryRun ?? false,
     },
   })

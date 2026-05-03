@@ -3,6 +3,7 @@ import dataJudCandidateMatchService from '#modules/integrations/services/datajud
 import dataJudLegalSignalClassifierService from '#modules/integrations/services/datajud_legal_signal_classifier_service'
 import dataJudProcessAssetLinkService from '#modules/integrations/services/datajud_process_asset_link_service'
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
+import postImportOperationalIntakeService from '#modules/operations/services/post_import_operational_intake_service'
 import tenantContext from '#shared/helpers/tenant_context'
 import jobRunService from '#shared/services/job_run_service'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
@@ -19,6 +20,8 @@ export type PostImportEnrichmentPayload = {
   publicationLimit?: number | null
   matchLimit?: number | null
   candidatesPerAsset?: number | null
+  operationalLimit?: number | null
+  createOpportunities?: boolean | null
   requestId?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
@@ -43,6 +46,8 @@ export async function handlePostImportEnrichment(payload: PostImportEnrichmentPa
       publicationLimit: payload.publicationLimit ?? null,
       matchLimit: payload.matchLimit ?? null,
       candidatesPerAsset: payload.candidatesPerAsset ?? null,
+      operationalLimit: payload.operationalLimit ?? null,
+      createOpportunities: payload.createOpportunities ?? true,
     },
   })
 
@@ -96,6 +101,13 @@ async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
     candidatesPerAsset: payload.candidatesPerAsset ?? 3,
     persist: true,
   })
+  const operationalIntake = await postImportOperationalIntakeService.run({
+    tenantId: payload.tenantId,
+    sourceRecordId: payload.sourceRecordId,
+    source: payload.source,
+    limit: payload.operationalLimit ?? 500,
+    createOpportunities: payload.createOpportunities ?? true,
+  })
 
   return {
     sourceRecordId: payload.sourceRecordId ?? null,
@@ -105,5 +117,6 @@ async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
     dataJudLegalSignalClassification,
     publicationSignalClassification,
     dataJudCandidateMatching: dataJudCandidateMatching.stats,
+    operationalIntake,
   }
 }

@@ -256,6 +256,16 @@ export default class TribunalSyncSources extends BaseCommand {
   })
   declare trf6ImportChunkSize?: number
 
+  @flags.number({
+    description: 'Maximum imported assets to operationally score and price after import',
+  })
+  declare postImportOperationalLimit?: number
+
+  @flags.boolean({
+    description: 'Skip automatic opportunity creation after imported assets are scored',
+  })
+  declare skipPostImportOpportunities: boolean
+
   @flags.boolean({
     description: 'Preview selected targets without downloading or mutating data',
   })
@@ -321,6 +331,8 @@ export default class TribunalSyncSources extends BaseCommand {
       trf6Limit: this.trf6Limit,
       trf6ImportLimit: this.trf6ImportLimit,
       trf6ImportChunkSize: this.trf6ImportChunkSize,
+      postImportOperationalLimit: this.postImportOperationalLimit,
+      postImportCreateOpportunities: !this.skipPostImportOpportunities,
       dryRun: this.dryRun,
       origin: 'manual_retry',
     }

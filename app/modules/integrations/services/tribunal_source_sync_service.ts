@@ -14,6 +14,9 @@ import tjmaPrecatorioAdapter, {
 } from '#modules/integrations/services/tjma_precatorio_adapter'
 import tjrjAnnualMapImportService from '#modules/integrations/services/tjrj_annual_map_import_service'
 import tjspPrecatorioSyncService from '#modules/integrations/services/tjsp_precatorio_sync_service'
+import postImportOperationalIntakeService, {
+  type PostImportOperationalIntakeResult,
+} from '#modules/operations/services/post_import_operational_intake_service'
 import trf1PrecatorioAdapter, {
   type Trf1PrecatorioLinkKind,
 } from '#modules/integrations/services/trf1_precatorio_adapter'
@@ -111,6 +114,8 @@ export type TribunalSourceSyncOptions = {
   trf6Limit?: number | null
   trf6ImportLimit?: number | null
   trf6ImportChunkSize?: number | null
+  postImportOperationalLimit?: number | null
+  postImportCreateOpportunities?: boolean | null
   dryRun?: boolean
   origin?: JobRunOrigin
 }
@@ -418,13 +423,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.totalElements,
       sourceRecordsCount: syncResult.pagesFetched,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -438,6 +444,7 @@ class TribunalSourceSyncService {
           stats: item.stats,
         })),
         importTotals,
+        operationalIntake,
       } as unknown as JsonRecord,
     })
   }
@@ -473,13 +480,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.totalElements,
       sourceRecordsCount: syncResult.pagesFetched,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -493,6 +501,7 @@ class TribunalSourceSyncService {
           stats: item.stats,
         })),
         importTotals,
+        operationalIntake,
       } as unknown as JsonRecord,
     })
   }
@@ -544,13 +553,18 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, genericImports)
 
     return completedResult(target, {
       discoveredCount: result.discovered,
       sourceRecordsCount: result.persisted,
       createdAssetsCount: genericImportTotals.inserted,
       linkedAssetsCount: genericImportTotals.inserted + genericImportTotals.updated,
-      enrichedAssetsCount: result.sourceRecordsCreated + tjrjImports.length + genericImports.length,
+      enrichedAssetsCount:
+        result.sourceRecordsCreated +
+        tjrjImports.length +
+        genericImports.length +
+        operationalIntake.scoresRefreshed,
       errorCount: tjrjImportTotals.errors + genericImportTotals.errors,
       metrics: {
         ...result,
@@ -576,6 +590,7 @@ class TribunalSourceSyncService {
         })),
         tjrjImportTotals,
         genericImportTotals,
+        operationalIntake,
       } as unknown as JsonRecord,
     })
   }
@@ -617,13 +632,15 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: syncResult.sourceRecordsCreated + imports.length,
+      enrichedAssetsCount:
+        syncResult.sourceRecordsCreated + imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -643,6 +660,7 @@ class TribunalSourceSyncService {
           },
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -724,13 +742,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -751,6 +770,7 @@ class TribunalSourceSyncService {
           },
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -783,13 +803,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -798,6 +819,7 @@ class TribunalSourceSyncService {
           stats: item.stats,
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -852,13 +874,14 @@ class TribunalSourceSyncService {
         budgetExecutionUpdated: 0,
       }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -879,6 +902,7 @@ class TribunalSourceSyncService {
           },
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -924,13 +948,14 @@ class TribunalSourceSyncService {
         processedBatches: 0,
       }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -940,6 +965,7 @@ class TribunalSourceSyncService {
           chunking: item.chunking,
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -981,13 +1007,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -1003,6 +1030,7 @@ class TribunalSourceSyncService {
           },
         })),
         importTotals,
+        operationalIntake,
       },
     })
   }
@@ -1043,13 +1071,14 @@ class TribunalSourceSyncService {
       }),
       { inserted: 0, updated: 0, errors: 0, validRows: 0, selectedRows: 0, processedBatches: 0 }
     )
+    const operationalIntake = await this.runOperationalIntakeForImports(options, imports)
 
     return completedResult(target, {
       discoveredCount: syncResult.discovered,
       sourceRecordsCount: syncResult.downloaded,
       createdAssetsCount: importTotals.inserted,
       linkedAssetsCount: importTotals.inserted + importTotals.updated,
-      enrichedAssetsCount: imports.length,
+      enrichedAssetsCount: imports.length + operationalIntake.scoresRefreshed,
       errorCount: importTotals.errors,
       metrics: {
         ...syncResult,
@@ -1065,7 +1094,26 @@ class TribunalSourceSyncService {
           },
         })),
         importTotals,
+        operationalIntake,
       },
+    })
+  }
+
+  private runOperationalIntakeForImports(
+    options: TribunalSourceSyncOptions,
+    imports: Array<{ sourceRecord: { id: string } }>
+  ): Promise<PostImportOperationalIntakeResult> {
+    const sourceRecordIds = [...new Set(imports.map((item) => item.sourceRecord.id))]
+
+    if (sourceRecordIds.length === 0) {
+      return Promise.resolve(emptyOperationalIntakeResult())
+    }
+
+    return postImportOperationalIntakeService.run({
+      tenantId: options.tenantId,
+      sourceRecordIds,
+      limit: options.postImportOperationalLimit ?? 2_000,
+      createOpportunities: options.postImportCreateOpportunities ?? true,
     })
   }
 
@@ -1207,6 +1255,17 @@ function isTjrjAnnualMapDocument(link: { title: string; url: string; format: str
     .toLowerCase()
 
   return link.format === 'pdf' && value.includes('mapa') && value.includes('precatorio')
+}
+
+function emptyOperationalIntakeResult(): PostImportOperationalIntakeResult {
+  return {
+    inspectedAssets: 0,
+    scoresRefreshed: 0,
+    scoresCreated: 0,
+    opportunitiesCreated: 0,
+    opportunitiesUpdated: 0,
+    opportunitiesSkipped: 0,
+  }
 }
 
 export default new TribunalSourceSyncService()
