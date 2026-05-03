@@ -13,6 +13,7 @@ tests/
 │   │   ├── siop/           # SIOP open-data integration adapters
 │   │   └── tribunals/      # Tribunal adapters/importers, grouped by court or shared core
 │   ├── operations/         # Cession, pricing, pipeline and operational intake
+│   ├── admin/              # Admin jobs, retries and operational controls
 │   ├── market/             # Market-rate calculations
 │   ├── siop/               # SIOP import and parser domain tests
 │   └── shared/             # Cross-module helpers and filters
