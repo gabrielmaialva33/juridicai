@@ -3,11 +3,17 @@ import { middleware } from '#start/kernel'
 
 const DataJudCandidatesController = () =>
   import('#modules/integrations/controllers/datajud_candidates_controller')
+const GovernmentCoverageController = () =>
+  import('#modules/integrations/controllers/government_coverage_controller')
 const TribunalBudgetExecutionsController = () =>
   import('#modules/integrations/controllers/tribunal_budget_executions_controller')
 
 router
   .group(() => {
+    router
+      .get('admin/integrations/coverage', [GovernmentCoverageController, 'index'])
+      .as('government.coverage.index')
+      .use(middleware.permission('imports.read'))
     router
       .get('admin/tribunal/budget-executions', [TribunalBudgetExecutionsController, 'index'])
       .as('tribunal.budget_executions.index')
