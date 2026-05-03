@@ -22,10 +22,14 @@ _"The desk should answer in seconds: originate, price, contact, monitor, block, 
 ---
 
 > [!IMPORTANT]
-> **Operations-first legal intelligence.** JuridicAI is an origination and decision desk for precatório opportunities. It collects public government records, preserves provenance, normalizes legal assets, enriches lawsuits, detects publication signals, prices liquidity, and keeps every decision auditable.
+> **Operations-first legal intelligence.** JuridicAI is an origination and decision desk for precatório opportunities.
+> It collects public government records, preserves provenance, normalizes legal assets, enriches lawsuits, detects
+> publication signals, prices liquidity, and keeps every decision auditable.
 
 > [!NOTE]
-> **Designed for real Brazilian data.** The backend already handles federal, judicial, publication, and tribunal-file lanes: SIOP open data, CNJ DataJud, DJEN, TRF2 CSVs, TJSP communications/documents, BCB market rates, and tenant-scoped operational workflows.
+> **Designed for real Brazilian data.** The backend already handles federal, judicial, publication, and tribunal-file
+> lanes: SIOP open data, CNJ DataJud, DJEN, TRF2 CSVs, TJSP communications/documents, BCB market rates, and tenant-scoped
+> operational workflows.
 
 ---
 
@@ -52,7 +56,8 @@ pnpm dev
 pnpm worker
 ```
 
-The default app URL is `http://localhost:3333`. Local services bind to `127.0.0.1:5432` for PostgreSQL and `127.0.0.1:6379` for Redis.
+The default app URL is `http://localhost:3333`. Local services bind to `127.0.0.1:5432` for PostgreSQL and
+`127.0.0.1:6379` for Redis.
 
 ---
 

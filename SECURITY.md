@@ -2,11 +2,13 @@
 
 ## Supported Versions
 
-This project is in pre-release development. Security fixes target the `main` branch unless a maintained release branch is explicitly announced.
+This project is in pre-release development. Security fixes target the `main` branch unless a maintained release branch
+is explicitly announced.
 
 ## Reporting a Vulnerability
 
-Do not open a public issue for vulnerabilities, exposed credentials, PII leakage, authentication bypasses, tenant isolation issues, queue/job abuse, or ingestion paths that can corrupt source evidence.
+Do not open a public issue for vulnerabilities, exposed credentials, PII leakage, authentication bypasses, tenant
+isolation issues, queue/job abuse, or ingestion paths that can corrupt source evidence.
 
 Report privately to the maintainers with:
 
@@ -18,7 +20,8 @@ Report privately to the maintainers with:
 
 ## Handling Expectations
 
-Maintainers will acknowledge valid reports as soon as practical, investigate privately, and coordinate a fix before public disclosure. Reports involving PII, credentials, or tenant isolation receive priority.
+Maintainers will acknowledge valid reports as soon as practical, investigate privately, and coordinate a fix before
+public disclosure. Reports involving PII, credentials, or tenant isolation receive priority.
 
 ## Security Scope
 

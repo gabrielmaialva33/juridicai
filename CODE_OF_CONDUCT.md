@@ -2,7 +2,8 @@
 
 ## Our Pledge
 
-We are committed to making this project a professional, respectful, and productive environment for contributors, maintainers, users, and security researchers.
+We are committed to making this project a professional, respectful, and productive environment for contributors,
+maintainers, users, and security researchers.
 
 ## Expected Behavior
 
@@ -22,8 +23,10 @@ We are committed to making this project a professional, respectful, and producti
 
 ## Enforcement
 
-Maintainers may remove comments, close issues, reject contributions, or restrict participation when behavior violates this code. Serious or repeated violations may result in a permanent ban from project spaces.
+Maintainers may remove comments, close issues, reject contributions, or restrict participation when behavior violates
+this code. Serious or repeated violations may result in a permanent ban from project spaces.
 
 ## Reporting
 
-Report conduct concerns privately to the maintainers. Include relevant links, screenshots, dates, and context when possible. Maintainers will review reports with discretion and avoid unnecessary disclosure.
+Report conduct concerns privately to the maintainers. Include relevant links, screenshots, dates, and context when
+possible. Maintainers will review reports with discretion and avoid unnecessary disclosure.

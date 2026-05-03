@@ -1,6 +1,7 @@
 # Contributing
 
-Thanks for helping improve JuridicAI. This repository is an AdonisJS 7 monolith with Inertia + React, TimescaleDB/PostgreSQL, Redis, queue workers, and public-data ingestion pipelines for precatórios.
+Thanks for helping improve JuridicAI. This repository is an AdonisJS 7 monolith with Inertia + React,
+TimescaleDB/PostgreSQL, Redis, queue workers, and public-data ingestion pipelines for precatórios.
 
 ## Development Setup
 
@@ -35,7 +36,8 @@ pnpm dev
 - Use `app/modules/<domain>/` for domain code and `app/shared/` for cross-domain utilities.
 - Prefer Adonis aliases such as `#modules/*`, `#shared/*`, and `#database/*`.
 - Use `DateTime` from Luxon for date/time values in backend code.
-- Keep migrations cohesive. This project is still pre-release, so schema improvements should be folded into create migrations when appropriate.
+- Keep migrations cohesive. This project is still pre-release, so schema improvements should be folded into create
+  migrations when appropriate.
 - Treat PII, secrets, court data, and source evidence with care. Do not log sensitive payloads.
 
 ## Validation
