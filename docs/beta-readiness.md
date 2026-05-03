@@ -128,4 +128,5 @@ pnpm typecheck
 pnpm test
 ```
 
-Also verify that sensitive beneficiary data remains behind the audited reveal flow, raw government payloads do not expose PII in normal views, and non-owner users cannot access admin-only routes directly.
+Also verify that sensitive beneficiary data remains behind the audited reveal flow, raw government payloads do not
+expose PII in normal views, and non-owner users cannot access admin-only routes directly.
