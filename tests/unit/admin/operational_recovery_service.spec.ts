@@ -20,6 +20,7 @@ test.group('Operational recovery service', () => {
     const now = DateTime.fromISO('2026-05-03T15:00:00Z')
     const tenant = await TenantFactory.create()
     const runId = await createGovernmentRun(tenant.id, 'running', now.minus({ hours: 8 }))
+    const coverageRunId = await createCoverageRun(tenant.id, 'running', now.minus({ hours: 8 }))
     const queued = await withOperationalQueueStubs(now, () =>
       operationalRecoveryService.run({
         tenantIds: [tenant.id],
@@ -28,6 +29,7 @@ test.group('Operational recovery service', () => {
     )
 
     assert.equal(queued.result.stalledRunsMarkedFailed, 1)
+    assert.equal(queued.result.stalledCoverageRunsMarkedFailed, 1)
     assert.equal(queued.result.governmentSyncsEnqueued, 1)
     assert.equal(queued.jobs[0].queueName, 'government-data-sync-orchestrator')
     assert.equal(queued.jobs[0].payload.tenantId, tenant.id)
@@ -35,6 +37,9 @@ test.group('Operational recovery service', () => {
     const [run] = await db.from('radar_job_runs').where('id', runId).select('*')
     assert.equal(run.status, 'failed')
     assert.equal(run.error_code, 'E_JOB_STALLED')
+    const [coverageRun] = await db.from('coverage_runs').where('id', coverageRunId).select('*')
+    assert.equal(coverageRun.status, 'failed')
+    assert.match(coverageRun.error_message, /Marked failed by operational recovery/)
 
     await cleanupTenantRuns(tenant.id)
     await tenant.delete()
@@ -44,6 +49,7 @@ test.group('Operational recovery service', () => {
     const now = DateTime.fromISO('2026-05-03T15:00:00Z')
     const tenant = await TenantFactory.create()
     const runId = await createGovernmentRun(tenant.id, 'running', now.minus({ hours: 8 }))
+    const coverageRunId = await createCoverageRun(tenant.id, 'running', now.minus({ hours: 8 }))
     const queued = await withOperationalQueueStubs(now, () =>
       operationalRecoveryService.run({
         tenantIds: [tenant.id],
@@ -54,11 +60,14 @@ test.group('Operational recovery service', () => {
 
     assert.equal(queued.result.dryRun, true)
     assert.equal(queued.result.stalledRunsMarkedFailed, 1)
+    assert.equal(queued.result.stalledCoverageRunsMarkedFailed, 1)
     assert.equal(queued.result.governmentSyncsEnqueued, 0)
     assert.lengthOf(queued.jobs, 0)
 
     const [run] = await db.from('radar_job_runs').where('id', runId).select('*')
     assert.equal(run.status, 'running')
+    const [coverageRun] = await db.from('coverage_runs').where('id', coverageRunId).select('*')
+    assert.equal(coverageRun.status, 'running')
 
     await cleanupTenantRuns(tenant.id)
     await tenant.delete()
@@ -176,6 +185,25 @@ async function createGovernmentRun(tenantId: string, status: JobRunStatus, creat
   return String(row.id)
 }
 
+async function createCoverageRun(tenantId: string, status: JobRunStatus, startedAt: DateTime) {
+  const [row] = await db
+    .table('coverage_runs')
+    .insert({
+      tenant_id: tenantId,
+      status,
+      origin: 'scheduler',
+      scope: { targetKey: `recovery-coverage-${tenantId}` },
+      started_at: startedAt.toJSDate(),
+      finished_at: status === 'running' ? null : startedAt.plus({ minutes: 1 }).toJSDate(),
+      created_at: startedAt.toJSDate(),
+      updated_at: startedAt.toJSDate(),
+    })
+    .returning('*')
+
+  return String(row.id)
+}
+
 async function cleanupTenantRuns(tenantId: string) {
+  await db.from('coverage_runs').where('tenant_id', tenantId).delete()
   await db.from('radar_job_runs').where('tenant_id', tenantId).delete()
 }

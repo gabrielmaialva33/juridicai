@@ -16,6 +16,7 @@ type TenantRecoveryAction = {
   healthStatus: 'ok' | 'attention' | 'degraded'
   governmentSyncStatus: string
   stalledRunsMarkedFailed: number
+  stalledCoverageRunsMarkedFailed: number
   governmentSyncEnqueued: boolean
   governmentSyncSkippedReason: string | null
 }
@@ -30,6 +31,11 @@ class OperationalRecoveryService {
     for (const tenantId of tenantIds) {
       const health = await operationalHealthService.build(tenantId, now)
       const stalledRunsMarkedFailed = await this.recoverStalledRuns(tenantId, now, dryRun)
+      const stalledCoverageRunsMarkedFailed = await this.recoverStalledCoverageRuns(
+        tenantId,
+        now,
+        dryRun
+      )
       const governmentSync = await this.recoverGovernmentSync(tenantId, health, now, dryRun)
 
       tenants.push({
@@ -37,6 +43,7 @@ class OperationalRecoveryService {
         healthStatus: health.status,
         governmentSyncStatus: health.governmentSync.status,
         stalledRunsMarkedFailed,
+        stalledCoverageRunsMarkedFailed,
         governmentSyncEnqueued: governmentSync.enqueued,
         governmentSyncSkippedReason: governmentSync.skippedReason,
       })
@@ -48,6 +55,10 @@ class OperationalRecoveryService {
       tenantsEvaluated: tenants.length,
       stalledRunsMarkedFailed: tenants.reduce(
         (total, tenant) => total + tenant.stalledRunsMarkedFailed,
+        0
+      ),
+      stalledCoverageRunsMarkedFailed: tenants.reduce(
+        (total, tenant) => total + tenant.stalledCoverageRunsMarkedFailed,
         0
       ),
       governmentSyncsEnqueued: tenants.filter((tenant) => tenant.governmentSyncEnqueued).length,
@@ -82,6 +93,36 @@ class OperationalRecoveryService {
         duration_ms: db.raw('extract(epoch from (?::timestamptz - started_at)) * 1000', [
           now.toISO(),
         ]),
+        updated_at: now.toJSDate(),
+      })
+
+    return rows.length
+  }
+
+  private async recoverStalledCoverageRuns(tenantId: string, now: DateTime, dryRun: boolean) {
+    const staleBefore = now.minus({ hours: GOVERNMENT_SYNC_RUNNING_STALE_HOURS }).toJSDate()
+    const rows = await db
+      .from('coverage_runs')
+      .where('tenant_id', tenantId)
+      .where('status', 'running')
+      .where('started_at', '<', staleBefore)
+      .select('id')
+
+    if (dryRun || rows.length === 0) {
+      return rows.length
+    }
+
+    await db
+      .from('coverage_runs')
+      .whereIn(
+        'id',
+        rows.map((row) => String(row.id))
+      )
+      .update({
+        status: 'failed',
+        error_count: db.raw('greatest(error_count, 1)'),
+        error_message: `Marked failed by operational recovery after ${GOVERNMENT_SYNC_RUNNING_STALE_HOURS} stale running hours.`,
+        finished_at: now.toJSDate(),
         updated_at: now.toJSDate(),
       })
 

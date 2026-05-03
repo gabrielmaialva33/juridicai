@@ -54,15 +54,26 @@ test.group('Government data sync orchestrator service', () => {
       collectedAt: DateTime.now(),
       rawData: { courtAlias: 'tjac' },
     })
+    const phaseEvents: Array<{ phase: string; status: string }> = []
 
     const result = await governmentDataSyncOrchestratorService.run({
       tenantId: tenant.id,
       years: [2026],
       dryRun: true,
+      phaseReporter: (event) => {
+        phaseEvents.push({
+          phase: event.phase,
+          status: event.status,
+        })
+      },
     })
 
     assert.equal(result.dryRun, true)
     assert.deepEqual(result.years, [2026])
+    assert.deepEqual(phaseEvents, [
+      { phase: 'coveragePlanning', status: 'started' },
+      { phase: 'coveragePlanning', status: 'completed' },
+    ])
     assert.exists(result.coveragePlan)
     assert.exists(result.coverageRecoveryPlan)
 

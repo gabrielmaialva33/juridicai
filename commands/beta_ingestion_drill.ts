@@ -33,8 +33,7 @@ export default class BetaIngestionDrill extends BaseCommand {
   declare fullBackfill: boolean
 
   @flags.string({
-    description:
-      'Comma-separated DataJud court aliases. Omit to scan all official aliases with limits.',
+    description: 'Comma-separated DataJud court aliases. Omit to use the scheduled national batch.',
   })
   declare courts?: string
 
@@ -49,8 +48,7 @@ export default class BetaIngestionDrill extends BaseCommand {
   declare datajudMaxPagesPerCourt?: number
 
   @flags.string({
-    description:
-      'Comma-separated DJEN court aliases. Omit to mirror all official aliases with limits.',
+    description: 'Comma-separated DJEN court aliases. Omit to mirror the DataJud batch.',
   })
   declare djenCourts?: string
 

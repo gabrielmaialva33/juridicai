@@ -18,6 +18,10 @@ import {
   REFRESH_AGGREGATES_QUEUE,
 } from '#modules/maintenance/jobs/refresh_aggregates_handler'
 import { handleVacuumHint, VACUUM_HINT_QUEUE } from '#modules/maintenance/jobs/vacuum_hint_handler'
+import {
+  handleOperationalRecovery,
+  OPERATIONAL_RECOVERY_QUEUE,
+} from '#modules/admin/jobs/operational_recovery_handler'
 
 const ENQUEUEABLE_JOBS = {
   [SIOP_RECONCILE_QUEUE]: {
@@ -39,6 +43,10 @@ const ENQUEUEABLE_JOBS = {
   [VACUUM_HINT_QUEUE]: {
     jobName: 'maintenance-vacuum-hint',
     handler: () => handleVacuumHint({ origin: 'manual_retry' }),
+  },
+  [OPERATIONAL_RECOVERY_QUEUE]: {
+    jobName: 'admin-operational-recovery',
+    handler: () => handleOperationalRecovery({ origin: 'manual_retry' }),
   },
 } as const
 
@@ -62,34 +70,38 @@ export default class QueueEnqueue extends BaseCommand {
   declare runInline: boolean
 
   async run() {
-    if (!this.isKnownQueue(this.queueName)) {
-      this.logger.error(`Unknown queue "${this.queueName}".`)
-      this.logger.info(`Available queues: ${Object.keys(ENQUEUEABLE_JOBS).join(', ')}`)
-      this.exitCode = 1
-      return
-    }
+    try {
+      if (!this.isKnownQueue(this.queueName)) {
+        this.logger.error(`Unknown queue "${this.queueName}".`)
+        this.logger.info(`Available queues: ${Object.keys(ENQUEUEABLE_JOBS).join(', ')}`)
+        this.exitCode = 1
+        return
+      }
 
-    const config = ENQUEUEABLE_JOBS[this.queueName]
+      const config = ENQUEUEABLE_JOBS[this.queueName]
 
-    if (this.runInline) {
-      const result = await config.handler()
-      this.logger.info(
-        `Job completed inline: ${JSON.stringify({ queueName: this.queueName, result })}`
+      if (this.runInline) {
+        const result = await config.handler()
+        this.logger.info(
+          `Job completed inline: ${JSON.stringify({ queueName: this.queueName, result })}`
+        )
+        return
+      }
+
+      const jobId = `${config.jobName}-${DateTime.utc().toMillis()}`
+      const job = await queueService.add(
+        this.queueName,
+        config.jobName,
+        { origin: 'manual_retry' },
+        { jobId }
       )
-      return
+
+      this.logger.info(
+        `Job enqueued: ${JSON.stringify({ queueName: this.queueName, jobId: job.id })}`
+      )
+    } finally {
+      await queueService.shutdown()
     }
-
-    const jobId = `${config.jobName}-${DateTime.utc().toMillis()}`
-    const job = await queueService.add(
-      this.queueName,
-      config.jobName,
-      { origin: 'manual_retry' },
-      { jobId }
-    )
-
-    this.logger.info(
-      `Job enqueued: ${JSON.stringify({ queueName: this.queueName, jobId: job.id })}`
-    )
   }
 
   private isKnownQueue(queueName: string): queueName is EnqueueableQueueName {

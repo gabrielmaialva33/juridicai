@@ -20,6 +20,14 @@ import { governmentTimedFetch } from '#modules/integrations/services/government_
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type { JobRunOrigin, SourceType } from '#shared/types/model_enums'
 
+export type GovernmentDataSyncPhaseProgressEvent = {
+  phase: string
+  status: 'started' | 'completed' | 'failed'
+  at: string
+  elapsedMs?: number | null
+  errorMessage?: string | null
+}
+
 export type GovernmentDataSyncOptions = {
   tenantId: string
   years?: number[] | null
@@ -42,6 +50,7 @@ export type GovernmentDataSyncOptions = {
   candidatesPerAsset?: number | null
   source?: SourceType | null
   fetchTimeoutMs?: number | null
+  phaseReporter?: (event: GovernmentDataSyncPhaseProgressEvent) => Promise<void> | void
   origin?: JobRunOrigin
   dryRun?: boolean
 }
@@ -50,9 +59,18 @@ class GovernmentDataSyncOrchestratorService {
   async run(options: GovernmentDataSyncOptions) {
     const startedAt = DateTime.utc()
     const years = normalizeYears(options.years)
-    const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
-    const coveragePlan = buildCoveragePlan(coverageMatrix)
-    const coverageRecoveryPlan = governmentCoverageRecoveryPlanService.build(coverageMatrix)
+    const { coveragePlan, coverageRecoveryPlan } = await runPhase(
+      options,
+      'coveragePlanning',
+      async () => {
+        const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
+
+        return {
+          coveragePlan: buildCoveragePlan(coverageMatrix),
+          coverageRecoveryPlan: governmentCoverageRecoveryPlanService.build(coverageMatrix),
+        }
+      }
+    )
     const coverageTargetKeys = targetKeysForCoverageRecoveryPlan(coverageRecoveryPlan)
     const fetcher = options.fetchTimeoutMs
       ? governmentTimedFetch({ timeoutMs: options.fetchTimeoutMs })
@@ -69,101 +87,125 @@ class GovernmentDataSyncOrchestratorService {
       }
     }
 
-    const siopOpenData = await siopOpenDataSyncService.sync({
-      tenantId: options.tenantId,
-      years,
-      download: true,
-      enqueueImports: true,
-      fetcher,
-      origin: options.origin ?? 'scheduler',
-    })
-    const dataJudNationalDiscovery = await dataJudNationalPrecatorioSyncService.sync({
-      tenantId: options.tenantId,
-      courtAliases: options.dataJudCourtAliases,
-      pageSize: options.dataJudPageSize ?? 100,
-      maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
-      fetcher,
-      origin: options.origin ?? 'scheduler',
-    })
-    const djenPublicationDiscovery = await djenPublicationSyncService.sync({
-      tenantId: options.tenantId,
-      courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases,
-      searchTexts: options.djenSearchTexts,
-      startDate: options.djenStartDate,
-      endDate: options.djenEndDate,
-      maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
-      fetcher,
-      origin: options.origin ?? 'scheduler',
-    })
-    const tribunalSourceDiscovery = await tribunalSourceSyncService.sync({
-      tenantId: options.tenantId,
-      targetKeys: coverageTargetKeys,
-      adapterKeys: coverageTargetKeys.length > 0 ? null : defaultAdapterKeys(),
-      tjspCategories: options.tjspCategories,
-      tjspLimit: options.tjspLimit ?? 25,
-      tjspImportDocuments: options.tjspImportDocuments ?? true,
-      tjbaPageSize: 500,
-      tjbaMaxPages: 25,
-      tjbaImportLimit: 500,
-      tjesDebtorLimit: 250,
-      tjesPageSize: 500,
-      tjesMaxPagesPerDebtor: 50,
-      tjesImportLimit: 500,
-      tjmaYears: years,
-      tjmaLimit: 80,
-      tjmaImportLimit: 1_000,
-      genericTribunalLimit: 25,
-      genericTribunalDownloadLinkedDocuments: true,
-      genericTribunalImportLimit: 500,
-      tjrjAnnualMapImportLimit: 10_000,
-      trf1Years: years,
-      trf1Limit: 25,
-      trf1ImportLimit: 5_000,
-      trf1ImportChunkSize: 500,
-      trf2Years: years,
-      trf3Years: years,
-      trf3Formats: ['csv', 'xlsx'],
-      trf3Limit: 24,
-      trf3ImportLimit: 5_000,
-      trf3ImportChunkSize: 500,
-      trf5Years: years,
-      trf5Limit: 10,
-      trf6Years: years,
-      trf6Limit: 10,
-      fetcher,
-      origin: options.origin ?? 'scheduler',
-    })
-    const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
-      tenantId: options.tenantId,
-      limit: options.enrichLimit ?? 500,
-      source: options.source,
-      missingOnly: true,
-      dryRun: false,
-      fetcher,
-    })
-    const dataJudExactAssetLinking = await dataJudProcessAssetLinkService.link({
-      tenantId: options.tenantId,
-      limit: options.linkLimit ?? 2_000,
-      projectSignals: true,
-    })
-    const dataJudLegalSignalClassification = await dataJudLegalSignalClassifierService.classify({
-      tenantId: options.tenantId,
-      limit: options.signalLimit ?? 2_000,
-      projectAssetEvents: true,
-    })
-    const publicationSignalClassification = await publicationSignalClassifierService.classify({
-      tenantId: options.tenantId,
-      limit: options.publicationLimit ?? 2_000,
-      projectAssetEvents: true,
-    })
-    const dataJudCandidateMatching = await dataJudCandidateMatchService.match({
-      tenantId: options.tenantId,
-      source: options.source,
-      limit: options.matchLimit ?? 500,
-      candidatesPerAsset: options.candidatesPerAsset ?? 3,
-      persist: true,
-      fetcher,
-    })
+    const siopOpenData = await runPhase(options, 'siopOpenData', () =>
+      siopOpenDataSyncService.sync({
+        tenantId: options.tenantId,
+        years,
+        download: true,
+        enqueueImports: true,
+        fetcher,
+        origin: options.origin ?? 'scheduler',
+      })
+    )
+    const dataJudNationalDiscovery = await runPhase(options, 'dataJudNationalDiscovery', () =>
+      dataJudNationalPrecatorioSyncService.sync({
+        tenantId: options.tenantId,
+        courtAliases: options.dataJudCourtAliases,
+        pageSize: options.dataJudPageSize ?? 100,
+        maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
+        fetcher,
+        origin: options.origin ?? 'scheduler',
+      })
+    )
+    const djenPublicationDiscovery = await runPhase(options, 'djenPublicationDiscovery', () =>
+      djenPublicationSyncService.sync({
+        tenantId: options.tenantId,
+        courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases,
+        searchTexts: options.djenSearchTexts,
+        startDate: options.djenStartDate,
+        endDate: options.djenEndDate,
+        maxPagesPerCourt: options.djenMaxPagesPerCourt ?? 1,
+        fetcher,
+        origin: options.origin ?? 'scheduler',
+      })
+    )
+    const tribunalSourceDiscovery = await runPhase(options, 'tribunalSourceDiscovery', () =>
+      tribunalSourceSyncService.sync({
+        tenantId: options.tenantId,
+        targetKeys: coverageTargetKeys,
+        adapterKeys: coverageTargetKeys.length > 0 ? null : defaultAdapterKeys(),
+        tjspCategories: options.tjspCategories,
+        tjspLimit: options.tjspLimit ?? 25,
+        tjspImportDocuments: options.tjspImportDocuments ?? true,
+        tjbaPageSize: 500,
+        tjbaMaxPages: 25,
+        tjbaImportLimit: 500,
+        tjesDebtorLimit: 250,
+        tjesPageSize: 500,
+        tjesMaxPagesPerDebtor: 50,
+        tjesImportLimit: 500,
+        tjmaYears: years,
+        tjmaLimit: 80,
+        tjmaImportLimit: 1_000,
+        genericTribunalLimit: 25,
+        genericTribunalDownloadLinkedDocuments: true,
+        genericTribunalImportLimit: 500,
+        tjrjAnnualMapImportLimit: 10_000,
+        trf1Years: years,
+        trf1Limit: 25,
+        trf1ImportLimit: 5_000,
+        trf1ImportChunkSize: 500,
+        trf2Years: years,
+        trf3Years: years,
+        trf3Formats: ['csv', 'xlsx'],
+        trf3Limit: 24,
+        trf3ImportLimit: 5_000,
+        trf3ImportChunkSize: 500,
+        trf5Years: years,
+        trf5Limit: 10,
+        trf6Years: years,
+        trf6Limit: 10,
+        fetcher,
+        origin: options.origin ?? 'scheduler',
+      })
+    )
+    const dataJudAssetEnrichment = await runPhase(options, 'dataJudAssetEnrichment', () =>
+      dataJudAssetEnrichmentService.enrich({
+        tenantId: options.tenantId,
+        limit: options.enrichLimit ?? 500,
+        source: options.source,
+        missingOnly: true,
+        dryRun: false,
+        fetcher,
+      })
+    )
+    const dataJudExactAssetLinking = await runPhase(options, 'dataJudExactAssetLinking', () =>
+      dataJudProcessAssetLinkService.link({
+        tenantId: options.tenantId,
+        limit: options.linkLimit ?? 2_000,
+        projectSignals: true,
+      })
+    )
+    const dataJudLegalSignalClassification = await runPhase(
+      options,
+      'dataJudLegalSignalClassification',
+      () =>
+        dataJudLegalSignalClassifierService.classify({
+          tenantId: options.tenantId,
+          limit: options.signalLimit ?? 2_000,
+          projectAssetEvents: true,
+        })
+    )
+    const publicationSignalClassification = await runPhase(
+      options,
+      'publicationSignalClassification',
+      () =>
+        publicationSignalClassifierService.classify({
+          tenantId: options.tenantId,
+          limit: options.publicationLimit ?? 2_000,
+          projectAssetEvents: true,
+        })
+    )
+    const dataJudCandidateMatching = await runPhase(options, 'dataJudCandidateMatching', () =>
+      dataJudCandidateMatchService.match({
+        tenantId: options.tenantId,
+        source: options.source,
+        limit: options.matchLimit ?? 500,
+        candidatesPerAsset: options.candidatesPerAsset ?? 3,
+        persist: true,
+        fetcher,
+      })
+    )
 
     return {
       dryRun: false,
@@ -185,6 +227,48 @@ class GovernmentDataSyncOrchestratorService {
       },
     }
   }
+}
+
+async function runPhase<T>(
+  options: GovernmentDataSyncOptions,
+  phase: string,
+  callback: () => Promise<T>
+) {
+  const startedAt = DateTime.utc()
+  await reportPhase(options, {
+    phase,
+    status: 'started',
+    at: startedAt.toISO(),
+  })
+
+  try {
+    const result = await callback()
+    await reportPhase(options, {
+      phase,
+      status: 'completed',
+      at: DateTime.utc().toISO(),
+      elapsedMs: DateTime.utc().diff(startedAt, 'milliseconds').milliseconds,
+    })
+
+    return result
+  } catch (error) {
+    await reportPhase(options, {
+      phase,
+      status: 'failed',
+      at: DateTime.utc().toISO(),
+      elapsedMs: DateTime.utc().diff(startedAt, 'milliseconds').milliseconds,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    })
+
+    throw error
+  }
+}
+
+async function reportPhase(
+  options: GovernmentDataSyncOptions,
+  event: GovernmentDataSyncPhaseProgressEvent
+) {
+  await options.phaseReporter?.(event)
 }
 
 function normalizeYears(years?: number[] | null) {

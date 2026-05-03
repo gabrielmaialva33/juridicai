@@ -39,6 +39,8 @@ test.group('Beta ingestion drill service', () => {
     assert.lengthOf(capturedPayloads, 1)
     assert.equal(capturedPayloads[0].dryRun, true)
     assert.deepEqual(capturedPayloads[0].years, [2026])
+    assert.lengthOf(capturedPayloads[0].dataJudCourtAliases ?? [], 12)
+    assert.deepEqual(capturedPayloads[0].djenCourtAliases, capturedPayloads[0].dataJudCourtAliases)
     assert.equal(capturedPayloads[0].dataJudPageSize, 25)
     assert.equal(capturedPayloads[0].dataJudMaxPagesPerCourt, 1)
     assert.equal(capturedPayloads[0].djenStartDate, '2026-04-26')

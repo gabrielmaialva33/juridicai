@@ -11,6 +11,14 @@ type StartJobRunPayload = {
   metadata?: Record<string, unknown> | null
 }
 
+type JobRunProgressEvent = {
+  phase: string
+  status: 'started' | 'completed' | 'failed'
+  at?: string
+  elapsedMs?: number | null
+  errorMessage?: string | null
+}
+
 class JobRunService {
   async start(payload: StartJobRunPayload) {
     const [row] = await db
@@ -68,6 +76,38 @@ class JobRunService {
       })
   }
 
+  async recordProgress(id: string, event: JobRunProgressEvent) {
+    const row = await db.from('radar_job_runs').where('id', id).select('metadata').first()
+    const metadata = isRecord(row?.metadata) ? row.metadata : {}
+    const phaseProgress = Array.isArray(metadata.phaseProgress) ? metadata.phaseProgress : []
+    const entry = {
+      phase: event.phase,
+      status: event.status,
+      at: event.at ?? new Date().toISOString(),
+      elapsedMs: event.elapsedMs ?? null,
+      errorMessage: event.errorMessage ?? null,
+    }
+
+    await db
+      .from('radar_job_runs')
+      .where('id', id)
+      .update({
+        metadata: {
+          ...metadata,
+          currentPhase:
+            event.status === 'started'
+              ? {
+                  phase: entry.phase,
+                  status: entry.status,
+                  at: entry.at,
+                }
+              : null,
+          phaseProgress: [...phaseProgress, entry].slice(-100),
+        },
+        updated_at: new Date(),
+      })
+  }
+
   private serializeError(error: unknown) {
     if (!error) {
       return {
@@ -88,6 +128,10 @@ class JobRunService {
       message: String(error),
     }
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export default new JobRunService()

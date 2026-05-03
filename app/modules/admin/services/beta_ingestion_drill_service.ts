@@ -5,6 +5,7 @@ import {
   type GovernmentDataSyncOrchestratorPayload,
   handleGovernmentDataSyncOrchestrator,
 } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
+import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import jobRunService from '#shared/services/job_run_service'
 import type { JobRunOrigin, JsonRecord, SourceType } from '#shared/types/model_enums'
 
@@ -130,14 +131,19 @@ function buildPipelinePayload(
   const djenEndDate = options.djenEndDate ?? options.now.toISODate()
   const djenStartDate =
     options.djenStartDate ?? options.now.minus({ days: DEFAULT_DJEN_DAYS }).toISODate()
+  const defaultCourtAliases = governmentDataSyncScheduleService.dataJudCourtBatch(options.now)
+  const requestedDataJudCourtAliases = normalizeList(options.dataJudCourtAliases)
 
   return {
     tenantId: options.tenantId,
     years: options.fullBackfill ? null : normalizeYears(options.years, options.now),
-    dataJudCourtAliases: normalizeList(options.dataJudCourtAliases),
+    dataJudCourtAliases: requestedDataJudCourtAliases ?? defaultCourtAliases,
     dataJudPageSize: options.dataJudPageSize ?? DEFAULT_PAGE_SIZE,
     dataJudMaxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? DEFAULT_MAX_PAGES_PER_COURT,
-    djenCourtAliases: normalizeList(options.djenCourtAliases),
+    djenCourtAliases:
+      normalizeList(options.djenCourtAliases) ??
+      requestedDataJudCourtAliases ??
+      defaultCourtAliases,
     djenSearchTexts: normalizeList(options.djenSearchTexts) ?? ['precatório', 'RPV'],
     djenStartDate,
     djenEndDate,

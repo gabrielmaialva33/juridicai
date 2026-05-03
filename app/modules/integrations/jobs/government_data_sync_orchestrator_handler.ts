@@ -77,7 +77,11 @@ export async function handleGovernmentDataSyncOrchestrator(
         tenantId: payload.tenantId,
         requestId: payload.requestId ?? undefined,
       },
-      () => governmentDataSyncOrchestratorService.run(payload)
+      () =>
+        governmentDataSyncOrchestratorService.run({
+          ...payload,
+          phaseReporter: (event) => jobRunService.recordProgress(run.id, event),
+        })
     )
 
     await jobRunService.finish(run.id, 'completed', metrics)

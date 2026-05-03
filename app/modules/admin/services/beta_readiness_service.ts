@@ -250,9 +250,17 @@ class BetaReadinessService {
     const checks: ReadinessCheck[] = []
 
     try {
-      const snapshots = await queueService.getSnapshots([...operationalQueueNames])
+      const [snapshots, workers] = await Promise.all([
+        queueService.getSnapshots([...operationalQueueNames]),
+        workerHeartbeatService.queueFreshness([...operationalQueueNames]),
+      ])
+      const workerByQueue = new Map(workers.map((worker) => [worker.queueName, worker]))
       const failedQueues = snapshots.filter((snapshot) => Number(snapshot.counts.failed ?? 0) > 0)
-      const missingWorkers = snapshots.filter((snapshot) => !snapshot.worker.registered)
+      const missingWorkers = snapshots.filter((snapshot) => {
+        const worker = workerByQueue.get(snapshot.name)
+
+        return !snapshot.worker.registered && worker?.status !== 'ok'
+      })
       checks.push({
         key: 'queues.snapshots',
         label: 'Queue snapshots',
