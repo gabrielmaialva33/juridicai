@@ -1,6 +1,8 @@
 import db from '@adonisjs/lucid/services/db'
 import queueService from '#shared/services/queue_service'
+import tenantContext from '#shared/helpers/tenant_context'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
+import operationalHealthService from '#modules/admin/services/operational_health_service'
 import { queueNames } from '#start/jobs'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -10,9 +12,14 @@ export default class HealthController {
       database: await this.checkDatabase(),
       queues: await this.checkQueues(),
       workers: await workerHeartbeatService.queueFreshness(queueNames),
+      operational: await this.checkOperational(),
     }
     const status =
-      checks.database.status === 'ok' && checks.queues.status === 'ok' ? 'ok' : 'degraded'
+      checks.database.status === 'ok' &&
+      checks.queues.status === 'ok' &&
+      checks.operational.status === 'ok'
+        ? 'ok'
+        : 'degraded'
 
     if (request.accepts(['html']) === 'html' || request.header('x-inertia')) {
       return inertia.render('admin/health', {
@@ -44,6 +51,17 @@ export default class HealthController {
         status: 'ok' as const,
         snapshots: await queueService.getSnapshots(queueNames),
       }
+    } catch (error) {
+      return {
+        status: 'failed' as const,
+        message: error instanceof Error ? error.message : String(error),
+      }
+    }
+  }
+
+  private async checkOperational() {
+    try {
+      return await operationalHealthService.build(tenantContext.requireTenantId())
     } catch (error) {
       return {
         status: 'failed' as const,
