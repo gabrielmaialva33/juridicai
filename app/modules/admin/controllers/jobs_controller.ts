@@ -3,7 +3,7 @@ import jobRetryService, { JobRetryError } from '#modules/admin/services/job_retr
 import queueService from '#shared/services/queue_service'
 import tenantContext from '#shared/helpers/tenant_context'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
-import { queueNames } from '#start/jobs'
+import { operationalQueueNames } from '#shared/constants/operational_queues'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class JobsController {
@@ -14,8 +14,8 @@ export default class JobsController {
       .where('tenant_id', tenantContext.requireTenantId())
       .orderBy('created_at', 'desc')
       .paginate(page, limit)
-    const queues = await queueService.getSnapshots(queueNames)
-    const workers = await workerHeartbeatService.queueFreshness(queueNames)
+    const queues = await queueService.getSnapshots([...operationalQueueNames])
+    const workers = await workerHeartbeatService.queueFreshness([...operationalQueueNames])
 
     return inertia.render('admin/jobs', {
       runs: paginator.all().map((run) => run.serialize()) as any,

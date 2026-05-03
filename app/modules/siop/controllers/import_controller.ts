@@ -12,7 +12,10 @@ import governmentSourceStatusService from '#modules/integrations/services/govern
 import siopImportService from '#modules/siop/services/siop_import_service'
 import { uploadValidator } from '#modules/siop/validators/upload_validator'
 import tenantContext from '#shared/helpers/tenant_context'
-import { queueNames } from '#start/jobs'
+import {
+  operationalQueueNames,
+  type OperationalQueueName,
+} from '#shared/constants/operational_queues'
 import type { HttpContext } from '@adonisjs/core/http'
 
 type UploadedFile = {
@@ -323,6 +326,6 @@ export default class ImportController {
   }
 }
 
-function isKnownQueueName(value: unknown): value is (typeof queueNames)[number] {
-  return typeof value === 'string' && (queueNames as readonly string[]).includes(value)
+function isKnownQueueName(value: unknown): value is OperationalQueueName {
+  return typeof value === 'string' && (operationalQueueNames as readonly string[]).includes(value)
 }

@@ -7,10 +7,17 @@ import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_re
 import { PURGE_STAGING_QUEUE } from '#modules/maintenance/jobs/purge_staging_handler'
 import { REFRESH_AGGREGATES_QUEUE } from '#modules/maintenance/jobs/refresh_aggregates_handler'
 import { VACUUM_HINT_QUEUE } from '#modules/maintenance/jobs/vacuum_hint_handler'
+import { OPERATIONAL_RECOVERY_QUEUE } from '#modules/admin/jobs/operational_recovery_handler'
 
 scheduler
   .call(() => enqueueScheduledJob(REFRESH_AGGREGATES_QUEUE, 'maintenance-refresh-aggregates'))
   .everyFifteenMinutes()
+  .withoutOverlapping()
+
+scheduler
+  .call(() => enqueueScheduledJob(OPERATIONAL_RECOVERY_QUEUE, 'admin-operational-recovery'))
+  .everyThirtyMinutes()
+  .immediate()
   .withoutOverlapping()
 
 scheduler

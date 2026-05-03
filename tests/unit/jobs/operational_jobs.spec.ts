@@ -3,6 +3,8 @@ import db from '@adonisjs/lucid/services/db'
 import { handleDataJudEnrichAssets } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { handleApplyRetentionPolicy } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { handleSiopReconcile } from '#modules/siop/jobs/siop_reconcile_handler'
+import { operationalQueueNames } from '#shared/constants/operational_queues'
+import { queueNames } from '#start/jobs'
 import ClientError from '#modules/client_errors/models/client_error'
 import SiopImport from '#modules/siop/models/siop_import'
 import SourceRecord from '#modules/siop/models/source_record'
@@ -13,6 +15,11 @@ import { TenantFactory } from '#database/factories/tenant_factory'
 import type Tenant from '#modules/tenant/models/tenant'
 
 test.group('operational jobs', () => {
+  test('keeps operational queue registry aligned with worker registration', async ({ assert }) => {
+    assert.sameMembers(queueNames, [...operationalQueueNames])
+    assert.include(queueNames, 'siop-imports')
+  })
+
   test('marks stale SIOP imports as failed during reconciliation', async ({ assert }) => {
     const tenant = await TenantFactory.create()
 

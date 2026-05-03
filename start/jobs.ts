@@ -1,5 +1,6 @@
 import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
+import { operationalQueueNames } from '#shared/constants/operational_queues'
 import {
   SIOP_IMPORT_QUEUE,
   handleSiopImport,
@@ -90,6 +91,11 @@ import {
   handleVacuumHint,
   type VacuumHintPayload,
 } from '#modules/maintenance/jobs/vacuum_hint_handler'
+import {
+  OPERATIONAL_RECOVERY_QUEUE,
+  handleOperationalRecovery,
+  type OperationalRecoveryPayload,
+} from '#modules/admin/jobs/operational_recovery_handler'
 
 export const queues = {
   siopImport: { name: SIOP_IMPORT_QUEUE, concurrency: 1 },
@@ -98,6 +104,7 @@ export const queues = {
   retentionPolicy: { name: APPLY_RETENTION_POLICY_QUEUE, concurrency: 1 },
   refreshAggregates: { name: REFRESH_AGGREGATES_QUEUE, concurrency: 1 },
   vacuumHint: { name: VACUUM_HINT_QUEUE, concurrency: 1 },
+  operationalRecovery: { name: OPERATIONAL_RECOVERY_QUEUE, concurrency: 1 },
   exportPrecatorios: { name: EXPORT_PRECATORIOS_QUEUE, concurrency: 2 },
   siopOpenDataSync: { name: SIOP_OPEN_DATA_SYNC_QUEUE, concurrency: 1 },
   tjspPrecatorioSync: { name: TJSP_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
@@ -112,7 +119,7 @@ export const queues = {
   dataJudProcessAssetLink: { name: DATAJUD_PROCESS_ASSET_LINK_QUEUE, concurrency: 1 },
 } as const
 
-export const queueNames = Object.values(queues).map((queue) => queue.name)
+export const queueNames = [...operationalQueueNames]
 
 let booted = false
 let heartbeatInterval: NodeJS.Timeout | null = null
@@ -192,6 +199,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.vacuumHint.concurrency }
+  )
+
+  queueService.registerWorker<OperationalRecoveryPayload>(
+    queues.operationalRecovery.name,
+    async (job) => {
+      await handleOperationalRecovery({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.operationalRecovery.concurrency }
   )
 
   queueService.registerWorker<ExportPrecatoriosPayload>(

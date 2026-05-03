@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
-import { queueNames } from '#start/jobs'
+import { operationalQueueNames } from '#shared/constants/operational_queues'
 import {
   GOVERNMENT_SYNC_FAILURE_COOLDOWN_HOURS,
   GOVERNMENT_SYNC_RECENT_SUCCESS_HOURS,
@@ -18,8 +18,8 @@ type WorkerFreshness = Awaited<ReturnType<typeof workerHeartbeatService.queueFre
 class OperationalHealthService {
   async build(tenantId: string, now: DateTime = DateTime.utc()) {
     const [queueSnapshots, workers, stalledRuns, governmentSync] = await Promise.all([
-      queueService.getSnapshots(queueNames),
-      workerHeartbeatService.queueFreshness(queueNames),
+      queueService.getSnapshots([...operationalQueueNames]),
+      workerHeartbeatService.queueFreshness([...operationalQueueNames]),
       this.stalledRuns(tenantId, now),
       this.governmentSyncState(tenantId, now),
     ])

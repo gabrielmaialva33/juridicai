@@ -3,7 +3,7 @@ import queueService from '#shared/services/queue_service'
 import tenantContext from '#shared/helpers/tenant_context'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
 import operationalHealthService from '#modules/admin/services/operational_health_service'
-import { queueNames } from '#start/jobs'
+import { operationalQueueNames } from '#shared/constants/operational_queues'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class HealthController {
@@ -11,7 +11,7 @@ export default class HealthController {
     const checks = {
       database: await this.checkDatabase(),
       queues: await this.checkQueues(),
-      workers: await workerHeartbeatService.queueFreshness(queueNames),
+      workers: await workerHeartbeatService.queueFreshness([...operationalQueueNames]),
       operational: await this.checkOperational(),
     }
     const status =
@@ -49,7 +49,7 @@ export default class HealthController {
     try {
       return {
         status: 'ok' as const,
-        snapshots: await queueService.getSnapshots(queueNames),
+        snapshots: await queueService.getSnapshots([...operationalQueueNames]),
       }
     } catch (error) {
       return {
