@@ -80,8 +80,13 @@ test.group('operations routes', () => {
     assert.equal(list.status, 200)
     assert.equal(list.body.meta.total, 1)
     assert.equal(list.body.opportunities[0].asset.id, asset.id)
+    assert.include(list.body.opportunities[0].pricing.explanation.summary, 'risk-adjusted IRR')
     assert.equal(pricing.status, 200)
     assert.equal(pricing.body.opportunity.pricing.offerRate, 0.385)
+    assert.equal(
+      pricing.body.opportunity.pricing.explanation.scoreBreakdown.riskAdjustedIrr.weight,
+      0.4
+    )
     assert.equal(moved.status, 200)
     assert.equal(moved.body.opportunity.pipeline.stage, 'offer')
     assert.equal(persisted.stage, 'offer')

@@ -110,6 +110,18 @@ function opportunityFixture(
       finalScore: overrides.finalScore ?? 0.86,
       grade: 'A+',
       decision: 'aggressive_buy',
+      explanation: {
+        headline: 'Grade A+: prioritize commercial action',
+        summary: 'Fixture pricing explanation.',
+        scoreBreakdown: {
+          riskAdjustedIrr: contribution(overrides.riskAdjustedIrr ?? 0.31, 0.47, 0.4),
+          paymentProbability: contribution(overrides.paymentProbability ?? 0.92, 0.92, 0.25),
+          termMonths: contribution(14, 0.78, 0.2),
+          faceValue: contribution(1_200_000, 0.23, 0.15),
+        },
+        signalImpacts: [],
+        pricingFactors: [],
+      },
       assumptions: {
         version: 'cession-pricing-v1',
         correctionRule: 'ec_136_min_ipca_plus_2_selic',
@@ -136,5 +148,14 @@ function opportunityFixture(
         eventDate: null,
       })),
     },
+  }
+}
+
+function contribution(value: number, normalized: number, weight: number) {
+  return {
+    value,
+    normalized,
+    weight,
+    contribution: normalized * weight,
   }
 }

@@ -43,6 +43,18 @@ test.group('cession pricing engine', () => {
 
     assert.equal(projection.pricing.termMonths, 18)
     assert.isAbove(projection.pricing.paymentProbability, 0.55)
+    assert.equal(projection.pricing.explanation.scoreBreakdown.riskAdjustedIrr.weight, 0.4)
+    assert.include(projection.pricing.explanation.headline, `Grade ${projection.pricing.grade}`)
+    assert.include(projection.pricing.explanation.summary, 'risk-adjusted IRR')
+    assert.include(
+      projection.pricing.explanation.signalImpacts.map((signal) => signal.code),
+      'direct_agreement_window'
+    )
+    assert.isTrue(
+      projection.pricing.explanation.pricingFactors.some(
+        (factor) => factor.key === 'estimated_term' && factor.impact === 'positive'
+      )
+    )
     assert.include(
       projection.signals.positive.map((signal) => signal.code),
       'direct_agreement_window'

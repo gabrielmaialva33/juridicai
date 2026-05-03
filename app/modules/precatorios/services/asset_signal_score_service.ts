@@ -5,7 +5,7 @@ import type AssetEvent from '#modules/precatorios/models/asset_event'
 import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import type { JsonRecord } from '#shared/types/model_enums'
 
-const SCORE_VERSION = 'legal-signals-v1'
+const SCORE_VERSION = 'legal-signals-v2'
 
 const POSITIVE_WEIGHTS: Record<string, number> = {
   direct_agreement_opened: 18,
@@ -146,7 +146,7 @@ function buildScoreSnapshot(asset: PrecatorioAsset, events: AssetEvent[]) {
     riskScore,
     finalScore,
     explanation: {
-      source: 'datajud_legal_signals',
+      source: 'legal_and_operational_signals',
       version: SCORE_VERSION,
       fingerprint,
       positiveSignals: summarizeEvents(positiveEvents),

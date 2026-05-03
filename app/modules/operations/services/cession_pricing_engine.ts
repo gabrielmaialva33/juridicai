@@ -169,6 +169,7 @@ export type PricingResult = {
   finalScore: number
   grade: OpportunityGrade
   decision: 'aggressive_buy' | 'buy' | 'watch' | 'avoid'
+  explanation: PricingExplanation
   assumptions: {
     version: 'cession-pricing-v1'
     correctionRule: 'ec_136_min_ipca_plus_2_selic'
@@ -176,6 +177,38 @@ export type PricingResult = {
     scoreModel: 'rule_based_v1'
     marketRatesAsOf: string | null
   }
+}
+
+export type PricingExplanation = {
+  headline: string
+  summary: string
+  scoreBreakdown: {
+    riskAdjustedIrr: ScoreContribution
+    paymentProbability: ScoreContribution
+    termMonths: ScoreContribution
+    faceValue: ScoreContribution
+  }
+  signalImpacts: Array<{
+    code: string
+    label: string
+    polarity: 'positive' | 'negative'
+    paymentMultiplier: number
+    eventDate: string | null
+  }>
+  pricingFactors: Array<{
+    key: string
+    label: string
+    impact: 'positive' | 'negative' | 'neutral'
+    value: number | string | null
+    detail: string
+  }>
+}
+
+export type ScoreContribution = {
+  value: number
+  normalized: number
+  weight: number
+  contribution: number
 }
 
 export type OpportunityProjection = {
@@ -346,13 +379,16 @@ class CessionPricingEngine {
     const expectedAnnualIrr = clamp(rawIrr, -1, 2)
     const paymentProbability = estimatePaymentProbability(asset, debtor, debtorPaymentStat, events)
     const riskAdjustedIrr = clamp(expectedAnnualIrr * paymentProbability, -1, 2)
-    const finalScore = scoreOpportunity({
+    const scoreBreakdown = scoreOpportunityBreakdown({
       riskAdjustedIrr,
       paymentProbability,
       termMonths,
       faceValue,
     })
+    const finalScore = scoreBreakdown.finalScore
     const grade = gradeFromScore(finalScore)
+    const classifiedSignals = classifySignals(events, asset)
+    const decision = decisionFromGrade(grade)
 
     return {
       faceValue: roundMoney(faceValue),
@@ -372,7 +408,22 @@ class CessionPricingEngine {
       riskAdjustedIrr: round(riskAdjustedIrr, 6),
       finalScore: round(finalScore, 6),
       grade,
-      decision: decisionFromGrade(grade),
+      decision,
+      explanation: buildPricingExplanation({
+        asset,
+        debtor,
+        debtorPaymentStat,
+        decision,
+        grade,
+        scoreBreakdown,
+        signals: classifiedSignals,
+        faceValue,
+        offerRate,
+        termMonths,
+        expectedAnnualIrr,
+        paymentProbability,
+        riskAdjustedIrr,
+      }),
       assumptions: {
         version: 'cession-pricing-v1',
         correctionRule: 'ec_136_min_ipca_plus_2_selic',
@@ -555,18 +606,229 @@ function classifySignals(events: AssetEvent[], asset: PrecatorioAsset) {
   return { positive, negative }
 }
 
-function scoreOpportunity(input: {
+function scoreOpportunityBreakdown(input: {
   riskAdjustedIrr: number
   paymentProbability: number
   termMonths: number
   faceValue: number
 }) {
-  return (
-    0.4 * normalize(input.riskAdjustedIrr, 0.05, 0.6) +
-    0.25 * normalize(input.paymentProbability, 0, 1) +
-    0.2 * inverseNormalize(input.termMonths, 1, 60) +
-    0.15 * normalize(input.faceValue, 50_000, 5_000_000)
+  const riskAdjustedIrr = contribution(
+    input.riskAdjustedIrr,
+    normalize(input.riskAdjustedIrr, 0.05, 0.6),
+    0.4
   )
+  const paymentProbability = contribution(
+    input.paymentProbability,
+    normalize(input.paymentProbability, 0, 1),
+    0.25
+  )
+  const termMonths = contribution(input.termMonths, inverseNormalize(input.termMonths, 1, 60), 0.2)
+  const faceValue = contribution(
+    input.faceValue,
+    normalize(input.faceValue, 50_000, 5_000_000),
+    0.15
+  )
+  const finalScore =
+    riskAdjustedIrr.contribution +
+    paymentProbability.contribution +
+    termMonths.contribution +
+    faceValue.contribution
+
+  return {
+    riskAdjustedIrr,
+    paymentProbability,
+    termMonths,
+    faceValue,
+    finalScore,
+  }
+}
+
+function buildPricingExplanation(input: {
+  asset: PrecatorioAsset
+  debtor: Debtor | null
+  debtorPaymentStat: DebtorPaymentStat | null
+  decision: PricingResult['decision']
+  grade: OpportunityGrade
+  scoreBreakdown: ReturnType<typeof scoreOpportunityBreakdown>
+  signals: { positive: EventSignal[]; negative: EventSignal[] }
+  faceValue: number
+  offerRate: number
+  termMonths: number
+  expectedAnnualIrr: number
+  paymentProbability: number
+  riskAdjustedIrr: number
+}): PricingExplanation {
+  const signalImpacts = [...input.signals.positive, ...input.signals.negative].map((signal) => ({
+    code: signal.code,
+    label: signal.label,
+    polarity: signal.polarity,
+    paymentMultiplier: signal.paymentMultiplier,
+    eventDate: signal.eventDate,
+  }))
+
+  return {
+    headline: headlineFor(input.decision, input.grade),
+    summary: summaryFor(input),
+    scoreBreakdown: {
+      riskAdjustedIrr: normalizeContribution(input.scoreBreakdown.riskAdjustedIrr),
+      paymentProbability: normalizeContribution(input.scoreBreakdown.paymentProbability),
+      termMonths: normalizeContribution(input.scoreBreakdown.termMonths),
+      faceValue: normalizeContribution(input.scoreBreakdown.faceValue),
+    },
+    signalImpacts,
+    pricingFactors: pricingFactorsFor(input),
+  }
+}
+
+function pricingFactorsFor(input: {
+  asset: PrecatorioAsset
+  debtor: Debtor | null
+  debtorPaymentStat: DebtorPaymentStat | null
+  faceValue: number
+  offerRate: number
+  termMonths: number
+  expectedAnnualIrr: number
+  paymentProbability: number
+  riskAdjustedIrr: number
+  signals: { positive: EventSignal[]; negative: EventSignal[] }
+}) {
+  const queuePosition = assetValueSnapshot(input.asset).queuePosition
+  const positiveSignals = input.signals.positive.length
+  const negativeSignals = input.signals.negative.length
+
+  return [
+    {
+      key: 'risk_adjusted_irr',
+      label: 'Risk-adjusted IRR',
+      impact: input.riskAdjustedIrr >= 0.25 ? 'positive' : 'neutral',
+      value: round(input.riskAdjustedIrr, 6),
+      detail: 'Primary ranking metric after payment probability is applied.',
+    },
+    {
+      key: 'payment_probability',
+      label: 'Payment probability',
+      impact: input.paymentProbability >= 0.75 ? 'positive' : 'neutral',
+      value: round(input.paymentProbability, 6),
+      detail: reliabilityDetail(input),
+    },
+    {
+      key: 'estimated_term',
+      label: 'Estimated term',
+      impact: input.termMonths <= 18 ? 'positive' : input.termMonths >= 60 ? 'negative' : 'neutral',
+      value: input.termMonths,
+      detail: termDetail(input, queuePosition),
+    },
+    {
+      key: 'offer_rate',
+      label: 'Offer rate',
+      impact: input.offerRate <= 0.6 ? 'positive' : 'neutral',
+      value: round(input.offerRate, 6),
+      detail:
+        'Lower acquisition cost increases expected spread but must remain commercially executable.',
+    },
+    {
+      key: 'signals',
+      label: 'Signals',
+      impact: negativeSignals > 0 ? 'negative' : positiveSignals > 0 ? 'positive' : 'neutral',
+      value: `${positiveSignals} positive / ${negativeSignals} negative`,
+      detail: 'DJEN, DataJud, tribunal queue and payment documents change payment probability.',
+    },
+  ] satisfies PricingExplanation['pricingFactors']
+}
+
+function reliabilityDetail(input: {
+  debtor: Debtor | null
+  debtorPaymentStat: DebtorPaymentStat | null
+}) {
+  if (input.debtorPaymentStat?.onTimePaymentRate) {
+    return 'Uses historical on-time payment rate for the debtor.'
+  }
+
+  if (input.debtorPaymentStat?.reliabilityScore || input.debtor?.paymentReliabilityScore) {
+    return 'Uses debtor reliability score when historical payment rate is unavailable.'
+  }
+
+  return 'Uses conservative default reliability by debtor type.'
+}
+
+function termDetail(
+  input: {
+    asset: PrecatorioAsset
+    signals: { positive: EventSignal[]; negative: EventSignal[] }
+  },
+  queuePosition: number | null
+) {
+  if (hasSignal(input.signals.positive, 'payment_available')) {
+    return 'Payment available signal sets a short expected exit window.'
+  }
+
+  if (hasSignal(input.signals.positive, 'payment_process_detected')) {
+    return 'Payment-process document indicates near-term liquidity.'
+  }
+
+  if (hasSignal(input.signals.positive, 'superpreference_granted')) {
+    return 'Superpreference signal shortens expected queue time.'
+  }
+
+  if (queuePosition !== null && queuePosition <= 100) {
+    return `Queue position ${queuePosition} shortens the estimated term.`
+  }
+
+  return 'Falls back to debtor type, payment regime and lifecycle status.'
+}
+
+function headlineFor(decision: PricingResult['decision'], grade: OpportunityGrade) {
+  switch (decision) {
+    case 'aggressive_buy':
+      return `Grade ${grade}: prioritize commercial action`
+    case 'buy':
+      return `Grade ${grade}: commercially attractive`
+    case 'watch':
+      return `Grade ${grade}: monitor and complete diligence`
+    case 'avoid':
+      return `Grade ${grade}: avoid until risk clears`
+  }
+}
+
+function summaryFor(input: {
+  grade: OpportunityGrade
+  riskAdjustedIrr: number
+  paymentProbability: number
+  termMonths: number
+  signals: { positive: EventSignal[]; negative: EventSignal[] }
+}) {
+  return [
+    `Score ${input.grade} from ${percent(input.riskAdjustedIrr)} risk-adjusted IRR`,
+    `${percent(input.paymentProbability)} payment probability`,
+    `${input.termMonths} month estimated term`,
+    `${input.signals.positive.length} positive and ${input.signals.negative.length} negative signals`,
+  ].join(', ')
+}
+
+function contribution(value: number, normalized: number, weight: number): ScoreContribution {
+  return {
+    value,
+    normalized,
+    weight,
+    contribution: normalized * weight,
+  }
+}
+
+function normalizeContribution(item: ScoreContribution): ScoreContribution {
+  return {
+    value: round(item.value, 6),
+    normalized: round(item.normalized, 6),
+    weight: item.weight,
+    contribution: round(item.contribution, 6),
+  }
+}
+
+function hasSignal(signals: EventSignal[], code: string) {
+  return signals.some((signal) => signal.code === code)
+}
+
+function percent(value: number) {
+  return `${round(value * 100, 2)}%`
 }
 
 function gradeFromScore(score: number): OpportunityGrade {
