@@ -6,6 +6,10 @@ import dataJudNationalPrecatorioSyncService from '#modules/integrations/services
 import dataJudProcessAssetLinkService from '#modules/integrations/services/datajud_process_asset_link_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
 import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
+import governmentCoverageMatrixService, {
+  type GovernmentCoverageMatrix,
+  type CoverageLayerStatus,
+} from '#modules/integrations/services/government_coverage_matrix_service'
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'
 import tribunalSourceSyncService from '#modules/integrations/services/tribunal_source_sync_service'
@@ -43,11 +47,14 @@ class GovernmentDataSyncOrchestratorService {
     const years = normalizeYears(options.years)
 
     if (options.dryRun) {
+      const coverageMatrix = await governmentCoverageMatrixService.build(options.tenantId)
+
       return {
         dryRun: true,
         startedAt: startedAt.toISO(),
         years,
         phases: plannedPhases(options, years),
+        coveragePlan: buildCoveragePlan(coverageMatrix),
       }
     }
 
@@ -268,6 +275,58 @@ function plannedPhases(options: GovernmentDataSyncOptions, years: number[]) {
       persist: true,
     },
   }
+}
+
+function buildCoveragePlan(matrix: GovernmentCoverageMatrix) {
+  return {
+    generatedAt: matrix.generatedAt,
+    summary: matrix.summary,
+    primarySyncTargets: matrix.states
+      .filter((state) => shouldSyncPrimary(state.primary.status))
+      .map((state) => ({
+        stateCode: state.stateCode,
+        courtAlias: state.courtAlias,
+        targetKey: state.primary.targetKey,
+        adapterKey: state.primary.adapterKey,
+        status: state.primary.status,
+        lastSuccessAt: state.primary.lastSuccessAt,
+        tenantSourceRecordsCount: state.primary.tenantSourceRecordsCount,
+        nextActions: state.nextActions,
+      })),
+    enrichmentTargets: matrix.states
+      .filter((state) => state.datajud.status !== 'missing' || state.djen.status !== 'missing')
+      .map((state) => ({
+        stateCode: state.stateCode,
+        courtAlias: state.courtAlias,
+        datajudStatus: state.datajud.status,
+        djenStatus: state.djen.status,
+        readyForOperationalScoring: state.intelligence.readyForOperationalScoring,
+      })),
+    adapterBacklog: matrix.gaps
+      .filter((gap) =>
+        ['primary_source_missing', 'primary_source_mapped_without_adapter'].includes(gap.code)
+      )
+      .map((gap) => ({
+        level: gap.level,
+        stateCode: gap.stateCode,
+        courtAlias: gap.courtAlias,
+        severity: gap.severity,
+        code: gap.code,
+        recommendedAction: gap.recommendedAction,
+      })),
+    federalPrimaryTargets: matrix.federal.map((item) => ({
+      courtAlias: item.courtAlias,
+      status: item.primary.status,
+      targetKey: item.primary.targetKey,
+      adapterKey: item.primary.adapterKey,
+      lastSuccessAt: item.primary.lastSuccessAt,
+      nextActions: item.nextActions,
+    })),
+  }
+}
+
+function shouldSyncPrimary(status: CoverageLayerStatus) {
+  return status === 'configured' || status === 'validated'
 }
 
 export default new GovernmentDataSyncOrchestratorService()
