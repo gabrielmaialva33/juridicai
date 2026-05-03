@@ -19,12 +19,12 @@ import {
 import {
   closestCenter,
   DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core'
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'

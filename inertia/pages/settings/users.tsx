@@ -13,8 +13,7 @@ import {
 import { PageHeader } from '~/components/shared/page-header'
 import { EmptyState } from '~/components/shared/empty-state'
 import { LabelChip } from '~/components/shared/label-chip'
-import { getInitials } from '~/lib/helpers'
-import { fmtRelative } from '~/lib/helpers'
+import { fmtRelative, getInitials } from '~/lib/helpers'
 
 type Role = {
   id: string

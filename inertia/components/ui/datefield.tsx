@@ -5,15 +5,15 @@ import { inputVariants } from '@/components/ui/input'
 import type { VariantProps } from 'class-variance-authority'
 import {
   composeRenderProps,
-  DateFieldProps,
   DateField as DateFieldRa,
-  DateInputProps as DateInputPropsRa,
+  DateFieldProps,
   DateInput as DateInputRa,
-  DateSegmentProps,
+  DateInputProps as DateInputPropsRa,
   DateSegment as DateSegmentRa,
+  DateSegmentProps,
   DateValue as DateValueRa,
-  TimeFieldProps,
   TimeField as TimeFieldRa,
+  TimeFieldProps,
   TimeValue as TimeValueRa,
 } from 'react-aria-components'
 
@@ -49,8 +49,8 @@ function DateSegment({ className, ...props }: DateSegmentProps) {
           `
             text-foreground inline-flex rounded px-0.5 caret-transparent outline-hidden data-[type=literal]:text-muted-foreground/70 data-[type=literal]:px-0
             data-placeholder:text-muted-foreground/70
-            data-invalid:data-focused:bg-destructive data-invalid:data-placeholder:text-destructive data-invalid:text-destructive data-invalid:data-focused:data-placeholder:text-destructive-foreground data-invalid:data-focused:text-destructive-foreground 
-            data-focused:bg-accent data-focused:data-placeholder:text-foreground data-focused:text-foreground             
+            data-invalid:data-focused:bg-destructive data-invalid:data-placeholder:text-destructive data-invalid:text-destructive data-invalid:data-focused:data-placeholder:text-destructive-foreground data-invalid:data-focused:text-destructive-foreground
+            data-focused:bg-accent data-focused:data-placeholder:text-foreground data-focused:text-foreground
             data-disabled:cursor-not-allowed data-disabled:opacity-50
           `,
           className
@@ -64,7 +64,7 @@ function DateSegment({ className, ...props }: DateSegmentProps) {
 
 const dateInputStyles = `
   relative inline-flex items-center overflow-hidden whitespace-nowrap
-  data-focus-within:ring-ring/30 data-focus-within:border-ring data-focus-within:outline-none data-focus-within:ring-[3px] 
+  data-focus-within:ring-ring/30 data-focus-within:border-ring data-focus-within:outline-none data-focus-within:ring-[3px]
   data-focus-within:has-aria-invalid:ring-destructive/20 dark:data-focus-within:has-aria-invalid:ring-destructive/40 data-focus-within:has-aria-invalid:border-destructive
 `
 

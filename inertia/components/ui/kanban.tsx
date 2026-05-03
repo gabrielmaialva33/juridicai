@@ -8,6 +8,8 @@ import {
   defaultDropAnimationSideEffects,
   DndContext,
   DragEndEvent,
+  type DraggableAttributes,
+  type DraggableSyntheticListeners,
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
@@ -17,8 +19,6 @@ import {
   UniqueIdentifier,
   useSensor,
   useSensors,
-  type DraggableAttributes,
-  type DraggableSyntheticListeners,
 } from '@dnd-kit/core'
 import {
   arrayMove,
