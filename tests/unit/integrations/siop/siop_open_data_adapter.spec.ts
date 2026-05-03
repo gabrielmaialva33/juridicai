@@ -2,8 +2,8 @@ import { rm } from 'node:fs/promises'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import siopOpenDataAdapter, {
-  SIOP_OPEN_DATA_LANDING_URL,
   parseSiopOpenDataLinks,
+  SIOP_OPEN_DATA_LANDING_URL,
 } from '#modules/integrations/services/siop_open_data_adapter'
 import SiopImport from '#modules/siop/models/siop_import'
 import SourceRecord from '#modules/siop/models/source_record'

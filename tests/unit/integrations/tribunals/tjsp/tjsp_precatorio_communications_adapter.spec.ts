@@ -3,9 +3,9 @@ import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import SourceRecord from '#modules/siop/models/source_record'
 import tjspPrecatorioCommunicationsAdapter, {
-  TJSP_PRECATORIO_COMMUNICATIONS_URL,
   parseTjspCommunicationDetail,
   parseTjspCommunicationLinks,
+  TJSP_PRECATORIO_COMMUNICATIONS_URL,
 } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import type Tenant from '#modules/tenant/models/tenant'

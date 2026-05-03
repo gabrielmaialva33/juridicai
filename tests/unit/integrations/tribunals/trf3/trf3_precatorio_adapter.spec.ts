@@ -2,8 +2,8 @@ import { rm } from 'node:fs/promises'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import trf3PrecatorioAdapter, {
-  TRF3_CNJ_102_PRECATORIO_URL,
   parseTrf3PrecatorioLinks,
+  TRF3_CNJ_102_PRECATORIO_URL,
 } from '#modules/integrations/services/trf3_precatorio_adapter'
 import SourceRecord from '#modules/siop/models/source_record'
 import { TenantFactory } from '#database/factories/tenant_factory'

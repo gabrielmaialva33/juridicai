@@ -2,9 +2,9 @@ import { rm } from 'node:fs/promises'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import tjmaPrecatorioAdapter, {
-  TJMA_PRECATORIO_LISTS_URL,
   parseTjmaCategoryLinks,
   parseTjmaPrecatorioLinks,
+  TJMA_PRECATORIO_LISTS_URL,
 } from '#modules/integrations/services/tjma_precatorio_adapter'
 import SourceRecord from '#modules/siop/models/source_record'
 import { TenantFactory } from '#database/factories/tenant_factory'

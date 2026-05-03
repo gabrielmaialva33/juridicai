@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import { test } from '@japa/runner'
 import {
-  BetaIngestionDrillService,
   type BetaIngestionDrillOptions,
+  BetaIngestionDrillService,
 } from '#modules/admin/services/beta_ingestion_drill_service'
 import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'

@@ -6,7 +6,7 @@ import { handleOperationalRecovery } from '#modules/admin/jobs/operational_recov
 import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
 import { TenantFactory } from '#database/factories/tenant_factory'
-import type { JsonRecord, JobRunStatus } from '#shared/types/model_enums'
+import type { JobRunStatus, JsonRecord } from '#shared/types/model_enums'
 
 type QueuedJob = {
   queueName: string

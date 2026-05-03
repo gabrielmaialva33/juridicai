@@ -15,8 +15,7 @@ import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import SourceRecord from '#modules/siop/models/source_record'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import type Tenant from '#modules/tenant/models/tenant'
-import type { LucidModel, LucidRow } from '@adonisjs/lucid/types/model'
-import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+import type { LucidModel, LucidRow, ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 const VALID_ROWS = [
   {
