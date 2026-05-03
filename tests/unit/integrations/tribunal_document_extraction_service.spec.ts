@@ -98,6 +98,47 @@ test.group('Tribunal document extraction service', () => {
     await cleanupTenantData(tenant)
   })
 
+  test('extracts structured TJMA chronological rows from PDF text', async ({ assert }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await createSourceRecord(tenant, 'pdf', '%PDF fixture', {
+      providerId: 'tjma-precatorio-reports',
+      targetKey: 'court-map:tjma',
+      courtAlias: 'tjma',
+      stateCode: 'MA',
+      sourceKind: 'chronological_list',
+      debtorGroup: 'state',
+      title: 'Lista de Ordem Cronológica do Estado do Maranhão',
+    })
+
+    const result = await tribunalDocumentExtractionService.extractSourceRecord(sourceRecord.id, {
+      annotateSourceRecord: true,
+      pdfTextExtractor: async () => `
+        Lista de Ordem Cronológica do Estado do Maranhão
+        Atualizada até 28/02/2026
+        ESTADO DO MARANHÃO (Administração Direta e Indireta) REGIME ESPECIAL
+        Ordem Nº Precatório Natureza Orç. Recebimento Prioridade Valor atualizado Ente
+        1 0806816-09.2023.8.10.0000 Alimentar 2024 30/03/2023 17:24:19 Doença Grave 135.803,94 ESTADO
+      `,
+    })
+    const updatedRecord = await SourceRecord.findOrFail(sourceRecord.id)
+    const completeness = (
+      updatedRecord.rawData?.extraction as { completeness?: Record<string, number> } | undefined
+    )?.completeness
+
+    assert.equal(result.format, 'pdf')
+    assert.equal(result.status, 'extracted')
+    assert.lengthOf(result.rows, 1)
+    assert.equal(result.rows[0].normalizedCnj, '0806816-09.2023.8.10.0000')
+    assert.equal(result.rows[0].normalizedValue, '135803.94')
+    assert.equal(result.rows[0].normalizedYear, 2024)
+    assert.equal(result.rows[0].rawData.ente_devedor, 'ESTADO')
+    assert.equal(result.rows[0].rawData.ordem, 1)
+    assert.equal(completeness?.cnjCoverage, 1)
+    assert.equal(completeness?.debtorCoverage, 1)
+
+    await cleanupTenantData(tenant)
+  })
+
   test('parses delimited text with quoted separators', ({ assert }) => {
     const rows = parseDelimitedText(`Processo,Credor,Valor\n${VALID_CNJ},"Maria, Silva","1.200,00"`)
 
@@ -107,7 +148,15 @@ test.group('Tribunal document extraction service', () => {
   })
 })
 
-async function createSourceRecord(tenant: Tenant, extension: 'csv' | 'pdf', contents: string) {
+async function createSourceRecord(
+  tenant: Tenant,
+  extension: 'csv' | 'pdf',
+  contents: string,
+  rawData: Record<string, unknown> = {
+    providerId: 'test-tribunal',
+    recordKind: 'attached_document',
+  }
+) {
   const directory = app.makePath('storage', 'tests', 'tribunal-extraction', tenant.id)
   const filePath = join(directory, `source.${extension}`)
 
@@ -123,10 +172,7 @@ async function createSourceRecord(tenant: Tenant, extension: 'csv' | 'pdf', cont
     mimeType: extension === 'pdf' ? 'application/pdf' : 'text/csv',
     sourceChecksum: `${extension}-${tenant.id}`,
     collectedAt: DateTime.now(),
-    rawData: {
-      providerId: 'test-tribunal',
-      recordKind: 'attached_document',
-    },
+    rawData,
   })
 }
 

@@ -5,6 +5,7 @@ import { promisify } from 'node:util'
 import ExcelJS from 'exceljs'
 import * as XLSX from 'xlsx'
 import SourceRecord from '#modules/siop/models/source_record'
+import { parseTjmaPrecatorioPdfText } from '#modules/integrations/services/tjma_precatorio_pdf_parser'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -53,6 +54,7 @@ class TribunalDocumentExtractionService {
             status: result.status,
             rows: result.rows.length,
             errors: result.errors,
+            completeness: summarizeCompleteness(result.rows),
           },
         },
       })
@@ -122,7 +124,10 @@ class TribunalDocumentExtractionService {
       const text = await (pdfTextExtractor ?? extractPdfTextWithPoppler)(
         sourceRecord.sourceFilePath!
       )
-      const rows = rowsFromRecords(recordsFromLooseText(text))
+      const providerRecords = recordsFromProviderPdf(sourceRecord, text)
+      const rows = rowsFromRecords(
+        providerRecords.length ? providerRecords : recordsFromLooseText(text)
+      )
 
       return resultFor(
         sourceRecord,
@@ -138,6 +143,19 @@ class TribunalDocumentExtractionService {
       ])
     }
   }
+}
+
+function recordsFromProviderPdf(sourceRecord: SourceRecord, text: string) {
+  if (sourceRecord.rawData?.providerId !== 'tjma-precatorio-reports') {
+    return []
+  }
+
+  return parseTjmaPrecatorioPdfText(text, {
+    sourceKind: stringField(sourceRecord.rawData.sourceKind),
+    debtorGroup: stringField(sourceRecord.rawData.debtorGroup),
+    title: stringField(sourceRecord.rawData.title),
+    sourceUrl: sourceRecord.sourceUrl,
+  })
 }
 
 export function detectDocumentFormat(sourceRecord: SourceRecord): TribunalDocumentFormat {
@@ -358,6 +376,46 @@ function rowsFromRecords(records: JsonRecord[]) {
   })
 }
 
+function summarizeCompleteness(rows: TribunalExtractedRow[]) {
+  const totalRows = rows.length
+  const rowsWithCnj = rows.filter((row) => row.normalizedCnj).length
+  const rowsWithValue = rows.filter((row) => row.normalizedValue).length
+  const rowsWithYear = rows.filter((row) => row.normalizedYear).length
+  const rowsWithDebtor = rows.filter((row) => debtorField(row.rawData)).length
+
+  return {
+    totalRows,
+    rowsWithCnj,
+    rowsWithValue,
+    rowsWithYear,
+    rowsWithDebtor,
+    cnjCoverage: coverage(rowsWithCnj, totalRows),
+    valueCoverage: coverage(rowsWithValue, totalRows),
+    yearCoverage: coverage(rowsWithYear, totalRows),
+    debtorCoverage: coverage(rowsWithDebtor, totalRows),
+  }
+}
+
+function debtorField(row: JsonRecord) {
+  return Object.entries(row).find(([key, value]) => {
+    const normalizedKey = normalizeHeader(key)
+
+    return (
+      /(devedor|entidade|ente|fazenda|required)/.test(normalizedKey) &&
+      !/(beneficiario|credor|autor|advogado)/.test(normalizedKey) &&
+      stringField(value)
+    )
+  })
+}
+
+function coverage(count: number, total: number) {
+  if (total === 0) {
+    return 0
+  }
+
+  return Number((count / total).toFixed(4))
+}
+
 async function extractPdfTextWithPoppler(filePath: string) {
   const { stdout } = await execFileAsync('pdftotext', ['-layout', filePath, '-'], {
     maxBuffer: 20 * 1024 * 1024,
@@ -489,6 +547,15 @@ function normalizeScalar(value: unknown) {
   }
 
   return compactText(String(value))
+}
+
+function stringField(value: unknown) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const text = value.trim()
+  return text || null
 }
 
 function flattenValue(value: unknown): string {
