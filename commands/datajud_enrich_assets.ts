@@ -3,8 +3,8 @@ import { DateTime } from 'luxon'
 import queueService from '#shared/services/queue_service'
 import {
   DATAJUD_ENRICH_ASSETS_QUEUE,
-  handleDataJudEnrichAssets,
   type DataJudEnrichAssetsPayload,
+  handleDataJudEnrichAssets,
 } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import { normalizeAliases } from '#modules/integrations/services/datajud_asset_enrichment_service'
 import type { SourceType } from '#shared/types/model_enums'

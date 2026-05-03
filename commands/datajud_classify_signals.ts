@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
   DATAJUD_LEGAL_SIGNAL_CLASSIFIER_QUEUE,
-  handleDataJudLegalSignalClassifier,
   type DataJudLegalSignalClassifierPayload,
+  handleDataJudLegalSignalClassifier,
 } from '#modules/integrations/jobs/datajud_legal_signal_classifier_handler'
 import queueService from '#shared/services/queue_service'
 

@@ -1,4 +1,4 @@
-import { BaseCommand, args } from '@adonisjs/core/ace'
+import { args, BaseCommand } from '@adonisjs/core/ace'
 import trf2PrecatorioImportService from '#modules/integrations/services/trf2_precatorio_import_service'
 
 export default class Trf2ImportPrecatorios extends BaseCommand {

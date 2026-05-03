@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
-  TRIBUNAL_SOURCE_SYNC_QUEUE,
   handleTribunalSourceSync,
+  TRIBUNAL_SOURCE_SYNC_QUEUE,
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
 import type { TjmaPrecatorioLinkKind } from '#modules/integrations/services/tjma_precatorio_adapter'

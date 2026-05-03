@@ -1,4 +1,4 @@
-import { BaseCommand, args, flags } from '@adonisjs/core/ace'
+import { args, BaseCommand, flags } from '@adonisjs/core/ace'
 import dataJudCandidateReviewService, {
   DataJudCandidateReviewError,
 } from '#modules/integrations/services/datajud_candidate_review_service'

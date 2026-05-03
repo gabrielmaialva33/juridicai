@@ -1,23 +1,23 @@
-import { BaseCommand, args, flags } from '@adonisjs/core/ace'
+import { args, BaseCommand, flags } from '@adonisjs/core/ace'
 import { DateTime } from 'luxon'
 import queueService from '#shared/services/queue_service'
 import {
-  SIOP_RECONCILE_QUEUE,
   handleSiopReconcile,
+  SIOP_RECONCILE_QUEUE,
 } from '#modules/siop/jobs/siop_reconcile_handler'
 import {
   APPLY_RETENTION_POLICY_QUEUE,
   handleApplyRetentionPolicy,
 } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import {
-  PURGE_STAGING_QUEUE,
   handlePurgeStaging,
+  PURGE_STAGING_QUEUE,
 } from '#modules/maintenance/jobs/purge_staging_handler'
 import {
-  REFRESH_AGGREGATES_QUEUE,
   handleRefreshAggregates,
+  REFRESH_AGGREGATES_QUEUE,
 } from '#modules/maintenance/jobs/refresh_aggregates_handler'
-import { VACUUM_HINT_QUEUE, handleVacuumHint } from '#modules/maintenance/jobs/vacuum_hint_handler'
+import { handleVacuumHint, VACUUM_HINT_QUEUE } from '#modules/maintenance/jobs/vacuum_hint_handler'
 
 const ENQUEUEABLE_JOBS = {
   [SIOP_RECONCILE_QUEUE]: {

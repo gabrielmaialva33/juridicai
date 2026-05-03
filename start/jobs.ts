@@ -2,98 +2,98 @@ import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
 import { operationalQueueNames } from '#shared/constants/operational_queues'
 import {
-  SIOP_IMPORT_QUEUE,
   handleSiopImport,
+  SIOP_IMPORT_QUEUE,
   type SiopImportJobPayload,
 } from '#modules/siop/jobs/siop_import_handler'
 import {
-  SIOP_RECONCILE_QUEUE,
   handleSiopReconcile,
+  SIOP_RECONCILE_QUEUE,
   type SiopReconcilePayload,
 } from '#modules/siop/jobs/siop_reconcile_handler'
 import {
   EXPORT_PRECATORIOS_QUEUE,
-  handleExportPrecatorios,
   type ExportPrecatoriosPayload,
+  handleExportPrecatorios,
 } from '#modules/exports/jobs/export_precatorios_handler'
 import {
   DATAJUD_ENRICH_ASSETS_QUEUE,
-  handleDataJudEnrichAssets,
   type DataJudEnrichAssetsPayload,
+  handleDataJudEnrichAssets,
 } from '#modules/integrations/jobs/datajud_enrich_assets_handler'
 import {
   DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE,
-  handleDataJudNationalPrecatorioSync,
   type DataJudNationalPrecatorioSyncPayload,
+  handleDataJudNationalPrecatorioSync,
 } from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
 import {
   DATAJUD_MATCH_CANDIDATES_QUEUE,
-  handleDataJudMatchCandidates,
   type DataJudMatchCandidatesPayload,
+  handleDataJudMatchCandidates,
 } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import {
   DATAJUD_LEGAL_SIGNAL_CLASSIFIER_QUEUE,
-  handleDataJudLegalSignalClassifier,
   type DataJudLegalSignalClassifierPayload,
+  handleDataJudLegalSignalClassifier,
 } from '#modules/integrations/jobs/datajud_legal_signal_classifier_handler'
 import {
   DATAJUD_PROCESS_ASSET_LINK_QUEUE,
-  handleDataJudProcessAssetLink,
   type DataJudProcessAssetLinkPayload,
+  handleDataJudProcessAssetLink,
 } from '#modules/integrations/jobs/datajud_process_asset_link_handler'
 import {
-  SIOP_OPEN_DATA_SYNC_QUEUE,
   handleSiopOpenDataSync,
+  SIOP_OPEN_DATA_SYNC_QUEUE,
   type SiopOpenDataSyncPayload,
 } from '#modules/integrations/jobs/siop_open_data_sync_handler'
 import {
-  TJSP_PRECATORIO_SYNC_QUEUE,
   handleTjspPrecatorioSync,
+  TJSP_PRECATORIO_SYNC_QUEUE,
   type TjspPrecatorioSyncPayload,
 } from '#modules/integrations/jobs/tjsp_precatorio_sync_handler'
 import {
-  TRIBUNAL_SOURCE_SYNC_QUEUE,
   handleTribunalSourceSync,
+  TRIBUNAL_SOURCE_SYNC_QUEUE,
   type TribunalSourceSyncPayload,
 } from '#modules/integrations/jobs/tribunal_source_sync_handler'
 import {
-  TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
   handleTrf6ManualExportImport,
+  TRF6_MANUAL_EXPORT_IMPORT_QUEUE,
   type Trf6ManualExportImportPayload,
 } from '#modules/integrations/jobs/trf6_manual_export_import_handler'
 import {
-  POST_IMPORT_ENRICHMENT_QUEUE,
   handlePostImportEnrichment,
+  POST_IMPORT_ENRICHMENT_QUEUE,
   type PostImportEnrichmentPayload,
 } from '#modules/integrations/jobs/post_import_enrichment_handler'
 import {
   GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
-  handleGovernmentDataSyncOrchestrator,
   type GovernmentDataSyncOrchestratorPayload,
+  handleGovernmentDataSyncOrchestrator,
 } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
 import {
   APPLY_RETENTION_POLICY_QUEUE,
-  handleApplyRetentionPolicy,
   type ApplyRetentionPolicyPayload,
+  handleApplyRetentionPolicy,
 } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import {
-  PURGE_STAGING_QUEUE,
   handlePurgeStaging,
+  PURGE_STAGING_QUEUE,
   type PurgeStagingPayload,
 } from '#modules/maintenance/jobs/purge_staging_handler'
 import {
-  REFRESH_AGGREGATES_QUEUE,
   handleRefreshAggregates,
+  REFRESH_AGGREGATES_QUEUE,
   type RefreshAggregatesPayload,
 } from '#modules/maintenance/jobs/refresh_aggregates_handler'
 import {
-  VACUUM_HINT_QUEUE,
   handleVacuumHint,
+  VACUUM_HINT_QUEUE,
   type VacuumHintPayload,
 } from '#modules/maintenance/jobs/vacuum_hint_handler'
 import {
-  OPERATIONAL_RECOVERY_QUEUE,
   handleOperationalRecovery,
+  OPERATIONAL_RECOVERY_QUEUE,
   type OperationalRecoveryPayload,
 } from '#modules/admin/jobs/operational_recovery_handler'
 

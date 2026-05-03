@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
   DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE,
-  handleDataJudNationalPrecatorioSync,
   type DataJudNationalPrecatorioSyncPayload,
+  handleDataJudNationalPrecatorioSync,
 } from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
 import queueService from '#shared/services/queue_service'
 import { normalizeAliases } from '#modules/integrations/services/datajud_asset_enrichment_service'

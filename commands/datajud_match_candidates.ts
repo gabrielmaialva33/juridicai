@@ -3,8 +3,8 @@ import { DateTime } from 'luxon'
 import dataJudCandidateMatchService from '#modules/integrations/services/datajud_candidate_match_service'
 import {
   DATAJUD_MATCH_CANDIDATES_QUEUE,
-  handleDataJudMatchCandidates,
   type DataJudMatchCandidatesPayload,
+  handleDataJudMatchCandidates,
 } from '#modules/integrations/jobs/datajud_match_candidates_handler'
 import queueService from '#shared/services/queue_service'
 import type { SourceType } from '#shared/types/model_enums'

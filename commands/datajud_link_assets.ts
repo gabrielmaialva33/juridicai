@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
   DATAJUD_PROCESS_ASSET_LINK_QUEUE,
-  handleDataJudProcessAssetLink,
   type DataJudProcessAssetLinkPayload,
+  handleDataJudProcessAssetLink,
 } from '#modules/integrations/jobs/datajud_process_asset_link_handler'
 import queueService from '#shared/services/queue_service'
 

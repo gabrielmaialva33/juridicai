@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
   GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
-  handleGovernmentDataSyncOrchestrator,
   type GovernmentDataSyncOrchestratorPayload,
+  handleGovernmentDataSyncOrchestrator,
 } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import { normalizeAliases } from '#modules/integrations/services/datajud_asset_enrichment_service'

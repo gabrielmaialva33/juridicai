@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import {
-  TJSP_PRECATORIO_SYNC_QUEUE,
   handleTjspPrecatorioSync,
+  TJSP_PRECATORIO_SYNC_QUEUE,
   type TjspPrecatorioSyncPayload,
 } from '#modules/integrations/jobs/tjsp_precatorio_sync_handler'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
