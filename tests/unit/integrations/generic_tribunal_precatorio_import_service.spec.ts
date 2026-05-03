@@ -129,6 +129,14 @@ test.group('Generic tribunal precatorio import service', () => {
     assert.equal(event.payload?.preferenceLabel, 'Doença Grave')
     assert.equal(event.payload?.queuePosition, 1)
 
+    const queueSignal = await AssetEvent.query()
+      .where('tenant_id', tenant.id)
+      .where('asset_id', asset.id)
+      .where('event_type', 'queue_position_favorable')
+      .firstOrFail()
+    assert.equal(queueSignal.payload?.queuePosition, 1)
+    assert.equal(queueSignal.payload?.sourceKind, 'chronological_list')
+
     const chronologicalOrder = await ExternalIdentifier.query()
       .where('tenant_id', tenant.id)
       .where('asset_id', asset.id)
@@ -155,6 +163,15 @@ test.group('Generic tribunal precatorio import service', () => {
         .where('tenant_id', tenant.id)
         .where('asset_id', asset.id)
         .where('event_type', 'superpreference_granted')
+        .count('* as total')
+        .then(([row]) => Number(row.$extras.total)),
+      1
+    )
+    assert.equal(
+      await AssetEvent.query()
+        .where('tenant_id', tenant.id)
+        .where('asset_id', asset.id)
+        .where('event_type', 'queue_position_favorable')
         .count('* as total')
         .then(([row]) => Number(row.$extras.total)),
       1

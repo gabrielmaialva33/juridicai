@@ -54,6 +54,7 @@ type ImportContext = {
   courtAlias: string | null
   stateCode: string | null
   sourceDatasetKey: string | null
+  sourceKind: string | null
 }
 
 class GenericTribunalPrecatorioImportService {
@@ -118,6 +119,7 @@ class GenericTribunalPrecatorioImportService {
       courtAlias,
       stateCode,
       sourceDatasetKey: sourceDatasetKeyFor(sourceRecord),
+      sourceKind: stringField(sourceRecord.rawData?.sourceKind),
     }
   }
 
@@ -212,6 +214,7 @@ class GenericTribunalPrecatorioImportService {
     await this.upsertJudicialProcess(sourceRecord, asset, row, context, trx)
     await this.upsertImportEvent(sourceRecord, asset.id, row, context, trx)
     await this.upsertPreferenceEvent(sourceRecord, asset.id, row, context, trx)
+    await this.upsertOperationalSignalEvents(sourceRecord, asset.id, row, context, trx)
     await this.recordEvidence(sourceRecord, asset, row, context, trx)
   }
 
@@ -362,6 +365,53 @@ class GenericTribunalPrecatorioImportService {
       },
       { client: trx }
     )
+  }
+
+  private async upsertOperationalSignalEvents(
+    sourceRecord: SourceRecord,
+    assetId: string,
+    row: GenericImportRow,
+    context: ImportContext,
+    trx: TransactionClientContract
+  ) {
+    for (const signal of operationalSignalsFor(row, context)) {
+      const idempotencyKey = `generic-tribunal:${signal.eventType}:${sourceRecord.id}:${row.rowFingerprint}`
+      const existing = await AssetEvent.query({ client: trx })
+        .where('tenant_id', sourceRecord.tenantId)
+        .where('asset_id', assetId)
+        .where('event_type', signal.eventType)
+        .where('idempotency_key', idempotencyKey)
+        .first()
+
+      if (existing) {
+        continue
+      }
+
+      await AssetEvent.create(
+        {
+          tenantId: sourceRecord.tenantId,
+          assetId,
+          eventType: signal.eventType,
+          eventDate: row.receivedAt ?? DateTime.now(),
+          source: 'tribunal',
+          payload: {
+            providerId: 'generic-tribunal-operational-signal',
+            sourceRecordId: sourceRecord.id,
+            sourceUrl: sourceRecord.sourceUrl,
+            courtAlias: context.courtAlias,
+            stateCode: context.stateCode,
+            sourceKind: context.sourceKind,
+            queuePosition: row.queuePosition,
+            preferenceLabel: row.preferenceLabel,
+            signalReason: signal.reason,
+            rowFingerprint: row.rowFingerprint,
+            extractedRow: row.extractedRow.rawData,
+          },
+          idempotencyKey,
+        },
+        { client: trx }
+      )
+    }
   }
 
   private async recordEvidence(
@@ -574,6 +624,47 @@ function queuePositionFromRow(row: JsonRecord) {
 
 function preferenceFromRow(row: JsonRecord) {
   return stringField(row.prioridade) ?? stringField(row.priority) ?? stringField(row.preference)
+}
+
+function operationalSignalsFor(row: GenericImportRow, context: ImportContext) {
+  const signals: Array<{ eventType: string; reason: string }> = []
+
+  if (row.queuePosition !== null && row.queuePosition <= 100) {
+    signals.push({
+      eventType: 'queue_position_favorable',
+      reason: `Queue position ${row.queuePosition} is within the first 100 entries.`,
+    })
+  }
+
+  if (row.queuePosition === null && context.sourceKind === 'chronological_list') {
+    signals.push({
+      eventType: 'queue_position_unknown',
+      reason: 'Chronological list row did not expose a reliable queue position.',
+    })
+  }
+
+  if (context.sourceKind === 'direct_agreement') {
+    signals.push({
+      eventType: 'direct_agreement_window',
+      reason: 'Source document is a direct agreement report.',
+    })
+  }
+
+  if (context.sourceKind === 'preferential_lot') {
+    signals.push({
+      eventType: 'preferential_queue',
+      reason: 'Source document is a preferential payment lot.',
+    })
+  }
+
+  if (context.sourceKind === 'paid_or_payment_process') {
+    signals.push({
+      eventType: 'payment_process_detected',
+      reason: 'Source document reports paid precatorios or payment processing.',
+    })
+  }
+
+  return signals
 }
 
 function dateTimeFromRow(row: JsonRecord) {

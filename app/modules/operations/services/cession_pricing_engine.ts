@@ -20,17 +20,41 @@ const POSITIVE_EVENT_SIGNALS: Record<string, EventSignalDefinition> = {
     polarity: 'positive',
     paymentMultiplier: 1.6,
   },
+  direct_agreement_window: {
+    code: 'direct_agreement_window',
+    label: 'Direct agreement window',
+    polarity: 'positive',
+    paymentMultiplier: 1.45,
+  },
   superpreference_granted: {
     code: 'superpreference_granted',
     label: 'Superpreference granted',
     polarity: 'positive',
     paymentMultiplier: 1.4,
   },
+  preferential_queue: {
+    code: 'preferential_queue',
+    label: 'Preferential queue',
+    polarity: 'positive',
+    paymentMultiplier: 1.25,
+  },
   payment_available: {
     code: 'payment_available',
     label: 'Payment available',
     polarity: 'positive',
     paymentMultiplier: 1.9,
+  },
+  payment_process_detected: {
+    code: 'payment_process_detected',
+    label: 'Payment process detected',
+    polarity: 'positive',
+    paymentMultiplier: 1.35,
+  },
+  queue_position_favorable: {
+    code: 'queue_position_favorable',
+    label: 'Favorable queue position',
+    polarity: 'positive',
+    paymentMultiplier: 1.18,
   },
   final_judgment: {
     code: 'final_judgment',
@@ -94,6 +118,12 @@ const NEGATIVE_EVENT_SIGNALS: Record<string, EventSignalDefinition> = {
     label: 'Special payment regime declared',
     polarity: 'negative',
     paymentMultiplier: 0.7,
+  },
+  queue_position_unknown: {
+    code: 'queue_position_unknown',
+    label: 'Queue position unknown',
+    polarity: 'negative',
+    paymentMultiplier: 0.95,
   },
 }
 
@@ -394,8 +424,29 @@ function defaultTermMonths(asset: PrecatorioAsset, debtor: Debtor | null, events
     return 12
   }
 
+  if (signals.positive.some((signal) => signal.code === 'payment_process_detected')) {
+    return 12
+  }
+
   if (signals.positive.some((signal) => signal.code === 'superpreference_granted')) {
     return 10
+  }
+
+  if (signals.positive.some((signal) => signal.code === 'preferential_queue')) {
+    return 12
+  }
+
+  if (signals.positive.some((signal) => signal.code === 'direct_agreement_window')) {
+    return 18
+  }
+
+  const queuePosition = assetValueSnapshot(asset).queuePosition
+  if (queuePosition !== null && queuePosition <= 25) {
+    return 12
+  }
+
+  if (queuePosition !== null && queuePosition <= 100) {
+    return 18
   }
 
   if (asset.lifecycleStatus === 'in_payment') {
@@ -403,8 +454,8 @@ function defaultTermMonths(asset: PrecatorioAsset, debtor: Debtor | null, events
   }
 
   if (asset.lifecycleStatus === 'paid') {
-    // Para assets já pagos sem histórico real de duração, usa placeholder
-    // razoável de 12 meses para evitar explosão exponencial na anualização.
+    // Paid assets without real duration history use a conservative placeholder
+    // to avoid exponential blowups in annualized return calculations.
     return debtorPaymentStat?.averagePaymentMonths ?? 12
   }
 

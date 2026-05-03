@@ -9,8 +9,12 @@ const SCORE_VERSION = 'legal-signals-v1'
 
 const POSITIVE_WEIGHTS: Record<string, number> = {
   direct_agreement_opened: 18,
+  direct_agreement_window: 16,
   superpreference_granted: 16,
+  preferential_queue: 14,
   payment_available: 22,
+  payment_process_detected: 18,
+  queue_position_favorable: 10,
   final_judgment: 10,
   calculation_homologated: 9,
   requisition_issued: 8,
@@ -24,6 +28,7 @@ const NEGATIVE_WEIGHTS: Record<string, number> = {
   beneficiary_inventory_pending: 36,
   fee_dispute_detected: 18,
   special_regime_declared: 22,
+  queue_position_unknown: 6,
 }
 
 class AssetSignalScoreService {
@@ -106,7 +111,10 @@ function buildScoreSnapshot(asset: PrecatorioAsset, events: AssetEvent[]) {
   const liquidityScore = clamp(
     45 +
       (positiveEvents.some((event) => event.eventType === 'payment_available') ? 35 : 0) +
+      (positiveEvents.some((event) => event.eventType === 'payment_process_detected') ? 25 : 0) +
       (positiveEvents.some((event) => event.eventType === 'direct_agreement_opened') ? 25 : 0) +
+      (positiveEvents.some((event) => event.eventType === 'direct_agreement_window') ? 22 : 0) +
+      (positiveEvents.some((event) => event.eventType === 'preferential_queue') ? 20 : 0) +
       (positiveEvents.some((event) => event.eventType === 'superpreference_granted') ? 20 : 0) -
       negativeWeight / 2,
     0,
