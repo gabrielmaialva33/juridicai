@@ -7,15 +7,15 @@ import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
+import type {
+  TribunalDocumentExtractionOptions,
+  TribunalExtractedRow,
+} from '#modules/integrations/services/tribunal_document_extraction_service'
 import tribunalDocumentExtractionService from '#modules/integrations/services/tribunal_document_extraction_service'
 import SourceRecord from '#modules/siop/models/source_record'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
-import type {
-  TribunalDocumentExtractionOptions,
-  TribunalExtractedRow,
-} from '#modules/integrations/services/tribunal_document_extraction_service'
 
 export type GenericTribunalPrecatorioImportOptions = {
   maxRows?: number | null

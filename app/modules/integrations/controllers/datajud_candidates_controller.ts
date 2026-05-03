@@ -1,6 +1,6 @@
 import dataJudCandidateApiService, {
-  serializeDataJudCandidate,
   type DataJudCandidateListFilters,
+  serializeDataJudCandidate,
 } from '#modules/integrations/services/datajud_candidate_api_service'
 import dataJudCandidateReviewService, {
   DataJudCandidateReviewError,

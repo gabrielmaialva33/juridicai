@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import operationalHealthService from '#modules/admin/services/operational_health_service'
-import scheduledGovernmentSyncService from '#modules/integrations/services/scheduled_government_sync_service'
-import { GOVERNMENT_SYNC_RUNNING_STALE_HOURS } from '#modules/integrations/services/scheduled_government_sync_service'
+import scheduledGovernmentSyncService, {
+  GOVERNMENT_SYNC_RUNNING_STALE_HOURS,
+} from '#modules/integrations/services/scheduled_government_sync_service'
 
 type OperationalRecoveryOptions = {
   tenantIds?: string[] | null

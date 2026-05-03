@@ -13,8 +13,8 @@ import siopImportService from '#modules/siop/services/siop_import_service'
 import { uploadValidator } from '#modules/siop/validators/upload_validator'
 import tenantContext from '#shared/helpers/tenant_context'
 import {
-  operationalQueueNames,
   type OperationalQueueName,
+  operationalQueueNames,
 } from '#shared/constants/operational_queues'
 import type { HttpContext } from '@adonisjs/core/http'
 

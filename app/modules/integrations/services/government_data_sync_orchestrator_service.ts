@@ -10,8 +10,8 @@ import governmentCoverageRecoveryPlanService, {
 } from '#modules/integrations/services/government_coverage_recovery_plan_service'
 import governmentDataSyncScheduleService from '#modules/integrations/services/government_data_sync_schedule_service'
 import governmentCoverageMatrixService, {
-  type GovernmentCoverageMatrix,
   type CoverageLayerStatus,
+  type GovernmentCoverageMatrix,
 } from '#modules/integrations/services/government_coverage_matrix_service'
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
 import siopOpenDataSyncService from '#modules/integrations/services/siop_open_data_sync_service'

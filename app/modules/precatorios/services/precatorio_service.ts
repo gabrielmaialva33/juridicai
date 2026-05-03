@@ -1,6 +1,6 @@
+import type { PrecatorioListFilters } from '#modules/precatorios/repositories/precatorio_repository'
 import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 import precatorioTimelineService from '#modules/precatorios/services/precatorio_timeline_service'
-import type { PrecatorioListFilters } from '#modules/precatorios/repositories/precatorio_repository'
 
 class PrecatorioService {
   list(tenantId: string, filters: PrecatorioListFilters) {
