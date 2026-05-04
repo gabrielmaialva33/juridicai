@@ -84,12 +84,12 @@ export default function AdminJobs({ runs, meta, queues }: Props) {
 
   return (
     <>
-      <Head title="Jobs · Admin" />
+      <Head title="Tarefas · Admin" />
 
       <PageHeader
-        title="Jobs"
-        description={`${fmtNum(meta.total)} runs registradas — ${fmtNum(totalActive)} ativos, ${fmtNum(totalWaiting)} aguardando, ${fmtNum(totalFailed)} falhas.`}
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Jobs' }]}
+        title="Tarefas"
+        description={`${fmtNum(meta.total)} execuções registradas — ${fmtNum(totalActive)} ativos, ${fmtNum(totalWaiting)} aguardando, ${fmtNum(totalFailed)} falhas.`}
+        breadcrumbs={[{ label: 'Admin' }, { label: 'Tarefas' }]}
       />
 
       <Card>
@@ -99,8 +99,8 @@ export default function AdminJobs({ runs, meta, queues }: Props) {
         <CardContent className="p-0">
           {runs.length === 0 ? (
             <EmptyState
-              message="Sem runs ainda"
-              description="Aguarde a execução do scheduler ou dispare um job manualmente."
+              message="Sem execuções ainda"
+              description="Aguarde a execução do agendador ou dispare uma tarefa manualmente."
             />
           ) : (
             <>

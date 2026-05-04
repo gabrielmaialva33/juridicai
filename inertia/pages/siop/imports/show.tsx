@@ -70,17 +70,17 @@ export default function SiopImportShow({ import: imp, invalidRows: errors }: Pro
 
   return (
     <>
-      <Head title={`Import #${imp.id.slice(0, 8)}`} />
+      <Head title={`Importação #${imp.id.slice(0, 8)}`} />
 
       <PageHeader
-        title={`Import ${imp.exerciseYear}`}
+        title={`Importação ${imp.exerciseYear}`}
         description={
           imp.sourceRecord?.originalFilename
             ? `Arquivo: ${imp.sourceRecord.originalFilename}`
             : 'Detalhe da importação SIOP.'
         }
         breadcrumbs={[
-          { label: 'Imports SIOP', href: '/siop/imports' },
+          { label: 'Importações SIOP', href: '/siop/imports' },
           { label: `#${imp.id.slice(0, 8)}` },
         ]}
       >

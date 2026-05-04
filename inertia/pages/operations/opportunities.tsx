@@ -306,12 +306,12 @@ export default function OpportunitiesIndex({
           icon={<AlertTriangle className="size-4" />}
           label="Sem valor confiável"
           value={fmtNum(qualitySummary.missingValue)}
-          hint="Valuation ausente ou zerada"
+          hint="Valor ausente ou zerado"
           tone={qualitySummary.missingValue > 0 ? 'warning' : 'success'}
         />
         <QualityMetric
           icon={<FileCheck2 className="size-4" />}
-          label="Gaps DataJud/DJEN"
+          label="Pendências de cobertura"
           value={fmtNum(qualitySummary.missingDataJud + qualitySummary.missingDjen)}
           hint={`${fmtNum(qualitySummary.missingDataJud)} sem processo · ${fmtNum(qualitySummary.missingDjen)} sem publicação`}
           tone="warning"
@@ -373,7 +373,7 @@ export default function OpportunitiesIndex({
             <EmptyState
               icon={<Sparkles className="size-12" />}
               message="Nenhum crédito no filtro atual"
-              description="Ajuste os filtros ou aguarde novos imports SIOP/DataJud."
+              description="Ajuste os filtros ou aguarde novas importações SIOP/DataJud."
             />
           ) : (
             <>
@@ -517,7 +517,7 @@ function OpportunityRow({
         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground tabular-nums">
           {op.asset.exerciseYear && <span>Exec. {op.asset.exerciseYear}</span>}
           {op.asset.currentScore !== null && op.asset.currentScore !== undefined && (
-            <span>Score {op.asset.currentScore.toFixed(1)}</span>
+            <span>Pontuação {op.asset.currentScore.toFixed(1)}</span>
           )}
         </div>
         {multiplier > 0 && (
@@ -550,7 +550,7 @@ function OpportunityRow({
           {fmtPct(op.pricing.riskAdjustedIrr)}
         </div>
         <div className="text-[10px] text-muted-foreground tabular-nums">
-          P {fmtPct(op.pricing.paymentProbability)} · {op.pricing.termMonths}m
+          Prob. {fmtPct(op.pricing.paymentProbability)} · {op.pricing.termMonths}m
         </div>
       </TableCell>
       <TableCell>

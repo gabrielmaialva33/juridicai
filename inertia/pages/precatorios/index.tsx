@@ -16,7 +16,7 @@ import { FilterPanel, SearchFilter, SelectFilter } from '~/components/shared/fil
 import { LabelChip } from '~/components/shared/label-chip'
 import { PageHeader } from '~/components/shared/page-header'
 import { StatusBadge } from '~/components/status-badge'
-import { fmtBRL, fmtNum, fmtRelative } from '~/lib/helpers'
+import { fmtBRL, fmtNum } from '~/lib/helpers'
 
 const LIFECYCLE_OPTIONS = [
   { value: 'unknown', label: 'Sem sinal' },
@@ -66,17 +66,34 @@ type Asset = {
   exerciseYear?: number | null
   faceValue?: string | number | null
   estimatedUpdatedValue?: string | number | null
+  valuations?: Array<{
+    faceValue?: string | number | null
+    estimatedUpdatedValue?: string | number | null
+  }>
   lifecycleStatus: string
   complianceStatus: string
   piiStatus: string
   currentScore?: number | null
   createdAt: string
+  dataQuality?: DataQuality
   debtor?: {
     id: string
     name: string
     debtorType?: string
     stateCode?: string | null
   } | null
+}
+
+type DataQuality = {
+  status: 'complete' | 'review' | 'blocked'
+  issues: string[]
+  hasValuation: boolean
+  hasDataJudProcess: boolean
+  hasDjenPublication: boolean
+  resolvedCoreFields: number
+  fieldEvidenceConflicts: number
+  sourceConflicts: number
+  pendingCandidateReviews: number
 }
 
 type Pagination = {
@@ -169,7 +186,7 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
 
       <PageHeader
         title="Créditos Monitorados"
-        description={`${fmtNum(assets.meta.total)} precatórios monitorados para originação.`}
+        description={`${fmtNum(assets.meta.total)} créditos monitorados · valor, cobertura e revisão na mesma fila.`}
         breadcrumbs={[{ label: 'Créditos Monitorados' }]}
       >
         {hasFilters && (
@@ -256,10 +273,13 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         </div>
                       </div>
                       <div className="shrink-0 text-right text-sm font-semibold tabular-nums">
-                        {fmtBRL(asset.faceValue)}
+                        {hasReliableValue(asset)
+                          ? fmtBRL(latestAssetValue(asset))
+                          : 'Não informado'}
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1.5">
+                      <DataQualityBadge quality={asset.dataQuality} />
                       <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
                       <StatusBadge kind="compliance" value={asset.complianceStatus} />
                       <StatusBadge kind="pii" value={asset.piiStatus} />
@@ -269,33 +289,24 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
               </div>
 
               <div className="hidden md:block">
-                <Table className="min-w-[1060px] table-fixed">
+                <Table className="w-full table-fixed">
                   <TableHeader className="bg-muted/40">
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[180px]">Ativo</TableHead>
-                      <TableHead className="w-[180px]">Ente/devedor</TableHead>
-                      <TableHead className="w-[60px]">
-                        <SortHead
-                          col="exercise_year"
-                          label="Exec"
-                          filters={filters}
-                          onClick={toggleSort}
-                        />
-                      </TableHead>
-                      <TableHead className="w-[88px]">Classe</TableHead>
-                      <TableHead className="w-[126px] text-end">
+                      <TableHead className="w-[104px]">Qualidade</TableHead>
+                      <TableHead className="w-[220px]">Crédito</TableHead>
+                      <TableHead className="w-[240px]">Ente/devedor</TableHead>
+                      <TableHead className="w-[92px]">Classe</TableHead>
+                      <TableHead className="w-[168px]">Cobertura</TableHead>
+                      <TableHead className="w-[132px] text-end">
                         <SortHead
                           col="face_value"
-                          label="Face"
+                          label="Valor"
                           filters={filters}
                           onClick={toggleSort}
                           align="end"
                         />
                       </TableHead>
-                      <TableHead className="w-[86px]">Etapa</TableHead>
-                      <TableHead className="w-[94px]">Revisão</TableHead>
-                      <TableHead className="w-[118px]">Dados sensíveis</TableHead>
-                      <TableHead className="w-[62px] text-end">
+                      <TableHead className="w-[92px] text-end">
                         <SortHead
                           col="current_score"
                           label="Pontuação"
@@ -304,7 +315,6 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                           align="end"
                         />
                       </TableHead>
-                      <TableHead className="w-[90px] text-end">Criado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -314,42 +324,51 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
                         className="cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
                         onClick={() => router.visit(`/precatorios/${asset.id}`)}
                       >
-                        <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">
-                          {asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}
-                        </TableCell>
                         <TableCell>
-                          <div className="truncate font-medium">{asset.debtor?.name ?? '—'}</div>
-                          {asset.debtor?.stateCode && (
-                            <div className="text-xs text-muted-foreground">
-                              {asset.debtor.stateCode}
+                          <DataQualityBadge quality={asset.dataQuality} />
+                          {asset.dataQuality && asset.dataQuality.issues.length > 0 && (
+                            <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
+                              {asset.dataQuality.issues.length} pendência
+                              {asset.dataQuality.issues.length === 1 ? '' : 's'}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="tabular-nums text-sm">
-                          {asset.exerciseYear ?? '—'}
+                        <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums">
+                          <div>{asset.cnjNumber ?? asset.externalId ?? asset.id.slice(0, 8)}</div>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            <LabelChip variant="info">{sourceLabel(asset.source)}</LabelChip>
+                            <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
+                            <StatusBadge kind="compliance" value={asset.complianceStatus} />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="truncate font-medium">{asset.debtor?.name ?? '—'}</div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            {asset.debtor?.stateCode && <span>{asset.debtor.stateCode}</span>}
+                            <span>Exec. {asset.exerciseYear ?? '—'}</span>
+                            <StatusBadge kind="pii" value={asset.piiStatus} />
+                          </div>
                         </TableCell>
                         <TableCell>
                           <LabelChip>{NATURE_LABELS[asset.nature] ?? asset.nature}</LabelChip>
                         </TableCell>
+                        <TableCell>
+                          <DataCoverage quality={asset.dataQuality} />
+                        </TableCell>
                         <TableCell className="text-end font-medium tabular-nums">
-                          {fmtBRL(asset.faceValue)}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge kind="lifecycle" value={asset.lifecycleStatus} />
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge kind="compliance" value={asset.complianceStatus} />
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge kind="pii" value={asset.piiStatus} />
+                          {hasReliableValue(asset)
+                            ? fmtBRL(latestAssetValue(asset))
+                            : 'Não informado'}
+                          {latestAssetUpdatedValue(asset) !== null && (
+                            <div className="text-[10px] font-normal text-muted-foreground">
+                              Atual. {fmtBRL(latestAssetUpdatedValue(asset))}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-end tabular-nums">
                           {asset.currentScore !== null && asset.currentScore !== undefined
                             ? asset.currentScore.toFixed(1)
                             : '—'}
-                        </TableCell>
-                        <TableCell className="text-end text-xs text-muted-foreground tabular-nums">
-                          {fmtRelative(asset.createdAt)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -389,6 +408,72 @@ export default function PrecatoriosIndex({ assets, filters }: Props) {
       </Card>
     </>
   )
+}
+
+function hasReliableValue(asset: Asset) {
+  const value = latestAssetValue(asset)
+
+  return (
+    Boolean(asset.dataQuality?.hasValuation) &&
+    value !== null &&
+    value !== undefined &&
+    value !== ''
+  )
+}
+
+function latestAssetValue(asset: Asset) {
+  const latest = asset.valuations?.[0]
+
+  return (
+    latest?.estimatedUpdatedValue ??
+    latest?.faceValue ??
+    asset.estimatedUpdatedValue ??
+    asset.faceValue
+  )
+}
+
+function latestAssetUpdatedValue(asset: Asset) {
+  return asset.valuations?.[0]?.estimatedUpdatedValue ?? asset.estimatedUpdatedValue ?? null
+}
+
+function sourceLabel(source: string) {
+  return SOURCE_OPTIONS.find((option) => option.value === source)?.label ?? source
+}
+
+function DataQualityBadge({ quality }: { quality?: DataQuality }) {
+  if (!quality) return <LabelChip variant="warning">Revisar</LabelChip>
+  if (quality.status === 'complete') return <LabelChip variant="success">Completo</LabelChip>
+  if (quality.status === 'blocked') return <LabelChip variant="danger">Bloqueado</LabelChip>
+
+  return <LabelChip variant="warning">Revisar</LabelChip>
+}
+
+function DataCoverage({ quality }: { quality?: DataQuality }) {
+  if (!quality) {
+    return <LabelChip variant="warning">Sem análise</LabelChip>
+  }
+
+  return (
+    <div className="flex max-w-[160px] flex-wrap gap-1">
+      <CoverageChip ok={quality.hasValuation} label="Valor" />
+      <CoverageChip ok={quality.hasDataJudProcess} label="DataJud" />
+      <CoverageChip ok={quality.hasDjenPublication} label="DJEN" />
+      <CoverageChip
+        ok={quality.resolvedCoreFields >= 4}
+        label={`Evid. ${quality.resolvedCoreFields}/4`}
+      />
+      {(quality.sourceConflicts > 0 || quality.fieldEvidenceConflicts > 0) && (
+        <LabelChip variant="danger">Conflito</LabelChip>
+      )}
+      {quality.pendingCandidateReviews > 0 && (
+        <LabelChip variant="warning">{`${quality.pendingCandidateReviews} candidato`}</LabelChip>
+      )}
+    </div>
+  )
+}
+
+function CoverageChip({ ok, label }: { ok: boolean; label: string }) {
+  return <LabelChip variant={ok ? 'success' : 'warning'}>{ok ? label : `Sem ${label}`}</LabelChip>
 }
 
 function SortHead({

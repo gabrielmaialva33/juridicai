@@ -14,9 +14,12 @@ export default class PrecatoriosController {
   async index({ inertia, request }: HttpContext) {
     const filters = normalizeFilters(request.qs())
     const assets = await precatorioService.list(tenantContext.requireTenantId(), filters)
+    const payload = assets.serialize() as any
+
+    await precatorioService.enrichListDataQuality(tenantContext.requireTenantId(), payload.data)
 
     return inertia.render('precatorios/index', {
-      assets: assets.serialize() as any,
+      assets: payload,
       filters: filters as any,
     })
   }

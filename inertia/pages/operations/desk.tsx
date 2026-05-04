@@ -154,16 +154,16 @@ export default function OperationsDesk({
 
   return (
     <>
-      <Head title="Data Ops Desk" />
+      <Head title="Painel operacional de dados" />
 
       <PageHeader
-        title="Data Ops Desk"
+        title="Painel operacional de dados"
         description={`Fila operacional de qualidade, reconciliação e cobertura · atualizado ${fmtRelative(dataOps.generatedAt)}`}
       >
         <Button variant="outline" size="sm" asChild>
           <Link href="/siop/imports">
             <Database className="me-1 size-3.5" />
-            Imports
+            Fontes
           </Link>
         </Button>
         <Button size="sm" asChild>

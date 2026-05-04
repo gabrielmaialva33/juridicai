@@ -80,12 +80,12 @@ export default function AdminHealth({ status, checks }: Props) {
                 <thead className="bg-muted/30">
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="text-start px-5 py-2 font-medium">Fila</th>
-                    <th className="text-end px-5 py-2 font-medium">Active</th>
-                    <th className="text-end px-5 py-2 font-medium">Waiting</th>
-                    <th className="text-end px-5 py-2 font-medium">Delayed</th>
-                    <th className="text-end px-5 py-2 font-medium">Completed</th>
-                    <th className="text-end px-5 py-2 font-medium">Failed</th>
-                    <th className="text-end px-5 py-2 font-medium">Paused</th>
+                    <th className="text-end px-5 py-2 font-medium">Ativos</th>
+                    <th className="text-end px-5 py-2 font-medium">Aguardando</th>
+                    <th className="text-end px-5 py-2 font-medium">Agendados</th>
+                    <th className="text-end px-5 py-2 font-medium">Concluídos</th>
+                    <th className="text-end px-5 py-2 font-medium">Falhas</th>
+                    <th className="text-end px-5 py-2 font-medium">Pausados</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

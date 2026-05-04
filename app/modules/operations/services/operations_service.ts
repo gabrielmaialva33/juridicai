@@ -485,13 +485,16 @@ function buildDataOpsDesk(report: NationalDataCoherenceReport) {
     coverage: [
       {
         key: 'primary_source',
-        label: 'Primary source',
+        label: 'Fonte primária',
         value: report.summary.primarySourceCoverage,
-        affected: Math.max(0, report.summary.totalAssets - report.summary.completeAssets),
+        affected: missingFromCoverage(
+          report.summary.totalAssets,
+          report.summary.primarySourceCoverage
+        ),
       },
       {
         key: 'datajud_process',
-        label: 'DataJud process',
+        label: 'Processo DataJud',
         value: report.summary.dataJudProcessCoverage,
         affected: missingFromCoverage(
           report.summary.totalAssets,
@@ -500,7 +503,7 @@ function buildDataOpsDesk(report: NationalDataCoherenceReport) {
       },
       {
         key: 'djen_publication',
-        label: 'DJEN publication',
+        label: 'Publicação DJEN',
         value: report.summary.djenPublicationCoverage,
         affected: missingFromCoverage(
           report.summary.totalAssets,
@@ -509,19 +512,19 @@ function buildDataOpsDesk(report: NationalDataCoherenceReport) {
       },
       {
         key: 'valuation',
-        label: 'Valuation',
+        label: 'Valor confiável',
         value: report.summary.valuationCoverage,
         affected: missingFromCoverage(report.summary.totalAssets, report.summary.valuationCoverage),
       },
       {
         key: 'score',
-        label: 'Scoring',
+        label: 'Pontuação',
         value: report.summary.scoreCoverage,
         affected: missingFromCoverage(report.summary.totalAssets, report.summary.scoreCoverage),
       },
       {
         key: 'field_evidence',
-        label: 'Field evidence',
+        label: 'Evidência dos campos',
         value: report.summary.fieldEvidenceResolvedCoverage,
         affected: missingFromCoverage(
           report.summary.totalAssets,
@@ -541,7 +544,9 @@ function buildDataOpsDesk(report: NationalDataCoherenceReport) {
         completeRate: court.completeRate,
         completeAssets: court.completeAssets,
         missing: court.missing,
-        recommendedActions: court.recommendedActions,
+        recommendedActions: court.recommendedActions.map((action) =>
+          translateDataGapAction(action)
+        ),
       })),
   }
 }
@@ -560,6 +565,10 @@ function aggregateGaps(gaps: NationalDataCoherenceGap[]) {
   >()
 
   for (const gap of gaps) {
+    if (gap.missingCount <= 0) {
+      continue
+    }
+
     const current = byCode.get(gap.code)
     const next = current ?? {
       code: gap.code,
@@ -567,7 +576,7 @@ function aggregateGaps(gaps: NationalDataCoherenceGap[]) {
       severity: gap.severity,
       affected: 0,
       courts: [],
-      recommendedAction: gap.recommendedAction,
+      recommendedAction: dataGapAction(gap.code, gap.recommendedAction),
     }
 
     next.affected += gap.missingCount
@@ -592,19 +601,89 @@ function aggregateGaps(gaps: NationalDataCoherenceGap[]) {
 
 function dataGapLabel(code: string) {
   const labels: Record<string, string> = {
-    no_assets: 'No canonical assets',
-    missing_primary_source: 'Missing primary source',
-    missing_datajud_process: 'Missing DataJud process',
-    missing_djen_publication: 'Missing DJEN publication',
-    missing_valuation: 'Missing valuation',
-    missing_score: 'Missing score',
-    missing_field_evidence: 'Missing field evidence',
-    source_conflicts: 'Source link conflicts',
-    field_evidence_conflicts: 'Field evidence conflicts',
-    pending_candidate_review: 'Pending candidate review',
+    no_assets: 'Sem ativos canônicos',
+    missing_primary_source: 'Sem fonte primária',
+    missing_datajud_process: 'Sem processo DataJud',
+    missing_djen_publication: 'Sem publicação DJEN',
+    missing_valuation: 'Sem valor confiável',
+    missing_score: 'Sem pontuação',
+    missing_field_evidence: 'Sem evidência dos campos',
+    source_conflicts: 'Conflitos de fonte',
+    field_evidence_conflicts: 'Conflitos nos campos',
+    pending_candidate_review: 'Candidatos pendentes',
   }
 
   return labels[code] ?? code
+}
+
+function dataGapAction(code: string, fallback: string) {
+  const actions: Record<string, string> = {
+    no_assets: 'Vincule ativos canônicos antes de analisar a cobertura desta fonte.',
+    missing_primary_source: 'Vincule os créditos aos registros oficiais de origem.',
+    missing_datajud_process:
+      'Rode o enriquecimento DataJud e revise candidatos para créditos sem processo.',
+    missing_djen_publication: 'Rode o monitoramento DJEN para anexar eventos de liquidez e risco.',
+    missing_valuation: 'Gere snapshots de valor antes de priorizar oportunidades comerciais.',
+    missing_score:
+      'Recalcule as pontuações jurídicas e financeiras dos créditos sem pontuação atual.',
+    missing_field_evidence:
+      'Materialize evidências para CNJ, devedor, tribunal e valor do registro canônico.',
+    source_conflicts:
+      'Resolva conflitos entre fontes antes de tratar estes créditos como confiáveis.',
+    field_evidence_conflicts:
+      'Revise campos canônicos conflitantes antes de atualizar o registro principal.',
+    pending_candidate_review:
+      'Revise candidatos DataJud ambíguos e aprove ou rejeite cada vínculo.',
+  }
+
+  return actions[code] ?? translateDataGapAction(fallback)
+}
+
+function translateDataGapAction(action: string) {
+  const translations = new Map([
+    [
+      'No canonical assets have been linked yet.',
+      'Vincule ativos canônicos antes de analisar a cobertura desta fonte.',
+    ],
+    [
+      'Link assets to their primary government source records.',
+      'Vincule os créditos aos registros oficiais de origem.',
+    ],
+    [
+      'Run DataJud enrichment and candidate review for assets without process metadata.',
+      'Rode o enriquecimento DataJud e revise candidatos para créditos sem processo.',
+    ],
+    [
+      'Run DJEN publication monitoring to attach liquidity and risk events.',
+      'Rode o monitoramento DJEN para anexar eventos de liquidez e risco.',
+    ],
+    [
+      'Create valuation snapshots before ranking liquidity opportunities.',
+      'Gere snapshots de valor antes de priorizar oportunidades comerciais.',
+    ],
+    [
+      'Recompute legal and financial scores for assets without current scoring evidence.',
+      'Recalcule as pontuações jurídicas e financeiras dos créditos sem pontuação atual.',
+    ],
+    [
+      'Materialize golden-record field evidence for CNJ, debtor, court, and value fields.',
+      'Materialize evidências para CNJ, devedor, tribunal e valor do registro canônico.',
+    ],
+    [
+      'Resolve conflicting source links before automation treats these assets as reliable.',
+      'Resolva conflitos entre fontes antes de tratar estes créditos como confiáveis.',
+    ],
+    [
+      'Review conflicting canonical field evidence before updating golden records.',
+      'Revise campos canônicos conflitantes antes de atualizar o registro principal.',
+    ],
+    [
+      'Review ambiguous DataJud candidates and promote or reject each match.',
+      'Revise candidatos DataJud ambíguos e aprove ou rejeite cada vínculo.',
+    ],
+  ])
+
+  return translations.get(action) ?? action
 }
 
 function gapSeverityRank(severity: NationalDataCoherenceGap['severity']) {

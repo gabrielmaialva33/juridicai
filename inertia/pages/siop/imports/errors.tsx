@@ -50,13 +50,13 @@ export default function SiopImportErrors({ import: imp, rows }: Props) {
 
   return (
     <>
-      <Head title={`Erros — Import ${imp.exerciseYear}`} />
+      <Head title={`Erros — Importação ${imp.exerciseYear}`} />
 
       <PageHeader
-        title={`Linhas inválidas — Import ${imp.exerciseYear}`}
+        title={`Linhas inválidas — Importação ${imp.exerciseYear}`}
         description={`${fmtNum(rows.meta.total)} linhas com erros de validação detectadas durante o processamento.`}
         breadcrumbs={[
-          { label: 'Imports SIOP', href: '/siop/imports' },
+          { label: 'Importações SIOP', href: '/siop/imports' },
           { label: `#${imp.id.slice(0, 8)}`, href: `/siop/imports/${imp.id}` },
           { label: 'Erros' },
         ]}
@@ -64,7 +64,7 @@ export default function SiopImportErrors({ import: imp, rows }: Props) {
         <Button variant="outline" size="sm" asChild>
           <Link href={`/siop/imports/${imp.id}`}>
             <ArrowLeft className="me-1 size-3.5" />
-            Voltar pro import
+            Voltar para a importação
           </Link>
         </Button>
       </PageHeader>
