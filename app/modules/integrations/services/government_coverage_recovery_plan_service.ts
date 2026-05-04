@@ -7,12 +7,13 @@ import type {
 import type { SourceDataQualitySummary } from '#modules/integrations/services/source_data_quality_service'
 
 export type CoverageRecoveryPriority = 'critical' | 'high' | 'medium' | 'low'
+export type CoverageRecoveryLayer = 'primary' | 'datajud' | 'djen'
 
 export type CoverageRecoveryTarget = {
   level: 'federal' | 'state'
   stateCode: string | null
   courtAlias: string
-  layer: 'primary'
+  layer: CoverageRecoveryLayer
   targetKey: string
   adapterKey: string | null
   status: CoverageLayerStatus
@@ -27,9 +28,13 @@ export type CoverageRecoveryTarget = {
 export type CoverageRecoveryPlan = {
   generatedAt: string
   executableTargetKeys: string[]
+  executableTargetKeysByLayer: Record<CoverageRecoveryLayer, string[]>
   targets: CoverageRecoveryTarget[]
   summary: {
     executableTargetsCount: number
+    primaryTargetsCount: number
+    dataJudTargetsCount: number
+    djenTargetsCount: number
     criticalTargetsCount: number
     highTargetsCount: number
     mediumTargetsCount: number
@@ -40,34 +45,73 @@ export type CoverageRecoveryPlan = {
 
 class GovernmentCoverageRecoveryPlanService {
   build(matrix: GovernmentCoverageMatrix): CoverageRecoveryPlan {
-    const stateTargets = matrix.states
-      .map((state) =>
+    const stateTargets = matrix.states.flatMap((state) =>
+      [
         recoveryTarget({
           level: 'state',
           stateCode: state.stateCode,
           courtAlias: state.courtAlias,
+          layerName: 'primary',
           layer: state.primary,
-        })
-      )
-      .filter((target): target is CoverageRecoveryTarget => target !== null)
-    const federalTargets = matrix.federal
-      .map((item) =>
+        }),
+        recoveryTarget({
+          level: 'state',
+          stateCode: state.stateCode,
+          courtAlias: state.courtAlias,
+          layerName: 'datajud',
+          layer: state.datajud,
+        }),
+        recoveryTarget({
+          level: 'state',
+          stateCode: state.stateCode,
+          courtAlias: state.courtAlias,
+          layerName: 'djen',
+          layer: state.djen,
+        }),
+      ].filter((target): target is CoverageRecoveryTarget => target !== null)
+    )
+    const federalTargets = matrix.federal.flatMap((item) =>
+      [
         recoveryTarget({
           level: 'federal',
           stateCode: null,
           courtAlias: item.courtAlias,
+          layerName: 'primary',
           layer: item.primary,
-        })
-      )
-      .filter((target): target is CoverageRecoveryTarget => target !== null)
+        }),
+        recoveryTarget({
+          level: 'federal',
+          stateCode: null,
+          courtAlias: item.courtAlias,
+          layerName: 'datajud',
+          layer: item.datajud,
+        }),
+        recoveryTarget({
+          level: 'federal',
+          stateCode: null,
+          courtAlias: item.courtAlias,
+          layerName: 'djen',
+          layer: item.djen,
+        }),
+      ].filter((target): target is CoverageRecoveryTarget => target !== null)
+    )
     const targets = [...stateTargets, ...federalTargets].sort(compareRecoveryTargets)
+    const executableTargetKeysByLayer = {
+      primary: targetKeysForLayer(targets, 'primary'),
+      datajud: targetKeysForLayer(targets, 'datajud'),
+      djen: targetKeysForLayer(targets, 'djen'),
+    }
 
     return {
       generatedAt: DateTime.utc().toISO(),
       executableTargetKeys: targets.map((target) => target.targetKey),
+      executableTargetKeysByLayer,
       targets,
       summary: {
         executableTargetsCount: targets.length,
+        primaryTargetsCount: executableTargetKeysByLayer.primary.length,
+        dataJudTargetsCount: executableTargetKeysByLayer.datajud.length,
+        djenTargetsCount: executableTargetKeysByLayer.djen.length,
         criticalTargetsCount: countByPriority(targets, 'critical'),
         highTargetsCount: countByPriority(targets, 'high'),
         mediumTargetsCount: countByPriority(targets, 'medium'),
@@ -84,6 +128,7 @@ function recoveryTarget(input: {
   level: 'federal' | 'state'
   stateCode: string | null
   courtAlias: string
+  layerName: CoverageRecoveryLayer
   layer: CoverageLayer
 }): CoverageRecoveryTarget | null {
   if (!input.layer.targetKey || !shouldExecute(input.layer)) {
@@ -98,7 +143,7 @@ function recoveryTarget(input: {
     level: input.level,
     stateCode: input.stateCode,
     courtAlias: input.courtAlias,
-    layer: 'primary',
+    layer: input.layerName,
     targetKey: input.layer.targetKey,
     adapterKey: input.layer.adapterKey,
     status: input.layer.status,
@@ -107,7 +152,7 @@ function recoveryTarget(input: {
     staleDays: staleDays(input.layer.lastSuccessAt),
     quality: input.layer.quality,
     reasons,
-    recommendedAction: recommendedAction(input.courtAlias, priority, reasons),
+    recommendedAction: recommendedAction(input.courtAlias, input.layerName, priority, reasons),
   }
 }
 
@@ -237,6 +282,7 @@ function compareRecoveryTargets(left: CoverageRecoveryTarget, right: CoverageRec
   return (
     right.priorityScore - left.priorityScore ||
     levelRank(left.level) - levelRank(right.level) ||
+    layerRank(left.layer) - layerRank(right.layer) ||
     left.courtAlias.localeCompare(right.courtAlias)
   )
 }
@@ -245,8 +291,22 @@ function levelRank(level: 'federal' | 'state') {
   return level === 'federal' ? 0 : 1
 }
 
+function layerRank(layer: CoverageRecoveryLayer) {
+  const ranks: Record<CoverageRecoveryLayer, number> = {
+    primary: 0,
+    datajud: 1,
+    djen: 2,
+  }
+
+  return ranks[layer]
+}
+
 function countByPriority(targets: CoverageRecoveryTarget[], priority: CoverageRecoveryPriority) {
   return targets.filter((target) => target.priority === priority).length
+}
+
+function targetKeysForLayer(targets: CoverageRecoveryTarget[], layer: CoverageRecoveryLayer) {
+  return targets.filter((target) => target.layer === layer).map((target) => target.targetKey)
 }
 
 function staleDays(lastSuccessAt: string | null) {
@@ -265,26 +325,38 @@ function staleDays(lastSuccessAt: string | null) {
 
 function recommendedAction(
   courtAlias: string,
+  layer: CoverageRecoveryLayer,
   priority: CoverageRecoveryPriority,
   reasons: string[]
 ) {
   const court = courtAlias.toUpperCase()
+  const layerLabel = layerLabelFor(layer)
 
   if (reasons.includes('never_succeeded') || reasons.includes('no_tenant_source_records')) {
-    return `Run ${court} immediately and inspect whether the source still publishes downloadable precatorio records.`
+    return `Run ${court} ${layerLabel} immediately and inspect whether it still returns usable precatorio evidence.`
   }
 
   if (reasons.includes('quality_failed') || reasons.includes('high_error_rate')) {
-    return `Retry ${court} with focused diagnostics and inspect parser/import errors before trusting coverage.`
+    return `Retry ${court} ${layerLabel} with focused diagnostics and inspect parser/import errors before trusting coverage.`
   }
 
   if (reasons.includes('quality_weak') || reasons.includes('low_field_coverage')) {
-    return `Backfill ${court} and compare field completeness against the last successful import.`
+    return `Backfill ${court} ${layerLabel} and compare field completeness against the last successful import.`
   }
 
   return priority === 'low'
-    ? `Refresh ${court} on the normal cadence.`
-    : `Prioritize ${court} in the next automatic coverage run.`
+    ? `Refresh ${court} ${layerLabel} on the normal cadence.`
+    : `Prioritize ${court} ${layerLabel} in the next automatic coverage run.`
+}
+
+function layerLabelFor(layer: CoverageRecoveryLayer) {
+  const labels: Record<CoverageRecoveryLayer, string> = {
+    primary: 'primary source',
+    datajud: 'DataJud enrichment',
+    djen: 'DJEN publication monitoring',
+  }
+
+  return labels[layer]
 }
 
 export default new GovernmentCoverageRecoveryPlanService()
