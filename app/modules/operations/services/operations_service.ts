@@ -11,6 +11,7 @@ import cessionPricingEngine, {
   type OpportunityProjection,
   type PricingInput,
 } from '#modules/operations/services/cession_pricing_engine'
+import assetIntelligenceDossierService from '#modules/operations/services/asset_intelligence_dossier_service'
 import liquidityAdvisoryService from '#modules/operations/services/liquidity_advisory_service'
 import liquidityDossierService from '#modules/operations/services/liquidity_dossier_service'
 import marketRateService from '#modules/market/services/market_rate_service'
@@ -149,12 +150,14 @@ class OperationsService {
 
   async dossier(tenantId: string, assetId: string) {
     const details = await this.show(tenantId, assetId)
+    const intelligence = await assetIntelligenceDossierService.build(tenantId, assetId)
 
     return {
       dossier: liquidityDossierService.build({
         opportunity: details.opportunity,
         liquidity: details.liquidity,
       }),
+      intelligence,
     }
   }
 
