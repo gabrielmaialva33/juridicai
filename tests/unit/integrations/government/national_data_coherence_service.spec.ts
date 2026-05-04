@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import AssetFieldEvidence from '#modules/precatorios/models/asset_field_evidence'
 import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import Court from '#modules/reference/models/court'
 import ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
@@ -81,6 +82,22 @@ test.group('National data coherence service', () => {
       maturityScore: 81,
       dataQualityScore: 93,
     }).create()
+    await AssetFieldEvidence.createMany(
+      ['cnj_number', 'debtor_name', 'court_alias', 'face_value'].map((fieldKey) => ({
+        tenantId: tenant.id,
+        assetId: completeAsset.id,
+        fieldKey,
+        canonicalValue: fieldKey === 'court_alias' ? 'tjac' : `resolved-${fieldKey}`,
+        canonicalSource: 'tribunal' as const,
+        canonicalSourceRecordId: sourceRecord.id,
+        canonicalSourceDatasetId: dataset.id,
+        confidence: '0.9500',
+        status: 'resolved' as const,
+        evidenceCount: 1,
+        conflictingValues: [],
+        evidence: [{ reason: 'test' }],
+      }))
+    )
     await AssetSourceLink.create({
       tenantId: tenant.id,
       assetId: conflictedAsset.id,
@@ -92,6 +109,20 @@ test.group('National data coherence service', () => {
       matchedFields: { courtAlias: true },
       normalizedPayload: { courtAlias: 'tjac' },
       rawPointer: { row: 2 },
+    })
+    await AssetFieldEvidence.create({
+      tenantId: tenant.id,
+      assetId: conflictedAsset.id,
+      fieldKey: 'cnj_number',
+      canonicalValue: '0000001-11.2026.8.01.0001',
+      canonicalSource: 'tribunal',
+      canonicalSourceRecordId: sourceRecord.id,
+      canonicalSourceDatasetId: dataset.id,
+      confidence: '0.5200',
+      status: 'conflict',
+      evidenceCount: 2,
+      conflictingValues: [{ normalizedValue: '99999999920268010001' }],
+      evidence: [{ reason: 'test_conflict' }],
     })
     await ProcessMatchCandidate.create({
       tenantId: tenant.id,
@@ -115,6 +146,9 @@ test.group('National data coherence service', () => {
     assert.equal(report.summary.completeAssets, 1)
     assert.equal(report.summary.completeRate, 0.5)
     assert.equal(report.summary.conflictedAssets, 1)
+    assert.equal(report.summary.fieldEvidenceConflictAssets, 1)
+    assert.equal(report.summary.fieldEvidenceCoverage, 1)
+    assert.equal(report.summary.fieldEvidenceResolvedCoverage, 0.5)
     assert.equal(report.summary.pendingCandidateReviewAssets, 1)
     assert.equal(acre?.totalAssets, 2)
     assert.equal(acre?.primarySourceAssets, 1)
@@ -122,10 +156,14 @@ test.group('National data coherence service', () => {
     assert.equal(acre?.djenPublicationAssets, 1)
     assert.equal(acre?.valuationAssets, 2)
     assert.equal(acre?.scoredAssets, 1)
+    assert.equal(acre?.fieldEvidenceAssets, 2)
+    assert.equal(acre?.fieldEvidenceResolvedAssets, 1)
+    assert.equal(acre?.fieldEvidenceConflictAssets, 1)
     assert.equal(acre?.missing.primarySource, 1)
     assert.equal(acre?.missing.dataJudProcess, 1)
     assert.equal(acre?.missing.djenPublication, 1)
     assert.equal(acre?.missing.score, 1)
+    assert.equal(acre?.missing.fieldEvidence, 1)
     assert.equal(acre?.status, 'critical')
     assert.includeMembers(
       report.gaps.filter((gap) => gap.courtAlias === 'tjac').map((gap) => gap.code),
@@ -134,7 +172,9 @@ test.group('National data coherence service', () => {
         'missing_datajud_process',
         'missing_djen_publication',
         'missing_score',
+        'missing_field_evidence',
         'source_conflicts',
+        'field_evidence_conflicts',
         'pending_candidate_review',
       ]
     )

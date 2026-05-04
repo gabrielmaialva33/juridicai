@@ -83,7 +83,10 @@ export type NationalDataCoherenceSummary = {
   djenPublicationCoverage: number
   valuationCoverage: number
   scoreCoverage: number
+  fieldEvidenceCoverage: number
+  fieldEvidenceResolvedCoverage: number
   conflictedAssets: number
+  fieldEvidenceConflictAssets: number
   pendingCandidateReviewAssets: number
   courtsCount: number
   courtsWithAssetsCount: number
@@ -103,7 +106,10 @@ export type NationalDataCoherenceCourt = {
   djenPublicationAssets: number
   valuationAssets: number
   scoredAssets: number
+  fieldEvidenceAssets: number
+  fieldEvidenceResolvedAssets: number
   conflictedAssets: number
+  fieldEvidenceConflictAssets: number
   pendingCandidateReviewAssets: number
   missing: {
     primarySource: number
@@ -111,6 +117,7 @@ export type NationalDataCoherenceCourt = {
     djenPublication: number
     valuation: number
     score: number
+    fieldEvidence: number
   }
   status: NationalDataCoherenceStatus
   recommendedActions: string[]
@@ -135,7 +142,10 @@ type CoherenceRow = {
   djen_publication_assets: string | number | null
   valuation_assets: string | number | null
   scored_assets: string | number | null
+  field_evidence_assets: string | number | null
+  field_evidence_resolved_assets: string | number | null
   conflicted_assets: string | number | null
+  field_evidence_conflict_assets: string | number | null
   pending_candidate_review_assets: string | number | null
   complete_assets: string | number | null
 }
@@ -259,6 +269,32 @@ class NationalDataCoherenceService {
             ) as has_score,
             exists (
               select 1
+              from asset_field_evidences
+              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
+                and asset_field_evidences.asset_id = precatorio_assets.id
+            ) as has_field_evidence,
+            (
+              select count(distinct asset_field_evidences.field_key)
+              from asset_field_evidences
+              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
+                and asset_field_evidences.asset_id = precatorio_assets.id
+                and asset_field_evidences.status = 'resolved'
+                and asset_field_evidences.field_key in (
+                  'cnj_number',
+                  'debtor_name',
+                  'court_alias',
+                  'face_value'
+                )
+            ) >= 4 as has_resolved_core_field_evidence,
+            exists (
+              select 1
+              from asset_field_evidences
+              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
+                and asset_field_evidences.asset_id = precatorio_assets.id
+                and asset_field_evidences.status = 'conflict'
+            ) as has_field_evidence_conflict,
+            exists (
+              select 1
               from asset_source_links
               where asset_source_links.tenant_id = precatorio_assets.tenant_id
                 and asset_source_links.asset_id = precatorio_assets.id
@@ -285,7 +321,10 @@ class NationalDataCoherenceService {
           count(*) filter (where has_djen_publication) as djen_publication_assets,
           count(*) filter (where has_valuation) as valuation_assets,
           count(*) filter (where has_score) as scored_assets,
+          count(*) filter (where has_field_evidence) as field_evidence_assets,
+          count(*) filter (where has_resolved_core_field_evidence) as field_evidence_resolved_assets,
           count(*) filter (where has_conflict) as conflicted_assets,
+          count(*) filter (where has_field_evidence_conflict) as field_evidence_conflict_assets,
           count(*) filter (where has_pending_candidate_review) as pending_candidate_review_assets,
           count(*) filter (
             where has_primary_source
@@ -293,7 +332,9 @@ class NationalDataCoherenceService {
               and has_djen_publication
               and has_valuation
               and has_score
+              and has_resolved_core_field_evidence
               and not has_conflict
+              and not has_field_evidence_conflict
               and not has_pending_candidate_review
           ) as complete_assets
         from asset_flags
@@ -312,7 +353,10 @@ class NationalDataCoherenceService {
     const djenPublicationAssets = numberFrom(row?.djen_publication_assets)
     const valuationAssets = numberFrom(row?.valuation_assets)
     const scoredAssets = numberFrom(row?.scored_assets)
+    const fieldEvidenceAssets = numberFrom(row?.field_evidence_assets)
+    const fieldEvidenceResolvedAssets = numberFrom(row?.field_evidence_resolved_assets)
     const conflictedAssets = numberFrom(row?.conflicted_assets)
+    const fieldEvidenceConflictAssets = numberFrom(row?.field_evidence_conflict_assets)
     const pendingCandidateReviewAssets = numberFrom(row?.pending_candidate_review_assets)
     const completeAssets = numberFrom(row?.complete_assets)
     const court = {
@@ -327,7 +371,10 @@ class NationalDataCoherenceService {
       djenPublicationAssets,
       valuationAssets,
       scoredAssets,
+      fieldEvidenceAssets,
+      fieldEvidenceResolvedAssets,
       conflictedAssets,
+      fieldEvidenceConflictAssets,
       pendingCandidateReviewAssets,
       missing: {
         primarySource: Math.max(0, totalAssets - primarySourceAssets),
@@ -335,6 +382,7 @@ class NationalDataCoherenceService {
         djenPublication: Math.max(0, totalAssets - djenPublicationAssets),
         valuation: Math.max(0, totalAssets - valuationAssets),
         score: Math.max(0, totalAssets - scoredAssets),
+        fieldEvidence: Math.max(0, totalAssets - fieldEvidenceResolvedAssets),
       },
       status: 'critical' as NationalDataCoherenceStatus,
       recommendedActions: [] as string[],
@@ -417,6 +465,18 @@ function courtGaps(court: NationalDataCoherenceCourt): NationalDataCoherenceGap[
     )
   }
 
+  if (court.missing.fieldEvidence > 0) {
+    gaps.push(
+      gap(
+        court,
+        'medium',
+        'missing_field_evidence',
+        court.missing.fieldEvidence,
+        'Materialize golden-record field evidence for CNJ, debtor, court, and value fields.'
+      )
+    )
+  }
+
   if (court.conflictedAssets > 0) {
     gaps.push(
       gap(
@@ -425,6 +485,18 @@ function courtGaps(court: NationalDataCoherenceCourt): NationalDataCoherenceGap[
         'source_conflicts',
         court.conflictedAssets,
         'Resolve conflicting source links before automation treats these assets as reliable.'
+      )
+    )
+  }
+
+  if (court.fieldEvidenceConflictAssets > 0) {
+    gaps.push(
+      gap(
+        court,
+        'high',
+        'field_evidence_conflicts',
+        court.fieldEvidenceConflictAssets,
+        'Review conflicting canonical field evidence before updating golden records.'
       )
     )
   }
@@ -478,7 +550,12 @@ function summarize(courts: NationalDataCoherenceCourt[]): NationalDataCoherenceS
       djenPublicationAssets: memo.djenPublicationAssets + court.djenPublicationAssets,
       valuationAssets: memo.valuationAssets + court.valuationAssets,
       scoredAssets: memo.scoredAssets + court.scoredAssets,
+      fieldEvidenceAssets: memo.fieldEvidenceAssets + court.fieldEvidenceAssets,
+      fieldEvidenceResolvedAssets:
+        memo.fieldEvidenceResolvedAssets + court.fieldEvidenceResolvedAssets,
       conflictedAssets: memo.conflictedAssets + court.conflictedAssets,
+      fieldEvidenceConflictAssets:
+        memo.fieldEvidenceConflictAssets + court.fieldEvidenceConflictAssets,
       pendingCandidateReviewAssets:
         memo.pendingCandidateReviewAssets + court.pendingCandidateReviewAssets,
     }),
@@ -490,7 +567,10 @@ function summarize(courts: NationalDataCoherenceCourt[]): NationalDataCoherenceS
       djenPublicationAssets: 0,
       valuationAssets: 0,
       scoredAssets: 0,
+      fieldEvidenceAssets: 0,
+      fieldEvidenceResolvedAssets: 0,
       conflictedAssets: 0,
+      fieldEvidenceConflictAssets: 0,
       pendingCandidateReviewAssets: 0,
     }
   )
@@ -504,7 +584,10 @@ function summarize(courts: NationalDataCoherenceCourt[]): NationalDataCoherenceS
     djenPublicationCoverage: ratio(totals.djenPublicationAssets, totals.totalAssets),
     valuationCoverage: ratio(totals.valuationAssets, totals.totalAssets),
     scoreCoverage: ratio(totals.scoredAssets, totals.totalAssets),
+    fieldEvidenceCoverage: ratio(totals.fieldEvidenceAssets, totals.totalAssets),
+    fieldEvidenceResolvedCoverage: ratio(totals.fieldEvidenceResolvedAssets, totals.totalAssets),
     conflictedAssets: totals.conflictedAssets,
+    fieldEvidenceConflictAssets: totals.fieldEvidenceConflictAssets,
     pendingCandidateReviewAssets: totals.pendingCandidateReviewAssets,
     courtsCount: courts.length,
     courtsWithAssetsCount: courts.filter((court) => court.totalAssets > 0).length,
