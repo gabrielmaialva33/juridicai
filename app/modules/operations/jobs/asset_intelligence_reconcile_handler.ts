@@ -16,6 +16,7 @@ export type AssetIntelligenceReconcilePayload = {
   maxActionsPerAsset?: number | null
   recentActionCooldownHours?: number | null
   useNationalCoherence?: boolean | null
+  materializeFieldEvidence?: boolean | null
   requestId?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
@@ -41,6 +42,7 @@ export async function handleAssetIntelligenceReconcile(payload: AssetIntelligenc
       maxActionsPerAsset: payload.maxActionsPerAsset ?? null,
       recentActionCooldownHours: payload.recentActionCooldownHours ?? null,
       useNationalCoherence: payload.useNationalCoherence ?? true,
+      materializeFieldEvidence: payload.materializeFieldEvidence ?? true,
     },
   })
 
@@ -62,6 +64,7 @@ export async function handleAssetIntelligenceReconcile(payload: AssetIntelligenc
           maxActionsPerAsset: payload.maxActionsPerAsset,
           recentActionCooldownHours: payload.recentActionCooldownHours,
           useNationalCoherence: payload.useNationalCoherence,
+          materializeFieldEvidence: payload.materializeFieldEvidence,
           requestId: payload.requestId,
         })
     )

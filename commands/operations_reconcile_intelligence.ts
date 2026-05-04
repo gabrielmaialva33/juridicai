@@ -62,6 +62,11 @@ export default class OperationsReconcileIntelligence extends BaseCommand {
   declare skipNationalCoherence: boolean
 
   @flags.boolean({
+    description: 'Skip materializing per-field canonical evidence rows',
+  })
+  declare skipFieldEvidence: boolean
+
+  @flags.boolean({
     description: 'Run inline instead of enqueueing a BullMQ job',
   })
   declare runInline: boolean
@@ -89,6 +94,7 @@ export default class OperationsReconcileIntelligence extends BaseCommand {
       maxActionsPerAsset: this.maxActionsPerAsset,
       recentActionCooldownHours: this.recentActionCooldownHours,
       useNationalCoherence: !this.skipNationalCoherence,
+      materializeFieldEvidence: !this.skipFieldEvidence,
       requestId: `operations-reconcile-intelligence-${DateTime.utc().toMillis()}`,
       origin: 'manual_retry',
     }

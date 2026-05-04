@@ -8,6 +8,7 @@ import nationalDataCoherenceService, {
   type NationalDataCoherenceReport,
   type NationalDataCoherenceStatus,
 } from '#modules/integrations/services/national_data_coherence_service'
+import assetFieldEvidenceService from '#modules/precatorios/services/asset_field_evidence_service'
 import type { SourceType } from '#shared/types/model_enums'
 
 const DEFAULT_LIMIT = 25
@@ -28,6 +29,7 @@ export type AssetIntelligenceReconcileOptions = {
   maxActionsPerAsset?: number | null
   recentActionCooldownHours?: number | null
   useNationalCoherence?: boolean | null
+  materializeFieldEvidence?: boolean | null
   requestId?: string | null
 }
 
@@ -44,6 +46,9 @@ export type AssetIntelligenceReconcileResult = {
   manualActions: number
   plannedActions: number
   skippedActions: number
+  fieldEvidenceAssets: number
+  fieldEvidenceRows: number
+  fieldEvidenceConflicts: number
   coherence: AssetIntelligenceReconcileCoherenceContext
   failures: Array<{ assetId: string; message: string }>
   assets: Array<{
@@ -53,6 +58,12 @@ export type AssetIntelligenceReconcileResult = {
     completenessScore: number
     confidenceScore: number
     actionKeys: string[]
+    fieldEvidence: {
+      totalFields: number
+      resolvedFields: number
+      conflictFields: number
+      missingFields: number
+    } | null
     results: AssetIntelligenceActionResult[]
   }>
 }
@@ -95,6 +106,9 @@ class AssetIntelligenceReconcileService {
       manualActions: 0,
       plannedActions: 0,
       skippedActions: 0,
+      fieldEvidenceAssets: 0,
+      fieldEvidenceRows: 0,
+      fieldEvidenceConflicts: 0,
       coherence,
       failures: [],
       assets: [],
@@ -105,10 +119,30 @@ class AssetIntelligenceReconcileService {
         result.inspectedAssets += 1
         const assetId = candidate.assetId
         const dossier = await assetIntelligenceDossierService.build(options.tenantId, assetId)
+        const fieldEvidence =
+          options.materializeFieldEvidence === false
+            ? null
+            : await assetFieldEvidenceService.materialize(options.tenantId, assetId, { dryRun })
         const actionKeys = selectActionKeys(dossier, options)
+
+        if (fieldEvidence) {
+          result.fieldEvidenceAssets += 1
+          result.fieldEvidenceRows += fieldEvidence.totalFields
+          result.fieldEvidenceConflicts += fieldEvidence.conflictFields
+        }
 
         if (actionKeys.length === 0) {
           result.skippedAssets += 1
+          result.assets.push({
+            assetId,
+            courtAlias: candidate.courtAlias,
+            coherencePriority: candidate.coherencePriority,
+            completenessScore: dossier.completeness.score,
+            confidenceScore: dossier.confidence.score,
+            actionKeys,
+            fieldEvidence: fieldEvidenceSummary(fieldEvidence),
+            results: [],
+          })
           continue
         }
 
@@ -126,6 +160,7 @@ class AssetIntelligenceReconcileService {
           completenessScore: dossier.completeness.score,
           confidenceScore: dossier.confidence.score,
           actionKeys,
+          fieldEvidence: fieldEvidenceSummary(fieldEvidence),
           results: actionResult.results,
         })
         accumulateActionMetrics(result, actionResult.results)
@@ -449,6 +484,19 @@ function accumulateActionMetrics(
     if (action.status === 'manual') result.manualActions += 1
     if (action.status === 'planned') result.plannedActions += 1
     if (action.status === 'skipped') result.skippedActions += 1
+  }
+}
+
+function fieldEvidenceSummary(
+  fieldEvidence: Awaited<ReturnType<typeof assetFieldEvidenceService.materialize>> | null
+) {
+  if (!fieldEvidence) return null
+
+  return {
+    totalFields: fieldEvidence.totalFields,
+    resolvedFields: fieldEvidence.resolvedFields,
+    conflictFields: fieldEvidence.conflictFields,
+    missingFields: fieldEvidence.missingFields,
   }
 }
 
