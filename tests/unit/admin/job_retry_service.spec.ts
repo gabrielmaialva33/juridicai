@@ -113,6 +113,7 @@ test.group('Job retry service', () => {
           includeManualActions: false,
           maxActionsPerAsset: 2,
           recentActionCooldownHours: 1,
+          useNationalCoherence: false,
         },
       },
       {

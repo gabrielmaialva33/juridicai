@@ -30,7 +30,11 @@ test.group('asset intelligence reconcile service', () => {
     assert.equal(result.selectedAssets, 1)
     assert.equal(result.inspectedAssets, 1)
     assert.equal(result.actedAssets, 1)
+    assert.isTrue(result.coherence.enabled)
+    assert.include(result.coherence.targetedCourts, 'federal-siop')
     assert.equal(result.assets[0].assetId, asset.id)
+    assert.equal(result.assets[0].courtAlias, 'federal-siop')
+    assert.isAbove(result.assets[0].coherencePriority, 0)
     assert.include(result.assets[0].actionKeys, 'enrich_from_datajud')
     assert.isAtLeast(result.plannedActions, 1)
 
