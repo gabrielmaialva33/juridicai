@@ -72,6 +72,11 @@ class GovernmentDataSyncOrchestratorService {
       }
     )
     const coverageTargetKeys = targetKeysForCoverageRecoveryPlan(coverageRecoveryPlan)
+    const dataJudRecoveryAliases = courtAliasesForCoverageRecoveryPlan(
+      coverageRecoveryPlan,
+      'datajud'
+    )
+    const djenRecoveryAliases = courtAliasesForCoverageRecoveryPlan(coverageRecoveryPlan, 'djen')
     const fetcher = options.fetchTimeoutMs
       ? governmentTimedFetch({ timeoutMs: options.fetchTimeoutMs })
       : undefined
@@ -100,7 +105,9 @@ class GovernmentDataSyncOrchestratorService {
     const dataJudNationalDiscovery = await runPhase(options, 'dataJudNationalDiscovery', () =>
       dataJudNationalPrecatorioSyncService.sync({
         tenantId: options.tenantId,
-        courtAliases: options.dataJudCourtAliases,
+        courtAliases:
+          options.dataJudCourtAliases ??
+          (dataJudRecoveryAliases.length > 0 ? dataJudRecoveryAliases : null),
         pageSize: options.dataJudPageSize ?? 100,
         maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
         fetcher,
@@ -110,7 +117,10 @@ class GovernmentDataSyncOrchestratorService {
     const djenPublicationDiscovery = await runPhase(options, 'djenPublicationDiscovery', () =>
       djenPublicationSyncService.sync({
         tenantId: options.tenantId,
-        courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases,
+        courtAliases:
+          options.djenCourtAliases ??
+          options.dataJudCourtAliases ??
+          (djenRecoveryAliases.length > 0 ? djenRecoveryAliases : null),
         searchTexts: options.djenSearchTexts,
         startDate: options.djenStartDate,
         endDate: options.djenEndDate,
@@ -290,6 +300,12 @@ function plannedPhases(
     : coveragePlan
       ? targetKeysForCoveragePlan(coveragePlan)
       : []
+  const plannedDataJudAliases = coverageRecoveryPlan
+    ? courtAliasesForCoverageRecoveryPlan(coverageRecoveryPlan, 'datajud')
+    : []
+  const plannedDjenAliases = coverageRecoveryPlan
+    ? courtAliasesForCoverageRecoveryPlan(coverageRecoveryPlan, 'djen')
+    : []
 
   return {
     siopOpenData: {
@@ -299,13 +315,18 @@ function plannedPhases(
       fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     dataJudNationalDiscovery: {
-      courtAliases: options.dataJudCourtAliases ?? 'all',
+      courtAliases:
+        options.dataJudCourtAliases ??
+        (plannedDataJudAliases.length > 0 ? plannedDataJudAliases : 'all'),
       pageSize: options.dataJudPageSize ?? 100,
       maxPagesPerCourt: options.dataJudMaxPagesPerCourt ?? 1,
       fetchTimeoutMs: options.fetchTimeoutMs ?? null,
     },
     djenPublicationDiscovery: {
-      courtAliases: options.djenCourtAliases ?? options.dataJudCourtAliases ?? 'all',
+      courtAliases:
+        options.djenCourtAliases ??
+        options.dataJudCourtAliases ??
+        (plannedDjenAliases.length > 0 ? plannedDjenAliases : 'all'),
       searchTexts: options.djenSearchTexts ?? ['precatório', 'RPV'],
       startDate: options.djenStartDate ?? null,
       endDate: options.djenEndDate ?? null,
@@ -318,6 +339,7 @@ function plannedPhases(
       recoveryPriority:
         coverageRecoveryPlan?.targets.slice(0, 10).map((target) => ({
           targetKey: target.targetKey,
+          layer: target.layer,
           priority: target.priority,
           priorityScore: target.priorityScore,
           reasons: target.reasons,
@@ -442,7 +464,18 @@ function targetKeysForCoveragePlan(plan: GovernmentCoveragePlan) {
 }
 
 function targetKeysForCoverageRecoveryPlan(plan: CoverageRecoveryPlan) {
-  return plan.executableTargetKeys
+  return plan.executableTargetKeysByLayer.primary
+}
+
+function courtAliasesForCoverageRecoveryPlan(
+  plan: CoverageRecoveryPlan,
+  layer: 'datajud' | 'djen'
+) {
+  return [
+    ...new Set(
+      plan.targets.filter((target) => target.layer === layer).map((target) => target.courtAlias)
+    ),
+  ]
 }
 
 function defaultAdapterKeys() {
