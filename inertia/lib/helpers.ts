@@ -115,7 +115,11 @@ export function formatDateTime(input: Date | string | number): string {
  * Brazilian currency (BRL) formatter.
  */
 export function fmtBRL(value: string | number | null | undefined): string {
-  return Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  if (value === null || value === undefined || value === '') {
+    return 'Não informado'
+  }
+
+  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 /**

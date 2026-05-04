@@ -1,6 +1,14 @@
 import { Head, router } from '@inertiajs/react'
 import { useState } from 'react'
-import { Filter, Sparkles, Target } from 'lucide-react'
+import {
+  AlertTriangle,
+  Database,
+  FileCheck2,
+  Filter,
+  ShieldAlert,
+  Sparkles,
+  Target,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -11,13 +19,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { EmptyState } from '~/components/shared/empty-state'
 import { FilterPanel, SelectFilter } from '~/components/shared/filter-controls'
 import { LabelChip } from '~/components/shared/label-chip'
 import { PageHeader } from '~/components/shared/page-header'
+import { StatusBadge } from '~/components/status-badge'
 import { fmtBRL, fmtNum } from '~/lib/helpers'
 import { jsonRequest } from '~/lib/http'
+
+type DataQuality = {
+  status: 'complete' | 'review' | 'blocked'
+  issues: string[]
+  hasValuation: boolean
+  hasDataJudProcess: boolean
+  hasDjenPublication: boolean
+  resolvedCoreFields: number
+  fieldEvidenceConflicts: number
+  sourceConflicts: number
+  pendingCandidateReviews: number
+}
 
 type Asset = {
   id: string
@@ -25,12 +45,16 @@ type Asset = {
   assetNumber?: string | null
   debtorName?: string | null
   debtorType?: string | null
+  source: string
   nature: string
   lifecycleStatus: string
+  complianceStatus: string
+  piiStatus: string
   faceValue: number
   estimatedUpdatedValue?: number | null
   exerciseYear?: number | null
   currentScore?: number | null
+  dataQuality: DataQuality
 }
 
 type Debtor = {
@@ -55,7 +79,8 @@ type Pipeline = {
 type Pricing = {
   faceValue: number
   offerRate: number
-  offerValue: number
+  offerValue?: number
+  acquisitionCost?: number
   termMonths: number
   expectedAnnualIrr: number
   riskAdjustedIrr: number
@@ -95,15 +120,30 @@ type Filters = {
   q?: string | null
   grade?: string | null
   stage?: string | null
+  source?: string | null
+  dataIssue?: string | null
   minRiskAdjustedIrr?: number | null
   minFaceValue?: number | null
   maxFaceValue?: number | null
+}
+
+type QualitySummary = {
+  total: number
+  missingValue: number
+  missingDataJud: number
+  missingDjen: number
+  missingFieldEvidence: number
+  conflicts: number
+  candidateReview: number
+  blocked: number
+  complete: number
 }
 
 type Props = {
   opportunities: Opportunity[]
   meta: Pagination
   filters: Filters
+  qualitySummary: QualitySummary
 }
 
 const GRADE_COLOR: Record<string, string> = {
@@ -141,6 +181,24 @@ const IRR_OPTIONS = [
   { value: '0.40', label: '≥ 40% a.a.' },
 ]
 
+const SOURCE_OPTIONS = [
+  { value: 'siop', label: 'SIOP' },
+  { value: 'datajud', label: 'DataJud' },
+  { value: 'djen', label: 'DJEN' },
+  { value: 'tribunal', label: 'Tribunal' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'api_private', label: 'API privada' },
+]
+
+const DATA_ISSUE_OPTIONS = [
+  { value: 'missing_value', label: 'Sem valor confiável' },
+  { value: 'missing_datajud', label: 'Sem processo DataJud' },
+  { value: 'missing_djen', label: 'Sem publicação DJEN' },
+  { value: 'missing_field_evidence', label: 'Evidência incompleta' },
+  { value: 'conflicts', label: 'Com conflito' },
+  { value: 'candidate_review', label: 'Candidato pendente' },
+]
+
 const NATURE_LABELS: Record<string, string> = {
   alimentar: 'Alimentar',
   comum: 'Comum',
@@ -148,24 +206,24 @@ const NATURE_LABELS: Record<string, string> = {
   unknown: 'Desconhecida',
 }
 
-const SIGNAL_ICON: Record<string, string> = {
-  payment_available: '⚡',
-  direct_agreement_opened: '🤝',
-  superpreference_granted: '⭐',
-  final_judgment: '🟢',
-  calculation_homologated: '🟢',
-  requisition_issued: '🟢',
-  prior_cession_detected: '🛑',
-  lien_detected: '🔴',
-  suspension_detected: '🔴',
-  objection_pending: '🟡',
-  beneficiary_inventory_pending: '🟡',
+const SOURCE_LABELS: Record<string, string> = {
+  siop: 'SIOP',
+  datajud: 'DataJud',
+  djen: 'DJEN',
+  tribunal: 'Tribunal',
+  manual: 'Manual',
+  api_private: 'API privada',
 }
 
 const fmtPct = (value: number | null | undefined, digits = 1) =>
   value === null || value === undefined ? '—' : `${(value * 100).toFixed(digits)}%`
 
-export default function OpportunitiesIndex({ opportunities, meta, filters }: Props) {
+export default function OpportunitiesIndex({
+  opportunities,
+  meta,
+  filters,
+  qualitySummary,
+}: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   function applyFilter(patch: Partial<Filters>) {
@@ -199,7 +257,7 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
         body: { assetIds: Array.from(selected), stage: 'qualified' },
       })
       setSelected(new Set())
-      router.reload({ only: ['opportunities', 'meta'] })
+      router.reload({ only: ['opportunities', 'meta', 'qualitySummary'] })
     } catch {
       // Keep the selection so the operator can retry the bulk action.
     }
@@ -211,11 +269,11 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
 
   return (
     <>
-      <Head title="Triagem de Créditos" />
+      <Head title="Triagem operacional de créditos" />
 
       <PageHeader
-        title="Triagem de Créditos"
-        description={`${fmtNum(meta.total)} créditos para análise · Priorizados por risco, prazo e retorno estimado`}
+        title="Triagem operacional de créditos"
+        description={`${fmtNum(meta.total)} registros para tratar · Qualidade de dados, cobertura e oportunidade em uma única fila`}
         breadcrumbs={[{ label: 'Painel', href: '/operations/desk' }, { label: 'Triagem' }]}
       >
         {selected.size > 0 ? (
@@ -236,8 +294,53 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
         )}
       </PageHeader>
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <QualityMetric
+          icon={<Database className="size-4" />}
+          label="Registros filtrados"
+          value={fmtNum(qualitySummary.total)}
+          hint={`${fmtNum(qualitySummary.complete)} completos`}
+          tone="primary"
+        />
+        <QualityMetric
+          icon={<AlertTriangle className="size-4" />}
+          label="Sem valor confiável"
+          value={fmtNum(qualitySummary.missingValue)}
+          hint="Valuation ausente ou zerada"
+          tone={qualitySummary.missingValue > 0 ? 'warning' : 'success'}
+        />
+        <QualityMetric
+          icon={<FileCheck2 className="size-4" />}
+          label="Gaps DataJud/DJEN"
+          value={fmtNum(qualitySummary.missingDataJud + qualitySummary.missingDjen)}
+          hint={`${fmtNum(qualitySummary.missingDataJud)} sem processo · ${fmtNum(qualitySummary.missingDjen)} sem publicação`}
+          tone="warning"
+        />
+        <QualityMetric
+          icon={<ShieldAlert className="size-4" />}
+          label="Bloqueios"
+          value={fmtNum(qualitySummary.blocked)}
+          hint={`${fmtNum(qualitySummary.conflicts)} conflitos · ${fmtNum(qualitySummary.candidateReview)} candidatos`}
+          tone={qualitySummary.blocked > 0 ? 'danger' : 'success'}
+        />
+      </div>
+
       <FilterPanel>
-        <div className="grid gap-3 md:grid-cols-3 lg:max-w-2xl">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <SelectFilter
+            label="Pendência"
+            value={filters.dataIssue}
+            allLabel="Todas as pendências"
+            options={DATA_ISSUE_OPTIONS}
+            onChange={(value) => applyFilter({ dataIssue: value })}
+          />
+          <SelectFilter
+            label="Fonte"
+            value={filters.source}
+            allLabel="Todas as fontes"
+            options={SOURCE_OPTIONS}
+            onChange={(value) => applyFilter({ source: value })}
+          />
           <SelectFilter
             label="Classificação"
             value={filters.grade}
@@ -274,7 +377,7 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
             />
           ) : (
             <>
-              <Table className="min-w-[1040px]">
+              <Table className="min-w-[1100px] table-fixed">
                 <TableHeader className="bg-muted/40">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[36px]">
@@ -285,14 +388,13 @@ export default function OpportunitiesIndex({ opportunities, meta, filters }: Pro
                         className="size-3.5"
                       />
                     </TableHead>
-                    <TableHead className="w-[60px]">Classe</TableHead>
-                    <TableHead>Devedor</TableHead>
-                    <TableHead className="text-end">Retorno est.</TableHead>
-                    <TableHead className="text-end">Face</TableHead>
-                    <TableHead className="text-end">Base de oferta</TableHead>
-                    <TableHead className="text-end">Prazo provável</TableHead>
-                    <TableHead>Sinais</TableHead>
-                    <TableHead>Situação</TableHead>
+                    <TableHead className="w-[96px]">Qualidade</TableHead>
+                    <TableHead className="w-[230px]">Crédito</TableHead>
+                    <TableHead className="w-[260px]">Devedor</TableHead>
+                    <TableHead className="w-[160px]">Cobertura</TableHead>
+                    <TableHead className="w-[120px] text-end">Valor</TableHead>
+                    <TableHead className="w-[105px] text-end">Retorno</TableHead>
+                    <TableHead className="w-[95px]">Situação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -358,6 +460,14 @@ function OpportunityRow({
   const negativeCount = op.signals?.negative?.length ?? 0
   const multiplier = op.debtor.historicalMultiplier
   const isHighIRR = op.pricing.riskAdjustedIrr >= 0.3
+  const acquisitionCost = op.pricing.acquisitionCost ?? op.pricing.offerValue ?? null
+  const quality = op.asset.dataQuality
+  const displayFaceValue =
+    quality.hasValuation && op.pricing.faceValue > 0
+      ? fmtBRL(op.pricing.faceValue)
+      : 'Não informado'
+  const offerLabel =
+    acquisitionCost !== null && acquisitionCost > 0 ? fmtBRL(acquisitionCost) : 'Oferta pendente'
 
   return (
     <TableRow className="cursor-pointer align-top hover:bg-orange-50/60" onClick={goToDetail}>
@@ -371,28 +481,67 @@ function OpportunityRow({
         />
       </TableCell>
       <TableCell>
-        <span
-          className={`inline-flex items-center justify-center min-w-[36px] h-7 rounded text-xs font-bold text-white ${
-            GRADE_COLOR[op.pricing.grade] ?? 'bg-muted-foreground'
-          }`}
-        >
-          {op.pricing.grade}
-        </span>
+        <div className="space-y-1.5">
+          <QualityBadge quality={quality} />
+          {quality.issues.length > 0 && (
+            <div className="text-[10px] text-muted-foreground tabular-nums">
+              {quality.issues.length} pendência{quality.issues.length === 1 ? '' : 's'}
+            </div>
+          )}
+        </div>
       </TableCell>
-      <TableCell className="max-w-xs">
-        <div className="font-medium truncate">{op.asset.debtorName ?? '—'}</div>
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground tabular-nums mt-0.5">
-          <span className="font-mono">
-            {op.asset.cnjNumber ?? op.asset.assetNumber ?? op.asset.id.slice(0, 8)}
+      <TableCell>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={`inline-flex h-6 min-w-8 items-center justify-center rounded text-xs font-bold text-white ${
+              GRADE_COLOR[op.pricing.grade] ?? 'bg-muted-foreground'
+            }`}
+          >
+            {op.pricing.grade}
           </span>
-          {op.asset.exerciseYear && <span>· {op.asset.exerciseYear}</span>}
+          <LabelChip variant="info">{SOURCE_LABELS[op.asset.source] ?? op.asset.source}</LabelChip>
           <LabelChip>{NATURE_LABELS[op.asset.nature] ?? op.asset.nature}</LabelChip>
         </div>
+        <div className="mt-1 font-mono text-xs tabular-nums text-foreground">
+          {op.asset.cnjNumber ?? op.asset.assetNumber ?? op.asset.id.slice(0, 8)}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          <StatusBadge kind="compliance" value={op.asset.complianceStatus} />
+          <StatusBadge kind="pii" value={op.asset.piiStatus} />
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="truncate font-medium">
+          {op.asset.debtorName ?? 'Devedor não identificado'}
+        </div>
+        <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground tabular-nums">
+          {op.asset.exerciseYear && <span>Exec. {op.asset.exerciseYear}</span>}
+          {op.asset.currentScore !== null && op.asset.currentScore !== undefined && (
+            <span>Score {op.asset.currentScore.toFixed(1)}</span>
+          )}
+        </div>
         {multiplier > 0 && (
-          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
-            ⭐ {multiplier.toFixed(1)}x histórico
+          <div className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 tabular-nums">
+            Histórico {multiplier.toFixed(1)}x
           </div>
         )}
+      </TableCell>
+      <TableCell>
+        <DataCoverage
+          quality={quality}
+          positiveCount={positiveCount}
+          negativeCount={negativeCount}
+        />
+      </TableCell>
+      <TableCell className="text-end tabular-nums">
+        <div className="font-semibold">{displayFaceValue}</div>
+        {op.asset.estimatedUpdatedValue !== null &&
+          op.asset.estimatedUpdatedValue !== undefined && (
+            <div className="text-[10px] text-muted-foreground">
+              Atual. {fmtBRL(op.asset.estimatedUpdatedValue)}
+            </div>
+          )}
+        <div className="mt-1 text-[10px] text-muted-foreground">{offerLabel}</div>
       </TableCell>
       <TableCell className="text-end">
         <div
@@ -401,40 +550,7 @@ function OpportunityRow({
           {fmtPct(op.pricing.riskAdjustedIrr)}
         </div>
         <div className="text-[10px] text-muted-foreground tabular-nums">
-          P {fmtPct(op.pricing.paymentProbability)}
-        </div>
-      </TableCell>
-      <TableCell className="text-end tabular-nums font-medium">
-        {fmtBRL(op.pricing.faceValue)}
-      </TableCell>
-      <TableCell className="text-end tabular-nums text-sm">
-        {fmtBRL(op.pricing.offerValue)}
-        <div className="text-[10px] text-muted-foreground tabular-nums">
-          {fmtPct(op.pricing.offerRate)} face
-        </div>
-      </TableCell>
-      <TableCell className="text-end tabular-nums text-sm">{op.pricing.termMonths}m</TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          {op.signals?.positive?.slice(0, 4).map((s, i) => (
-            <Tooltip key={`p-${i}`}>
-              <TooltipTrigger asChild>
-                <span className="cursor-default">{SIGNAL_ICON[s.code] ?? '🟢'}</span>
-              </TooltipTrigger>
-              <TooltipContent>{s.label}</TooltipContent>
-            </Tooltip>
-          ))}
-          {op.signals?.negative?.slice(0, 3).map((s, i) => (
-            <Tooltip key={`n-${i}`}>
-              <TooltipTrigger asChild>
-                <span className="cursor-default">{SIGNAL_ICON[s.code] ?? '🔴'}</span>
-              </TooltipTrigger>
-              <TooltipContent>{s.label}</TooltipContent>
-            </Tooltip>
-          ))}
-          {positiveCount + negativeCount === 0 && (
-            <span className="text-[10px] text-muted-foreground">—</span>
-          )}
+          P {fmtPct(op.pricing.paymentProbability)} · {op.pricing.termMonths}m
         </div>
       </TableCell>
       <TableCell>
@@ -442,4 +558,93 @@ function OpportunityRow({
       </TableCell>
     </TableRow>
   )
+}
+
+function QualityMetric({
+  icon,
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+  hint: string
+  tone: 'primary' | 'success' | 'warning' | 'danger'
+}) {
+  const toneClass = {
+    primary: 'before:bg-primary',
+    success: 'before:bg-emerald-500',
+    warning: 'before:bg-amber-500',
+    danger: 'before:bg-red-500',
+  }[tone]
+
+  return (
+    <Card
+      className={`relative overflow-hidden before:absolute before:inset-y-0 before:start-0 before:w-0.5 ${toneClass}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 text-primary">{icon}</div>
+          <div className="min-w-0">
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {label}
+            </div>
+            <div className="mt-1 text-xl font-bold tabular-nums">{value}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function QualityBadge({ quality }: { quality: DataQuality }) {
+  if (quality.status === 'complete') {
+    return <LabelChip variant="success">Completo</LabelChip>
+  }
+
+  if (quality.status === 'blocked') {
+    return <LabelChip variant="danger">Bloqueado</LabelChip>
+  }
+
+  return <LabelChip variant="warning">Revisar</LabelChip>
+}
+
+function DataCoverage({
+  quality,
+  positiveCount,
+  negativeCount,
+}: {
+  quality: DataQuality
+  positiveCount: number
+  negativeCount: number
+}) {
+  return (
+    <div className="flex max-w-[170px] flex-wrap gap-1">
+      <CoverageChip ok={quality.hasValuation} label="Valor" />
+      <CoverageChip ok={quality.hasDataJudProcess} label="DataJud" />
+      <CoverageChip ok={quality.hasDjenPublication} label="DJEN" />
+      <CoverageChip
+        ok={quality.resolvedCoreFields >= 4}
+        label={`Evid. ${quality.resolvedCoreFields}/4`}
+      />
+      {(quality.sourceConflicts > 0 || quality.fieldEvidenceConflicts > 0) && (
+        <LabelChip variant="danger">Conflito</LabelChip>
+      )}
+      {quality.pendingCandidateReviews > 0 && (
+        <LabelChip variant="warning">{`${quality.pendingCandidateReviews} candidato`}</LabelChip>
+      )}
+      {positiveCount + negativeCount > 0 && (
+        <LabelChip variant={negativeCount > 0 ? 'warning' : 'success'}>
+          {`${positiveCount}+/${negativeCount}-`}
+        </LabelChip>
+      )}
+    </div>
+  )
+}
+
+function CoverageChip({ ok, label }: { ok: boolean; label: string }) {
+  return <LabelChip variant={ok ? 'success' : 'warning'}>{ok ? label : `Sem ${label}`}</LabelChip>
 }

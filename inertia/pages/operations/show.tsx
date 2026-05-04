@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   FileText,
   Loader2,
-  MessageSquareText,
   Save,
   Sparkles,
   Star,
@@ -316,6 +315,13 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
 
   const debtor = opportunity.debtor
   const recentEvents = useMemo(() => events.slice(0, 8), [events])
+  const recommendedChannel =
+    liquidityAdvisory.channels.find((channel) => channel.recommended) ??
+    liquidityAdvisory.channels[0] ??
+    null
+  const blockedChecklist = liquidityAdvisory.checklist.filter((item) => item.status === 'blocked')
+  const reviewChecklist = liquidityAdvisory.checklist.filter((item) => item.status === 'review')
+  const passedChecklist = liquidityAdvisory.checklist.filter((item) => item.status === 'passed')
 
   function stageForAction(action: 'save' | 'pipeline'): PipelineStage {
     if (action === 'save') {
@@ -406,116 +412,99 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
         </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3 space-y-4">
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <div
-                  className={`flex flex-col items-center justify-center size-16 rounded-xl text-white shrink-0 ${
-                    GRADE_COLOR[pricing.grade] ?? 'bg-muted-foreground'
-                  }`}
-                >
-                  <span className="text-2xl font-bold leading-none">{pricing.grade}</span>
-                  <span className="text-[9px] font-medium opacity-80 mt-0.5">CLASSE</span>
-                </div>
-                <div className="flex-1">
-                  <div
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${decision.color}`}
-                  >
-                    {decision.label}
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Retorno estimado
-                      </div>
-                      <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                        {fmtPct(pricing.riskAdjustedIrr)}
-                      </div>
-                      <div className="text-[10px] tabular-nums text-muted-foreground">
-                        {irrVsCdi.toFixed(0)}% do CDI
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Múltiplo financeiro
-                      </div>
-                      <div className="text-2xl font-bold tabular-nums">
-                        {multiplier.toFixed(2)}x
-                      </div>
-                      <div className="text-[10px] tabular-nums text-muted-foreground">
-                        TIR esperada {fmtPct(pricing.expectedAnnualIrr)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Probabilidade
-                      </div>
-                      <div className="text-2xl font-bold tabular-nums">
-                        {fmtPct(pricing.paymentProbability)}
-                      </div>
-                      <div className="text-[10px] tabular-nums text-muted-foreground">
-                        de pagamento
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <section className="mb-4 rounded-lg border border-border bg-card p-4 shadow-xs">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className={`inline-flex h-10 min-w-10 items-center justify-center rounded-md px-2 text-base font-bold text-white ${
+                  GRADE_COLOR[pricing.grade] ?? 'bg-muted-foreground'
+                }`}
+              >
+                {pricing.grade}
               </div>
-            </CardContent>
-          </Card>
+              <div
+                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${decision.color}`}
+              >
+                {decision.label}
+              </div>
+              <div
+                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${READINESS_COLOR[liquidityAdvisory.readiness.status]}`}
+              >
+                {liquidityAdvisory.readiness.score}/100 · {liquidityAdvisory.readiness.label}
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                {PIPELINE_STAGE_LABEL[opportunity.pipeline.stage]}
+              </div>
+            </div>
 
-          <Card>
-            <CardHeader className="items-stretch py-4">
-              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold flex items-center gap-2">
-                    <Briefcase className="size-4 text-primary" />
-                    Cenários para o cliente
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {liquidityAdvisory.readiness.summary}
-                  </p>
+            <h2 className="mt-3 text-lg font-semibold tracking-tight">
+              {liquidityAdvisory.clientAdvisory.headline}
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              {liquidityAdvisory.clientAdvisory.clientMessage}
+            </p>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <DecisionMetric
+                label="Retorno ajustado"
+                value={fmtPct(pricing.riskAdjustedIrr)}
+                hint={`${irrVsCdi.toFixed(0)}% do CDI`}
+                accent="success"
+              />
+              <DecisionMetric
+                label="Valor face"
+                value={fmtBRL(pricing.faceValue)}
+                hint={`Proposta ${fmtBRL(pricing.acquisitionCost)}`}
+              />
+              <DecisionMetric
+                label="Pagamento"
+                value={fmtPct(pricing.paymentProbability)}
+                hint={`${termMonths} meses prováveis`}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-md border border-border bg-muted/25 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Próxima conduta
                 </div>
-                <div
-                  className={`w-fit shrink-0 rounded-md border px-3.5 py-2 text-sm font-semibold tabular-nums sm:self-center ${READINESS_COLOR[liquidityAdvisory.readiness.status]}`}
-                >
-                  {liquidityAdvisory.readiness.score}/100 · {liquidityAdvisory.readiness.label}
+                <div className="mt-1 font-semibold">
+                  {recommendedChannel?.title ?? 'Completar diligência'}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {liquidityAdvisory.insights.length > 0 && (
-                <div className="grid gap-2">
-                  {liquidityAdvisory.insights.map((insight) => (
-                    <div
-                      key={insight}
-                      className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm"
-                    >
-                      {insight}
-                    </div>
-                  ))}
+              {recommendedChannel && (
+                <div className="rounded-md bg-background px-2 py-1 text-xs font-semibold tabular-nums">
+                  {recommendedChannel.fitScore}/100
                 </div>
               )}
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {recommendedChannel?.nextAction ?? liquidityAdvisory.readiness.summary}
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <StatusPill label="Aprovados" value={passedChecklist.length} tone="success" />
+              <StatusPill label="Revisar" value={reviewChecklist.length} tone="warning" />
+              <StatusPill label="Bloqueios" value={blockedChecklist.length} tone="danger" />
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                {liquidityAdvisory.channels.map((channel) => (
-                  <LiquidityChannelCard key={channel.key} channel={channel} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="space-y-4">
           <Card>
             <CardHeader className="items-stretch py-4">
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold flex items-center gap-2">
-                    <MessageSquareText className="size-4 text-primary" />
-                    Recomendação ao cliente
+                  <h2 className="flex items-center gap-2 text-base font-semibold">
+                    <ClipboardCheck className="size-4 text-primary" />
+                    Roteiro de atendimento
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {liquidityAdvisory.clientAdvisory.headline}
+                    Ordem prática para transformar este crédito em conversa com cliente.
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={generateDossier}>
@@ -528,44 +517,130 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
-                {liquidityAdvisory.clientAdvisory.clientMessage}
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
+            <CardContent className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="space-y-3">
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+                  {liquidityAdvisory.readiness.summary}
+                </div>
                 <AdvisoryList
-                  title="Próximos passos"
+                  title="Próximas ações"
                   icon={<ClipboardCheck className="size-4 text-primary" />}
                   items={liquidityAdvisory.clientAdvisory.operatorNextSteps}
                 />
+              </div>
+
+              <div className="space-y-3">
                 <AdvisoryList
                   title="Documentos para pedir"
                   icon={<FileText className="size-4 text-primary" />}
                   items={liquidityAdvisory.clientAdvisory.requiredDocuments}
                 />
-              </div>
-
-              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-                <div className="font-medium">
-                  Serviço sugerido: {liquidityAdvisory.clientAdvisory.revenueOpportunity.label}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {liquidityAdvisory.clientAdvisory.revenueOpportunity.rationale}
+                <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                  <div className="font-medium">
+                    Serviço sugerido: {liquidityAdvisory.clientAdvisory.revenueOpportunity.label}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {liquidityAdvisory.clientAdvisory.revenueOpportunity.rationale}
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="events" className="space-y-3">
+          <Card>
+            <CardHeader className="items-stretch py-4">
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
+                  <Briefcase className="size-4 text-primary" />
+                  Caminhos possíveis
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Compare alternativas sem misturar com os dados brutos do processo.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 md:grid-cols-2">
+                {liquidityAdvisory.channels.map((channel) => (
+                  <LiquidityChannelCard key={channel.key} channel={channel} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="items-stretch py-4">
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
+                  <Star className="size-4 text-emerald-500" />
+                  Devedor e sinais
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Dados que explicam prazo, risco e prioridade de abordagem.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Stat
+                  label="Multiplier histórico"
+                  value={`${debtor.historicalMultiplier.toFixed(1)}x`}
+                  hint={debtor.historicalMultiplier > 1 ? 'acima da média' : 'abaixo da média'}
+                  accent={debtor.historicalMultiplier > 1 ? 'success' : 'muted'}
+                />
+                <Stat
+                  label="Tempo médio pgto"
+                  value={
+                    debtor.averagePaymentMonths ? `${debtor.averagePaymentMonths.toFixed(0)}m` : '—'
+                  }
+                />
+                <Stat
+                  label="Taxa pgto no prazo"
+                  value={fmtPct(debtor.onTimePaymentRate)}
+                  accent={(debtor.onTimePaymentRate ?? 0) > 0.85 ? 'success' : 'muted'}
+                />
+                <Stat
+                  label="RCL/dívida"
+                  value={fmtPct(debtor.rclDebtRatio, 2)}
+                  hint={debtor.regimeSpecialActive ? 'regime especial' : undefined}
+                />
+              </div>
+
+              {(opportunity.signals.positive.length > 0 ||
+                opportunity.signals.negative.length > 0) && (
+                <div className="grid gap-2 border-t border-border pt-4 md:grid-cols-2">
+                  {opportunity.signals.positive.map((signal, index) => (
+                    <SignalRow key={`p-${index}`} signal={signal} />
+                  ))}
+                  {opportunity.signals.negative.map((signal, index) => (
+                    <SignalRow key={`n-${index}`} signal={signal} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Tabs defaultValue="checklist" className="space-y-3">
             <div className="overflow-x-auto pb-1">
               <TabsList size="sm" className="w-max min-w-full justify-start">
-                <TabsTrigger value="events">Movimentações ({events.length})</TabsTrigger>
                 <TabsTrigger value="checklist">Diligência</TabsTrigger>
-                <TabsTrigger value="comparison">Comparativo financeiro</TabsTrigger>
-                <TabsTrigger value="assumptions">Premissas do cálculo</TabsTrigger>
+                <TabsTrigger value="events">Movimentações ({events.length})</TabsTrigger>
+                <TabsTrigger value="comparison">Comparativo</TabsTrigger>
+                <TabsTrigger value="assumptions">Premissas</TabsTrigger>
               </TabsList>
             </div>
+
+            <TabsContent value="checklist" className="mt-0">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="grid gap-2">
+                    {liquidityAdvisory.checklist.map((item) => (
+                      <ChecklistRow key={item.key} item={item} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="events" className="mt-0">
               <Card>
@@ -576,14 +651,14 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                     </div>
                   ) : (
                     <ul className="divide-y divide-border">
-                      {recentEvents.map((ev: any) => (
-                        <li key={ev.id} className="px-5 py-3 flex items-start gap-3">
-                          <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
+                      {recentEvents.map((event: any) => (
+                        <li key={event.id} className="flex items-start gap-3 px-5 py-3">
+                          <div className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-sm font-mono">{ev.eventType}</span>
-                              <span className="text-xs text-muted-foreground tabular-nums">
-                                {fmtRelative(ev.eventDate ?? ev.createdAt)}
+                              <span className="font-mono text-sm">{event.eventType}</span>
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {fmtRelative(event.eventDate ?? event.createdAt)}
                               </span>
                             </div>
                           </div>
@@ -595,19 +670,9 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               </Card>
             </TabsContent>
 
-            <TabsContent value="checklist" className="mt-0">
-              <Card>
-                <CardContent className="p-5 space-y-3">
-                  {liquidityAdvisory.checklist.map((item) => (
-                    <ChecklistRow key={item.key} item={item} />
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             <TabsContent value="comparison" className="mt-0">
               <Card>
-                <CardContent className="p-5 space-y-4">
+                <CardContent className="space-y-4 p-5">
                   <ComparisonRow
                     label="Esta oportunidade"
                     value={fmtPct(pricing.riskAdjustedIrr)}
@@ -615,7 +680,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                     accent="primary"
                   />
                   <ComparisonRow
-                    label="FIDC top decil (Hurst/Precato)"
+                    label="FIDC top decil"
                     value="20% a.a."
                     pct={(0.2 / 0.6) * 100}
                     accent="info"
@@ -626,12 +691,12 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                     pct={(cdiRate / 0.6) * 100}
                     accent="muted"
                   />
-                  <div className="text-xs text-muted-foreground border-t border-border pt-3">
-                    Esta oferta entrega{' '}
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  <div className="border-t border-border pt-3 text-xs text-muted-foreground">
+                    Spread estimado:{' '}
+                    <span className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                       +{((pricing.riskAdjustedIrr - cdiRate) * 100).toFixed(1)}pp
                     </span>{' '}
-                    sobre o CDI atual.
+                    sobre CDI.
                   </div>
                 </CardContent>
               </Card>
@@ -639,22 +704,16 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
 
             <TabsContent value="assumptions" className="mt-0">
               <Card>
-                <CardContent className="p-5 space-y-3 text-sm">
+                <CardContent className="space-y-3 p-5 text-sm">
+                  <SummaryRow label="Correção" value="EC 136/2025: min(IPCA+2%, Selic)" />
                   <SummaryRow
-                    label="Modelo de correção"
-                    value="EC 136/2025 — min(IPCA+2%, Selic)"
-                  />
-                  <SummaryRow
-                    label="Modelo tributário"
-                    value={`Ganho de capital flat ${fmtPct(pricing.taxRate)}`}
+                    label="Tributação"
+                    value={`Ganho de capital ${fmtPct(pricing.taxRate)}`}
                   />
                   <SummaryRow label="Custo operacional" value={fmtBRL(pricing.operationalCost)} />
+                  <SummaryRow label="Correção anual" value={fmtPct(pricing.annualCorrectionRate)} />
                   <SummaryRow
-                    label="Correção anual estimada"
-                    value={fmtPct(pricing.annualCorrectionRate)}
-                  />
-                  <SummaryRow
-                    label="Snapshot de mercado"
+                    label="Mercado"
                     value={
                       pricing.assumptions?.marketRatesAsOf
                         ? fmtRelative(pricing.assumptions.marketRatesAsOf)
@@ -665,75 +724,29 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               </Card>
             </TabsContent>
           </Tabs>
-
-          <Card>
-            <CardHeader>
-              <h2 className="text-base font-semibold flex items-center gap-2">
-                <Star className="size-4 text-emerald-500" />
-                Perfil do devedor
-              </h2>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Stat
-                label="Multiplier histórico"
-                value={`${debtor.historicalMultiplier.toFixed(1)}x`}
-                hint={debtor.historicalMultiplier > 1 ? 'acima da média' : 'abaixo da média'}
-                accent={debtor.historicalMultiplier > 1 ? 'success' : 'muted'}
-              />
-              <Stat
-                label="Tempo médio pgto"
-                value={
-                  debtor.averagePaymentMonths ? `${debtor.averagePaymentMonths.toFixed(0)}m` : '—'
-                }
-              />
-              <Stat
-                label="Taxa pgto no prazo"
-                value={fmtPct(debtor.onTimePaymentRate)}
-                accent={(debtor.onTimePaymentRate ?? 0) > 0.85 ? 'success' : 'muted'}
-              />
-              <Stat
-                label="RCL/dívida"
-                value={fmtPct(debtor.rclDebtRatio, 2)}
-                hint={debtor.regimeSpecialActive ? '⚠ regime especial' : undefined}
-              />
-            </CardContent>
-          </Card>
-
-          {(opportunity.signals.positive.length > 0 || opportunity.signals.negative.length > 0) && (
-            <Card>
-              <CardHeader>
-                <h2 className="text-base font-semibold">Sinais processuais</h2>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {opportunity.signals.positive.map((s, i) => (
-                  <SignalRow key={`p-${i}`} signal={s} />
-                ))}
-                {opportunity.signals.negative.map((s, i) => (
-                  <SignalRow key={`n-${i}`} signal={s} />
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </div>
 
-        <div className="lg:col-span-2 lg:sticky lg:top-20 lg:self-start">
+        <aside className="xl:sticky xl:top-20 xl:self-start">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold flex items-center gap-2">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
                   <Sparkles className="size-4 text-primary" />
-                  Cálculo de referência
+                  Simulador da proposta
                 </h2>
                 {recomputing && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              <Stat label="Valor face" value={fmtBRL(pricing.faceValue)} accent="primary" large />
+              <div className="grid grid-cols-2 gap-3">
+                <Stat label="Valor face" value={fmtBRL(pricing.faceValue)} accent="primary" />
+                <Stat label="Oferta" value={fmtBRL(pricing.acquisitionCost)} accent="primary" />
+              </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                    Valor de referência (% do crédito)
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Percentual ofertado
                   </label>
                   <span className="font-mono text-sm font-bold tabular-nums">
                     {(offerRate * 100).toFixed(1)}%
@@ -741,42 +754,33 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 </div>
                 <Slider
                   value={[offerRate]}
-                  onValueChange={(v) => setOfferRate(v[0])}
+                  onValueChange={(value) => setOfferRate(value[0])}
                   min={0.1}
                   max={0.95}
                   step={0.01}
                 />
-                <div className="text-sm tabular-nums font-medium">
-                  Base da proposta: {fmtBRL(pricing.acquisitionCost)}
-                </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Prazo provável
                   </label>
                   <span className="font-mono text-sm font-bold tabular-nums">{termMonths}m</span>
                 </div>
                 <Slider
                   value={[termMonths]}
-                  onValueChange={(v) => setTermMonths(Math.round(v[0]))}
+                  onValueChange={(value) => setTermMonths(Math.round(value[0]))}
                   min={1}
                   max={120}
                   step={1}
                 />
               </div>
 
-              <div className="border-t border-border pt-4 space-y-2">
+              <div className="space-y-2 border-t border-border pt-4">
                 <SummaryRow label="Recebimento esperado" value={fmtBRL(pricing.expectedPayment)} />
-                <SummaryRow
-                  label="Tributos estimados"
-                  value={`− ${fmtBRL(pricing.estimatedTax)}`}
-                />
-                <SummaryRow
-                  label="Custos operacionais"
-                  value={`− ${fmtBRL(pricing.operationalCost)}`}
-                />
+                <SummaryRow label="Tributos" value={`− ${fmtBRL(pricing.estimatedTax)}`} />
+                <SummaryRow label="Custos" value={`− ${fmtBRL(pricing.operationalCost)}`} />
                 <SummaryRow
                   label="Lucro líquido"
                   value={fmtBRL(pricing.netProfit)}
@@ -785,9 +789,9 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
                 />
               </div>
 
-              <div className="border-t border-border pt-4 space-y-1.5">
+              <div className="space-y-1.5 border-t border-border pt-4">
                 <SummaryRow
-                  label="Retorno estimado"
+                  label="TIR ajustada"
                   value={fmtPct(pricing.riskAdjustedIrr)}
                   bold
                   accent="success"
@@ -856,7 +860,7 @@ export default function OpportunityShow({ opportunity: initial, liquidity, event
               </div>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
 
       <Dialog open={dossierOpen} onOpenChange={setDossierOpen}>
@@ -917,6 +921,58 @@ function Stat({
         {value}
       </div>
       {hint && <div className="text-xs text-muted-foreground tabular-nums">{hint}</div>}
+    </div>
+  )
+}
+
+function DecisionMetric({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string
+  value: string
+  hint?: string
+  accent?: 'success'
+}) {
+  return (
+    <div className="rounded-md border border-border bg-background/60 px-3 py-2">
+      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-lg font-semibold tabular-nums ${
+          accent === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
+        }`}
+      >
+        {value}
+      </div>
+      {hint && <div className="mt-0.5 text-xs text-muted-foreground">{hint}</div>}
+    </div>
+  )
+}
+
+function StatusPill({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number
+  tone: 'success' | 'warning' | 'danger'
+}) {
+  const toneClass =
+    tone === 'success'
+      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      : tone === 'warning'
+        ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+        : 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300'
+
+  return (
+    <div className={`rounded-md border px-2 py-1 ${toneClass}`}>
+      <div className="text-[10px] font-medium uppercase tracking-wider opacity-80">{label}</div>
+      <div className="text-base font-semibold tabular-nums">{value}</div>
     </div>
   )
 }
