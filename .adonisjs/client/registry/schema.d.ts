@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 /// <reference path="../manifest.d.ts" />
 
-import type { ExtractBody, ExtractErrorResponse, ExtractQuery, ExtractResponse } from '@tuyau/core/types'
+import type { ExtractBody, ExtractErrorResponse, ExtractQuery, ExtractQueryForGet, ExtractResponse } from '@tuyau/core/types'
 import type { InferInput, SimpleError } from '@vinejs/vine/types'
 
 export type ParamValue = string | number | bigint | boolean
@@ -187,6 +187,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['newForm']>>>
     }
   }
+  'siop.imports.sources': {
+    methods: ["GET","HEAD"]
+    pattern: '/siop/imports/sources'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['sources']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['sources']>>>
+    }
+  }
+  'siop.imports.jobs.status': {
+    methods: ["GET","HEAD"]
+    pattern: '/siop/imports/jobs/:id/status'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['jobStatus']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['jobStatus']>>>
+    }
+  }
   'siop.imports.store': {
     methods: ["POST"]
     pattern: '/siop/imports'
@@ -197,6 +221,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#modules/siop/validators/upload_validator').uploadValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['store']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'siop.imports.trf6_export.store': {
+    methods: ["POST"]
+    pattern: '/siop/imports/trf6-export'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/siop/validators/upload_validator').uploadValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#modules/siop/validators/upload_validator').uploadValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['storeTrf6Export']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/siop/controllers/import_controller').default['storeTrf6Export']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'siop.imports.show': {
@@ -257,6 +293,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#modules/precatorios/controllers/precatorios_controller').default['index']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/precatorios/controllers/precatorios_controller').default['index']>>>
+    }
+  }
+  'precatorios.timeline': {
+    methods: ["GET","HEAD"]
+    pattern: '/precatorios/:id/timeline'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/precatorios/controllers/precatorios_controller').default['timeline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/precatorios/controllers/precatorios_controller').default['timeline']>>>
     }
   }
   'precatorios.show': {
@@ -353,6 +401,42 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#modules/exports/controllers/exports_controller').default['download']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/exports/controllers/exports_controller').default['download']>>>
+    }
+  }
+  'integrations.government.coverage.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/integrations/coverage'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/government_coverage_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/government_coverage_controller').default['index']>>>
+    }
+  }
+  'integrations.government.data_coherence.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/integrations/data-coherence'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/national_data_coherence_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/national_data_coherence_controller').default['index']>>>
+    }
+  }
+  'integrations.tribunal.budget_executions.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/tribunal/budget-executions'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/integrations/controllers/tribunal_budget_executions_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/integrations/controllers/tribunal_budget_executions_controller').default['index']>>>
     }
   }
   'integrations.datajud.candidates.index': {
@@ -485,6 +569,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['dossier']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['dossier']>>>
+    }
+  }
+  'operations.opportunities.intelligence_actions': {
+    methods: ["POST"]
+    pattern: '/operations/opportunities/:id/intelligence/actions'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['runIntelligenceActions']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['runIntelligenceActions']>>>
     }
   }
   'operations.opportunities.pricing': {

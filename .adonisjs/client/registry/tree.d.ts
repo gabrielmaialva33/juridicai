@@ -36,7 +36,14 @@ export interface ApiDefinition {
     imports: {
       index: typeof routes['siop.imports.index']
       new: typeof routes['siop.imports.new']
+      sources: typeof routes['siop.imports.sources']
+      jobs: {
+        status: typeof routes['siop.imports.jobs.status']
+      }
       store: typeof routes['siop.imports.store']
+      trf6Export: {
+        store: typeof routes['siop.imports.trf6_export.store']
+      }
       show: typeof routes['siop.imports.show']
       errors: typeof routes['siop.imports.errors']
       reprocess: typeof routes['siop.imports.reprocess']
@@ -45,6 +52,7 @@ export interface ApiDefinition {
   }
   precatorios: {
     index: typeof routes['precatorios.index']
+    timeline: typeof routes['precatorios.timeline']
     show: typeof routes['precatorios.show']
   }
   debtors: {
@@ -63,6 +71,19 @@ export interface ApiDefinition {
     download: typeof routes['exports.download']
   }
   integrations: {
+    government: {
+      coverage: {
+        index: typeof routes['integrations.government.coverage.index']
+      }
+      dataCoherence: {
+        index: typeof routes['integrations.government.data_coherence.index']
+      }
+    }
+    tribunal: {
+      budgetExecutions: {
+        index: typeof routes['integrations.tribunal.budget_executions.index']
+      }
+    }
     datajud: {
       candidates: {
         index: typeof routes['integrations.datajud.candidates.index']
@@ -81,6 +102,7 @@ export interface ApiDefinition {
       show: typeof routes['operations.opportunities.show']
       liquidity: typeof routes['operations.opportunities.liquidity']
       dossier: typeof routes['operations.opportunities.dossier']
+      intelligenceActions: typeof routes['operations.opportunities.intelligence_actions']
       pricing: typeof routes['operations.opportunities.pricing']
       pipeline: typeof routes['operations.opportunities.pipeline']
     }

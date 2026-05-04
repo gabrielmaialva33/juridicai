@@ -96,11 +96,29 @@ const routes = {
     tokens: [{"old":"/siop/imports/new","type":0,"val":"siop","end":""},{"old":"/siop/imports/new","type":0,"val":"imports","end":""},{"old":"/siop/imports/new","type":0,"val":"new","end":""}],
     types: placeholder as Registry['siop.imports.new']['types'],
   },
+  'siop.imports.sources': {
+    methods: ["GET","HEAD"],
+    pattern: '/siop/imports/sources',
+    tokens: [{"old":"/siop/imports/sources","type":0,"val":"siop","end":""},{"old":"/siop/imports/sources","type":0,"val":"imports","end":""},{"old":"/siop/imports/sources","type":0,"val":"sources","end":""}],
+    types: placeholder as Registry['siop.imports.sources']['types'],
+  },
+  'siop.imports.jobs.status': {
+    methods: ["GET","HEAD"],
+    pattern: '/siop/imports/jobs/:id/status',
+    tokens: [{"old":"/siop/imports/jobs/:id/status","type":0,"val":"siop","end":""},{"old":"/siop/imports/jobs/:id/status","type":0,"val":"imports","end":""},{"old":"/siop/imports/jobs/:id/status","type":0,"val":"jobs","end":""},{"old":"/siop/imports/jobs/:id/status","type":1,"val":"id","end":""},{"old":"/siop/imports/jobs/:id/status","type":0,"val":"status","end":""}],
+    types: placeholder as Registry['siop.imports.jobs.status']['types'],
+  },
   'siop.imports.store': {
     methods: ["POST"],
     pattern: '/siop/imports',
     tokens: [{"old":"/siop/imports","type":0,"val":"siop","end":""},{"old":"/siop/imports","type":0,"val":"imports","end":""}],
     types: placeholder as Registry['siop.imports.store']['types'],
+  },
+  'siop.imports.trf6_export.store': {
+    methods: ["POST"],
+    pattern: '/siop/imports/trf6-export',
+    tokens: [{"old":"/siop/imports/trf6-export","type":0,"val":"siop","end":""},{"old":"/siop/imports/trf6-export","type":0,"val":"imports","end":""},{"old":"/siop/imports/trf6-export","type":0,"val":"trf6-export","end":""}],
+    types: placeholder as Registry['siop.imports.trf6_export.store']['types'],
   },
   'siop.imports.show': {
     methods: ["GET","HEAD"],
@@ -131,6 +149,12 @@ const routes = {
     pattern: '/precatorios',
     tokens: [{"old":"/precatorios","type":0,"val":"precatorios","end":""}],
     types: placeholder as Registry['precatorios.index']['types'],
+  },
+  'precatorios.timeline': {
+    methods: ["GET","HEAD"],
+    pattern: '/precatorios/:id/timeline',
+    tokens: [{"old":"/precatorios/:id/timeline","type":0,"val":"precatorios","end":""},{"old":"/precatorios/:id/timeline","type":1,"val":"id","end":""},{"old":"/precatorios/:id/timeline","type":0,"val":"timeline","end":""}],
+    types: placeholder as Registry['precatorios.timeline']['types'],
   },
   'precatorios.show': {
     methods: ["GET","HEAD"],
@@ -179,6 +203,24 @@ const routes = {
     pattern: '/exports/:id/download',
     tokens: [{"old":"/exports/:id/download","type":0,"val":"exports","end":""},{"old":"/exports/:id/download","type":1,"val":"id","end":""},{"old":"/exports/:id/download","type":0,"val":"download","end":""}],
     types: placeholder as Registry['exports.download']['types'],
+  },
+  'integrations.government.coverage.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/admin/integrations/coverage',
+    tokens: [{"old":"/admin/integrations/coverage","type":0,"val":"admin","end":""},{"old":"/admin/integrations/coverage","type":0,"val":"integrations","end":""},{"old":"/admin/integrations/coverage","type":0,"val":"coverage","end":""}],
+    types: placeholder as Registry['integrations.government.coverage.index']['types'],
+  },
+  'integrations.government.data_coherence.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/admin/integrations/data-coherence',
+    tokens: [{"old":"/admin/integrations/data-coherence","type":0,"val":"admin","end":""},{"old":"/admin/integrations/data-coherence","type":0,"val":"integrations","end":""},{"old":"/admin/integrations/data-coherence","type":0,"val":"data-coherence","end":""}],
+    types: placeholder as Registry['integrations.government.data_coherence.index']['types'],
+  },
+  'integrations.tribunal.budget_executions.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/admin/tribunal/budget-executions',
+    tokens: [{"old":"/admin/tribunal/budget-executions","type":0,"val":"admin","end":""},{"old":"/admin/tribunal/budget-executions","type":0,"val":"tribunal","end":""},{"old":"/admin/tribunal/budget-executions","type":0,"val":"budget-executions","end":""}],
+    types: placeholder as Registry['integrations.tribunal.budget_executions.index']['types'],
   },
   'integrations.datajud.candidates.index': {
     methods: ["GET","HEAD"],
@@ -245,6 +287,12 @@ const routes = {
     pattern: '/operations/opportunities/:id/dossier',
     tokens: [{"old":"/operations/opportunities/:id/dossier","type":0,"val":"operations","end":""},{"old":"/operations/opportunities/:id/dossier","type":0,"val":"opportunities","end":""},{"old":"/operations/opportunities/:id/dossier","type":1,"val":"id","end":""},{"old":"/operations/opportunities/:id/dossier","type":0,"val":"dossier","end":""}],
     types: placeholder as Registry['operations.opportunities.dossier']['types'],
+  },
+  'operations.opportunities.intelligence_actions': {
+    methods: ["POST"],
+    pattern: '/operations/opportunities/:id/intelligence/actions',
+    tokens: [{"old":"/operations/opportunities/:id/intelligence/actions","type":0,"val":"operations","end":""},{"old":"/operations/opportunities/:id/intelligence/actions","type":0,"val":"opportunities","end":""},{"old":"/operations/opportunities/:id/intelligence/actions","type":1,"val":"id","end":""},{"old":"/operations/opportunities/:id/intelligence/actions","type":0,"val":"intelligence","end":""},{"old":"/operations/opportunities/:id/intelligence/actions","type":0,"val":"actions","end":""}],
+    types: placeholder as Registry['operations.opportunities.intelligence_actions']['types'],
   },
   'operations.opportunities.pricing': {
     methods: ["POST"],

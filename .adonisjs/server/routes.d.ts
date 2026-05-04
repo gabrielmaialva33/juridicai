@@ -19,12 +19,16 @@ export type ScannedRoutes = {
     'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
+    'siop.imports.sources': { paramsTuple?: []; params?: {} }
+    'siop.imports.jobs.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.store': { paramsTuple?: []; params?: {} }
+    'siop.imports.trf6_export.store': { paramsTuple?: []; params?: {} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.reprocess': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.download_source': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.index': { paramsTuple?: []; params?: {} }
+    'precatorios.timeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'debtors.index': { paramsTuple?: []; params?: {} }
     'debtors.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -33,6 +37,9 @@ export type ScannedRoutes = {
     'exports.store': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.government.coverage.index': { paramsTuple?: []; params?: {} }
+    'integrations.government.data_coherence.index': { paramsTuple?: []; params?: {} }
+    'integrations.tribunal.budget_executions.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'integrations.datajud.candidates.accept': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -44,6 +51,7 @@ export type ScannedRoutes = {
     'operations.opportunities.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.dossier': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'operations.opportunities.intelligence_actions': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
@@ -66,16 +74,22 @@ export type ScannedRoutes = {
     'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
+    'siop.imports.sources': { paramsTuple?: []; params?: {} }
+    'siop.imports.jobs.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.download_source': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.index': { paramsTuple?: []; params?: {} }
+    'precatorios.timeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'debtors.index': { paramsTuple?: []; params?: {} }
     'debtors.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.index': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.government.coverage.index': { paramsTuple?: []; params?: {} }
+    'integrations.government.data_coherence.index': { paramsTuple?: []; params?: {} }
+    'integrations.tribunal.budget_executions.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.desk': { paramsTuple?: []; params?: {} }
@@ -101,16 +115,22 @@ export type ScannedRoutes = {
     'settings.users': { paramsTuple?: []; params?: {} }
     'siop.imports.index': { paramsTuple?: []; params?: {} }
     'siop.imports.new': { paramsTuple?: []; params?: {} }
+    'siop.imports.sources': { paramsTuple?: []; params?: {} }
+    'siop.imports.jobs.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.errors': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'siop.imports.download_source': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.index': { paramsTuple?: []; params?: {} }
+    'precatorios.timeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'precatorios.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'debtors.index': { paramsTuple?: []; params?: {} }
     'debtors.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.index': { paramsTuple?: []; params?: {} }
     'exports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'integrations.government.coverage.index': { paramsTuple?: []; params?: {} }
+    'integrations.government.data_coherence.index': { paramsTuple?: []; params?: {} }
+    'integrations.tribunal.budget_executions.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.index': { paramsTuple?: []; params?: {} }
     'integrations.datajud.candidates.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.desk': { paramsTuple?: []; params?: {} }
@@ -132,6 +152,7 @@ export type ScannedRoutes = {
     'auth.logout': { paramsTuple?: []; params?: {} }
     'tenants.select.store': { paramsTuple?: []; params?: {} }
     'siop.imports.store': { paramsTuple?: []; params?: {} }
+    'siop.imports.trf6_export.store': { paramsTuple?: []; params?: {} }
     'siop.imports.reprocess': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'pii.beneficiaries.reveal': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'exports.store': { paramsTuple?: []; params?: {} }
@@ -139,6 +160,7 @@ export type ScannedRoutes = {
     'integrations.datajud.candidates.reject': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'integrations.datajud.candidates.ambiguous': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.bulk_pipeline': { paramsTuple?: []; params?: {} }
+    'operations.opportunities.intelligence_actions': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'market.rates.sync_bcb': { paramsTuple?: []; params?: {} }
