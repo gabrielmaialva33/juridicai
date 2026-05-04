@@ -398,8 +398,10 @@ export async function shutdownWorkers() {
 
 async function writeHeartbeats() {
   try {
+    const registeredQueueNames = queueService.getRegisteredQueueNames()
+
     await Promise.all(
-      queueNames.map((queueName) =>
+      registeredQueueNames.map((queueName) =>
         workerHeartbeatService.beat({
           workerId: `${process.pid}:${queueName}`,
           queueName,

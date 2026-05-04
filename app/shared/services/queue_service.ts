@@ -37,6 +37,11 @@ class QueueService {
     processor: Processor<T>,
     options?: Pick<WorkerOptions, 'concurrency'>
   ) {
+    if (!shouldRegisterWorker(queueName)) {
+      logger.info({ queueName }, 'Queue worker skipped by WORKER_QUEUES filter')
+      return null
+    }
+
     const worker = new Worker(queueName, processor, {
       prefix: this.#prefix,
       connection: this.getConnection(),
@@ -90,6 +95,10 @@ class QueueService {
     return Promise.all(names.map((name) => this.getQueueSnapshot(name)))
   }
 
+  getRegisteredQueueNames() {
+    return [...this.#workers.keys()]
+  }
+
   async shutdown() {
     await Promise.all([...this.#workers.values()].map((worker) => worker.close()))
     await Promise.all([...this.#queues.values()].map((queue) => queue.close()))
@@ -105,6 +114,18 @@ class QueueService {
       password: env.get('REDIS_PASSWORD')?.release() || undefined,
     }
   }
+}
+
+function shouldRegisterWorker(queueName: string) {
+  const enabledQueues = process.env.WORKER_QUEUES?.split(',')
+    .map((name) => name.trim())
+    .filter(Boolean)
+
+  if (!enabledQueues?.length) {
+    return true
+  }
+
+  return enabledQueues.includes(queueName)
 }
 
 export default new QueueService()
