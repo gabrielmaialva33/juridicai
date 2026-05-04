@@ -13,6 +13,7 @@ test.group('Operational health service', () => {
     const tenant = await TenantFactory.create()
 
     await createGovernmentRun(tenant.id, 'completed', now.minus({ hours: 1 }))
+    await createAssetIntelligenceRun(tenant.id, 'completed', now.minus({ minutes: 30 }))
 
     const result = await withOperationalStubs(
       {
@@ -31,6 +32,8 @@ test.group('Operational health service', () => {
     assert.equal(result.governmentSync.status, 'healthy')
     assert.equal(result.governmentSync.reason, 'recent_success')
     assert.equal(result.governmentSync.lastCompletedRun?.status, 'completed')
+    assert.equal(result.assetIntelligenceReconcile.status, 'healthy')
+    assert.equal(result.assetIntelligenceReconcile.reason, 'recent_success')
 
     await cleanupTenantRuns(tenant.id)
     await tenant.delete()
@@ -46,6 +49,7 @@ test.group('Operational health service', () => {
       errorCode: 'DataJudUnavailable',
       errorMessage: 'DataJud public API returned 503',
     })
+    await createAssetIntelligenceRun(tenant.id, 'completed', now.minus({ minutes: 30 }))
 
     const result = await withOperationalStubs(
       {
@@ -61,6 +65,7 @@ test.group('Operational health service', () => {
     assert.equal(result.governmentSync.status, 'cooldown')
     assert.equal(result.governmentSync.reason, 'recent_failure')
     assert.equal(result.governmentSync.lastFailedRun?.errorCode, 'DataJudUnavailable')
+    assert.equal(result.assetIntelligenceReconcile.status, 'healthy')
 
     await cleanupTenantRuns(tenant.id)
     await tenant.delete()
@@ -162,11 +167,45 @@ async function createGovernmentRun(
   createdAt: DateTime,
   error: { errorCode?: string; errorMessage?: string } = {}
 ) {
+  await createTenantJobRun(
+    tenantId,
+    'government-data-sync-orchestrator',
+    'government-data-sync-orchestrator',
+    status,
+    createdAt,
+    error
+  )
+}
+
+async function createAssetIntelligenceRun(
+  tenantId: string,
+  status: JobRunStatus,
+  createdAt: DateTime,
+  error: { errorCode?: string; errorMessage?: string } = {}
+) {
+  await createTenantJobRun(
+    tenantId,
+    'asset-intelligence-reconcile',
+    'asset-intelligence-reconcile',
+    status,
+    createdAt,
+    error
+  )
+}
+
+async function createTenantJobRun(
+  tenantId: string,
+  jobName: string,
+  queueName: string,
+  status: JobRunStatus,
+  createdAt: DateTime,
+  error: { errorCode?: string; errorMessage?: string } = {}
+) {
   await db.table('radar_job_runs').insert({
     tenant_id: tenantId,
-    job_name: 'government-data-sync-orchestrator',
-    queue_name: 'government-data-sync-orchestrator',
-    bullmq_job_id: `health-${tenantId}-${status}`,
+    job_name: jobName,
+    queue_name: queueName,
+    bullmq_job_id: `health-${tenantId}-${jobName}-${status}`,
     status,
     origin: 'scheduler',
     attempts: 1,
@@ -183,6 +222,6 @@ async function cleanupTenantRuns(tenantId: string) {
   await db
     .from('radar_job_runs')
     .where('tenant_id', tenantId)
-    .where('job_name', 'government-data-sync-orchestrator')
+    .whereIn('job_name', ['government-data-sync-orchestrator', 'asset-intelligence-reconcile'])
     .delete()
 }
