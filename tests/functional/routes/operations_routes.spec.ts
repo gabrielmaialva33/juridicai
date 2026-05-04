@@ -76,6 +76,19 @@ test.group('operations routes', () => {
       sessionCookie,
       tenant: fixture.tenant,
     })
+    const intelligenceActions = await apiFetch(
+      `/operations/opportunities/${asset.id}/intelligence/actions`,
+      {
+        method: 'POST',
+        sessionCookie,
+        tenant: fixture.tenant,
+        csrfToken,
+        body: {
+          dryRun: true,
+          actions: ['enrich_from_datajud', 'recompute_asset_score'],
+        },
+      }
+    )
     const persisted = await CessionOpportunity.query()
       .where('tenant_id', fixture.tenant.id)
       .where('asset_id', asset.id)
@@ -97,6 +110,14 @@ test.group('operations routes', () => {
     assert.equal(dossier.status, 200)
     assert.equal(dossier.body.intelligence.canonicalIdentity.assetId, asset.id)
     assert.isArray(dossier.body.intelligence.completeness.checks)
+    assert.equal(intelligenceActions.status, 200)
+    assert.equal(intelligenceActions.body.dryRun, true)
+    assert.isTrue(
+      intelligenceActions.body.results.some(
+        (action: { key: string; status: string }) =>
+          action.key === 'enrich_from_datajud' && action.status === 'planned'
+      )
+    )
 
     await fixture.cleanup()
   })

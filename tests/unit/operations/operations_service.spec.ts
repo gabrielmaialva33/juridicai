@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import operationsService from '#modules/operations/services/operations_service'
+import assetIntelligenceActionService from '#modules/operations/services/asset_intelligence_action_service'
 import CessionOpportunity from '#modules/operations/models/cession_opportunity'
 import CessionPricing from '#modules/operations/models/cession_pricing'
 import MarketRate from '#modules/market/models/market_rate'
@@ -280,6 +281,24 @@ test.group('operations service', () => {
     assert.isTrue(
       result.intelligence.nextBestActions.some(
         (action) => action.key === 'resolve_high_severity_conflicts'
+      )
+    )
+
+    const actions = await assetIntelligenceActionService.run(tenant.id, asset.id, {
+      actions: ['resolve_high_severity_conflicts', 'recompute_asset_score'],
+      dryRun: true,
+      requestId: 'asset-intelligence-actions-test',
+    })
+
+    assert.equal(actions.dryRun, true)
+    assert.isTrue(
+      actions.results.some(
+        (action) => action.key === 'resolve_high_severity_conflicts' && action.status === 'manual'
+      )
+    )
+    assert.isTrue(
+      actions.results.some(
+        (action) => action.key === 'recompute_asset_score' && action.status === 'planned'
       )
     )
 
