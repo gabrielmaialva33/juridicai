@@ -31,6 +31,7 @@ WORKDIR /app
 COPY --from=build /app/build/package.json /app/build/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 COPY --from=build /app/build ./
+RUN mkdir -p storage/logs
 
 EXPOSE 3333
 
