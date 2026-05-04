@@ -173,14 +173,16 @@ class AssetIntelligenceActionService {
   ) {
     const now = DateTime.utc()
     const courtAlias = courtAliasFrom(dossier)
+    const djenStartDate = now.minus({ days: 30 }).toISODate()
+    const djenEndDate = now.toISODate()
     const payload: GovernmentDataSyncOrchestratorPayload = {
       tenantId,
       years: uniqueNumbers([now.year, now.plus({ years: 1 }).year]),
       dataJudCourtAliases: courtAlias ? [courtAlias] : null,
       djenCourtAliases: courtAlias ? [courtAlias] : null,
       djenSearchTexts: ['precatório', 'RPV'],
-      djenStartDate: now.minus({ days: 30 }).toISODate(),
-      djenEndDate: now.toISODate(),
+      djenStartDate,
+      djenEndDate,
       djenMaxPagesPerCourt: 2,
       dataJudPageSize: 100,
       dataJudMaxPagesPerCourt: 1,
@@ -204,6 +206,11 @@ class AssetIntelligenceActionService {
       jobName: 'government-data-sync-orchestrator',
       requestId: input.requestId,
       payload,
+      jobId: courtLevelActionJobId(tenantId, action.key, {
+        courtAlias,
+        startDate: djenStartDate,
+        endDate: djenEndDate,
+      }),
     })
   }
 
@@ -304,10 +311,11 @@ class AssetIntelligenceActionService {
     dryRun: boolean
     queueName: string
     jobName: string
+    jobId?: string | null
     requestId?: string | null
     payload: JsonRecord
   }): Promise<AssetIntelligenceActionResult> {
-    const jobId = actionJobId(input.tenantId, input.assetId, input.action.key)
+    const jobId = input.jobId ?? actionJobId(input.tenantId, input.assetId, input.action.key)
 
     if (input.dryRun) {
       return plannedAction(input.action, {
@@ -432,6 +440,22 @@ function skippedAction(action: RecommendedAction, reason: string): AssetIntellig
 
 function actionJobId(tenantId: string, assetId: string, actionKey: string) {
   return `asset-intelligence-${tenantId}-${assetId}-${actionKey}-${DateTime.utc().toMillis()}`
+}
+
+function courtLevelActionJobId(
+  tenantId: string,
+  actionKey: string,
+  input: {
+    courtAlias: string | null
+    startDate: string | null
+    endDate: string | null
+  }
+) {
+  const courtAlias = input.courtAlias ?? 'national'
+  const startDate = input.startDate ?? 'open'
+  const endDate = input.endDate ?? 'open'
+
+  return `asset-intelligence-${tenantId}-${actionKey}-${courtAlias}-${startDate}-${endDate}`
 }
 
 function courtAliasFrom(dossier: Dossier) {

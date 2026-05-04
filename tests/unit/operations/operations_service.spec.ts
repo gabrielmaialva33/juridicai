@@ -304,6 +304,42 @@ test.group('operations service', () => {
 
     await cleanupTenantData(tenant)
   })
+
+  test('deduplicates court-level government sync actions within the same window', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+    const firstAsset = await PrecatorioAssetFactory.merge({
+      tenantId: tenant.id,
+      courtCode: 'trf1',
+      courtName: 'Tribunal Regional Federal da 1a Regiao',
+    }).create()
+    const secondAsset = await PrecatorioAssetFactory.merge({
+      tenantId: tenant.id,
+      courtCode: 'trf1',
+      courtName: 'Tribunal Regional Federal da 1a Regiao',
+    }).create()
+
+    const firstActions = await assetIntelligenceActionService.run(tenant.id, firstAsset.id, {
+      actions: ['sync_djen_publications'],
+      dryRun: true,
+      requestId: 'court-sync-dedupe-test',
+    })
+    const secondActions = await assetIntelligenceActionService.run(tenant.id, secondAsset.id, {
+      actions: ['sync_djen_publications'],
+      dryRun: true,
+      requestId: 'court-sync-dedupe-test',
+    })
+
+    const firstJobId = firstActions.results[0].jobId
+    const secondJobId = secondActions.results[0].jobId
+
+    assert.equal(firstJobId, secondJobId)
+    assert.notInclude(firstJobId!, firstAsset.id)
+    assert.include(firstJobId!, 'sync_djen_publications-trf1')
+
+    await cleanupTenantData(tenant)
+  })
 })
 
 async function cleanupTenantData(tenant: Tenant) {
