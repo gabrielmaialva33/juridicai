@@ -3,6 +3,7 @@ import ProcessMatchCandidate from '#modules/integrations/models/process_match_ca
 import type CessionOpportunity from '#modules/operations/models/cession_opportunity'
 import type CessionPricing from '#modules/operations/models/cession_pricing'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
+import type AssetFieldEvidence from '#modules/precatorios/models/asset_field_evidence'
 import type AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import type ExternalIdentifier from '#modules/precatorios/models/external_identifier'
 import type JudicialProcess from '#modules/precatorios/models/judicial_process'
@@ -44,6 +45,7 @@ class AssetIntelligenceDossierService {
       canonicalIdentity: buildCanonicalIdentity(context),
       relationshipMap: buildRelationshipMap(context),
       evidenceGraph: buildEvidenceGraph(context),
+      fieldEvidence: buildFieldEvidence(context),
       completeness,
       confidence,
       conflicts,
@@ -84,6 +86,7 @@ class AssetIntelligenceDossierService {
           .orderBy('identifier_type', 'asc')
           .limit(100)
       )
+      .preload('fieldEvidences', (query) => query.orderBy('field_key', 'asc'))
       .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(30))
       .preload('budgetFacts', (query) => query.orderBy('created_at', 'desc').limit(30))
       .preload('events', (query) => query.orderBy('event_date', 'desc').limit(150))
@@ -120,6 +123,7 @@ function buildContext(asset: PrecatorioAsset, processMatchCandidates: ProcessMat
   const publications = (asset.publications ?? []) as Publication[]
   const sourceLinks = (asset.sourceLinks ?? []) as AssetSourceLink[]
   const externalIdentifiers = (asset.externalIdentifiers ?? []) as ExternalIdentifier[]
+  const fieldEvidences = (asset.fieldEvidences ?? []) as AssetFieldEvidence[]
   const events = (asset.events ?? []) as AssetEvent[]
   const processSignals = judicialProcesses.flatMap(
     (process) => (process.signals ?? []) as JudicialProcessSignal[]
@@ -134,6 +138,7 @@ function buildContext(asset: PrecatorioAsset, processMatchCandidates: ProcessMat
     asset,
     sourceLinks,
     externalIdentifiers,
+    fieldEvidences,
     judicialProcesses,
     publications,
     events,
@@ -155,6 +160,7 @@ function buildCanonicalIdentity(context: IntelligenceContext) {
     confidence: decimalNumber(identifier.confidence),
     isPrimary: identifier.isPrimary,
     sourceRecordId: identifier.sourceRecordId,
+    sourceDatasetId: identifier.sourceDatasetId,
   }))
 
   return {
@@ -239,6 +245,7 @@ function buildEvidenceGraph(context: IntelligenceContext) {
     sourceRecords: sourceRecords.map((sourceRecord) => ({
       id: sourceRecord.id,
       source: sourceRecord.source,
+      sourceDatasetId: sourceRecord.sourceDatasetId,
       datasetKey: sourceRecord.sourceDataset?.key ?? null,
       providerId: sourceRecord.rawData?.providerId ?? null,
       originalFilename: sourceRecord.originalFilename,
@@ -252,6 +259,7 @@ function buildEvidenceGraph(context: IntelligenceContext) {
     sourceLinks: context.sourceLinks.map((link) => ({
       id: link.id,
       sourceRecordId: link.sourceRecordId,
+      sourceDatasetId: link.sourceDatasetId,
       datasetKey: link.sourceDataset?.key ?? link.sourceRecord?.sourceDataset?.key ?? null,
       linkType: link.linkType,
       confidence: decimalNumber(link.confidence),
@@ -270,6 +278,22 @@ function buildEvidenceGraph(context: IntelligenceContext) {
       maximum: confidences.length ? Math.max(...confidences) : null,
     },
   }
+}
+
+function buildFieldEvidence(context: IntelligenceContext) {
+  return context.fieldEvidences.map((field) => ({
+    fieldKey: field.fieldKey,
+    canonicalValue: field.canonicalValue,
+    canonicalSource: field.canonicalSource,
+    canonicalSourceRecordId: field.canonicalSourceRecordId,
+    canonicalSourceDatasetId: field.canonicalSourceDatasetId,
+    confidence: decimalNumber(field.confidence),
+    status: field.status,
+    evidenceCount: field.evidenceCount,
+    conflictingValues: field.conflictingValues,
+    evidence: field.evidence,
+    computedAt: field.computedAt.toISO(),
+  }))
 }
 
 function buildCompleteness(context: IntelligenceContext) {
