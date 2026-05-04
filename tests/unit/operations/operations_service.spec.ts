@@ -7,10 +7,15 @@ import CessionPricing from '#modules/operations/models/cession_pricing'
 import MarketRate from '#modules/market/models/market_rate'
 import MarketRateSeries from '#modules/market/models/market_rate_series'
 import { AssetEventFactory } from '#database/factories/asset_event_factory'
+import { AssetScoreFactory } from '#database/factories/asset_score_factory'
 import { DebtorPaymentStatFactory } from '#database/factories/debtor_payment_stat_factory'
 import { DebtorFactory } from '#database/factories/debtor_factory'
+import { JudicialProcessFactory } from '#database/factories/judicial_process_factory'
 import { MarketRateFactory } from '#database/factories/market_rate_factory'
 import { PrecatorioAssetFactory } from '#database/factories/precatorio_asset_factory'
+import { PublicationEventFactory } from '#database/factories/publication_event_factory'
+import { PublicationFactory } from '#database/factories/publication_factory'
+import { SourceRecordFactory } from '#database/factories/source_record_factory'
 import { TenantFactory } from '#database/factories/tenant_factory'
 import { UserFactory } from '#database/factories/user_factory'
 import type Tenant from '#modules/tenant/models/tenant'
@@ -138,6 +143,147 @@ test.group('operations service', () => {
 
     await cleanupTenantData(tenant)
     await user.delete()
+  })
+
+  test('builds a coherent asset intelligence dossier from source, process, publication, and score evidence', async ({
+    assert,
+  }) => {
+    const tenant = await TenantFactory.create()
+    const sourceRecord = await SourceRecordFactory.merge({
+      tenantId: tenant.id,
+      source: 'siop',
+      rawData: { providerId: 'siop-open-data-precatorios' },
+    }).create()
+    const debtor = await DebtorFactory.merge({
+      tenantId: tenant.id,
+      name: 'Instituto Nacional do Seguro Social',
+      normalizedName: 'INSTITUTO NACIONAL DO SEGURO SOCIAL',
+      normalizedKey: 'INSTITUTO NACIONAL DO SEGURO SOCIAL',
+      debtorType: 'autarchy',
+      paymentRegime: 'federal_unique',
+    }).create()
+    const asset = await PrecatorioAssetFactory.merge({
+      tenantId: tenant.id,
+      sourceRecordId: sourceRecord.id,
+      debtorId: debtor.id,
+      cnjNumber: '0001234-56.2024.4.03.6100',
+      assetNumber: 'PRC-2026-1',
+      courtName: 'Tribunal Regional Federal da 3a Regiao',
+      courtCode: 'TRF3',
+      courtClass: 'federal',
+      budgetUnitCode: '33201',
+      budgetUnitName: 'Instituto Nacional do Seguro Social',
+      causeType: 'alimentar',
+      faceValue: '1247892.00',
+      estimatedUpdatedValue: '1320000.00',
+      currentScore: 92,
+    }).create()
+    await AssetScoreFactory.merge({
+      tenantId: tenant.id,
+      assetId: asset.id,
+      finalScore: 92,
+      dataQualityScore: 90,
+      legalSignalScore: 80,
+      economicScore: 75,
+      liquidityScore: 82,
+      riskScore: 20,
+      maturityScore: 85,
+    }).create()
+    await db.table('asset_source_links').insert({
+      tenant_id: tenant.id,
+      asset_id: asset.id,
+      source_record_id: sourceRecord.id,
+      link_type: 'cross_check',
+      confidence: '0.9500',
+      match_reason: 'siop_cnj_match',
+      matched_fields: { cnjNumber: '0001234-56.2024.4.03.6100' },
+      normalized_payload: {
+        cnjNumber: '0001234-56.2024.4.03.6100',
+        debtorName: 'Instituto Nacional do Seguro Social',
+      },
+      raw_pointer: { row: 1 },
+    })
+    await db.table('external_identifiers').multiInsert([
+      {
+        tenant_id: tenant.id,
+        asset_id: asset.id,
+        source_record_id: sourceRecord.id,
+        identifier_type: 'cnj_number',
+        identifier_value: '0001234-56.2024.4.03.6100',
+        normalized_value: '00012345620244036100',
+        issuer: 'SIOP',
+        confidence: '1.0000',
+        is_primary: true,
+        raw_data: {},
+      },
+      {
+        tenant_id: tenant.id,
+        asset_id: asset.id,
+        source_record_id: sourceRecord.id,
+        identifier_type: 'cnj_number',
+        identifier_value: '9999999-99.2024.4.03.6100',
+        normalized_value: '99999999920244036100',
+        issuer: 'TRIBUNAL',
+        confidence: '0.6000',
+        is_primary: false,
+        raw_data: {},
+      },
+    ])
+    await JudicialProcessFactory.merge({
+      tenantId: tenant.id,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      source: 'datajud',
+      cnjNumber: '0001234-56.2024.4.03.6100',
+      courtAlias: 'trf3',
+    }).create()
+    const publication = await PublicationFactory.merge({
+      tenantId: tenant.id,
+      assetId: asset.id,
+      sourceRecordId: sourceRecord.id,
+      source: 'djen',
+      body: 'Pagamento disponibilizado para o precatorio.',
+    }).create()
+    await PublicationEventFactory.merge({
+      tenantId: tenant.id,
+      publicationId: publication.id,
+      eventType: 'payment_available',
+      idempotencyKey: 'operations-dossier-payment-available',
+    }).create()
+    await AssetEventFactory.merge({
+      tenantId: tenant.id,
+      assetId: asset.id,
+      eventType: 'prior_cession_detected',
+      source: 'djen',
+      idempotencyKey: 'operations-dossier-prior-cession',
+    }).create()
+
+    const result = await operationsService.dossier(tenant.id, asset.id)
+
+    assert.equal(result.intelligence.canonicalIdentity.assetId, asset.id)
+    assert.equal(result.intelligence.relationshipMap.judicialProcessIds.length, 1)
+    assert.isAtLeast(result.intelligence.completeness.score, 85)
+    assert.equal(result.intelligence.confidence.acceptedProcess, true)
+    assert.isTrue(
+      result.intelligence.conflicts.some((conflict) => conflict.key === 'cnj_identifier_mismatch')
+    )
+    assert.isTrue(
+      result.intelligence.legalSignals.positive.some(
+        (signal) => signal.code === 'payment_available'
+      )
+    )
+    assert.isTrue(
+      result.intelligence.legalSignals.negative.some(
+        (signal) => signal.code === 'prior_cession_detected'
+      )
+    )
+    assert.isTrue(
+      result.intelligence.nextBestActions.some(
+        (action) => action.key === 'resolve_high_severity_conflicts'
+      )
+    )
+
+    await cleanupTenantData(tenant)
   })
 })
 
