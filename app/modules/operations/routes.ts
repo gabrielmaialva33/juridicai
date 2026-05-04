@@ -30,6 +30,13 @@ router
       .as('opportunities.dossier')
       .use(middleware.permission('operations.read'))
     router
+      .post('operations/opportunities/:id/intelligence/actions', [
+        OperationsController,
+        'runIntelligenceActions',
+      ])
+      .as('opportunities.intelligence_actions')
+      .use(middleware.permission('operations.manage'))
+    router
       .post('operations/opportunities/:id/pricing', [OperationsController, 'pricing'])
       .as('opportunities.pricing')
       .use(middleware.permission('operations.read'))

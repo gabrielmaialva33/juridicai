@@ -3,6 +3,7 @@ import operationsService, {
   type OpportunityListFilters,
   type PipelineUpdateInput,
 } from '#modules/operations/services/operations_service'
+import assetIntelligenceActionService from '#modules/operations/services/asset_intelligence_action_service'
 import type {
   CessionPipelineStage,
   OpportunityGrade,
@@ -61,6 +62,16 @@ export default class OperationsController {
 
   async dossier({ params, response }: HttpContext) {
     return response.ok(await operationsService.dossier(tenantContext.requireTenantId(), params.id))
+  }
+
+  async runIntelligenceActions({ auth, params, request, requestId, response }: HttpContext) {
+    return response.ok(
+      await assetIntelligenceActionService.run(
+        tenantContext.requireTenantId(),
+        params.id,
+        normalizeIntelligenceActionInput(request.body(), auth.getUserOrFail().id, requestId)
+      )
+    )
   }
 
   async pricing({ params, request, response }: HttpContext) {
@@ -148,6 +159,21 @@ function normalizePipelineInput(body: Record<string, unknown>): PipelineUpdateIn
   }
 }
 
+function normalizeIntelligenceActionInput(
+  body: Record<string, unknown>,
+  userId: string,
+  requestId: string
+) {
+  return {
+    actions: Array.isArray(body.actions)
+      ? body.actions.filter((value): value is string => typeof value === 'string')
+      : null,
+    dryRun: booleanOrNull(body.dryRun) ?? false,
+    userId,
+    requestId,
+  }
+}
+
 function dateTimeOrNull(value: unknown) {
   const normalized = stringOrNull(value)
 
@@ -161,4 +187,8 @@ function dateTimeOrNull(value: unknown) {
 
 function wantsJson(request: HttpContext['request']) {
   return request.header('accept')?.includes('application/json') ?? false
+}
+
+function booleanOrNull(value: unknown) {
+  return typeof value === 'boolean' ? value : null
 }
