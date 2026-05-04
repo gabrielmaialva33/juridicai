@@ -72,6 +72,10 @@ test.group('operations routes', () => {
         termMonths: 18,
       },
     })
+    const dossier = await apiFetch(`/operations/opportunities/${asset.id}/dossier`, {
+      sessionCookie,
+      tenant: fixture.tenant,
+    })
     const persisted = await CessionOpportunity.query()
       .where('tenant_id', fixture.tenant.id)
       .where('asset_id', asset.id)
@@ -90,6 +94,9 @@ test.group('operations routes', () => {
     assert.equal(moved.status, 200)
     assert.equal(moved.body.opportunity.pipeline.stage, 'offer')
     assert.equal(persisted.stage, 'offer')
+    assert.equal(dossier.status, 200)
+    assert.equal(dossier.body.intelligence.canonicalIdentity.assetId, asset.id)
+    assert.isArray(dossier.body.intelligence.completeness.checks)
 
     await fixture.cleanup()
   })
