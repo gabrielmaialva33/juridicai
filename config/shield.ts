@@ -1,4 +1,5 @@
 import { defineConfig } from '@adonisjs/shield'
+import env from '#start/env'
 
 const shieldConfig = defineConfig({
   /**
@@ -72,7 +73,7 @@ const shieldConfig = defineConfig({
     /**
      * Enable the Strict-Transport-Security header.
      */
-    enabled: true,
+    enabled: env.get('NODE_ENV') === 'production',
 
     /**
      * HSTS policy duration remembered by browsers.
