@@ -8,6 +8,11 @@ import {
   GOVERNMENT_SYNC_RECENT_SUCCESS_HOURS,
   GOVERNMENT_SYNC_RUNNING_STALE_HOURS,
 } from '#modules/integrations/services/scheduled_government_sync_service'
+import {
+  ASSET_INTELLIGENCE_RECONCILE_FAILURE_COOLDOWN_HOURS,
+  ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS,
+  ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS,
+} from '#modules/operations/services/scheduled_asset_intelligence_reconcile_service'
 
 const QUEUE_BACKLOG_WARNING_THRESHOLD = 100
 const STALLED_RUN_LIMIT = 25
@@ -17,12 +22,14 @@ type WorkerFreshness = Awaited<ReturnType<typeof workerHeartbeatService.queueFre
 
 class OperationalHealthService {
   async build(tenantId: string, now: DateTime = DateTime.utc()) {
-    const [queueSnapshots, workers, stalledRuns, governmentSync] = await Promise.all([
-      queueService.getSnapshots([...operationalQueueNames]),
-      workerHeartbeatService.queueFreshness([...operationalQueueNames]),
-      this.stalledRuns(tenantId, now),
-      this.governmentSyncState(tenantId, now),
-    ])
+    const [queueSnapshots, workers, stalledRuns, governmentSync, assetIntelligenceReconcile] =
+      await Promise.all([
+        queueService.getSnapshots([...operationalQueueNames]),
+        workerHeartbeatService.queueFreshness([...operationalQueueNames]),
+        this.stalledRuns(tenantId, now),
+        this.governmentSyncState(tenantId, now),
+        this.assetIntelligenceReconcileState(tenantId, now),
+      ])
     const queues = queueSnapshots.map((snapshot) => queueHealth(snapshot))
     const workerItems = workers.map((worker) => workerHealth(worker))
     const status = overallStatus({
@@ -30,6 +37,7 @@ class OperationalHealthService {
       workers: workerItems,
       stalledRunsCount: stalledRuns.length,
       governmentSyncStatus: governmentSync.status,
+      assetIntelligenceReconcileStatus: assetIntelligenceReconcile.status,
     })
 
     return {
@@ -52,6 +60,7 @@ class OperationalHealthService {
         items: stalledRuns,
       },
       governmentSync,
+      assetIntelligenceReconcile,
     }
   }
 
@@ -81,85 +90,128 @@ class OperationalHealthService {
   }
 
   private async governmentSyncState(tenantId: string, now: DateTime) {
-    const [running, completed, failed, latest] = await Promise.all([
-      latestGovernmentSyncRun(tenantId, ['running']),
-      latestGovernmentSyncRun(tenantId, ['completed']),
-      latestGovernmentSyncRun(tenantId, ['failed', 'skipped', 'cancelled']),
-      latestGovernmentSyncRun(tenantId, [
-        'pending',
-        'running',
-        'completed',
-        'failed',
-        'skipped',
-        'cancelled',
-      ]),
-    ])
-    const runningAgeMs = running ? dateAgeMs(running.created_at, now) : null
-    const completedAgeMs = completed ? dateAgeMs(completed.created_at, now) : null
-    const failedAgeMs = failed ? dateAgeMs(failed.created_at, now) : null
-
-    if (
-      running &&
-      runningAgeMs !== null &&
-      runningAgeMs <= hoursToMs(GOVERNMENT_SYNC_RUNNING_STALE_HOURS)
-    ) {
-      return governmentSyncPayload({
-        tenantId,
-        status: 'in_progress',
-        reason: 'recent_running_run',
-        now,
-        latest,
-        running,
-        completed,
-        failed,
-      })
-    }
-
-    if (
-      completed &&
-      completedAgeMs !== null &&
-      completedAgeMs <= hoursToMs(GOVERNMENT_SYNC_RECENT_SUCCESS_HOURS)
-    ) {
-      return governmentSyncPayload({
-        tenantId,
-        status: 'healthy',
-        reason: 'recent_success',
-        now,
-        latest,
-        running,
-        completed,
-        failed,
-      })
-    }
-
-    if (
-      failed &&
-      failedAgeMs !== null &&
-      failedAgeMs <= hoursToMs(GOVERNMENT_SYNC_FAILURE_COOLDOWN_HOURS)
-    ) {
-      return governmentSyncPayload({
-        tenantId,
-        status: 'cooldown',
-        reason: 'recent_failure',
-        now,
-        latest,
-        running,
-        completed,
-        failed,
-      })
-    }
-
-    return governmentSyncPayload({
+    return scheduledJobState({
       tenantId,
-      status: 'due',
-      reason: latest ? 'outside_due_window' : 'never_ran',
+      jobName: 'government-data-sync-orchestrator',
       now,
+      windows: {
+        recentSuccessHours: GOVERNMENT_SYNC_RECENT_SUCCESS_HOURS,
+        runningStaleHours: GOVERNMENT_SYNC_RUNNING_STALE_HOURS,
+        failureCooldownHours: GOVERNMENT_SYNC_FAILURE_COOLDOWN_HOURS,
+      },
+    })
+  }
+
+  private async assetIntelligenceReconcileState(tenantId: string, now: DateTime) {
+    return scheduledJobState({
+      tenantId,
+      jobName: 'asset-intelligence-reconcile',
+      now,
+      windows: {
+        recentSuccessHours: ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS,
+        runningStaleHours: ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS,
+        failureCooldownHours: ASSET_INTELLIGENCE_RECONCILE_FAILURE_COOLDOWN_HOURS,
+      },
+    })
+  }
+}
+
+async function scheduledJobState(input: {
+  tenantId: string
+  jobName: string
+  now: DateTime
+  windows: {
+    recentSuccessHours: number
+    runningStaleHours: number
+    failureCooldownHours: number
+  }
+}) {
+  const [running, completed, failed, latest] = await Promise.all([
+    latestTenantJobRun(input.tenantId, input.jobName, ['running']),
+    latestTenantJobRun(input.tenantId, input.jobName, ['completed']),
+    latestTenantJobRun(input.tenantId, input.jobName, ['failed', 'skipped', 'cancelled']),
+    latestTenantJobRun(input.tenantId, input.jobName, [
+      'pending',
+      'running',
+      'completed',
+      'failed',
+      'skipped',
+      'cancelled',
+    ]),
+  ])
+  const runningAgeMs = running ? dateAgeMs(running.created_at, input.now) : null
+  const completedAgeMs = completed ? dateAgeMs(completed.created_at, input.now) : null
+  const failedAgeMs = failed ? dateAgeMs(failed.created_at, input.now) : null
+
+  if (
+    running &&
+    runningAgeMs !== null &&
+    runningAgeMs <= hoursToMs(input.windows.runningStaleHours)
+  ) {
+    return scheduledJobPayload({
+      tenantId: input.tenantId,
+      jobName: input.jobName,
+      status: 'in_progress',
+      reason: 'recent_running_run',
+      now: input.now,
+      windows: input.windows,
       latest,
       running,
       completed,
       failed,
     })
   }
+
+  if (
+    completed &&
+    completedAgeMs !== null &&
+    completedAgeMs <= hoursToMs(input.windows.recentSuccessHours)
+  ) {
+    return scheduledJobPayload({
+      tenantId: input.tenantId,
+      jobName: input.jobName,
+      status: 'healthy',
+      reason: 'recent_success',
+      now: input.now,
+      windows: input.windows,
+      latest,
+      running,
+      completed,
+      failed,
+    })
+  }
+
+  if (
+    failed &&
+    failedAgeMs !== null &&
+    failedAgeMs <= hoursToMs(input.windows.failureCooldownHours)
+  ) {
+    return scheduledJobPayload({
+      tenantId: input.tenantId,
+      jobName: input.jobName,
+      status: 'cooldown',
+      reason: 'recent_failure',
+      now: input.now,
+      windows: input.windows,
+      latest,
+      running,
+      completed,
+      failed,
+    })
+  }
+
+  return scheduledJobPayload({
+    tenantId: input.tenantId,
+    jobName: input.jobName,
+    status: 'due',
+    reason: latest ? 'outside_due_window' : 'never_ran',
+    now: input.now,
+    windows: input.windows,
+    latest,
+    running,
+    completed,
+    failed,
+  })
 }
 
 function queueHealth(snapshot: QueueSnapshot) {
@@ -199,21 +251,27 @@ function workerHealth(worker: WorkerFreshness) {
   }
 }
 
-async function latestGovernmentSyncRun(tenantId: string, statuses: string[]) {
+async function latestTenantJobRun(tenantId: string, jobName: string, statuses: string[]) {
   return db
     .from('radar_job_runs')
     .where('tenant_id', tenantId)
-    .where('job_name', 'government-data-sync-orchestrator')
+    .where('job_name', jobName)
     .whereIn('status', statuses)
     .orderBy('created_at', 'desc')
     .first()
 }
 
-function governmentSyncPayload(input: {
+function scheduledJobPayload(input: {
   tenantId: string
+  jobName: string
   status: 'healthy' | 'in_progress' | 'cooldown' | 'due'
   reason: string
   now: DateTime
+  windows: {
+    recentSuccessHours: number
+    runningStaleHours: number
+    failureCooldownHours: number
+  }
   latest: Record<string, any> | null
   running: Record<string, any> | null
   completed: Record<string, any> | null
@@ -221,13 +279,10 @@ function governmentSyncPayload(input: {
 }) {
   return {
     tenantId: input.tenantId,
+    jobName: input.jobName,
     status: input.status,
     reason: input.reason,
-    windows: {
-      recentSuccessHours: GOVERNMENT_SYNC_RECENT_SUCCESS_HOURS,
-      runningStaleHours: GOVERNMENT_SYNC_RUNNING_STALE_HOURS,
-      failureCooldownHours: GOVERNMENT_SYNC_FAILURE_COOLDOWN_HOURS,
-    },
+    windows: input.windows,
     latestRun: serializeRun(input.latest, input.now),
     runningRun: serializeRun(input.running, input.now),
     lastCompletedRun: serializeRun(input.completed, input.now),
@@ -261,6 +316,7 @@ function overallStatus(input: {
   workers: Array<{ status: string }>
   stalledRunsCount: number
   governmentSyncStatus: string
+  assetIntelligenceReconcileStatus: string
 }) {
   if (
     input.queues.some((queue) => queue.status === 'degraded') ||
@@ -272,7 +328,8 @@ function overallStatus(input: {
 
   if (
     input.queues.some((queue) => queue.status === 'backlogged') ||
-    ['cooldown', 'due'].includes(input.governmentSyncStatus)
+    ['cooldown', 'due'].includes(input.governmentSyncStatus) ||
+    ['cooldown', 'due'].includes(input.assetIntelligenceReconcileStatus)
   ) {
     return 'attention' as const
   }
