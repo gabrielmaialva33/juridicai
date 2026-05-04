@@ -179,21 +179,25 @@ class NationalDataCoherenceService {
   private async fetchRows(tenantId: string) {
     const result = await db.rawQuery(
       `
-        with asset_flags as (
+        with judicial_process_flags as (
+          select
+            judicial_processes.asset_id,
+            min(lower(judicial_processes.court_alias)) filter (
+              where judicial_processes.court_alias is not null
+            ) as court_alias,
+            bool_or(judicial_processes.source = 'datajud') as has_datajud_process
+          from judicial_processes
+          where judicial_processes.tenant_id = ?
+            and judicial_processes.deleted_at is null
+            and judicial_processes.asset_id is not null
+          group by judicial_processes.asset_id
+        ),
+        asset_base as (
           select
             precatorio_assets.id,
             coalesce(
               nullif(lower(courts.alias), ''),
-              (
-                select lower(judicial_processes.court_alias)
-                from judicial_processes
-                where judicial_processes.tenant_id = precatorio_assets.tenant_id
-                  and judicial_processes.asset_id = precatorio_assets.id
-                  and judicial_processes.deleted_at is null
-                  and judicial_processes.court_alias is not null
-                order by judicial_processes.created_at desc
-                limit 1
-              ),
+              judicial_process_flags.court_alias,
               nullif(lower(precatorio_assets.raw_data->>'courtAlias'), ''),
               case
                 when precatorio_assets.source = 'siop' then 'federal-siop'
@@ -204,143 +208,178 @@ class NationalDataCoherenceService {
             ) as court_alias,
             (
               precatorio_assets.source in ('siop', 'tribunal')
-              or exists (
-                select 1
-                from source_records
-                where source_records.id = precatorio_assets.source_record_id
-                  and source_records.tenant_id = precatorio_assets.tenant_id
-                  and source_records.source in ('siop', 'tribunal')
-              )
-              or exists (
-                select 1
-                from asset_source_links
-                left join source_datasets
-                  on source_datasets.id = asset_source_links.source_dataset_id
-                where asset_source_links.tenant_id = precatorio_assets.tenant_id
-                  and asset_source_links.asset_id = precatorio_assets.id
-                  and (
-                    asset_source_links.link_type = 'primary'
-                    or (
-                      asset_source_links.link_type <> 'conflict'
-                      and source_datasets.priority = 'primary'
-                    )
-                  )
-              )
+              or source_records.source in ('siop', 'tribunal')
             ) as has_primary_source,
-            exists (
-              select 1
-              from judicial_processes
-              where judicial_processes.tenant_id = precatorio_assets.tenant_id
-                and judicial_processes.asset_id = precatorio_assets.id
-                and judicial_processes.deleted_at is null
-                and judicial_processes.source = 'datajud'
-            ) as has_datajud_process,
-            exists (
-              select 1
-              from publications
-              where publications.tenant_id = precatorio_assets.tenant_id
-                and publications.source = 'djen'
-                and (
-                  publications.asset_id = precatorio_assets.id
-                  or exists (
-                    select 1
-                    from judicial_processes
-                    where judicial_processes.tenant_id = precatorio_assets.tenant_id
-                      and judicial_processes.id = publications.process_id
-                      and judicial_processes.asset_id = precatorio_assets.id
-                      and judicial_processes.deleted_at is null
-                  )
-                )
-            ) as has_djen_publication,
-            exists (
-              select 1
-              from asset_valuations
-              where asset_valuations.tenant_id = precatorio_assets.tenant_id
-                and asset_valuations.asset_id = precatorio_assets.id
-            ) as has_valuation,
             (
               precatorio_assets.current_score_id is not null
-              or exists (
-                select 1
-                from asset_scores
-                where asset_scores.tenant_id = precatorio_assets.tenant_id
-                  and asset_scores.asset_id = precatorio_assets.id
+              or precatorio_assets.current_score is not null
+            ) as has_inline_score
+          from precatorio_assets
+          left join courts on courts.id = precatorio_assets.court_id
+          left join debtors on debtors.id = precatorio_assets.debtor_id
+          left join judicial_process_flags
+            on judicial_process_flags.asset_id = precatorio_assets.id
+          left join source_records
+            on source_records.id = precatorio_assets.source_record_id
+            and source_records.tenant_id = precatorio_assets.tenant_id
+          where precatorio_assets.tenant_id = ?
+            and precatorio_assets.deleted_at is null
+        ),
+        primary_source_links as (
+          select asset_source_links.asset_id
+          from asset_source_links
+          left join source_datasets
+            on source_datasets.id = asset_source_links.source_dataset_id
+          where asset_source_links.tenant_id = ?
+            and (
+              asset_source_links.link_type = 'primary'
+              or (
+                asset_source_links.link_type <> 'conflict'
+                and source_datasets.priority = 'primary'
               )
-            ) as has_score,
-            exists (
-              select 1
-              from asset_field_evidences
-              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
-                and asset_field_evidences.asset_id = precatorio_assets.id
-            ) as has_field_evidence,
-            (
-              select count(distinct asset_field_evidences.field_key)
-              from asset_field_evidences
-              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
-                and asset_field_evidences.asset_id = precatorio_assets.id
-                and asset_field_evidences.status = 'resolved'
+            )
+          group by asset_source_links.asset_id
+        ),
+        djen_publications as (
+          select publications.asset_id
+          from publications
+          where publications.tenant_id = ?
+            and publications.source = 'djen'
+            and publications.asset_id is not null
+          group by publications.asset_id
+          union
+          select judicial_processes.asset_id
+          from publications
+          inner join judicial_processes
+            on judicial_processes.id = publications.process_id
+            and judicial_processes.tenant_id = publications.tenant_id
+            and judicial_processes.deleted_at is null
+          where publications.tenant_id = ?
+            and publications.source = 'djen'
+            and judicial_processes.asset_id is not null
+          group by judicial_processes.asset_id
+        ),
+        valuations as (
+          select asset_valuations.asset_id
+          from asset_valuations
+          where asset_valuations.tenant_id = ?
+          group by asset_valuations.asset_id
+        ),
+        scores as (
+          select asset_scores.asset_id
+          from asset_scores
+          where asset_scores.tenant_id = ?
+          group by asset_scores.asset_id
+        ),
+        field_evidence as (
+          select
+            asset_field_evidences.asset_id,
+            count(*) as evidence_count,
+            count(distinct asset_field_evidences.field_key) filter (
+              where asset_field_evidences.status = 'resolved'
                 and asset_field_evidences.field_key in (
                   'cnj_number',
                   'debtor_name',
                   'court_alias',
                   'face_value'
                 )
-            ) >= 4 as has_resolved_core_field_evidence,
-            exists (
-              select 1
-              from asset_field_evidences
-              where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
-                and asset_field_evidences.asset_id = precatorio_assets.id
-                and asset_field_evidences.status = 'conflict'
-            ) as has_field_evidence_conflict,
-            exists (
-              select 1
-              from asset_source_links
-              where asset_source_links.tenant_id = precatorio_assets.tenant_id
-                and asset_source_links.asset_id = precatorio_assets.id
-                and asset_source_links.link_type = 'conflict'
-            ) as has_conflict,
-            exists (
-              select 1
-              from process_match_candidates
-              where process_match_candidates.tenant_id = precatorio_assets.tenant_id
-                and process_match_candidates.asset_id = precatorio_assets.id
-                and process_match_candidates.status in ('candidate', 'ambiguous')
-            ) as has_pending_candidate_review
-          from precatorio_assets
-          left join courts on courts.id = precatorio_assets.court_id
-          left join debtors on debtors.id = precatorio_assets.debtor_id
-          where precatorio_assets.tenant_id = ?
-            and precatorio_assets.deleted_at is null
+            ) as resolved_core_fields,
+            count(*) filter (
+              where asset_field_evidences.status = 'conflict'
+            ) as conflict_count
+          from asset_field_evidences
+          where asset_field_evidences.tenant_id = ?
+          group by asset_field_evidences.asset_id
+        ),
+        source_conflicts as (
+          select asset_source_links.asset_id
+          from asset_source_links
+          where asset_source_links.tenant_id = ?
+            and asset_source_links.link_type = 'conflict'
+          group by asset_source_links.asset_id
+        ),
+        pending_candidates as (
+          select process_match_candidates.asset_id
+          from process_match_candidates
+          where process_match_candidates.tenant_id = ?
+            and process_match_candidates.status in ('candidate', 'ambiguous')
+          group by process_match_candidates.asset_id
         )
         select
-          court_alias,
+          asset_base.court_alias,
           count(*) as total_assets,
-          count(*) filter (where has_primary_source) as primary_source_assets,
-          count(*) filter (where has_datajud_process) as datajud_process_assets,
-          count(*) filter (where has_djen_publication) as djen_publication_assets,
-          count(*) filter (where has_valuation) as valuation_assets,
-          count(*) filter (where has_score) as scored_assets,
-          count(*) filter (where has_field_evidence) as field_evidence_assets,
-          count(*) filter (where has_resolved_core_field_evidence) as field_evidence_resolved_assets,
-          count(*) filter (where has_conflict) as conflicted_assets,
-          count(*) filter (where has_field_evidence_conflict) as field_evidence_conflict_assets,
-          count(*) filter (where has_pending_candidate_review) as pending_candidate_review_assets,
           count(*) filter (
-            where has_primary_source
-              and has_datajud_process
-              and has_djen_publication
-              and has_valuation
-              and has_score
-              and has_resolved_core_field_evidence
-              and not has_conflict
-              and not has_field_evidence_conflict
-              and not has_pending_candidate_review
+            where asset_base.has_primary_source
+              or primary_source_links.asset_id is not null
+          ) as primary_source_assets,
+          count(*) filter (
+            where judicial_process_flags.has_datajud_process
+          ) as datajud_process_assets,
+          count(*) filter (where djen_publications.asset_id is not null) as djen_publication_assets,
+          count(*) filter (where valuations.asset_id is not null) as valuation_assets,
+          count(*) filter (
+            where asset_base.has_inline_score
+              or scores.asset_id is not null
+          ) as scored_assets,
+          count(*) filter (
+            where coalesce(field_evidence.evidence_count, 0) > 0
+          ) as field_evidence_assets,
+          count(*) filter (
+            where coalesce(field_evidence.resolved_core_fields, 0) >= 4
+          ) as field_evidence_resolved_assets,
+          count(*) filter (where source_conflicts.asset_id is not null) as conflicted_assets,
+          count(*) filter (
+            where coalesce(field_evidence.conflict_count, 0) > 0
+          ) as field_evidence_conflict_assets,
+          count(*) filter (where pending_candidates.asset_id is not null) as pending_candidate_review_assets,
+          count(*) filter (
+            where (
+                asset_base.has_primary_source
+                or primary_source_links.asset_id is not null
+              )
+              and judicial_process_flags.has_datajud_process
+              and djen_publications.asset_id is not null
+              and valuations.asset_id is not null
+              and (
+                asset_base.has_inline_score
+                or scores.asset_id is not null
+              )
+              and coalesce(field_evidence.resolved_core_fields, 0) >= 4
+              and source_conflicts.asset_id is null
+              and coalesce(field_evidence.conflict_count, 0) = 0
+              and pending_candidates.asset_id is null
           ) as complete_assets
-        from asset_flags
-        group by court_alias
+        from asset_base
+        left join primary_source_links
+          on primary_source_links.asset_id = asset_base.id
+        left join judicial_process_flags
+          on judicial_process_flags.asset_id = asset_base.id
+        left join djen_publications
+          on djen_publications.asset_id = asset_base.id
+        left join valuations
+          on valuations.asset_id = asset_base.id
+        left join scores
+          on scores.asset_id = asset_base.id
+        left join field_evidence
+          on field_evidence.asset_id = asset_base.id
+        left join source_conflicts
+          on source_conflicts.asset_id = asset_base.id
+        left join pending_candidates
+          on pending_candidates.asset_id = asset_base.id
+        group by asset_base.court_alias
       `,
-      [tenantId]
+      [
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+        tenantId,
+      ]
     )
 
     return result.rows as CoherenceRow[]
