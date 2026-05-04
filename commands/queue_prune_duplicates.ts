@@ -2,7 +2,8 @@ import { BaseCommand, flags } from '@adonisjs/core/ace'
 import queueService from '#shared/services/queue_service'
 import { queueNames } from '#start/jobs'
 
-const DEFAULT_STATES = ['waiting', 'delayed'] as const
+const INSPECTED_STATES = ['active', 'waiting', 'delayed'] as const
+const REMOVABLE_STATES = new Set<string>(['waiting', 'delayed'])
 const queueNameSet = new Set<string>(queueNames)
 
 export default class QueuePruneDuplicates extends BaseCommand {
@@ -34,14 +35,19 @@ export default class QueuePruneDuplicates extends BaseCommand {
 
     for (const queueName of inspectedQueues) {
       const queue = queueService.getQueue(queueName)
-      const jobs = await queue.getJobs([...DEFAULT_STATES], 0, limit - 1, true)
+      const jobs = await queue.getJobs([...INSPECTED_STATES], 0, limit - 1, true)
       const seen = new Set<string>()
 
-      for (const job of jobs) {
+      for (const job of sortJobsForDedupe(jobs)) {
         const signature = jobSignature(job.name, job.data)
+        const state = await job.getState()
 
         if (!seen.has(signature)) {
           seen.add(signature)
+          continue
+        }
+
+        if (!REMOVABLE_STATES.has(state)) {
           continue
         }
 
@@ -49,7 +55,7 @@ export default class QueuePruneDuplicates extends BaseCommand {
           queueName,
           jobId: job.id ? String(job.id) : null,
           jobName: job.name,
-          state: await job.getState(),
+          state,
           signature,
         }
         report.push(duplicate)
@@ -63,7 +69,8 @@ export default class QueuePruneDuplicates extends BaseCommand {
     this.logger.info(
       `Duplicate queue jobs: ${JSON.stringify({
         mode: this.apply ? 'apply' : 'dry_run',
-        inspectedStates: DEFAULT_STATES,
+        inspectedStates: INSPECTED_STATES,
+        removableStates: [...REMOVABLE_STATES],
         inspectedQueues,
         inspectedLimit: limit,
         count: report.length,
@@ -105,6 +112,14 @@ function normalizeLimit(value: number | undefined) {
 
 function jobSignature(jobName: string, payload: unknown) {
   return `${jobName}:${stableStringify(payload)}`
+}
+
+function sortJobsForDedupe<T extends { processedOn?: number | null }>(jobs: T[]) {
+  return [...jobs].sort((left, right) => statePriority(left) - statePriority(right))
+}
+
+function statePriority(job: { processedOn?: number | null }) {
+  return job.processedOn ? 0 : 1
 }
 
 function stableStringify(value: unknown): string {
