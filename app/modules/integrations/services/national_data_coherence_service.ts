@@ -185,11 +185,12 @@ class NationalDataCoherenceService {
                 limit 1
               ),
               nullif(lower(precatorio_assets.raw_data->>'courtAlias'), ''),
-              ${STATE_COURT_CASE},
               case
                 when precatorio_assets.source = 'siop' then 'federal-siop'
-                else 'unknown'
-              end
+                else null
+              end,
+              ${STATE_COURT_CASE},
+              'unknown'
             ) as court_alias,
             (
               precatorio_assets.source in ('siop', 'tribunal')
