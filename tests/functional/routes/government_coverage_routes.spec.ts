@@ -26,6 +26,12 @@ test.group('Government coverage routes', () => {
     assert.equal(response.status, 401)
   })
 
+  test('requires authentication for data coherence report', async ({ assert }) => {
+    const response = await apiFetch('/admin/integrations/data-coherence')
+
+    assert.equal(response.status, 401)
+  })
+
   test('returns tenant-aware government coverage matrix', async ({ assert }) => {
     const fixture = await createAccessFixture(['imports.read'])
     const otherTenant = await TenantFactory.create()
@@ -55,6 +61,28 @@ test.group('Government coverage routes', () => {
     await cleanup()
     await fixture.cleanup()
     await otherTenant.delete()
+  })
+
+  test('returns tenant-aware national data coherence report', async ({ assert }) => {
+    const fixture = await createAccessFixture(['imports.read'])
+    const sessionCookie = await loginAndGetSessionCookie(fixture.user)
+
+    const response = await apiFetch('/admin/integrations/data-coherence', {
+      sessionCookie,
+      tenant: fixture.tenant,
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.body.summary.totalAssets, 0)
+    assert.isAtLeast(response.body.summary.courtsCount, 33)
+    assert.isTrue(
+      response.body.courts.some(
+        (court: { courtAlias: string; stateCode: string | null }) =>
+          court.courtAlias === 'tjac' && court.stateCode === 'AC'
+      )
+    )
+
+    await fixture.cleanup()
   })
 })
 
