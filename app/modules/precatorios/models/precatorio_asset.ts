@@ -24,6 +24,7 @@ import BudgetUnit from '#modules/reference/models/budget_unit'
 import Court from '#modules/reference/models/court'
 import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
 import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
+import AssetFieldEvidence from '#modules/precatorios/models/asset_field_evidence'
 
 export default class PrecatorioAsset extends TenantBaseModel {
   faceValue: string | null = null
@@ -149,6 +150,11 @@ export default class PrecatorioAsset extends TenantBaseModel {
     foreignKey: 'assetId',
   })
   declare externalIdentifiers: HasMany<typeof ExternalIdentifier>
+
+  @hasMany(() => AssetFieldEvidence, {
+    foreignKey: 'assetId',
+  })
+  declare fieldEvidences: HasMany<typeof AssetFieldEvidence>
 
   @hasMany(() => JudicialProcess, {
     foreignKey: 'assetId',

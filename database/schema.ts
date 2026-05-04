@@ -100,6 +100,60 @@ export class AssetEventSchema extends BaseModel {
   declare tenantId: string
 }
 
+export class AssetFieldEvidenceSchema extends BaseModel {
+  static $columns = [
+    'assetId',
+    'canonicalSource',
+    'canonicalSourceDatasetId',
+    'canonicalSourceRecordId',
+    'canonicalValue',
+    'computedAt',
+    'confidence',
+    'conflictingValues',
+    'createdAt',
+    'evidence',
+    'evidenceCount',
+    'fieldKey',
+    'id',
+    'status',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = AssetFieldEvidenceSchema.$columns
+  @column()
+  declare assetId: string
+  @column()
+  declare canonicalSource: any | null
+  @column()
+  declare canonicalSourceDatasetId: string | null
+  @column()
+  declare canonicalSourceRecordId: string | null
+  @column()
+  declare canonicalValue: string | null
+  @column.dateTime()
+  declare computedAt: DateTime
+  @column()
+  declare confidence: string
+  @column()
+  declare conflictingValues: any
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare evidence: any
+  @column()
+  declare evidenceCount: number
+  @column()
+  declare fieldKey: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare status: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class AssetScoreSchema extends BaseModel {
   static $columns = [
     'assetId',
