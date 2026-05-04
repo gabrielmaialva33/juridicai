@@ -219,13 +219,17 @@ export type OpportunityProjection = {
     assetNumber: string | null
     debtorName: string | null
     debtorType: DebtorType | null
+    source: string
     nature: string
     lifecycleStatus: string
+    complianceStatus: string
+    piiStatus: string
     faceValue: number
     estimatedUpdatedValue: number | null
     exerciseYear: number | null
     budgetYear: number | null
     currentScore: number | null
+    dataQuality: OpportunityDataQuality
   }
   debtor: {
     id: string | null
@@ -251,6 +255,18 @@ export type OpportunityProjection = {
     positive: EventSignal[]
     negative: EventSignal[]
   }
+}
+
+export type OpportunityDataQuality = {
+  status: 'complete' | 'review' | 'blocked'
+  issues: string[]
+  hasValuation: boolean
+  hasDataJudProcess: boolean
+  hasDjenPublication: boolean
+  resolvedCoreFields: number
+  fieldEvidenceConflicts: number
+  sourceConflicts: number
+  pendingCandidateReviews: number
 }
 
 type EventSignalDefinition = {
@@ -302,13 +318,17 @@ class CessionPricingEngine {
         assetNumber: asset.assetNumber,
         debtorName: debtor?.name ?? null,
         debtorType: debtor?.debtorType ?? null,
+        source: asset.source,
         nature: asset.nature,
         lifecycleStatus: asset.lifecycleStatus,
+        complianceStatus: asset.complianceStatus,
+        piiStatus: asset.piiStatus,
         faceValue,
         estimatedUpdatedValue: valueSnapshot.estimatedUpdatedValue,
         exerciseYear: asset.exerciseYear,
         budgetYear: asset.budgetYear,
         currentScore: asset.currentScore,
+        dataQuality: emptyDataQuality(),
       },
       debtor: {
         id: debtor?.id ?? null,
@@ -917,6 +937,20 @@ function round(value: number, fractionDigits: number) {
 
 function roundMoney(value: number) {
   return round(value, 2)
+}
+
+function emptyDataQuality(): OpportunityDataQuality {
+  return {
+    status: 'review',
+    issues: [],
+    hasValuation: false,
+    hasDataJudProcess: false,
+    hasDjenPublication: false,
+    resolvedCoreFields: 0,
+    fieldEvidenceConflicts: 0,
+    sourceConflicts: 0,
+    pendingCandidateReviews: 0,
+  }
 }
 
 export const cessionPricingEngine = new CessionPricingEngine()

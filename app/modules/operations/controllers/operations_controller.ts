@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import operationsService, {
+  type OpportunityDataIssue,
   type OpportunityListFilters,
   type PipelineUpdateInput,
 } from '#modules/operations/services/operations_service'
@@ -31,6 +32,14 @@ const PIPELINE_STAGES: CessionPipelineStage[] = [
 ]
 
 const GRADES: OpportunityGrade[] = ['A+', 'A', 'B+', 'B', 'C', 'D']
+const DATA_ISSUES: OpportunityDataIssue[] = [
+  'missing_value',
+  'missing_datajud',
+  'missing_djen',
+  'missing_field_evidence',
+  'conflicts',
+  'candidate_review',
+]
 
 export default class OperationsController {
   async desk({ inertia }: HttpContext) {
@@ -129,6 +138,15 @@ function normalizeListFilters(query: Record<string, unknown>): OpportunityListFi
     q: stringOrNull(query.q),
     grade: enumOrNull(query.grade, GRADES),
     stage: enumOrNull(query.stage, PIPELINE_STAGES),
+    source: enumOrNull(query.source, [
+      'siop',
+      'datajud',
+      'djen',
+      'tribunal',
+      'api_private',
+      'manual',
+    ]),
+    dataIssue: enumOrNull(query.dataIssue, DATA_ISSUES),
     minRiskAdjustedIrr: numberOrNull(query.minRiskAdjustedIrr),
     minFaceValue: numberOrNull(query.minFaceValue),
     maxFaceValue: numberOrNull(query.maxFaceValue),

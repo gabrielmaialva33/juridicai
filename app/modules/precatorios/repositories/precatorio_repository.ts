@@ -62,7 +62,7 @@ class PrecatorioRepository extends BaseRepository<typeof PrecatorioAsset> {
 
     return query
       .if(filters.sortBy === 'face_value', (builder) =>
-        builder.orderByRaw(`${latestValueSql()} ${filters.sortDirection}`)
+        builder.orderByRaw(`${latestValueSql()} ${filters.sortDirection} nulls last`)
       )
       .if(filters.sortBy !== 'face_value', (builder) =>
         builder.orderBy(filters.sortBy, filters.sortDirection)
@@ -107,7 +107,7 @@ function latestValueSql() {
       and av.asset_id = precatorio_assets.id
     order by av.computed_at desc
     limit 1
-  ), 0)`
+  ))`
 }
 
 export default new PrecatorioRepository()

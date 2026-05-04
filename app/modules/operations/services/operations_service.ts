@@ -8,6 +8,7 @@ import CessionPricing from '#modules/operations/models/cession_pricing'
 import CessionStageHistory from '#modules/operations/models/cession_stage_history'
 import cessionPricingEngine, {
   type MarketRatePricingSnapshot,
+  type OpportunityDataQuality,
   type OpportunityProjection,
   type PricingInput,
 } from '#modules/operations/services/cession_pricing_engine'
@@ -15,6 +16,10 @@ import assetIntelligenceDossierService from '#modules/operations/services/asset_
 import liquidityAdvisoryService from '#modules/operations/services/liquidity_advisory_service'
 import liquidityDossierService from '#modules/operations/services/liquidity_dossier_service'
 import marketRateService from '#modules/market/services/market_rate_service'
+import nationalDataCoherenceService, {
+  type NationalDataCoherenceGap,
+  type NationalDataCoherenceReport,
+} from '#modules/integrations/services/national_data_coherence_service'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 
@@ -32,10 +37,20 @@ export type OpportunityListFilters = {
   q?: string | null
   grade?: OpportunityGrade | null
   stage?: CessionPipelineStage | null
+  source?: string | null
+  dataIssue?: OpportunityDataIssue | null
   minRiskAdjustedIrr?: number | null
   minFaceValue?: number | null
   maxFaceValue?: number | null
 }
+
+export type OpportunityDataIssue =
+  | 'missing_value'
+  | 'missing_datajud'
+  | 'missing_djen'
+  | 'missing_field_evidence'
+  | 'conflicts'
+  | 'candidate_review'
 
 export type PipelineUpdateInput = {
   stage: CessionPipelineStage
@@ -51,7 +66,10 @@ export type PipelineUpdateInput = {
 
 class OperationsService {
   async desk(tenantId: string) {
-    const marketRates = await marketRateService.latestSnapshot()
+    const [marketRates, dataCoherence] = await Promise.all([
+      marketRateService.latestSnapshot(),
+      nationalDataCoherenceService.build(tenantId),
+    ])
     const opportunities = await this.computeOpportunities(tenantId, { limit: 500, marketRates })
     const today = DateTime.now().minus({ hours: 24 })
     const inboxAPlus = opportunities.filter(
@@ -97,6 +115,7 @@ class OperationsService {
         targetSpreadLabel: '150-200% CDI',
         rates: marketRates,
       },
+      dataOps: buildDataOpsDesk(dataCoherence),
     }
   }
 
@@ -117,6 +136,7 @@ class OperationsService {
         currentPage: page,
         lastPage: Math.max(Math.ceil(sorted.length / limit), 1),
       },
+      qualitySummary: summarizeDataQuality(filtered),
       filters,
     }
   }
@@ -295,7 +315,11 @@ class OperationsService {
       .orderBy('created_at', 'desc')
       .limit(options.limit)
 
-    return assets.map((asset) => this.projectAsset(asset, null, options.marketRates))
+    const opportunities = assets.map((asset) => this.projectAsset(asset, null, options.marketRates))
+
+    await enrichDataQuality(tenantId, opportunities)
+
+    return opportunities
   }
 
   private assetQuery(tenantId: string) {
@@ -363,6 +387,14 @@ function matchesFilters(opportunity: OpportunityProjection, filters: Opportunity
     return false
   }
 
+  if (filters.source && opportunity.asset.source !== filters.source) {
+    return false
+  }
+
+  if (filters.dataIssue && !matchesDataIssue(opportunity, filters.dataIssue)) {
+    return false
+  }
+
   if (
     filters.minRiskAdjustedIrr !== null &&
     filters.minRiskAdjustedIrr !== undefined &&
@@ -404,6 +436,25 @@ function matchesFilters(opportunity: OpportunityProjection, filters: Opportunity
   return true
 }
 
+function matchesDataIssue(opportunity: OpportunityProjection, issue: OpportunityDataIssue) {
+  const quality = opportunity.asset.dataQuality
+
+  switch (issue) {
+    case 'missing_value':
+      return opportunity.asset.faceValue <= 0 || !quality.hasValuation
+    case 'missing_datajud':
+      return !quality.hasDataJudProcess
+    case 'missing_djen':
+      return !quality.hasDjenPublication
+    case 'missing_field_evidence':
+      return quality.resolvedCoreFields < 4
+    case 'conflicts':
+      return quality.sourceConflicts > 0 || quality.fieldEvidenceConflicts > 0
+    case 'candidate_review':
+      return quality.pendingCandidateReviews > 0
+  }
+}
+
 function compareOpportunities(left: OpportunityProjection, right: OpportunityProjection) {
   return (
     right.pricing.finalScore - left.pricing.finalScore ||
@@ -427,6 +478,143 @@ function scoreDistribution(opportunities: OpportunityProjection[]) {
   })
 }
 
+function buildDataOpsDesk(report: NationalDataCoherenceReport) {
+  return {
+    generatedAt: report.generatedAt,
+    summary: report.summary,
+    coverage: [
+      {
+        key: 'primary_source',
+        label: 'Primary source',
+        value: report.summary.primarySourceCoverage,
+        affected: Math.max(0, report.summary.totalAssets - report.summary.completeAssets),
+      },
+      {
+        key: 'datajud_process',
+        label: 'DataJud process',
+        value: report.summary.dataJudProcessCoverage,
+        affected: missingFromCoverage(
+          report.summary.totalAssets,
+          report.summary.dataJudProcessCoverage
+        ),
+      },
+      {
+        key: 'djen_publication',
+        label: 'DJEN publication',
+        value: report.summary.djenPublicationCoverage,
+        affected: missingFromCoverage(
+          report.summary.totalAssets,
+          report.summary.djenPublicationCoverage
+        ),
+      },
+      {
+        key: 'valuation',
+        label: 'Valuation',
+        value: report.summary.valuationCoverage,
+        affected: missingFromCoverage(report.summary.totalAssets, report.summary.valuationCoverage),
+      },
+      {
+        key: 'score',
+        label: 'Scoring',
+        value: report.summary.scoreCoverage,
+        affected: missingFromCoverage(report.summary.totalAssets, report.summary.scoreCoverage),
+      },
+      {
+        key: 'field_evidence',
+        label: 'Field evidence',
+        value: report.summary.fieldEvidenceResolvedCoverage,
+        affected: missingFromCoverage(
+          report.summary.totalAssets,
+          report.summary.fieldEvidenceResolvedCoverage
+        ),
+      },
+    ],
+    queues: aggregateGaps(report.gaps).slice(0, 8),
+    criticalCourts: report.courts
+      .filter((court) => court.totalAssets > 0 && court.status !== 'complete')
+      .slice(0, 8)
+      .map((court) => ({
+        courtAlias: court.courtAlias,
+        stateCode: court.stateCode,
+        status: court.status,
+        totalAssets: court.totalAssets,
+        completeRate: court.completeRate,
+        completeAssets: court.completeAssets,
+        missing: court.missing,
+        recommendedActions: court.recommendedActions,
+      })),
+  }
+}
+
+function aggregateGaps(gaps: NationalDataCoherenceGap[]) {
+  const byCode = new Map<
+    string,
+    {
+      code: string
+      label: string
+      severity: NationalDataCoherenceGap['severity']
+      affected: number
+      courts: string[]
+      recommendedAction: string
+    }
+  >()
+
+  for (const gap of gaps) {
+    const current = byCode.get(gap.code)
+    const next = current ?? {
+      code: gap.code,
+      label: dataGapLabel(gap.code),
+      severity: gap.severity,
+      affected: 0,
+      courts: [],
+      recommendedAction: gap.recommendedAction,
+    }
+
+    next.affected += gap.missingCount
+
+    if (!next.courts.includes(gap.courtAlias)) {
+      next.courts.push(gap.courtAlias)
+    }
+
+    next.severity =
+      gapSeverityRank(gap.severity) > gapSeverityRank(next.severity) ? gap.severity : next.severity
+
+    byCode.set(gap.code, next)
+  }
+
+  return [...byCode.values()].sort(
+    (left, right) =>
+      gapSeverityRank(right.severity) - gapSeverityRank(left.severity) ||
+      right.affected - left.affected ||
+      left.code.localeCompare(right.code)
+  )
+}
+
+function dataGapLabel(code: string) {
+  const labels: Record<string, string> = {
+    no_assets: 'No canonical assets',
+    missing_primary_source: 'Missing primary source',
+    missing_datajud_process: 'Missing DataJud process',
+    missing_djen_publication: 'Missing DJEN publication',
+    missing_valuation: 'Missing valuation',
+    missing_score: 'Missing score',
+    missing_field_evidence: 'Missing field evidence',
+    source_conflicts: 'Source link conflicts',
+    field_evidence_conflicts: 'Field evidence conflicts',
+    pending_candidate_review: 'Pending candidate review',
+  }
+
+  return labels[code] ?? code
+}
+
+function gapSeverityRank(severity: NationalDataCoherenceGap['severity']) {
+  return severity === 'high' ? 3 : severity === 'medium' ? 2 : 1
+}
+
+function missingFromCoverage(total: number, coverage: number) {
+  return Math.max(0, Math.round(total * (1 - coverage)))
+}
+
 function summarize(opportunities: OpportunityProjection[]) {
   return {
     count: opportunities.length,
@@ -434,6 +622,157 @@ function summarize(opportunities: OpportunityProjection[]) {
     averageRiskAdjustedIrr: average(opportunities, (item) => item.pricing.riskAdjustedIrr),
     averagePaymentProbability: average(opportunities, (item) => item.pricing.paymentProbability),
   }
+}
+
+function summarizeDataQuality(opportunities: OpportunityProjection[]) {
+  return {
+    total: opportunities.length,
+    missingValue: opportunities.filter((item) => matchesDataIssue(item, 'missing_value')).length,
+    missingDataJud: opportunities.filter((item) => matchesDataIssue(item, 'missing_datajud'))
+      .length,
+    missingDjen: opportunities.filter((item) => matchesDataIssue(item, 'missing_djen')).length,
+    missingFieldEvidence: opportunities.filter((item) =>
+      matchesDataIssue(item, 'missing_field_evidence')
+    ).length,
+    conflicts: opportunities.filter((item) => matchesDataIssue(item, 'conflicts')).length,
+    candidateReview: opportunities.filter((item) => matchesDataIssue(item, 'candidate_review'))
+      .length,
+    blocked: opportunities.filter((item) => item.asset.dataQuality.status === 'blocked').length,
+    complete: opportunities.filter((item) => item.asset.dataQuality.status === 'complete').length,
+  }
+}
+
+async function enrichDataQuality(tenantId: string, opportunities: OpportunityProjection[]) {
+  if (opportunities.length === 0) {
+    return
+  }
+
+  const ids = opportunities.map((opportunity) => opportunity.asset.id)
+  const result = await db.rawQuery(
+    `
+      select
+        precatorio_assets.id,
+        exists (
+          select 1
+          from asset_valuations
+          where asset_valuations.tenant_id = precatorio_assets.tenant_id
+            and asset_valuations.asset_id = precatorio_assets.id
+        ) as has_valuation,
+        exists (
+          select 1
+          from judicial_processes
+          where judicial_processes.tenant_id = precatorio_assets.tenant_id
+            and judicial_processes.asset_id = precatorio_assets.id
+            and judicial_processes.deleted_at is null
+            and judicial_processes.source = 'datajud'
+        ) as has_datajud_process,
+        exists (
+          select 1
+          from publications
+          where publications.tenant_id = precatorio_assets.tenant_id
+            and publications.source = 'djen'
+            and (
+              publications.asset_id = precatorio_assets.id
+              or exists (
+                select 1
+                from judicial_processes
+                where judicial_processes.tenant_id = precatorio_assets.tenant_id
+                  and judicial_processes.id = publications.process_id
+                  and judicial_processes.asset_id = precatorio_assets.id
+                  and judicial_processes.deleted_at is null
+              )
+            )
+        ) as has_djen_publication,
+        (
+          select count(distinct asset_field_evidences.field_key)
+          from asset_field_evidences
+          where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
+            and asset_field_evidences.asset_id = precatorio_assets.id
+            and asset_field_evidences.status = 'resolved'
+            and asset_field_evidences.field_key in ('cnj_number', 'debtor_name', 'court_alias', 'face_value')
+        ) as resolved_core_fields,
+        (
+          select count(*)
+          from asset_field_evidences
+          where asset_field_evidences.tenant_id = precatorio_assets.tenant_id
+            and asset_field_evidences.asset_id = precatorio_assets.id
+            and asset_field_evidences.status = 'conflict'
+        ) as field_evidence_conflicts,
+        (
+          select count(*)
+          from asset_source_links
+          where asset_source_links.tenant_id = precatorio_assets.tenant_id
+            and asset_source_links.asset_id = precatorio_assets.id
+            and asset_source_links.link_type = 'conflict'
+        ) as source_conflicts,
+        (
+          select count(*)
+          from process_match_candidates
+          where process_match_candidates.tenant_id = precatorio_assets.tenant_id
+            and process_match_candidates.asset_id = precatorio_assets.id
+            and process_match_candidates.status in ('candidate', 'ambiguous')
+        ) as pending_candidate_reviews
+      from precatorio_assets
+      where precatorio_assets.tenant_id = ?
+        and precatorio_assets.id = any(?::uuid[])
+    `,
+    [tenantId, ids]
+  )
+  const byId = new Map<string, Record<string, unknown>>(
+    result.rows.map((row: Record<string, unknown>) => [String(row.id), row])
+  )
+
+  for (const opportunity of opportunities) {
+    opportunity.asset.dataQuality = buildOpportunityDataQuality(
+      opportunity,
+      byId.get(opportunity.asset.id)
+    )
+  }
+}
+
+function buildOpportunityDataQuality(
+  opportunity: OpportunityProjection,
+  row: Record<string, unknown> | undefined
+): OpportunityDataQuality {
+  const hasValuation = booleanFrom(row?.has_valuation)
+  const hasDataJudProcess = booleanFrom(row?.has_datajud_process)
+  const hasDjenPublication = booleanFrom(row?.has_djen_publication)
+  const resolvedCoreFields = numberFrom(row?.resolved_core_fields)
+  const fieldEvidenceConflicts = numberFrom(row?.field_evidence_conflicts)
+  const sourceConflicts = numberFrom(row?.source_conflicts)
+  const pendingCandidateReviews = numberFrom(row?.pending_candidate_reviews)
+  const issues: string[] = []
+
+  if (opportunity.asset.faceValue <= 0 || !hasValuation) issues.push('missing_value')
+  if (!hasDataJudProcess) issues.push('missing_datajud')
+  if (!hasDjenPublication) issues.push('missing_djen')
+  if (resolvedCoreFields < 4) issues.push('missing_field_evidence')
+  if (sourceConflicts > 0 || fieldEvidenceConflicts > 0) issues.push('conflicts')
+  if (pendingCandidateReviews > 0) issues.push('candidate_review')
+
+  const hasBlocker =
+    sourceConflicts > 0 || fieldEvidenceConflicts > 0 || pendingCandidateReviews > 0
+
+  return {
+    status: hasBlocker ? 'blocked' : issues.length === 0 ? 'complete' : 'review',
+    issues,
+    hasValuation,
+    hasDataJudProcess,
+    hasDjenPublication,
+    resolvedCoreFields,
+    fieldEvidenceConflicts,
+    sourceConflicts,
+    pendingCandidateReviews,
+  }
+}
+
+function booleanFrom(value: unknown) {
+  return value === true || value === 'true' || value === 1 || value === '1'
+}
+
+function numberFrom(value: unknown) {
+  const parsed = Number(value ?? 0)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function sum<T>(items: T[], selector: (item: T) => number) {
