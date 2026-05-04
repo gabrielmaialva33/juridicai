@@ -105,6 +105,17 @@ test.group('Job retry service', () => {
         metadata: { limit: 40, projectSignals: false },
       },
       {
+        jobName: 'asset-intelligence-reconcile',
+        queueName: 'asset-intelligence-reconcile',
+        metadata: {
+          limit: 15,
+          dryRun: true,
+          includeManualActions: false,
+          maxActionsPerAsset: 2,
+          recentActionCooldownHours: 1,
+        },
+      },
+      {
         jobName: 'siop-open-data-sync',
         queueName: 'siop-open-data-sync',
         metadata: { years: [2025, 2026], download: false, enqueueImports: false },
