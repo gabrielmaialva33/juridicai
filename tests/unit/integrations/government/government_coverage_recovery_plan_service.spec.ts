@@ -34,8 +34,16 @@ test.group('Government coverage recovery plan service', () => {
             targetKey: 'coverage-recovery:tjac',
             adapterKey: 'generic_tribunal_public_source_sync',
           }),
-          datajud: emptyLayer(),
-          djen: emptyLayer(),
+          datajud: layer({
+            status: 'configured',
+            targetKey: 'coverage-recovery:datajud:tjac',
+            adapterKey: 'datajud_precatorio_discovery',
+          }),
+          djen: layer({
+            status: 'configured',
+            targetKey: 'coverage-recovery:djen:tjac',
+            adapterKey: 'djen_publication_sync',
+          }),
           intelligence: {
             hasPrimaryDiscovery: true,
             hasProcessEnrichment: false,
@@ -115,11 +123,23 @@ test.group('Government coverage recovery plan service', () => {
 
     assert.deepEqual(plan.executableTargetKeys, [
       'coverage-recovery:tjac',
+      'coverage-recovery:datajud:tjac',
+      'coverage-recovery:djen:tjac',
       'coverage-recovery:tjsp',
       'coverage-recovery:trf1',
     ])
-    assert.equal(plan.summary.executableTargetsCount, 3)
-    assert.equal(plan.summary.criticalTargetsCount, 2)
+    assert.deepEqual(plan.executableTargetKeysByLayer.primary, [
+      'coverage-recovery:tjac',
+      'coverage-recovery:tjsp',
+      'coverage-recovery:trf1',
+    ])
+    assert.deepEqual(plan.executableTargetKeysByLayer.datajud, ['coverage-recovery:datajud:tjac'])
+    assert.deepEqual(plan.executableTargetKeysByLayer.djen, ['coverage-recovery:djen:tjac'])
+    assert.equal(plan.summary.executableTargetsCount, 5)
+    assert.equal(plan.summary.primaryTargetsCount, 3)
+    assert.equal(plan.summary.dataJudTargetsCount, 1)
+    assert.equal(plan.summary.djenTargetsCount, 1)
+    assert.equal(plan.summary.criticalTargetsCount, 4)
     assert.equal(plan.summary.lowTargetsCount, 1)
     assert.equal(plan.summary.missingAdapterTargetsCount, 1)
     assert.equal(plan.targets[0].priority, 'critical')
@@ -129,14 +149,16 @@ test.group('Government coverage recovery plan service', () => {
       'no_tenant_source_records',
       'quality_unknown',
     ])
-    assert.includeMembers(plan.targets[1].reasons, [
+    const tjspTarget = plan.targets.find((target) => target.targetKey === 'coverage-recovery:tjsp')
+
+    assert.includeMembers(tjspTarget?.reasons ?? [], [
       'stale_success',
       'quality_failed',
       'low_import_yield',
       'high_error_rate',
       'low_field_coverage',
     ])
-    assert.equal(plan.targets[2].priority, 'low')
+    assert.equal(plan.targets.at(-1)?.priority, 'low')
   })
 })
 

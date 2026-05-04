@@ -84,10 +84,14 @@ test.group('Government data sync orchestrator service', () => {
       adapterKeys: string[] | null
       recoveryPriority: Array<{
         targetKey: string
+        layer: string
         priority: string
         priorityScore: number
         reasons: string[]
       }>
+    }
+    const dataJudPhase = result.phases.dataJudNationalDiscovery as {
+      courtAliases: string[] | string
     }
     const acreTarget = coveragePlan.primarySyncTargets.find((target) => target.stateCode === 'AC')
     const recoveryTarget = coverageRecoveryPlan.targets.find(
@@ -96,9 +100,13 @@ test.group('Government data sync orchestrator service', () => {
 
     assert.equal(coveragePlan.summary.statesCount, 27)
     assert.include(tribunalPhase.targetKeys, primaryTarget.key)
+    assert.notInclude(tribunalPhase.targetKeys, dataJudTarget.key)
     assert.isNull(tribunalPhase.adapterKeys)
     assert.isArray(tribunalPhase.recoveryPriority)
     assert.include(coverageRecoveryPlan.executableTargetKeys, primaryTarget.key)
+    assert.include(coverageRecoveryPlan.executableTargetKeysByLayer.primary, primaryTarget.key)
+    assert.include(coverageRecoveryPlan.executableTargetKeysByLayer.datajud, dataJudTarget.key)
+    assert.include(dataJudPhase.courtAliases, 'tjac')
     assert.equal(recoveryTarget?.priority, 'low')
     assert.isAbove(recoveryTarget?.priorityScore ?? 0, 0)
     assert.equal(acreTarget?.targetKey, primaryTarget.key)
