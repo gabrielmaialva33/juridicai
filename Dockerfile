@@ -17,7 +17,6 @@ FROM dependencies AS build
 COPY . .
 RUN pnpm build
 RUN cp pnpm-lock.yaml build/pnpm-lock.yaml
-RUN cd build && pnpm install --prod --frozen-lockfile
 
 FROM node:24-bookworm-slim AS runner
 
@@ -29,6 +28,8 @@ RUN corepack enable
 
 WORKDIR /app
 
+COPY --from=build /app/build/package.json /app/build/pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 COPY --from=build /app/build ./
 
 EXPOSE 3333
