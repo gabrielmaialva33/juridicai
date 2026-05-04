@@ -7,9 +7,9 @@ import {
 import queueService from '#shared/services/queue_service'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
-const RECENT_SUCCESS_HOURS = 4
-const RUNNING_STALE_HOURS = 1
-const FAILURE_COOLDOWN_HOURS = 1
+export const ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS = 4
+export const ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS = 1
+export const ASSET_INTELLIGENCE_RECONCILE_FAILURE_COOLDOWN_HOURS = 1
 
 type ScheduledAssetIntelligenceReconcileOptions = {
   now?: DateTime
@@ -127,9 +127,12 @@ async function skipReasonForTenant(
   now: DateTime,
   options: ScheduledAssetIntelligenceReconcileOptions
 ): Promise<SkipReason | null> {
-  const recentSuccessHours = options.recentSuccessHours ?? RECENT_SUCCESS_HOURS
-  const runningStaleHours = options.runningStaleHours ?? RUNNING_STALE_HOURS
-  const failureCooldownHours = options.failureCooldownHours ?? FAILURE_COOLDOWN_HOURS
+  const recentSuccessHours =
+    options.recentSuccessHours ?? ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS
+  const runningStaleHours =
+    options.runningStaleHours ?? ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS
+  const failureCooldownHours =
+    options.failureCooldownHours ?? ASSET_INTELLIGENCE_RECONCILE_FAILURE_COOLDOWN_HOURS
 
   const running = await trx
     .from('radar_job_runs')
