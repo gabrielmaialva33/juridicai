@@ -5,6 +5,8 @@ const DataJudCandidatesController = () =>
   import('#modules/integrations/controllers/datajud_candidates_controller')
 const GovernmentCoverageController = () =>
   import('#modules/integrations/controllers/government_coverage_controller')
+const NationalDataCoherenceController = () =>
+  import('#modules/integrations/controllers/national_data_coherence_controller')
 const TribunalBudgetExecutionsController = () =>
   import('#modules/integrations/controllers/tribunal_budget_executions_controller')
 
@@ -13,6 +15,10 @@ router
     router
       .get('admin/integrations/coverage', [GovernmentCoverageController, 'index'])
       .as('government.coverage.index')
+      .use(middleware.permission('imports.read'))
+    router
+      .get('admin/integrations/data-coherence', [NationalDataCoherenceController, 'index'])
+      .as('government.data_coherence.index')
       .use(middleware.permission('imports.read'))
     router
       .get('admin/tribunal/budget-executions', [TribunalBudgetExecutionsController, 'index'])
