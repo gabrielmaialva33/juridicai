@@ -4,6 +4,10 @@ import assetIntelligenceActionService, {
   type AssetIntelligenceActionResult,
 } from '#modules/operations/services/asset_intelligence_action_service'
 import assetIntelligenceDossierService from '#modules/operations/services/asset_intelligence_dossier_service'
+import nationalDataCoherenceService, {
+  type NationalDataCoherenceReport,
+  type NationalDataCoherenceStatus,
+} from '#modules/integrations/services/national_data_coherence_service'
 import type { SourceType } from '#shared/types/model_enums'
 
 const DEFAULT_LIMIT = 25
@@ -23,6 +27,7 @@ export type AssetIntelligenceReconcileOptions = {
   allowAutomationWithConflicts?: boolean
   maxActionsPerAsset?: number | null
   recentActionCooldownHours?: number | null
+  useNationalCoherence?: boolean | null
   requestId?: string | null
 }
 
@@ -39,9 +44,12 @@ export type AssetIntelligenceReconcileResult = {
   manualActions: number
   plannedActions: number
   skippedActions: number
+  coherence: AssetIntelligenceReconcileCoherenceContext
   failures: Array<{ assetId: string; message: string }>
   assets: Array<{
     assetId: string
+    courtAlias: string | null
+    coherencePriority: number
     completenessScore: number
     confidenceScore: number
     actionKeys: string[]
@@ -49,10 +57,31 @@ export type AssetIntelligenceReconcileResult = {
   }>
 }
 
+export type AssetIntelligenceReconcileCoherenceContext = {
+  enabled: boolean
+  generatedAt: string | null
+  targetedCourts: string[]
+  criticalCourts: string[]
+  partialCourts: string[]
+  topGaps: Array<{
+    courtAlias: string
+    code: string
+    severity: 'high' | 'medium' | 'low'
+    missingCount: number
+  }>
+}
+
+type CandidateAsset = {
+  assetId: string
+  courtAlias: string | null
+  coherencePriority: number
+}
+
 class AssetIntelligenceReconcileService {
   async run(options: AssetIntelligenceReconcileOptions): Promise<AssetIntelligenceReconcileResult> {
     const dryRun = options.dryRun ?? false
-    const candidates = await this.findCandidateAssetIds(options)
+    const coherence = await buildCoherenceContext(options)
+    const candidates = await this.findCandidateAssets(options, coherence)
     const result: AssetIntelligenceReconcileResult = {
       tenantId: options.tenantId,
       dryRun,
@@ -66,13 +95,15 @@ class AssetIntelligenceReconcileService {
       manualActions: 0,
       plannedActions: 0,
       skippedActions: 0,
+      coherence,
       failures: [],
       assets: [],
     }
 
-    for (const assetId of candidates) {
+    for (const candidate of candidates) {
       try {
         result.inspectedAssets += 1
+        const assetId = candidate.assetId
         const dossier = await assetIntelligenceDossierService.build(options.tenantId, assetId)
         const actionKeys = selectActionKeys(dossier, options)
 
@@ -90,6 +121,8 @@ class AssetIntelligenceReconcileService {
         result.actedAssets += 1
         result.assets.push({
           assetId,
+          courtAlias: candidate.courtAlias,
+          coherencePriority: candidate.coherencePriority,
           completenessScore: dossier.completeness.score,
           confidenceScore: dossier.confidence.score,
           actionKeys,
@@ -99,7 +132,7 @@ class AssetIntelligenceReconcileService {
       } catch (error) {
         result.failedAssets += 1
         result.failures.push({
-          assetId,
+          assetId: candidate.assetId,
           message: error instanceof Error ? error.message : String(error),
         })
       }
@@ -108,10 +141,16 @@ class AssetIntelligenceReconcileService {
     return result
   }
 
-  private async findCandidateAssetIds(options: AssetIntelligenceReconcileOptions) {
+  private async findCandidateAssets(
+    options: AssetIntelligenceReconcileOptions,
+    coherence: AssetIntelligenceReconcileCoherenceContext
+  ): Promise<CandidateAsset[]> {
     const query = db
       .from('precatorio_assets')
       .select('precatorio_assets.id')
+      .select(db.raw(`${COURT_ALIAS_SQL} as court_alias`))
+      .leftJoin('courts', 'courts.id', 'precatorio_assets.court_id')
+      .leftJoin('debtors', 'debtors.id', 'precatorio_assets.debtor_id')
       .where('precatorio_assets.tenant_id', options.tenantId)
       .whereNull('precatorio_assets.deleted_at')
       .where((builder) => {
@@ -191,15 +230,181 @@ class AssetIntelligenceReconcileService {
           )
       })
       .orderBy('precatorio_assets.updated_at', 'asc')
-      .limit(normalizeLimit(options.limit))
+      .limit(preselectionLimit(options.limit, coherence))
 
     if (options.source) {
       query.where('precatorio_assets.source', options.source)
     }
 
     const rows = await query
-    return rows.map((row) => String(row.id))
+    return rows
+      .map((row) => {
+        const courtAlias = stringOrNull(row.court_alias)
+
+        return {
+          assetId: String(row.id),
+          courtAlias,
+          coherencePriority: coherencePriorityFor(courtAlias, coherence),
+        }
+      })
+      .sort(compareCandidates)
+      .slice(0, normalizeLimit(options.limit))
   }
+}
+
+const STATE_COURT_CASE_SQL = `
+  case upper(debtors.state_code)
+    when 'AC' then 'tjac'
+    when 'AL' then 'tjal'
+    when 'AM' then 'tjam'
+    when 'AP' then 'tjap'
+    when 'BA' then 'tjba'
+    when 'CE' then 'tjce'
+    when 'DF' then 'tjdft'
+    when 'ES' then 'tjes'
+    when 'GO' then 'tjgo'
+    when 'MA' then 'tjma'
+    when 'MG' then 'tjmg'
+    when 'MS' then 'tjms'
+    when 'MT' then 'tjmt'
+    when 'PA' then 'tjpa'
+    when 'PB' then 'tjpb'
+    when 'PE' then 'tjpe'
+    when 'PI' then 'tjpi'
+    when 'PR' then 'tjpr'
+    when 'RJ' then 'tjrj'
+    when 'RN' then 'tjrn'
+    when 'RO' then 'tjro'
+    when 'RR' then 'tjrr'
+    when 'RS' then 'tjrs'
+    when 'SC' then 'tjsc'
+    when 'SE' then 'tjse'
+    when 'SP' then 'tjsp'
+    when 'TO' then 'tjto'
+    else null
+  end
+`
+
+const COURT_ALIAS_SQL = `
+  coalesce(
+    nullif(lower(courts.alias), ''),
+    (
+      select lower(judicial_processes.court_alias)
+      from judicial_processes
+      where judicial_processes.tenant_id = precatorio_assets.tenant_id
+        and judicial_processes.asset_id = precatorio_assets.id
+        and judicial_processes.deleted_at is null
+        and judicial_processes.court_alias is not null
+      order by judicial_processes.created_at desc
+      limit 1
+    ),
+    nullif(lower(precatorio_assets.raw_data->>'courtAlias'), ''),
+    case
+      when precatorio_assets.source = 'siop' then 'federal-siop'
+      else null
+    end,
+    ${STATE_COURT_CASE_SQL}
+  )
+`
+
+async function buildCoherenceContext(
+  options: AssetIntelligenceReconcileOptions
+): Promise<AssetIntelligenceReconcileCoherenceContext> {
+  if (options.useNationalCoherence === false) {
+    return emptyCoherenceContext(false)
+  }
+
+  const report = await nationalDataCoherenceService.build(options.tenantId)
+  const criticalCourts = courtsByStatus(report, 'critical')
+  const partialCourts = courtsByStatus(report, 'partial')
+  const usableCourts = courtsByStatus(report, 'usable')
+
+  return {
+    enabled: true,
+    generatedAt: report.generatedAt,
+    criticalCourts,
+    partialCourts,
+    targetedCourts: [...new Set([...criticalCourts, ...partialCourts, ...usableCourts])],
+    topGaps: report.gaps
+      .filter((gap) => gap.missingCount > 0)
+      .sort((left, right) => gapRank(right.severity) - gapRank(left.severity))
+      .slice(0, 20)
+      .map((gap) => ({
+        courtAlias: gap.courtAlias,
+        code: gap.code,
+        severity: gap.severity,
+        missingCount: gap.missingCount,
+      })),
+  }
+}
+
+function emptyCoherenceContext(enabled: boolean): AssetIntelligenceReconcileCoherenceContext {
+  return {
+    enabled,
+    generatedAt: null,
+    targetedCourts: [],
+    criticalCourts: [],
+    partialCourts: [],
+    topGaps: [],
+  }
+}
+
+function courtsByStatus(report: NationalDataCoherenceReport, status: NationalDataCoherenceStatus) {
+  return report.courts
+    .filter((court) => court.status === status && court.totalAssets > 0)
+    .map((court) => court.courtAlias)
+}
+
+function coherencePriorityFor(
+  courtAlias: string | null,
+  coherence: AssetIntelligenceReconcileCoherenceContext
+) {
+  if (!coherence.enabled || !courtAlias) {
+    return 0
+  }
+
+  if (coherence.criticalCourts.includes(courtAlias)) {
+    return 300
+  }
+
+  if (coherence.partialCourts.includes(courtAlias)) {
+    return 200
+  }
+
+  if (coherence.targetedCourts.includes(courtAlias)) {
+    return 100
+  }
+
+  return 0
+}
+
+function compareCandidates(left: CandidateAsset, right: CandidateAsset) {
+  return (
+    right.coherencePriority - left.coherencePriority || left.assetId.localeCompare(right.assetId)
+  )
+}
+
+function preselectionLimit(
+  limit: number | null | undefined,
+  coherence: AssetIntelligenceReconcileCoherenceContext
+) {
+  const normalized = normalizeLimit(limit)
+  return coherence.enabled ? Math.min(normalized * 4, MAX_LIMIT) : normalized
+}
+
+function gapRank(severity: 'high' | 'medium' | 'low') {
+  switch (severity) {
+    case 'high':
+      return 3
+    case 'medium':
+      return 2
+    case 'low':
+      return 1
+  }
+}
+
+function stringOrNull(value: unknown) {
+  return typeof value === 'string' && value.trim() !== '' ? value.trim().toLowerCase() : null
 }
 
 function selectActionKeys(

@@ -57,6 +57,11 @@ export default class OperationsReconcileIntelligence extends BaseCommand {
   declare allowAutomationWithConflicts: boolean
 
   @flags.boolean({
+    description: 'Disable national data coherence prioritization for this run',
+  })
+  declare skipNationalCoherence: boolean
+
+  @flags.boolean({
     description: 'Run inline instead of enqueueing a BullMQ job',
   })
   declare runInline: boolean
@@ -83,6 +88,7 @@ export default class OperationsReconcileIntelligence extends BaseCommand {
       allowAutomationWithConflicts: this.allowAutomationWithConflicts,
       maxActionsPerAsset: this.maxActionsPerAsset,
       recentActionCooldownHours: this.recentActionCooldownHours,
+      useNationalCoherence: !this.skipNationalCoherence,
       requestId: `operations-reconcile-intelligence-${DateTime.utc().toMillis()}`,
       origin: 'manual_retry',
     }

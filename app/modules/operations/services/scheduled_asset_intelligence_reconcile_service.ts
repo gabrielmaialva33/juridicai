@@ -79,6 +79,7 @@ class ScheduledAssetIntelligenceReconcileService {
           allowAutomationWithConflicts: false,
           maxActionsPerAsset: 3,
           recentActionCooldownHours: 6,
+          useNationalCoherence: true,
           requestId: `asset-intelligence-reconcile-${tenantId}-${now.toFormat('yyyyLLddHH')}`,
           origin: 'scheduler',
         }

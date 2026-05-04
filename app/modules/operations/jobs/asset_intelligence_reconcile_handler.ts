@@ -15,6 +15,7 @@ export type AssetIntelligenceReconcilePayload = {
   allowAutomationWithConflicts?: boolean
   maxActionsPerAsset?: number | null
   recentActionCooldownHours?: number | null
+  useNationalCoherence?: boolean | null
   requestId?: string | null
   bullmqJobId?: string | null
   attempts?: number | null
@@ -39,6 +40,7 @@ export async function handleAssetIntelligenceReconcile(payload: AssetIntelligenc
       allowAutomationWithConflicts: payload.allowAutomationWithConflicts ?? false,
       maxActionsPerAsset: payload.maxActionsPerAsset ?? null,
       recentActionCooldownHours: payload.recentActionCooldownHours ?? null,
+      useNationalCoherence: payload.useNationalCoherence ?? true,
     },
   })
 
@@ -59,6 +61,7 @@ export async function handleAssetIntelligenceReconcile(payload: AssetIntelligenc
           allowAutomationWithConflicts: payload.allowAutomationWithConflicts,
           maxActionsPerAsset: payload.maxActionsPerAsset,
           recentActionCooldownHours: payload.recentActionCooldownHours,
+          useNationalCoherence: payload.useNationalCoherence,
           requestId: payload.requestId,
         })
     )

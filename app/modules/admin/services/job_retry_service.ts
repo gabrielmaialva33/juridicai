@@ -194,6 +194,7 @@ class JobRetryService {
               booleanMetadata(run.metadata, 'allowAutomationWithConflicts') ?? false,
             maxActionsPerAsset: numberMetadata(run.metadata, 'maxActionsPerAsset'),
             recentActionCooldownHours: numberMetadata(run.metadata, 'recentActionCooldownHours'),
+            useNationalCoherence: booleanMetadata(run.metadata, 'useNationalCoherence') ?? true,
             origin: 'manual_retry' as const,
           },
         }
