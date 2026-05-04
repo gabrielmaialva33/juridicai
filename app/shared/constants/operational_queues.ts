@@ -12,6 +12,7 @@ export const operationalQueueNames = [
   'tribunal-source-sync',
   'trf6-manual-export-import',
   'post-import-enrichment',
+  'asset-intelligence-reconcile',
   'government-data-sync-orchestrator',
   'datajud-national-precatorio-sync',
   'datajud-enrich-assets',

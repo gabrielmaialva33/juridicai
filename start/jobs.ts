@@ -67,6 +67,11 @@ import {
   type PostImportEnrichmentPayload,
 } from '#modules/integrations/jobs/post_import_enrichment_handler'
 import {
+  ASSET_INTELLIGENCE_RECONCILE_QUEUE,
+  handleAssetIntelligenceReconcile,
+  type AssetIntelligenceReconcilePayload,
+} from '#modules/operations/jobs/asset_intelligence_reconcile_handler'
+import {
   GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE,
   type GovernmentDataSyncOrchestratorPayload,
   handleGovernmentDataSyncOrchestrator,
@@ -111,6 +116,7 @@ export const queues = {
   tribunalSourceSync: { name: TRIBUNAL_SOURCE_SYNC_QUEUE, concurrency: 1 },
   trf6ManualExportImport: { name: TRF6_MANUAL_EXPORT_IMPORT_QUEUE, concurrency: 1 },
   postImportEnrichment: { name: POST_IMPORT_ENRICHMENT_QUEUE, concurrency: 1 },
+  assetIntelligenceReconcile: { name: ASSET_INTELLIGENCE_RECONCILE_QUEUE, concurrency: 1 },
   governmentDataSyncOrchestrator: { name: GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE, concurrency: 1 },
   dataJudNationalPrecatorioSync: { name: DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE, concurrency: 1 },
   dataJudEnrichAssets: { name: DATAJUD_ENRICH_ASSETS_QUEUE, concurrency: 1 },
@@ -283,6 +289,18 @@ export function bootWorkers() {
       })
     },
     { concurrency: queues.postImportEnrichment.concurrency }
+  )
+
+  queueService.registerWorker<AssetIntelligenceReconcilePayload>(
+    queues.assetIntelligenceReconcile.name,
+    async (job) => {
+      await handleAssetIntelligenceReconcile({
+        ...job.data,
+        bullmqJobId: job.id ? String(job.id) : null,
+        attempts: job.attemptsMade + 1,
+      })
+    },
+    { concurrency: queues.assetIntelligenceReconcile.concurrency }
   )
 
   queueService.registerWorker<GovernmentDataSyncOrchestratorPayload>(

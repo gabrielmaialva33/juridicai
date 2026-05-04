@@ -5,6 +5,7 @@ import { DATAJUD_MATCH_CANDIDATES_QUEUE } from '#modules/integrations/jobs/dataj
 import { DATAJUD_NATIONAL_PRECATORIO_SYNC_QUEUE } from '#modules/integrations/jobs/datajud_national_precatorio_sync_handler'
 import { DATAJUD_PROCESS_ASSET_LINK_QUEUE } from '#modules/integrations/jobs/datajud_process_asset_link_handler'
 import { GOVERNMENT_DATA_SYNC_ORCHESTRATOR_QUEUE } from '#modules/integrations/jobs/government_data_sync_orchestrator_handler'
+import { ASSET_INTELLIGENCE_RECONCILE_QUEUE } from '#modules/operations/jobs/asset_intelligence_reconcile_handler'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import { SIOP_OPEN_DATA_SYNC_QUEUE } from '#modules/integrations/jobs/siop_open_data_sync_handler'
 import { TJSP_PRECATORIO_SYNC_QUEUE } from '#modules/integrations/jobs/tjsp_precatorio_sync_handler'
@@ -172,6 +173,27 @@ class JobRetryService {
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
             limit: numberMetadata(run.metadata, 'limit'),
             projectSignals: booleanMetadata(run.metadata, 'projectSignals') ?? true,
+            origin: 'manual_retry' as const,
+          },
+        }
+      }
+
+      case 'asset-intelligence-reconcile': {
+        return {
+          queueName: ASSET_INTELLIGENCE_RECONCILE_QUEUE,
+          jobName: 'asset-intelligence-reconcile',
+          payload: {
+            tenantId: run.tenantId!,
+            requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            limit: numberMetadata(run.metadata, 'limit'),
+            source: stringMetadata(run.metadata, 'source'),
+            dryRun: booleanMetadata(run.metadata, 'dryRun') ?? false,
+            highPriorityOnly: booleanMetadata(run.metadata, 'highPriorityOnly') ?? false,
+            includeManualActions: booleanMetadata(run.metadata, 'includeManualActions') ?? true,
+            allowAutomationWithConflicts:
+              booleanMetadata(run.metadata, 'allowAutomationWithConflicts') ?? false,
+            maxActionsPerAsset: numberMetadata(run.metadata, 'maxActionsPerAsset'),
+            recentActionCooldownHours: numberMetadata(run.metadata, 'recentActionCooldownHours'),
             origin: 'manual_retry' as const,
           },
         }

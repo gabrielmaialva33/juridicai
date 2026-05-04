@@ -2,6 +2,7 @@ import scheduler from 'adonisjs-scheduler/services/main'
 import { DateTime } from 'luxon'
 import queueService from '#shared/services/queue_service'
 import scheduledGovernmentSyncService from '#modules/integrations/services/scheduled_government_sync_service'
+import scheduledAssetIntelligenceReconcileService from '#modules/operations/services/scheduled_asset_intelligence_reconcile_service'
 import { SIOP_RECONCILE_QUEUE } from '#modules/siop/jobs/siop_reconcile_handler'
 import { APPLY_RETENTION_POLICY_QUEUE } from '#modules/maintenance/jobs/apply_retention_policy_handler'
 import { PURGE_STAGING_QUEUE } from '#modules/maintenance/jobs/purge_staging_handler'
@@ -27,6 +28,12 @@ scheduler
 
 scheduler
   .call(() => scheduledGovernmentSyncService.enqueueDueRuns())
+  .everyThirtyMinutes()
+  .immediate()
+  .withoutOverlapping()
+
+scheduler
+  .call(() => scheduledAssetIntelligenceReconcileService.enqueueDueRuns())
   .everyThirtyMinutes()
   .immediate()
   .withoutOverlapping()
