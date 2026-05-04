@@ -4,6 +4,10 @@ import queueService from '#shared/services/queue_service'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
 import { operationalQueueNames } from '#shared/constants/operational_queues'
 import governmentCoverageMatrixService from '#modules/integrations/services/government_coverage_matrix_service'
+import {
+  ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS,
+  ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS,
+} from '#modules/operations/services/scheduled_asset_intelligence_reconcile_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 
 const DEFAULT_TENANT_SLUG = 'juridicai-local'
@@ -63,7 +67,7 @@ class BetaReadinessService {
       await this.bootstrapSection(tenant, database),
       await this.integrationConfigSection(),
       await this.dataEvidenceSection(tenant?.id ?? null),
-      await this.operationsSection(),
+      await this.operationsSection(tenant?.id ?? null, now),
       await this.coverageSection(tenant?.id ?? null),
     ]
     const status = sectionStatus(sections)
@@ -246,7 +250,10 @@ class BetaReadinessService {
     return readinessSection('data_evidence', 'Tenant Data Evidence', checks)
   }
 
-  private async operationsSection(): Promise<ReadinessSection> {
+  private async operationsSection(
+    tenantId: string | null,
+    now: DateTime
+  ): Promise<ReadinessSection> {
     const checks: ReadinessCheck[] = []
 
     try {
@@ -314,6 +321,7 @@ class BetaReadinessService {
     }
 
     checks.push(await latestJobRunCheck())
+    checks.push(await latestAssetIntelligenceRunCheck(tenantId, now))
 
     return readinessSection('operations', 'Jobs, Queues, and Workers', checks)
   }
@@ -529,6 +537,77 @@ async function latestJobRunCheck(): Promise<ReadinessCheck> {
   }
 }
 
+async function latestAssetIntelligenceRunCheck(
+  tenantId: string | null,
+  now: DateTime
+): Promise<ReadinessCheck> {
+  if (!tenantId) {
+    return {
+      key: 'jobs.asset_intelligence_reconcile',
+      label: 'Asset intelligence reconciliation',
+      status: 'fail',
+      message: 'Asset intelligence reconciliation cannot be checked without an active tenant.',
+      expected: 'active beta tenant',
+    }
+  }
+
+  const row = await db
+    .from('radar_job_runs')
+    .where('tenant_id', tenantId)
+    .where('job_name', 'asset-intelligence-reconcile')
+    .orderBy('created_at', 'desc')
+    .first()
+
+  if (!row) {
+    return {
+      key: 'jobs.asset_intelligence_reconcile',
+      label: 'Asset intelligence reconciliation',
+      status: 'warn',
+      message: 'Asset intelligence reconciliation has not run yet.',
+      actual: 0,
+      expected: `completed within ${ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS}h after worker boot`,
+    }
+  }
+
+  const ageHours = dateAgeHours(row.created_at, now)
+  const status = String(row.status)
+  const isFreshSuccess =
+    status === 'completed' && ageHours <= ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS
+  const isFreshRunning =
+    status === 'running' && ageHours <= ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS
+  const checkStatus: ReadinessStatus =
+    isFreshSuccess || isFreshRunning ? 'pass' : status === 'failed' ? 'fail' : 'warn'
+
+  return {
+    key: 'jobs.asset_intelligence_reconcile',
+    label: 'Asset intelligence reconciliation',
+    status: checkStatus,
+    message:
+      checkStatus === 'pass'
+        ? `Asset intelligence reconciliation is ${status}.`
+        : `Asset intelligence reconciliation latest status is ${status}.`,
+    actual: status,
+    expected: `completed within ${ASSET_INTELLIGENCE_RECONCILE_RECENT_SUCCESS_HOURS}h or running within ${ASSET_INTELLIGENCE_RECONCILE_RUNNING_STALE_HOURS}h`,
+    details: {
+      jobName: String(row.job_name),
+      status,
+      ageHours,
+      createdAt: dateIso(row.created_at),
+      finishedAt: dateIso(row.finished_at),
+      errorCode: row.error_code ? String(row.error_code) : null,
+      metrics: isRecord(row.metrics)
+        ? {
+            selectedAssets: row.metrics.selectedAssets ?? null,
+            actedAssets: row.metrics.actedAssets ?? null,
+            failedAssets: row.metrics.failedAssets ?? null,
+            queuedActions: row.metrics.queuedActions ?? null,
+            manualActions: row.metrics.manualActions ?? null,
+          }
+        : null,
+    },
+  }
+}
+
 function minimumCheck(
   key: string,
   label: string,
@@ -611,6 +690,10 @@ function actionFor(key: string) {
     return 'Start the worker process and verify Redis connectivity before opening beta traffic.'
   }
 
+  if (key === 'jobs.asset_intelligence_reconcile') {
+    return 'Start workers/scheduler or run node ace operations:reconcile-intelligence --tenant-id <tenant-id> --dry-run to inspect recommended actions.'
+  }
+
   if (key.startsWith('coverage.')) {
     return 'Run node ace government:sync-data --tenant-id <tenant-id> --dry-run --run-inline to inspect the next coverage plan.'
   }
@@ -632,6 +715,22 @@ function dateIso(value: unknown) {
   }
 
   return DateTime.fromJSDate(value instanceof Date ? value : new Date(String(value))).toISO()
+}
+
+function dateAgeHours(value: unknown, now: DateTime) {
+  if (!value) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  return Number(
+    now
+      .diff(DateTime.fromJSDate(new Date(value as string | number | Date)), 'hours')
+      .hours.toFixed(2)
+  )
+}
+
+function isRecord(value: unknown): value is JsonRecord {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
 
 function errorMessage(error: unknown) {
