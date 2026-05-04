@@ -80,6 +80,7 @@ type CandidateRow = {
 
 export type DataJudAssetEnrichmentOptions = {
   tenantId: string
+  assetIds?: string[] | null
   sourceRecordId?: string | null
   limit?: number | null
   source?: SourceType | null
@@ -183,6 +184,10 @@ class DataJudAssetEnrichmentService {
       query.where('source_record_id', options.sourceRecordId)
     }
 
+    if (options.assetIds?.length) {
+      query.whereIn('id', uniqueIds(options.assetIds))
+    }
+
     if (options.missingOnly ?? true) {
       query.whereNotExists((subquery) => {
         subquery
@@ -205,6 +210,10 @@ class DataJudAssetEnrichmentService {
 
     return Number(row.total) > 0
   }
+}
+
+function uniqueIds(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
 export function inferDataJudCourtAliases(cnjNumber: string) {

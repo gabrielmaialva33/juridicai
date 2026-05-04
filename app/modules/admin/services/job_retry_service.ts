@@ -103,6 +103,7 @@ class JobRetryService {
           payload: {
             tenantId: run.tenantId!,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            assetIds: stringArrayMetadata(run.metadata, 'assetIds'),
             sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
             limit: numberMetadata(run.metadata, 'limit'),
             source: stringMetadata(run.metadata, 'source'),
@@ -136,6 +137,7 @@ class JobRetryService {
           payload: {
             tenantId: run.tenantId!,
             requestId: requestId ?? stringMetadata(run.metadata, 'requestId'),
+            assetIds: stringArrayMetadata(run.metadata, 'assetIds'),
             sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
             source: stringMetadata(run.metadata, 'source'),
             limit: numberMetadata(run.metadata, 'limit'),
@@ -329,6 +331,7 @@ class JobRetryService {
           jobName: 'post-import-enrichment',
           payload: {
             tenantId: run.tenantId!,
+            assetIds: stringArrayMetadata(run.metadata, 'assetIds'),
             sourceRecordId: stringMetadata(run.metadata, 'sourceRecordId'),
             source: stringMetadata(run.metadata, 'source'),
             enrichmentLimit: numberMetadata(run.metadata, 'enrichmentLimit'),

@@ -31,6 +31,7 @@ type CandidateAssetRow = {
 
 export type DataJudCandidateMatchOptions = {
   tenantId: string
+  assetIds?: string[] | null
   sourceRecordId?: string | null
   source?: SourceType | null
   limit?: number | null
@@ -168,6 +169,10 @@ class DataJudCandidateMatchService {
       query.where('precatorio_assets.source_record_id', options.sourceRecordId)
     }
 
+    if (options.assetIds?.length) {
+      query.whereIn('precatorio_assets.id', uniqueIds(options.assetIds))
+    }
+
     return query as Promise<CandidateAssetRow[]>
   }
 
@@ -201,6 +206,10 @@ class DataJudCandidateMatchService {
 
     return ProcessMatchCandidate.create(payload)
   }
+}
+
+function uniqueIds(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
 function buildMatch(

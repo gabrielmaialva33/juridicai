@@ -12,6 +12,7 @@ export const POST_IMPORT_ENRICHMENT_QUEUE = 'post-import-enrichment'
 
 export type PostImportEnrichmentPayload = {
   tenantId: string
+  assetIds?: string[] | null
   sourceRecordId?: string | null
   source?: SourceType | null
   enrichmentLimit?: number | null
@@ -38,6 +39,7 @@ export async function handlePostImportEnrichment(payload: PostImportEnrichmentPa
     origin: payload.origin ?? 'system',
     metadata: {
       requestId: payload.requestId ?? null,
+      assetIds: payload.assetIds ?? null,
       sourceRecordId: payload.sourceRecordId ?? null,
       source: payload.source ?? null,
       enrichmentLimit: payload.enrichmentLimit ?? null,
@@ -72,6 +74,7 @@ export async function handlePostImportEnrichment(payload: PostImportEnrichmentPa
 async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
   const dataJudAssetEnrichment = await dataJudAssetEnrichmentService.enrich({
     tenantId: payload.tenantId,
+    assetIds: payload.assetIds,
     sourceRecordId: payload.sourceRecordId,
     source: payload.source,
     limit: payload.enrichmentLimit ?? 1_000,
@@ -95,6 +98,7 @@ async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
   })
   const dataJudCandidateMatching = await dataJudCandidateMatchService.match({
     tenantId: payload.tenantId,
+    assetIds: payload.assetIds,
     sourceRecordId: payload.sourceRecordId,
     source: payload.source,
     limit: payload.matchLimit ?? 500,
@@ -103,6 +107,7 @@ async function enrichAfterImport(payload: PostImportEnrichmentPayload) {
   })
   const operationalIntake = await postImportOperationalIntakeService.run({
     tenantId: payload.tenantId,
+    assetIds: payload.assetIds,
     sourceRecordId: payload.sourceRecordId,
     source: payload.source,
     limit: payload.operationalLimit ?? 500,

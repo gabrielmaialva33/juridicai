@@ -16,6 +16,7 @@ const DEFAULT_MIN_RISK_ADJUSTED_IRR = 0.25
 
 export type PostImportOperationalIntakeOptions = {
   tenantId: string
+  assetIds?: string[] | null
   sourceRecordId?: string | null
   sourceRecordIds?: string[] | null
   source?: SourceType | null
@@ -120,6 +121,10 @@ class PostImportOperationalIntakeService {
 
     if (sourceRecordIds.length > 0) {
       query.whereIn('source_record_id', sourceRecordIds)
+    }
+
+    if (options.assetIds?.length) {
+      query.whereIn('id', uniqueIds(options.assetIds))
     }
 
     if (options.source) {

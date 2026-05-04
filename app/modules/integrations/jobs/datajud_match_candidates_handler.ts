@@ -7,6 +7,7 @@ export const DATAJUD_MATCH_CANDIDATES_QUEUE = 'datajud-match-candidates'
 
 export type DataJudMatchCandidatesPayload = {
   tenantId: string
+  assetIds?: string[] | null
   sourceRecordId?: string | null
   source?: SourceType | null
   limit?: number | null
@@ -28,6 +29,7 @@ export async function handleDataJudMatchCandidates(payload: DataJudMatchCandidat
     origin: payload.origin ?? 'system',
     metadata: {
       requestId: payload.requestId ?? null,
+      assetIds: payload.assetIds ?? null,
       sourceRecordId: payload.sourceRecordId ?? null,
       source: payload.source ?? null,
       limit: payload.limit ?? null,
@@ -45,6 +47,7 @@ export async function handleDataJudMatchCandidates(payload: DataJudMatchCandidat
       () =>
         dataJudCandidateMatchService.match({
           tenantId: payload.tenantId,
+          assetIds: payload.assetIds,
           sourceRecordId: payload.sourceRecordId,
           source: payload.source,
           limit: payload.limit,
