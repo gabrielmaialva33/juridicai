@@ -11,11 +11,7 @@ type LifecycleStatus =
   | 'suspended'
 
 type ComplianceStatus =
-  | 'pending'
-  | 'approved_for_analysis'
-  | 'approved_for_sales'
-  | 'blocked'
-  | 'opt_out'
+  'pending' | 'approved_for_analysis' | 'approved_for_sales' | 'blocked' | 'opt_out'
 
 type PiiStatus = 'none' | 'pseudonymous' | 'bunker_available' | 'materialized' | 'blocked'
 

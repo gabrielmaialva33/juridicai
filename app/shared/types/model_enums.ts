@@ -3,11 +3,7 @@ export type AssetNature = 'alimentar' | 'comum' | 'tributario' | 'unknown'
 export type ClientErrorStatus = 'new' | 'triaged' | 'resolved' | 'ignored'
 
 export type ComplianceStatus =
-  | 'pending'
-  | 'approved_for_analysis'
-  | 'approved_for_sales'
-  | 'blocked'
-  | 'opt_out'
+  'pending' | 'approved_for_analysis' | 'approved_for_sales' | 'blocked' | 'opt_out'
 
 export type DebtorType = 'union' | 'state' | 'municipality' | 'autarchy' | 'foundation'
 
@@ -37,20 +33,12 @@ export type FederativeLevel = 'federal' | 'state' | 'municipal' | 'multi_level'
 export type SourceDatasetAccess = 'public' | 'credentialed' | 'certificate'
 
 export type SourceDatasetKind =
-  | 'open_data_file'
-  | 'soap_webservice'
-  | 'public_search_api'
-  | 'tribunal_publication'
+  'open_data_file' | 'soap_webservice' | 'public_search_api' | 'tribunal_publication'
 
 export type SourceDatasetPriority = 'primary' | 'enrichment' | 'cross_check'
 
 export type GovernmentSourceTargetStatus =
-  | 'implemented'
-  | 'generic_supported'
-  | 'manual_review'
-  | 'blocked_captcha'
-  | 'unknown'
-  | 'disabled'
+  'implemented' | 'generic_supported' | 'manual_review' | 'blocked_captcha' | 'unknown' | 'disabled'
 
 export type GovernmentSourceTargetCadence = 'daily' | 'weekly' | 'monthly' | 'manual'
 
@@ -69,13 +57,7 @@ export type MembershipStatus = 'active' | 'inactive'
 export type PaymentRegime = 'none' | 'special' | 'federal_unique' | 'other'
 
 export type PiiAction =
-  | 'attempt_reveal'
-  | 'reveal_denied'
-  | 'reveal_success'
-  | 'export'
-  | 'contact'
-  | 'update'
-  | 'delete'
+  'attempt_reveal' | 'reveal_denied' | 'reveal_success' | 'export' | 'contact' | 'update' | 'delete'
 
 export type PiiStatus = 'none' | 'pseudonymous' | 'bunker_available' | 'materialized' | 'blocked'
 
