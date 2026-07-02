@@ -3,10 +3,24 @@ import LegalPublication, {
   type DeadlineKind,
   type LegalPublicationOrigin,
 } from '#modules/legal_publications/models/legal_publication'
-import type { DateTime } from 'luxon'
+import { DateTime } from 'luxon'
 import type { JsonRecord } from '#shared/types/model_enums'
 import type { DeadlineCalculationResult } from '#modules/legal_publications/services/legal_publication_deadline_service'
 import type { LegalPublicationInterpretationResult } from '#modules/legal_publications/services/legal_publication_interpretation_service'
+
+export type LegalPublicationManualInterpretationPayload = {
+  determination: string | null
+  actType: string | null
+  recommendedAction: string | null
+  legalBasis: string | null
+  deadlineDays: number | null
+  deadlineKind: DeadlineKind | null
+  hearingAt: DateTime | null
+  hearingTime: string | null
+  judgmentAt: DateTime | null
+  priority: string | null
+  notes: string | null
+}
 
 export type LegalPublicationPersistencePayload = {
   judicialProcessId: string | null
@@ -87,6 +101,13 @@ class LegalPublicationRepository extends BaseRepository<typeof LegalPublication>
     return publication
   }
 
+  async applyManualDueDate(publication: LegalPublication, manualDueAt: DateTime | null) {
+    publication.manualDueAt = manualDueAt
+    publication.manualReviewRequired = false
+    await publication.save()
+    return publication
+  }
+
   async applyInterpretation(
     publication: LegalPublication,
     interpretation: LegalPublicationInterpretationResult
@@ -111,6 +132,40 @@ class LegalPublicationRepository extends BaseRepository<typeof LegalPublication>
       validatorReason: interpretation.validatorReason,
       deadlineReason: interpretation.deadlineReason ?? publication.deadlineReason,
       processedAt: interpretation.processedAt,
+    })
+    await publication.save()
+    return publication
+  }
+
+  async applyManualInterpretation(
+    publication: LegalPublication,
+    payload: LegalPublicationManualInterpretationPayload
+  ) {
+    publication.merge({
+      ...payload,
+      confidence: 'high',
+      validatorFailed: false,
+      validatorReason: null,
+      manualReviewRequired: false,
+    })
+    await publication.save()
+    return publication
+  }
+
+  async markConfirmed(publication: LegalPublication, userId: string) {
+    publication.merge({
+      status: 'confirmed',
+      confirmedByUserId: userId,
+      confirmedAt: DateTime.utc(),
+      manualReviewRequired: false,
+    })
+    await publication.save()
+    return publication
+  }
+
+  async markDismissed(publication: LegalPublication) {
+    publication.merge({
+      status: 'dismissed',
     })
     await publication.save()
     return publication

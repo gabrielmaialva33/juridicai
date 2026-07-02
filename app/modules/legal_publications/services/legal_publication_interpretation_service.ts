@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon'
-import LegalPublication, {
-  type DeadlineKind,
-} from '#modules/legal_publications/models/legal_publication'
+import type LegalPublication from '#modules/legal_publications/models/legal_publication'
+import { type DeadlineKind } from '#modules/legal_publications/models/legal_publication'
 import legalPublicationRepository from '#modules/legal_publications/repositories/legal_publication_repository'
 import legalPublicationEventRepository from '#modules/legal_publications/repositories/legal_publication_event_repository'
 
