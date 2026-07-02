@@ -68,4 +68,35 @@ test.group('legal publications forensic calendar', () => {
     assert.isTrue(result.manualReviewRequired)
     assert.equal(result.deadlineReason, 'partial_court_calendar')
   })
+
+  test('emits deadline and hearing items for the agenda', ({ assert }) => {
+    const result = calculateDeadline({
+      availableAt: null,
+      publishedAt: DateTime.utc(2026, 7, 8),
+      deadlineDays: 2,
+      deadlineKind: 'business_days',
+      hearingAt: DateTime.utc(2026, 7, 13),
+      hearingTime: '14:30',
+      courtAlias: 'TJSP',
+      courtHolidayDates: [],
+      courtCalendarVerified: true,
+      today: DateTime.utc(2026, 7, 8),
+    })
+
+    assert.equal(result.dueAt?.toISODate(), '2026-07-10')
+    assert.equal(result.businessDaysUntilHearing, 3)
+    assert.isFalse(result.hearingElapsed)
+    assert.deepEqual(
+      result.deadlineItems.map((item) => item.kind),
+      ['deadline', 'hearing']
+    )
+    assert.deepInclude(result.deadlineItems, {
+      kind: 'hearing',
+      label: 'Hearing',
+      dueAt: '2026-07-13',
+      fatal: false,
+      source: 'event',
+      time: '14:30',
+    })
+  })
 })

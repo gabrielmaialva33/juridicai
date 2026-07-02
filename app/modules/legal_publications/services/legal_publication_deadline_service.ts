@@ -4,6 +4,7 @@ import { type DeadlineKind } from '#modules/legal_publications/models/legal_publ
 import courtHolidayRepository from '#modules/legal_publications/repositories/court_holiday_repository'
 import legalPublicationRepository from '#modules/legal_publications/repositories/legal_publication_repository'
 import legalPublicationEventRepository from '#modules/legal_publications/repositories/legal_publication_event_repository'
+import type { JsonRecord } from '#shared/types/model_enums'
 import {
   availableDateToPublicationDate,
   ForensicCalendar,
@@ -15,10 +16,25 @@ type DeadlineCalculationInput = {
   deadlineDays: number | null
   deadlineKind: DeadlineKind | null
   manualDueAt?: DateTime | null
+  hearingAt?: DateTime | null
+  hearingTime?: string | null
+  judgmentAt?: DateTime | null
   courtAlias?: string | null
   courtHolidayDates?: string[]
   courtCalendarVerified?: boolean
   today?: DateTime
+}
+
+export type LegalPublicationDeadlineItem = JsonRecord & {
+  kind: 'deadline' | 'manual_due_date' | 'hearing' | 'judgment'
+  label: string
+  dueAt: string
+  fatal: boolean
+  source: 'interpretation' | 'manual' | 'event'
+  days?: number
+  deadlineKind?: DeadlineKind
+  startsAt?: string
+  time?: string
 }
 
 export type DeadlineCalculationResult = {
@@ -28,12 +44,20 @@ export type DeadlineCalculationResult = {
   partialCalendar: boolean
   manualReviewRequired: boolean
   deadlineReason: string | null
-  deadlineItems: Array<Record<string, unknown>>
+  deadlineItems: LegalPublicationDeadlineItem[]
+  businessDaysUntilHearing: number | null
+  hearingElapsed: boolean
 }
 
 class LegalPublicationDeadlineService {
   async calculateAndPersist(publication: LegalPublication) {
-    const years = deadlineCandidateYears(publication.availableAt, publication.publishedAt)
+    const years = deadlineCandidateYears(
+      publication.availableAt,
+      publication.publishedAt,
+      publication.manualDueAt,
+      publication.hearingAt,
+      publication.judgmentAt
+    )
     const courtAlias = publication.courtAlias?.toUpperCase() ?? null
     const [courtHolidayDates, courtCalendarVerified] = await Promise.all([
       courtHolidayRepository.listCalendarDates(courtAlias, years),
@@ -45,6 +69,9 @@ class LegalPublicationDeadlineService {
       deadlineDays: publication.deadlineDays,
       deadlineKind: publication.deadlineKind,
       manualDueAt: publication.manualDueAt,
+      hearingAt: publication.hearingAt,
+      hearingTime: publication.hearingTime,
+      judgmentAt: publication.judgmentAt,
       courtAlias,
       courtHolidayDates,
       courtCalendarVerified,
@@ -57,6 +84,7 @@ class LegalPublicationDeadlineService {
       payload: {
         dueAt: result.dueAt?.toISODate() ?? null,
         publishedAt: result.publishedAt?.toISODate() ?? null,
+        deadlineItems: result.deadlineItems,
         partialCalendar: result.partialCalendar,
         reason: result.deadlineReason,
       },
@@ -73,6 +101,8 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
   const publishedAt =
     input.publishedAt ??
     (input.availableAt ? availableDateToPublicationDate(input.availableAt, calendar) : null)
+  const eventItems = buildEventItems(input.hearingAt, input.hearingTime ?? null, input.judgmentAt)
+  const hearingStatus = calculateHearingStatus(input.hearingAt ?? null, today, calendar)
 
   if (input.manualDueAt) {
     const dueAt = input.manualDueAt.startOf('day')
@@ -83,7 +113,18 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
       partialCalendar,
       manualReviewRequired: partialCalendar,
       deadlineReason: partialCalendar ? 'manual_due_date_with_partial_calendar' : 'manual_due_date',
-      deadlineItems: [{ kind: 'manual_due_date', dueAt: dueAt.toISODate() }],
+      deadlineItems: [
+        {
+          kind: 'manual_due_date',
+          label: 'Manual due date',
+          dueAt: dueAt.toISODate()!,
+          fatal: true,
+          source: 'manual',
+        },
+        ...eventItems,
+      ],
+      businessDaysUntilHearing: hearingStatus.businessDaysUntilHearing,
+      hearingElapsed: hearingStatus.hearingElapsed,
     }
   }
 
@@ -95,7 +136,9 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
       partialCalendar,
       manualReviewRequired: false,
       deadlineReason: 'missing_deadline_data',
-      deadlineItems: [],
+      deadlineItems: eventItems,
+      businessDaysUntilHearing: hearingStatus.businessDaysUntilHearing,
+      hearingElapsed: hearingStatus.hearingElapsed,
     }
   }
 
@@ -113,12 +156,19 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
     deadlineReason: partialCalendar ? 'partial_court_calendar' : null,
     deadlineItems: [
       {
-        kind: input.deadlineKind,
+        kind: 'deadline',
+        label: 'Legal deadline',
         days: input.deadlineDays,
-        startsAt: publishedAt.toISODate(),
-        dueAt: dueAt.toISODate(),
+        deadlineKind: input.deadlineKind,
+        startsAt: publishedAt.toISODate()!,
+        dueAt: dueAt.toISODate()!,
+        fatal: true,
+        source: 'interpretation',
       },
+      ...eventItems,
     ],
+    businessDaysUntilHearing: hearingStatus.businessDaysUntilHearing,
+    hearingElapsed: hearingStatus.hearingElapsed,
   }
 }
 
@@ -205,6 +255,73 @@ function deadlineCandidateYears(...dates: Array<DateTime | null>) {
   }
 
   return [...years]
+}
+
+function buildEventItems(
+  hearingAt: DateTime | null | undefined,
+  hearingTime: string | null,
+  judgmentAt: DateTime | null | undefined
+): LegalPublicationDeadlineItem[] {
+  const items: LegalPublicationDeadlineItem[] = []
+
+  if (hearingAt) {
+    items.push({
+      kind: 'hearing',
+      label: 'Hearing',
+      dueAt: hearingAt.toISODate()!,
+      fatal: false,
+      source: 'event',
+      ...(hearingTime ? { time: hearingTime } : {}),
+    })
+  }
+
+  if (judgmentAt) {
+    items.push({
+      kind: 'judgment',
+      label: 'Judgment session',
+      dueAt: judgmentAt.toISODate()!,
+      fatal: false,
+      source: 'event',
+    })
+  }
+
+  return items
+}
+
+function calculateHearingStatus(
+  hearingAt: DateTime | null,
+  today: DateTime,
+  calendar: ForensicCalendar
+) {
+  if (!hearingAt) {
+    return {
+      businessDaysUntilHearing: null,
+      hearingElapsed: false,
+    }
+  }
+
+  const hearingDate = hearingAt.startOf('day')
+
+  return {
+    businessDaysUntilHearing:
+      hearingDate >= today ? countWorkingDaysBetween(today, hearingDate, calendar) : 0,
+    hearingElapsed: hearingDate < today,
+  }
+}
+
+function countWorkingDaysBetween(from: DateTime, to: DateTime, calendar: ForensicCalendar) {
+  let cursor = from.startOf('day')
+  let days = 0
+
+  while (cursor < to.startOf('day')) {
+    cursor = cursor.plus({ days: 1 })
+
+    if (calendar.isWorkingDay(cursor)) {
+      days += 1
+    }
+  }
+
+  return days
 }
 
 export default new LegalPublicationDeadlineService()
