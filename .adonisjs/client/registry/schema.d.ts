@@ -631,6 +631,90 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['index']>>>
     }
   }
+  'legal_publications.monitoring': {
+    methods: ["GET","HEAD"]
+    pattern: '/legal-publications/monitoring'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['index']>>>
+    }
+  }
+  'legal_publications.monitoring.cases.store': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/cases'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredCaseValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredCaseValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['storeCase']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['storeCase']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.monitoring.cases.update': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/cases/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredCaseValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredCaseValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['updateCase']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['updateCase']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.monitoring.cases.active': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/cases/:id/active'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoringActiveToggleValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoringActiveToggleValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['toggleCase']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['toggleCase']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.monitoring.bar_registrations.store': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/bar-registrations'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredBarRegistrationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredBarRegistrationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['storeBarRegistration']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['storeBarRegistration']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.monitoring.bar_registrations.update': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/bar-registrations/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredBarRegistrationValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoredBarRegistrationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['updateBarRegistration']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['updateBarRegistration']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.monitoring.bar_registrations.active': {
+    methods: ["POST"]
+    pattern: '/legal-publications/monitoring/bar-registrations/:id/active'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoringActiveToggleValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_monitoring_validator').monitoringActiveToggleValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['toggleBarRegistration']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publication_monitoring_controller').default['toggleBarRegistration']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'legal_publications.confirm': {
     methods: ["POST"]
     pattern: '/legal-publications/:id/confirm'

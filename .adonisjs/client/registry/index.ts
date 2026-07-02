@@ -318,6 +318,48 @@ const routes = {
     tokens: [{"old":"/legal-publications","type":0,"val":"legal-publications","end":""}],
     types: placeholder as Registry['legal_publications.index']['types'],
   },
+  'legal_publications.monitoring': {
+    methods: ["GET","HEAD"],
+    pattern: '/legal-publications/monitoring',
+    tokens: [{"old":"/legal-publications/monitoring","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring","type":0,"val":"monitoring","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring']['types'],
+  },
+  'legal_publications.monitoring.cases.store': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/cases',
+    tokens: [{"old":"/legal-publications/monitoring/cases","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/cases","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/cases","type":0,"val":"cases","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.cases.store']['types'],
+  },
+  'legal_publications.monitoring.cases.update': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/cases/:id',
+    tokens: [{"old":"/legal-publications/monitoring/cases/:id","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/cases/:id","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/cases/:id","type":0,"val":"cases","end":""},{"old":"/legal-publications/monitoring/cases/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.cases.update']['types'],
+  },
+  'legal_publications.monitoring.cases.active': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/cases/:id/active',
+    tokens: [{"old":"/legal-publications/monitoring/cases/:id/active","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/cases/:id/active","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/cases/:id/active","type":0,"val":"cases","end":""},{"old":"/legal-publications/monitoring/cases/:id/active","type":1,"val":"id","end":""},{"old":"/legal-publications/monitoring/cases/:id/active","type":0,"val":"active","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.cases.active']['types'],
+  },
+  'legal_publications.monitoring.bar_registrations.store': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/bar-registrations',
+    tokens: [{"old":"/legal-publications/monitoring/bar-registrations","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/bar-registrations","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/bar-registrations","type":0,"val":"bar-registrations","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.bar_registrations.store']['types'],
+  },
+  'legal_publications.monitoring.bar_registrations.update': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/bar-registrations/:id',
+    tokens: [{"old":"/legal-publications/monitoring/bar-registrations/:id","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id","type":0,"val":"bar-registrations","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.bar_registrations.update']['types'],
+  },
+  'legal_publications.monitoring.bar_registrations.active': {
+    methods: ["POST"],
+    pattern: '/legal-publications/monitoring/bar-registrations/:id/active',
+    tokens: [{"old":"/legal-publications/monitoring/bar-registrations/:id/active","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id/active","type":0,"val":"monitoring","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id/active","type":0,"val":"bar-registrations","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id/active","type":1,"val":"id","end":""},{"old":"/legal-publications/monitoring/bar-registrations/:id/active","type":0,"val":"active","end":""}],
+    types: placeholder as Registry['legal_publications.monitoring.bar_registrations.active']['types'],
+  },
   'legal_publications.confirm': {
     methods: ["POST"],
     pattern: '/legal-publications/:id/confirm',

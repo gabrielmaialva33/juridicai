@@ -110,6 +110,18 @@ export interface ApiDefinition {
   }
   legalPublications: {
     index: typeof routes['legal_publications.index']
+    monitoring: typeof routes['legal_publications.monitoring'] & {
+      cases: {
+        store: typeof routes['legal_publications.monitoring.cases.store']
+        update: typeof routes['legal_publications.monitoring.cases.update']
+        active: typeof routes['legal_publications.monitoring.cases.active']
+      }
+      barRegistrations: {
+        store: typeof routes['legal_publications.monitoring.bar_registrations.store']
+        update: typeof routes['legal_publications.monitoring.bar_registrations.update']
+        active: typeof routes['legal_publications.monitoring.bar_registrations.active']
+      }
+    }
     confirm: typeof routes['legal_publications.confirm']
     dismiss: typeof routes['legal_publications.dismiss']
     deadline: {
