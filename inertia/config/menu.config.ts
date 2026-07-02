@@ -9,7 +9,14 @@ export const MENU_SIDEBAR: MenuConfig = [
 
   { heading: 'Base jurídica' },
   { title: 'Créditos Monitorados', path: '/precatorios', icon: FileSearch },
-  { title: 'Publicações Jurídicas', path: '/legal-publications', icon: Newspaper },
+  {
+    title: 'Publicações Jurídicas',
+    icon: Newspaper,
+    children: [
+      { title: 'Agenda e Publicações', path: '/legal-publications' },
+      { title: 'Monitoramento', path: '/legal-publications/monitoring' },
+    ],
+  },
   { title: 'Devedores', path: '/debtors', icon: Building2 },
   { title: 'Fontes de Dados', path: '/siop/imports', icon: Upload },
 ]
