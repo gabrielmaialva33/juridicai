@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import { DateTime } from 'luxon'
 import type { LegalPublicationOrigin } from '#modules/legal_publications/models/legal_publication'
 import legalPublicationProcessLinkService from '#modules/legal_publications/services/legal_publication_process_link_service'
 import legalPublicationAssetProjectionService from '#modules/legal_publications/services/legal_publication_asset_projection_service'
@@ -7,6 +7,7 @@ import legalPublicationInterpretationService from '#modules/legal_publications/s
 import legalPublicationRepository from '#modules/legal_publications/repositories/legal_publication_repository'
 import legalPublicationEventRepository from '#modules/legal_publications/repositories/legal_publication_event_repository'
 import type { JsonRecord } from '#shared/types/model_enums'
+import type { LegalPublicationDeadlineItem } from '#modules/legal_publications/services/legal_publication_deadline_service'
 
 export type UpsertLegalPublicationInput = {
   tenantId: string
@@ -106,6 +107,51 @@ class LegalPublicationService {
       body: publication.body,
     }))
   }
+
+  async listAgendaForView(tenantId: string, limit = 200) {
+    const publications = await legalPublicationRepository.listAgendaSource(tenantId, limit)
+    const todayIso = DateTime.local().toISODate()
+    const events = publications.flatMap((publication) => {
+      const items = deadlineItemsFrom(publication.deadlineItems)
+
+      return items.map((item) => ({
+        id: `${publication.id}:${item.kind}:${item.dueAt}`,
+        publicationId: publication.id,
+        type: item.kind,
+        title: item.label,
+        date: item.dueAt,
+        time: item.time ?? null,
+        fatal: item.fatal,
+        overdue: item.fatal && todayIso ? item.dueAt < todayIso : false,
+        processNumber: publication.processNumber,
+        caseLabel: publication.monitoredCase?.label ?? null,
+        courtAlias: publication.courtAlias,
+        priority: publication.priority,
+        manualReviewRequired: publication.manualReviewRequired,
+      }))
+    })
+
+    return events.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 25)
+  }
+}
+
+function deadlineItemsFrom(items: JsonRecord[] | null): LegalPublicationDeadlineItem[] {
+  if (!items) {
+    return []
+  }
+
+  return items.filter(isDeadlineItem)
+}
+
+function isDeadlineItem(item: JsonRecord): item is LegalPublicationDeadlineItem {
+  return (
+    typeof item.kind === 'string' &&
+    ['deadline', 'manual_due_date', 'hearing', 'judgment'].includes(item.kind) &&
+    typeof item.label === 'string' &&
+    typeof item.dueAt === 'string' &&
+    typeof item.fatal === 'boolean' &&
+    typeof item.source === 'string'
+  )
 }
 
 export default new LegalPublicationService()

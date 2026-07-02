@@ -8,6 +8,7 @@ export default class LegalPublicationsController {
 
     return inertia.render('legal_publications/index', {
       publications: await legalPublicationService.listRecentForView(tenantId),
+      agenda: await legalPublicationService.listAgendaForView(tenantId),
     })
   }
 }
