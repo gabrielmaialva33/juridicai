@@ -55,6 +55,11 @@ export type ScannedRoutes = {
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'legal_publications.index': { paramsTuple?: []; params?: {} }
+    'legal_publications.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.dismiss': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.deadline.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.interpretation.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'market.rates.sync_bcb': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
@@ -98,6 +103,7 @@ export type ScannedRoutes = {
     'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.dossier': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'legal_publications.index': { paramsTuple?: []; params?: {} }
     'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
@@ -139,6 +145,7 @@ export type ScannedRoutes = {
     'operations.opportunities.liquidity': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.dossier': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.pipeline': { paramsTuple?: []; params?: {} }
+    'legal_publications.index': { paramsTuple?: []; params?: {} }
     'market.rates.snapshot': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'admin.health': { paramsTuple?: []; params?: {} }
@@ -163,6 +170,10 @@ export type ScannedRoutes = {
     'operations.opportunities.intelligence_actions': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pricing': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'operations.opportunities.pipeline': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.dismiss': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.deadline.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'legal_publications.interpretation.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'market.rates.sync_bcb': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }

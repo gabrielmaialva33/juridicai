@@ -312,6 +312,36 @@ const routes = {
     tokens: [{"old":"/operations/pipeline","type":0,"val":"operations","end":""},{"old":"/operations/pipeline","type":0,"val":"pipeline","end":""}],
     types: placeholder as Registry['operations.pipeline']['types'],
   },
+  'legal_publications.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/legal-publications',
+    tokens: [{"old":"/legal-publications","type":0,"val":"legal-publications","end":""}],
+    types: placeholder as Registry['legal_publications.index']['types'],
+  },
+  'legal_publications.confirm': {
+    methods: ["POST"],
+    pattern: '/legal-publications/:id/confirm',
+    tokens: [{"old":"/legal-publications/:id/confirm","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/:id/confirm","type":1,"val":"id","end":""},{"old":"/legal-publications/:id/confirm","type":0,"val":"confirm","end":""}],
+    types: placeholder as Registry['legal_publications.confirm']['types'],
+  },
+  'legal_publications.dismiss': {
+    methods: ["POST"],
+    pattern: '/legal-publications/:id/dismiss',
+    tokens: [{"old":"/legal-publications/:id/dismiss","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/:id/dismiss","type":1,"val":"id","end":""},{"old":"/legal-publications/:id/dismiss","type":0,"val":"dismiss","end":""}],
+    types: placeholder as Registry['legal_publications.dismiss']['types'],
+  },
+  'legal_publications.deadline.update': {
+    methods: ["POST"],
+    pattern: '/legal-publications/:id/deadline',
+    tokens: [{"old":"/legal-publications/:id/deadline","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/:id/deadline","type":1,"val":"id","end":""},{"old":"/legal-publications/:id/deadline","type":0,"val":"deadline","end":""}],
+    types: placeholder as Registry['legal_publications.deadline.update']['types'],
+  },
+  'legal_publications.interpretation.update': {
+    methods: ["POST"],
+    pattern: '/legal-publications/:id/interpretation',
+    tokens: [{"old":"/legal-publications/:id/interpretation","type":0,"val":"legal-publications","end":""},{"old":"/legal-publications/:id/interpretation","type":1,"val":"id","end":""},{"old":"/legal-publications/:id/interpretation","type":0,"val":"interpretation","end":""}],
+    types: placeholder as Registry['legal_publications.interpretation.update']['types'],
+  },
   'market.rates.snapshot': {
     methods: ["GET","HEAD"],
     pattern: '/market/rates/snapshot',

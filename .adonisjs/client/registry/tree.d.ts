@@ -108,6 +108,17 @@ export interface ApiDefinition {
     }
     pipeline: typeof routes['operations.pipeline']
   }
+  legalPublications: {
+    index: typeof routes['legal_publications.index']
+    confirm: typeof routes['legal_publications.confirm']
+    dismiss: typeof routes['legal_publications.dismiss']
+    deadline: {
+      update: typeof routes['legal_publications.deadline.update']
+    }
+    interpretation: {
+      update: typeof routes['legal_publications.interpretation.update']
+    }
+  }
   market: {
     rates: {
       snapshot: typeof routes['market.rates.snapshot']

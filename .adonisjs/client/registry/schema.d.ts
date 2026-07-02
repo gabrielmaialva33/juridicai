@@ -619,6 +619,66 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/operations/controllers/operations_controller').default['pipeline']>>>
     }
   }
+  'legal_publications.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/legal-publications'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['index']>>>
+    }
+  }
+  'legal_publications.confirm': {
+    methods: ["POST"]
+    pattern: '/legal-publications/:id/confirm'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['confirm']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['confirm']>>>
+    }
+  }
+  'legal_publications.dismiss': {
+    methods: ["POST"]
+    pattern: '/legal-publications/:id/dismiss'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['dismiss']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['dismiss']>>>
+    }
+  }
+  'legal_publications.deadline.update': {
+    methods: ["POST"]
+    pattern: '/legal-publications/:id/deadline'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_actions_validator').legalPublicationManualDeadlineValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_actions_validator').legalPublicationManualDeadlineValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['updateDeadline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['updateDeadline']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'legal_publications.interpretation.update': {
+    methods: ["POST"]
+    pattern: '/legal-publications/:id/interpretation'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_actions_validator').legalPublicationInterpretationEditValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#modules/legal_publications/validators/legal_publication_actions_validator').legalPublicationInterpretationEditValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['updateInterpretation']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#modules/legal_publications/controllers/legal_publications_controller').default['updateInterpretation']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'market.rates.snapshot': {
     methods: ["GET","HEAD"]
     pattern: '/market/rates/snapshot'
