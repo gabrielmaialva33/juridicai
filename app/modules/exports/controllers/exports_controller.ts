@@ -1,6 +1,5 @@
 import auditService from '#shared/services/audit_service'
 import queueService from '#shared/services/queue_service'
-import ExportJob from '#modules/exports/models/export_job'
 import {
   EXPORT_PRECATORIOS_QUEUE,
   type ExportPrecatoriosPayload,
@@ -22,11 +21,8 @@ export default class ExportsController {
     const tenantId = tenantContext.requireTenantId()
     const user = auth.getUserOrFail()
     const filters = request.only(['limit'])
-    const exportJob = await ExportJob.create({
-      tenantId,
+    const exportJob = await exportJobRepository.createPendingPrecatoriosCsv(tenantId, {
       requestedByUserId: user.id,
-      status: 'pending',
-      exportType: 'precatorios_csv',
       filters,
     })
 
@@ -57,11 +53,10 @@ export default class ExportsController {
         },
       })
     } catch (error) {
-      exportJob.merge({
-        status: 'failed',
-        errorMessage: error instanceof Error ? error.message : String(error),
-      })
-      await exportJob.save()
+      await exportJobRepository.markFailed(
+        exportJob,
+        error instanceof Error ? error.message : String(error)
+      )
 
       return response.status(503).send({
         code: 'E_EXPORT_QUEUE_UNAVAILABLE',
@@ -71,10 +66,10 @@ export default class ExportsController {
   }
 
   async show({ params, response }: HttpContext) {
-    const exportJob = await ExportJob.query()
-      .where('id', params.id)
-      .where('tenant_id', tenantContext.requireTenantId())
-      .firstOrFail()
+    const exportJob = await exportJobRepository.findByIdOrFail(
+      tenantContext.requireTenantId(),
+      params.id
+    )
 
     return response.ok({
       export: exportJob.serialize(),
@@ -84,10 +79,7 @@ export default class ExportsController {
   async download({ auth, params, response, requestId }: HttpContext) {
     const tenantId = tenantContext.requireTenantId()
     const user = auth.getUserOrFail()
-    const exportJob = await ExportJob.query()
-      .where('id', params.id)
-      .where('tenant_id', tenantId)
-      .firstOrFail()
+    const exportJob = await exportJobRepository.findByIdOrFail(tenantId, params.id)
 
     if (exportJob.status !== 'completed' || !exportJob.filePath) {
       return response.conflict({

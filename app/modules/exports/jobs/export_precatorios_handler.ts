@@ -2,12 +2,12 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import ExportJob from '#modules/exports/models/export_job'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import tenantContext from '#shared/helpers/tenant_context'
 import jobRunService from '#shared/services/job_run_service'
 import type { JsonRecord } from '#shared/types/model_enums'
+import exportJobRepository from '#modules/exports/repositories/export_job_repository'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 
 export const EXPORT_PRECATORIOS_QUEUE = 'exports-precatorios'
 
@@ -54,10 +54,7 @@ export async function handleExportPrecatorios(payload: ExportPrecatoriosPayload)
 }
 
 async function runExport(tenantId: string, exportJobId: string) {
-  const exportJob = await ExportJob.query()
-    .where('id', exportJobId)
-    .where('tenant_id', tenantId)
-    .firstOrFail()
+  const exportJob = await exportJobRepository.findByIdOrFail(tenantId, exportJobId)
 
   exportJob.merge({
     status: 'running',
@@ -65,12 +62,7 @@ async function runExport(tenantId: string, exportJobId: string) {
   })
   await exportJob.save()
 
-  const assets = await PrecatorioAsset.query()
-    .where('tenant_id', tenantId)
-    .preload('debtor')
-    .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
-    .orderBy('created_at', 'desc')
-    .limit(getLimit(exportJob.filters))
+  const assets = await precatorioRepository.listForCsvExport(tenantId, getLimit(exportJob.filters))
 
   const filePath = await writePrecatorioCsv({
     tenantId,
@@ -108,10 +100,7 @@ async function runExport(tenantId: string, exportJobId: string) {
 }
 
 async function markExportFailed(tenantId: string, exportJobId: string, error: unknown) {
-  const exportJob = await ExportJob.query()
-    .where('id', exportJobId)
-    .where('tenant_id', tenantId)
-    .first()
+  const exportJob = await exportJobRepository.findById(tenantId, exportJobId)
 
   if (!exportJob) {
     return
