@@ -2,10 +2,10 @@ import db from '@adonisjs/lucid/services/db'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import User from '#modules/auth/models/user'
 import userRepository from '#modules/auth/repositories/user_repository'
-import Tenant from '#modules/tenant/models/tenant'
-import TenantMembership from '#modules/tenant/models/tenant_membership'
-import Role from '#modules/permission/models/role'
-import UserRole from '#modules/permission/models/user_role'
+import tenantRepository from '#modules/tenant/repositories/tenant_repository'
+import tenantMembershipRepository from '#modules/tenant/repositories/tenant_membership_repository'
+import roleRepository from '#modules/permission/repositories/role_repository'
+import userRoleRepository from '#modules/permission/repositories/user_role_repository'
 
 class AuthService {
   verifyCredentials(email: string, password: string) {
@@ -24,15 +24,15 @@ class AuthService {
     organizationDocument?: string | null
   }) {
     return db.transaction(async (trx) => {
-      const user = await User.create(
+      const user = await userRepository.create(
         {
           fullName: payload.fullName,
           email: payload.email,
           password: payload.password,
         },
-        { client: trx }
+        trx
       )
-      const tenant = await Tenant.create(
+      const tenant = await tenantRepository.create(
         {
           name: payload.organizationName,
           slug: await uniqueTenantSlug(payload.organizationName, trx),
@@ -41,25 +41,25 @@ class AuthService {
           plan: 'beta',
           rbacVersion: 1,
         },
-        { client: trx }
+        trx
       )
-      const ownerRole = await Role.query({ client: trx }).where('slug', 'owner').firstOrFail()
+      const ownerRole = await roleRepository.findBySlugOrFail('owner', trx)
 
-      await TenantMembership.create(
+      await tenantMembershipRepository.createMembership(
+        tenant.id,
         {
-          tenantId: tenant.id,
           userId: user.id,
           status: 'active',
         },
-        { client: trx }
+        trx
       )
-      await UserRole.create(
+      await userRoleRepository.createAssignment(
+        tenant.id,
         {
-          tenantId: tenant.id,
           userId: user.id,
           roleId: ownerRole.id,
         },
-        { client: trx }
+        trx
       )
 
       return { user, tenant }
@@ -72,7 +72,7 @@ async function uniqueTenantSlug(name: string, trx?: TransactionClientContract) {
   let candidate = base
   let suffix = 2
 
-  while (await Tenant.query({ client: trx }).where('slug', candidate).first()) {
+  while (await tenantRepository.slugExists(candidate, trx)) {
     candidate = `${base}-${suffix}`
     suffix += 1
   }

@@ -1,8 +1,9 @@
 import User from '#modules/auth/models/user'
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 class UserRepository {
-  query() {
-    return User.query()
+  query(trx?: TransactionClientContract) {
+    return trx ? User.query({ client: trx }) : User.query()
   }
 
   findById(id: string) {
@@ -17,9 +18,16 @@ class UserRepository {
     return this.query().where('email', email).first()
   }
 
-  async create(payload: { fullName?: string | null; email: string; password: string }) {
-    return User.create(payload)
+  async create(
+    payload: { fullName?: string | null; email: string; password: string },
+    trx?: TransactionClientContract
+  ) {
+    return User.create(payload, clientOptions(trx))
   }
+}
+
+function clientOptions(trx?: TransactionClientContract) {
+  return trx ? { client: trx } : undefined
 }
 
 export default new UserRepository()
