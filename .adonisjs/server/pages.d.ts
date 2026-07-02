@@ -21,6 +21,7 @@ declare module '@adonisjs/inertia/types' {
     'debtors/show': ExtractProps<(typeof import('../../inertia/pages/debtors/show.tsx'))['default']>
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.tsx'))['default']>
     'errors/server_error': ExtractProps<(typeof import('../../inertia/pages/errors/server_error.tsx'))['default']>
+    'legal_publications/index': ExtractProps<(typeof import('../../inertia/pages/legal_publications/index.tsx'))['default']>
     'operations/desk': ExtractProps<(typeof import('../../inertia/pages/operations/desk.tsx'))['default']>
     'operations/opportunities': ExtractProps<(typeof import('../../inertia/pages/operations/opportunities.tsx'))['default']>
     'operations/pipeline': ExtractProps<(typeof import('../../inertia/pages/operations/pipeline.tsx'))['default']>

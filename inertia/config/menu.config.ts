@@ -1,4 +1,4 @@
-import { Building2, Columns3, FileSearch, LineChart, Target, Upload } from 'lucide-react'
+import { Building2, Columns3, FileSearch, LineChart, Newspaper, Target, Upload } from 'lucide-react'
 import type { MenuConfig } from './types'
 
 export const MENU_SIDEBAR: MenuConfig = [
@@ -9,6 +9,7 @@ export const MENU_SIDEBAR: MenuConfig = [
 
   { heading: 'Base jurídica' },
   { title: 'Créditos Monitorados', path: '/precatorios', icon: FileSearch },
+  { title: 'Publicações Jurídicas', path: '/legal-publications', icon: Newspaper },
   { title: 'Devedores', path: '/debtors', icon: Building2 },
   { title: 'Fontes de Dados', path: '/siop/imports', icon: Upload },
 ]
