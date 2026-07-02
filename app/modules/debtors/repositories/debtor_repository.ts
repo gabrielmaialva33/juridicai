@@ -1,6 +1,7 @@
 import BaseRepository from '#shared/repositories/base_repository'
 import Debtor from '#modules/debtors/models/debtor'
 import type { DebtorType, PaymentRegime } from '#shared/types/model_enums'
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 export type DebtorListFilters = {
   page: number
@@ -52,6 +53,31 @@ class DebtorRepository extends BaseRepository<typeof Debtor> {
 
   findByNormalizedKey(tenantId: string, normalizedKey: string) {
     return this.query(tenantId).where('normalized_key', normalizedKey).first()
+  }
+
+  async findOrCreateByNormalizedKey(
+    tenantId: string,
+    input: {
+      name: string
+      normalizedName: string
+      normalizedKey: string
+      debtorType: DebtorType
+      cnpj: string | null
+      stateCode: string
+      paymentRegime: PaymentRegime
+    },
+    trx: TransactionClientContract
+  ) {
+    const existing = await Debtor.query({ client: trx })
+      .where('tenant_id', tenantId)
+      .where('normalized_key', input.normalizedKey)
+      .first()
+
+    if (existing) {
+      return existing
+    }
+
+    return Debtor.create({ tenantId, ...input }, { client: trx })
   }
 }
 
