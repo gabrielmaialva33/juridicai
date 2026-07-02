@@ -71,6 +71,52 @@ class LegalPublicationRepository extends BaseRepository<typeof LegalPublication>
     return this.query(tenantId).where('djen_id', djenId).first()
   }
 
+  async summarizeByMonitoredCaseIds(tenantId: string, monitoredCaseIds: string[]) {
+    if (monitoredCaseIds.length === 0) {
+      return new Map<string, { publicationCount: number; latestAvailableAt: string | null }>()
+    }
+
+    const rows = await this.query(tenantId)
+      .whereIn('monitored_case_id', monitoredCaseIds)
+      .select('monitored_case_id')
+      .count('* as publication_count')
+      .max('available_at as latest_available_at')
+      .groupBy('monitored_case_id')
+
+    return new Map(
+      rows.map((row) => [
+        row.monitoredCaseId!,
+        {
+          publicationCount: Number(row.$extras.publication_count ?? 0),
+          latestAvailableAt: row.$extras.latest_available_at ?? null,
+        },
+      ])
+    )
+  }
+
+  async summarizeByMonitoredBarRegistrationIds(tenantId: string, registrationIds: string[]) {
+    if (registrationIds.length === 0) {
+      return new Map<string, { publicationCount: number; latestAvailableAt: string | null }>()
+    }
+
+    const rows = await this.query(tenantId)
+      .whereIn('monitored_bar_registration_id', registrationIds)
+      .select('monitored_bar_registration_id')
+      .count('* as publication_count')
+      .max('available_at as latest_available_at')
+      .groupBy('monitored_bar_registration_id')
+
+    return new Map(
+      rows.map((row) => [
+        row.monitoredBarRegistrationId!,
+        {
+          publicationCount: Number(row.$extras.publication_count ?? 0),
+          latestAvailableAt: row.$extras.latest_available_at ?? null,
+        },
+      ])
+    )
+  }
+
   async saveFromDjen(
     tenantId: string,
     publication: LegalPublication | null,
