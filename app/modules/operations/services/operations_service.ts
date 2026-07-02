@@ -1,11 +1,14 @@
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
-import CessionOpportunity, {
+import type CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import {
   type CessionPipelineStage,
   type OpportunityGrade,
 } from '#modules/operations/models/cession_opportunity'
-import CessionPricing from '#modules/operations/models/cession_pricing'
-import CessionStageHistory from '#modules/operations/models/cession_stage_history'
+import type CessionPricing from '#modules/operations/models/cession_pricing'
+import cessionOpportunityRepository from '#modules/operations/repositories/cession_opportunity_repository'
+import cessionPricingRepository from '#modules/operations/repositories/cession_pricing_repository'
+import cessionStageHistoryRepository from '#modules/operations/repositories/cession_stage_history_repository'
 import cessionPricingEngine, {
   type MarketRatePricingSnapshot,
   type OpportunityDataQuality,
@@ -20,7 +23,8 @@ import nationalDataCoherenceService, {
   type NationalDataCoherenceGap,
   type NationalDataCoherenceReport,
 } from '#modules/integrations/services/national_data_coherence_service'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 
 const ACTIVE_PIPELINE_STAGES: CessionPipelineStage[] = [
@@ -143,19 +147,7 @@ class OperationsService {
 
   async show(tenantId: string, assetId: string, pricing?: PricingInput | null) {
     const marketRates = await marketRateService.latestSnapshot()
-    const asset = await this.assetQuery(tenantId)
-      .where('id', assetId)
-      .preload('debtor', (query) =>
-        query.preload('paymentStats', (statsQuery) =>
-          statsQuery.orderBy('computed_at', 'desc').limit(1)
-        )
-      )
-      .preload('events', (query) => query.orderBy('event_date', 'desc').limit(100))
-      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
-      .preload('cessionOpportunity', (query) => query.preload('currentPricing'))
-      .preload('judicialProcesses', (query) => query.orderBy('created_at', 'desc').limit(10))
-      .preload('publications', (query) => query.orderBy('publication_date', 'desc').limit(10))
-      .firstOrFail()
+    const asset = await precatorioRepository.findForOpportunityShow(tenantId, assetId)
 
     const opportunity = this.projectAsset(asset, pricing, marketRates)
 
@@ -218,10 +210,7 @@ class OperationsService {
       termMonths: input.termMonths,
     })
     const pricing = details.opportunity.pricing
-    const existing = await CessionOpportunity.query()
-      .where('tenant_id', tenantId)
-      .where('asset_id', assetId)
-      .first()
+    const existing = await cessionOpportunityRepository.findByAsset(tenantId, assetId)
     const payload = {
       tenantId,
       assetId,
@@ -233,31 +222,25 @@ class OperationsService {
       notes: input.notes ?? existing?.notes ?? null,
       updatedByUserId: input.userId ?? null,
     }
-    const opportunity = existing ?? new CessionOpportunity()
-
-    opportunity.merge({
+    const opportunity = await cessionOpportunityRepository.savePipelineState(tenantId, existing, {
       ...payload,
       createdByUserId: existing?.createdByUserId ?? input.userId ?? null,
     })
-    await opportunity.save()
-    const currentPricing = await CessionPricing.create({
-      tenantId,
+    const currentPricing = await cessionPricingRepository.createSnapshot(tenantId, {
       opportunityId: opportunity.id,
-      offerRate: String(pricing.offerRate),
-      offerValue: String(pricing.acquisitionCost),
+      offerRate: pricing.offerRate,
+      offerValue: pricing.acquisitionCost,
       termMonths: pricing.termMonths,
-      expectedAnnualIrr: String(pricing.expectedAnnualIrr),
-      riskAdjustedIrr: String(pricing.riskAdjustedIrr),
-      paymentProbability: String(pricing.paymentProbability),
-      finalScore: String(pricing.finalScore),
+      expectedAnnualIrr: pricing.expectedAnnualIrr,
+      riskAdjustedIrr: pricing.riskAdjustedIrr,
+      paymentProbability: pricing.paymentProbability,
+      finalScore: pricing.finalScore,
       modelVersion: pricing.assumptions.version,
       pricingSnapshot: pricing,
       createdByUserId: input.userId ?? null,
     })
-    opportunity.currentPricingId = currentPricing.id
-    await opportunity.save()
-    await CessionStageHistory.create({
-      tenantId,
+    await cessionOpportunityRepository.setCurrentPricing(opportunity, currentPricing.id)
+    await cessionStageHistoryRepository.createTransition(tenantId, {
       opportunityId: opportunity.id,
       fromStage: existing?.stage ?? null,
       toStage: input.stage,
@@ -303,27 +286,13 @@ class OperationsService {
       marketRates: MarketRatePricingSnapshot
     }
   ) {
-    const assets = await this.assetQuery(tenantId)
-      .preload('debtor', (query) =>
-        query.preload('paymentStats', (statsQuery) =>
-          statsQuery.orderBy('computed_at', 'desc').limit(1)
-        )
-      )
-      .preload('events', (query) => query.orderBy('event_date', 'desc').limit(50))
-      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
-      .preload('cessionOpportunity', (query) => query.preload('currentPricing'))
-      .orderBy('created_at', 'desc')
-      .limit(options.limit)
+    const assets = await precatorioRepository.listForOpportunityComputation(tenantId, options.limit)
 
     const opportunities = assets.map((asset) => this.projectAsset(asset, null, options.marketRates))
 
     await enrichDataQuality(tenantId, opportunities)
 
     return opportunities
-  }
-
-  private assetQuery(tenantId: string) {
-    return PrecatorioAsset.query().where('tenant_id', tenantId).whereNull('deleted_at')
   }
 
   private projectAsset(

@@ -66,14 +66,7 @@ type Signal = {
 }
 
 type PipelineStage =
-  | 'inbox'
-  | 'qualified'
-  | 'contact'
-  | 'offer'
-  | 'due_diligence'
-  | 'cession'
-  | 'paid'
-  | 'lost'
+  'inbox' | 'qualified' | 'contact' | 'offer' | 'due_diligence' | 'cession' | 'paid' | 'lost'
 
 type Opportunity = {
   id: string

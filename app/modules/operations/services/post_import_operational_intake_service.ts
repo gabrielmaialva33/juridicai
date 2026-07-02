@@ -1,16 +1,16 @@
-import CessionOpportunity, {
-  type OpportunityGrade,
-} from '#modules/operations/models/cession_opportunity'
-import CessionPricing from '#modules/operations/models/cession_pricing'
-import CessionStageHistory from '#modules/operations/models/cession_stage_history'
+import type CessionOpportunity from '#modules/operations/models/cession_opportunity'
+import { type OpportunityGrade } from '#modules/operations/models/cession_opportunity'
+import cessionOpportunityRepository from '#modules/operations/repositories/cession_opportunity_repository'
+import cessionPricingRepository from '#modules/operations/repositories/cession_pricing_repository'
+import cessionStageHistoryRepository from '#modules/operations/repositories/cession_stage_history_repository'
 import cessionPricingEngine from '#modules/operations/services/cession_pricing_engine'
 import marketRateService from '#modules/market/services/market_rate_service'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 import assetSignalScoreService from '#modules/precatorios/services/asset_signal_score_service'
 import type { JsonRecord, SourceType } from '#shared/types/model_enums'
 
-const DEFAULT_LIMIT = 500
 const DEFAULT_MIN_GRADE: OpportunityGrade = 'A'
 const DEFAULT_MIN_RISK_ADJUSTED_IRR = 0.25
 
@@ -97,41 +97,7 @@ class PostImportOperationalIntakeService {
   }
 
   private findAssets(options: PostImportOperationalIntakeOptions) {
-    const sourceRecordIds = uniqueIds([
-      ...(options.sourceRecordIds ?? []),
-      ...(options.sourceRecordId ? [options.sourceRecordId] : []),
-    ])
-    const query = PrecatorioAsset.query()
-      .where('tenant_id', options.tenantId)
-      .whereNull('deleted_at')
-      .preload('debtor', (debtorQuery) =>
-        debtorQuery.preload('paymentStats', (statsQuery) =>
-          statsQuery.orderBy('computed_at', 'desc').limit(1)
-        )
-      )
-      .preload('events', (eventQuery) => eventQuery.orderBy('event_date', 'desc').limit(100))
-      .preload('valuations', (valuationQuery) =>
-        valuationQuery.orderBy('computed_at', 'desc').limit(1)
-      )
-      .preload('cessionOpportunity', (opportunityQuery) =>
-        opportunityQuery.preload('currentPricing')
-      )
-      .orderBy('created_at', 'desc')
-      .limit(normalizeLimit(options.limit))
-
-    if (sourceRecordIds.length > 0) {
-      query.whereIn('source_record_id', sourceRecordIds)
-    }
-
-    if (options.assetIds?.length) {
-      query.whereIn('id', uniqueIds(options.assetIds))
-    }
-
-    if (options.source) {
-      query.where('source', options.source)
-    }
-
-    return query.exec()
+    return precatorioRepository.listForPostImportOperationalIntake(options)
   }
 
   private async upsertOpportunity(input: {
@@ -140,7 +106,6 @@ class PostImportOperationalIntakeService {
     existing: CessionOpportunity | null
     pricing: ReturnType<typeof cessionPricingEngine.calculate>
   }) {
-    const opportunity = input.existing ?? new CessionOpportunity()
     const wasCreated = !input.existing
     const metadata = {
       ...(input.existing?.metadata ?? {}),
@@ -152,41 +117,40 @@ class PostImportOperationalIntakeService {
       },
     } satisfies JsonRecord
 
-    opportunity.merge({
-      tenantId: input.tenantId,
-      assetId: input.asset.id,
-      stage: input.existing?.stage ?? 'inbox',
-      grade: input.pricing.grade,
-      priority: input.existing?.priority ?? gradePriority(input.pricing.grade),
-      targetCloseAt: input.existing?.targetCloseAt ?? null,
-      lastContactedAt: input.existing?.lastContactedAt ?? null,
-      metadata,
-      notes: input.existing?.notes ?? null,
-      createdByUserId: input.existing?.createdByUserId ?? null,
-      updatedByUserId: null,
-    })
-    await opportunity.save()
+    const opportunity = await cessionOpportunityRepository.savePipelineState(
+      input.tenantId,
+      input.existing,
+      {
+        assetId: input.asset.id,
+        stage: input.existing?.stage ?? 'inbox',
+        grade: input.pricing.grade,
+        priority: input.existing?.priority ?? gradePriority(input.pricing.grade),
+        targetCloseAt: input.existing?.targetCloseAt ?? null,
+        lastContactedAt: input.existing?.lastContactedAt ?? null,
+        metadata,
+        notes: input.existing?.notes ?? null,
+        createdByUserId: input.existing?.createdByUserId ?? null,
+        updatedByUserId: null,
+      }
+    )
 
-    const currentPricing = await CessionPricing.create({
-      tenantId: input.tenantId,
+    const currentPricing = await cessionPricingRepository.createSnapshot(input.tenantId, {
       opportunityId: opportunity.id,
-      offerRate: String(input.pricing.offerRate),
-      offerValue: String(input.pricing.acquisitionCost),
+      offerRate: input.pricing.offerRate,
+      offerValue: input.pricing.acquisitionCost,
       termMonths: input.pricing.termMonths,
-      expectedAnnualIrr: String(input.pricing.expectedAnnualIrr),
-      riskAdjustedIrr: String(input.pricing.riskAdjustedIrr),
-      paymentProbability: String(input.pricing.paymentProbability),
-      finalScore: String(input.pricing.finalScore),
+      expectedAnnualIrr: input.pricing.expectedAnnualIrr,
+      riskAdjustedIrr: input.pricing.riskAdjustedIrr,
+      paymentProbability: input.pricing.paymentProbability,
+      finalScore: input.pricing.finalScore,
       modelVersion: input.pricing.assumptions.version,
       pricingSnapshot: input.pricing,
       createdByUserId: null,
     })
-    opportunity.currentPricingId = currentPricing.id
-    await opportunity.save()
+    await cessionOpportunityRepository.setCurrentPricing(opportunity, currentPricing.id)
 
     if (wasCreated) {
-      await CessionStageHistory.create({
-        tenantId: input.tenantId,
+      await cessionStageHistoryRepository.createTransition(input.tenantId, {
         opportunityId: opportunity.id,
         fromStage: null,
         toStage: 'inbox',
@@ -255,18 +219,6 @@ function gradeRank(grade: OpportunityGrade) {
 function normalizeRate(value: number | null | undefined, fallback: number) {
   const rate = value ?? fallback
   return rate > 1 ? rate / 100 : rate
-}
-
-function normalizeLimit(value: number | null | undefined) {
-  if (!value || value < 1) {
-    return DEFAULT_LIMIT
-  }
-
-  return Math.trunc(value)
-}
-
-function uniqueIds(values: string[]) {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
 export const postImportOperationalIntakeService = new PostImportOperationalIntakeService()

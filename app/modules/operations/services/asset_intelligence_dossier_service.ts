@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
+import type ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
+import processMatchCandidateRepository from '#modules/integrations/repositories/process_match_candidate_repository'
 import type CessionOpportunity from '#modules/operations/models/cession_opportunity'
 import type CessionPricing from '#modules/operations/models/cession_pricing'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
@@ -10,7 +11,8 @@ import type JudicialProcess from '#modules/precatorios/models/judicial_process'
 import type JudicialProcessSignal from '#modules/precatorios/models/judicial_process_signal'
 import type Publication from '#modules/precatorios/models/publication'
 import type PublicationEvent from '#modules/precatorios/models/publication_event'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 import type SourceRecord from '#modules/siop/models/source_record'
 import type { JsonRecord } from '#shared/types/model_enums'
 
@@ -28,13 +30,10 @@ type CompletenessCheck = {
 
 class AssetIntelligenceDossierService {
   async build(tenantId: string, assetId: string) {
-    const asset = await this.assetQuery(tenantId, assetId).firstOrFail()
-    const processMatchCandidates = await ProcessMatchCandidate.query()
-      .where('tenant_id', tenantId)
-      .where('asset_id', assetId)
-      .orderBy('score', 'desc')
-      .orderBy('created_at', 'desc')
-      .limit(50)
+    const [asset, processMatchCandidates] = await Promise.all([
+      precatorioRepository.findForIntelligenceDossier(tenantId, assetId),
+      processMatchCandidateRepository.listForAsset(tenantId, assetId),
+    ])
     const context = buildContext(asset, processMatchCandidates)
     const completeness = buildCompleteness(context)
     const conflicts = detectConflicts(context)
@@ -56,63 +55,6 @@ class AssetIntelligenceDossierService {
       freshness: buildFreshness(context),
       nextBestActions: buildNextBestActions(context, completeness.checks, conflicts),
     }
-  }
-
-  private assetQuery(tenantId: string, assetId: string) {
-    return PrecatorioAsset.query()
-      .where('tenant_id', tenantId)
-      .where('id', assetId)
-      .whereNull('deleted_at')
-      .preload('debtor', (query) =>
-        query.preload('paymentStats', (statsQuery) =>
-          statsQuery.orderBy('computed_at', 'desc').limit(3)
-        )
-      )
-      .preload('court')
-      .preload('budgetUnit')
-      .preload('sourceRecord', (query) => query.preload('sourceDataset'))
-      .preload('sourceLinks', (query) =>
-        query
-          .preload('sourceRecord', (sourceQuery) => sourceQuery.preload('sourceDataset'))
-          .preload('sourceDataset')
-          .orderBy('last_seen_at', 'desc')
-          .limit(100)
-      )
-      .preload('externalIdentifiers', (query) =>
-        query
-          .preload('sourceRecord', (sourceQuery) => sourceQuery.preload('sourceDataset'))
-          .preload('sourceDataset')
-          .orderBy('is_primary', 'desc')
-          .orderBy('identifier_type', 'asc')
-          .limit(100)
-      )
-      .preload('fieldEvidences', (query) => query.orderBy('field_key', 'asc'))
-      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(30))
-      .preload('budgetFacts', (query) => query.orderBy('created_at', 'desc').limit(30))
-      .preload('events', (query) => query.orderBy('event_date', 'desc').limit(150))
-      .preload('scores', (query) => query.orderBy('computed_at', 'desc').limit(30))
-      .preload('judicialProcesses', (query) =>
-        query
-          .preload('sourceRecord', (sourceQuery) => sourceQuery.preload('sourceDataset'))
-          .preload('court')
-          .preload('judicialClass')
-          .preload('judgingBody')
-          .preload('subjects')
-          .preload('signals', (signalQuery) => signalQuery.orderBy('detected_at', 'desc').limit(80))
-          .preload('movements', (movementQuery) =>
-            movementQuery.orderBy('occurred_at', 'desc').limit(80)
-          )
-          .orderBy('created_at', 'desc')
-          .limit(30)
-      )
-      .preload('publications', (query) =>
-        query
-          .preload('sourceRecord', (sourceQuery) => sourceQuery.preload('sourceDataset'))
-          .preload('events', (eventQuery) => eventQuery.orderBy('event_date', 'desc').limit(50))
-          .orderBy('publication_date', 'desc')
-          .limit(80)
-      )
-      .preload('cessionOpportunity', (query) => query.preload('currentPricing'))
   }
 }
 

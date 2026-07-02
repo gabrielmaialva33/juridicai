@@ -10,14 +10,7 @@ import CessionPricing from '#modules/operations/models/cession_pricing'
 import CessionStageHistory from '#modules/operations/models/cession_stage_history'
 
 export type CessionPipelineStage =
-  | 'inbox'
-  | 'qualified'
-  | 'contact'
-  | 'offer'
-  | 'due_diligence'
-  | 'cession'
-  | 'paid'
-  | 'lost'
+  'inbox' | 'qualified' | 'contact' | 'offer' | 'due_diligence' | 'cession' | 'paid' | 'lost'
 
 export type OpportunityGrade = 'A+' | 'A' | 'B+' | 'B' | 'C' | 'D'
 
