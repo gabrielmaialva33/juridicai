@@ -1,19 +1,17 @@
-import RadarJobRun from '#modules/admin/models/radar_job_run'
 import jobRetryService, { JobRetryError } from '#modules/admin/services/job_retry_service'
 import queueService from '#shared/services/queue_service'
 import tenantContext from '#shared/helpers/tenant_context'
 import workerHeartbeatService from '#shared/services/worker_heartbeat_service'
 import { operationalQueueNames } from '#shared/constants/operational_queues'
+import radarJobRunRepository from '#modules/admin/repositories/radar_job_run_repository'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class JobsController {
   async index({ inertia, request }: HttpContext) {
     const page = positiveInteger(request.input('page'), 1)
     const limit = Math.min(positiveInteger(request.input('limit'), 25), 100)
-    const paginator = await RadarJobRun.query()
-      .where('tenant_id', tenantContext.requireTenantId())
-      .orderBy('created_at', 'desc')
-      .paginate(page, limit)
+    const tenantId = tenantContext.requireTenantId()
+    const paginator = await radarJobRunRepository.paginateRecent(tenantId, page, limit)
     const queues = await queueService.getSnapshots([...operationalQueueNames])
     const workers = await workerHeartbeatService.queueFreshness([...operationalQueueNames])
 
@@ -26,10 +24,10 @@ export default class JobsController {
   }
 
   async retry({ params, requestId, response }: HttpContext) {
-    const run = await RadarJobRun.query()
-      .where('id', params.id)
-      .where('tenant_id', tenantContext.requireTenantId())
-      .firstOrFail()
+    const run = await radarJobRunRepository.findByIdOrFail(
+      tenantContext.requireTenantId(),
+      params.id
+    )
 
     try {
       const retry = await jobRetryService.retry(run, requestId)
