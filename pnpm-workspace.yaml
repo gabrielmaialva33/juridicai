@@ -4,3 +4,6 @@ allowBuilds:
   better-sqlite3: true
   esbuild: true
   msgpackr-extract: true
+minimumReleaseAgeExclude:
+  - '@types/node@26.1.0'
+  - lucide-react@1.23.0
