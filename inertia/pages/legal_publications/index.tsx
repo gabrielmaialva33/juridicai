@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react'
+import { AlertTriangle, CalendarDays, Clock3 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { PageHeader } from '~/components/shared/page-header'
@@ -16,11 +17,28 @@ type LegalPublicationRow = {
   body: string
 }
 
-type Props = {
-  publications: LegalPublicationRow[]
+type AgendaItem = {
+  id: string
+  publicationId: string
+  type: 'deadline' | 'manual_due_date' | 'hearing' | 'judgment'
+  title: string
+  date: string
+  time: string | null
+  fatal: boolean
+  overdue: boolean
+  processNumber: string
+  caseLabel: string | null
+  courtAlias: string | null
+  priority: string | null
+  manualReviewRequired: boolean
 }
 
-export default function LegalPublicationsIndex({ publications }: Props) {
+type Props = {
+  publications: LegalPublicationRow[]
+  agenda: AgendaItem[]
+}
+
+export default function LegalPublicationsIndex({ publications, agenda }: Props) {
   return (
     <>
       <Head title="Publicações jurídicas" />
@@ -29,6 +47,61 @@ export default function LegalPublicationsIndex({ publications }: Props) {
         title="Publicações jurídicas"
         description="Publicações DJEN ligadas a processos monitorados e ativos de precatório."
       />
+
+      <Card className="mb-6">
+        <CardHeader className="py-4">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="size-4 text-primary" />
+            <h2 className="text-base font-semibold">Agenda</h2>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {agenda.length === 0 ? (
+            <div className="p-8 text-sm text-muted-foreground">
+              Nenhum prazo, audiência ou julgamento identificado.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {agenda.map((item) => (
+                <li key={item.id} className="px-5 py-3">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <AgendaIcon item={item} />
+                        <span className="font-medium">{agendaTitle(item)}</span>
+                        {item.fatal ? (
+                          <Badge
+                            variant={item.overdue ? 'destructive' : 'warning'}
+                            appearance="light"
+                          >
+                            {item.overdue ? 'Vencido' : 'Prazo fatal'}
+                          </Badge>
+                        ) : null}
+                        {item.manualReviewRequired ? (
+                          <Badge variant="warning" appearance="light">
+                            Revisar
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {item.caseLabel ?? item.processNumber}
+                        {item.courtAlias ? ` · ${item.courtAlias}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground md:text-right">
+                      <Clock3 className="size-4" />
+                      <span>
+                        {fmtDate(item.date)}
+                        {item.time ? ` às ${item.time}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="py-4">
@@ -77,4 +150,19 @@ export default function LegalPublicationsIndex({ publications }: Props) {
       </Card>
     </>
   )
+}
+
+function agendaTitle(item: AgendaItem) {
+  if (item.type === 'hearing') return 'Audiência'
+  if (item.type === 'judgment') return 'Sessão de julgamento'
+  if (item.type === 'manual_due_date') return 'Prazo manual'
+  return item.title
+}
+
+function AgendaIcon({ item }: { item: AgendaItem }) {
+  if (item.overdue) {
+    return <AlertTriangle className="size-4 text-destructive" />
+  }
+
+  return <CalendarDays className="size-4 text-primary" />
 }
