@@ -1,11 +1,4 @@
-import Court from '#modules/reference/models/court'
-import JudicialClass from '#modules/reference/models/judicial_class'
-import JudicialSubjectCatalog from '#modules/reference/models/judicial_subject_catalog'
-import JudicialSystem from '#modules/reference/models/judicial_system'
-import JudgingBody from '#modules/reference/models/judging_body'
-import MovementComplementType from '#modules/reference/models/movement_complement_type'
-import MovementType from '#modules/reference/models/movement_type'
-import ProcessFormat from '#modules/reference/models/process_format'
+import referenceCatalogRepository from '#modules/reference/repositories/reference_catalog_repository'
 
 class ReferenceCatalogService {
   court(input: { code: string | null; alias?: string | null; name?: string | null }) {
@@ -13,15 +6,11 @@ class ReferenceCatalogService {
       return null
     }
 
-    return Court.updateOrCreate(
-      { code: input.code },
-      {
-        code: input.code,
-        alias: input.alias ?? null,
-        name: input.name,
-        courtClass: null,
-      }
-    )
+    return referenceCatalogRepository.upsertCourt({
+      code: input.code,
+      alias: input.alias ?? null,
+      name: input.name,
+    })
   }
 
   judicialSystem(input: { code: number | null; name: string | null }) {
@@ -29,10 +18,7 @@ class ReferenceCatalogService {
       return null
     }
 
-    return JudicialSystem.updateOrCreate(
-      { code: input.code },
-      { code: input.code, name: input.name }
-    )
+    return referenceCatalogRepository.upsertJudicialSystem({ code: input.code, name: input.name })
   }
 
   processFormat(input: { code: number | null; name: string | null }) {
@@ -40,10 +26,7 @@ class ReferenceCatalogService {
       return null
     }
 
-    return ProcessFormat.updateOrCreate(
-      { code: input.code },
-      { code: input.code, name: input.name }
-    )
+    return referenceCatalogRepository.upsertProcessFormat({ code: input.code, name: input.name })
   }
 
   judicialClass(input: { code: number | null; name: string | null }) {
@@ -51,10 +34,7 @@ class ReferenceCatalogService {
       return null
     }
 
-    return JudicialClass.updateOrCreate(
-      { code: input.code },
-      { code: input.code, name: input.name }
-    )
+    return referenceCatalogRepository.upsertJudicialClass({ code: input.code, name: input.name })
   }
 
   movementType(input: { code: number | null; name: string | null }) {
@@ -62,7 +42,7 @@ class ReferenceCatalogService {
       return null
     }
 
-    return MovementType.updateOrCreate({ code: input.code }, { code: input.code, name: input.name })
+    return referenceCatalogRepository.upsertMovementType({ code: input.code, name: input.name })
   }
 
   subject(input: { code: number | null; name: string | null }) {
@@ -70,10 +50,7 @@ class ReferenceCatalogService {
       return null
     }
 
-    return JudicialSubjectCatalog.updateOrCreate(
-      { code: input.code },
-      { code: input.code, name: input.name }
-    )
+    return referenceCatalogRepository.upsertSubject({ code: input.code, name: input.name })
   }
 
   complementType(input: {
@@ -86,15 +63,12 @@ class ReferenceCatalogService {
       return null
     }
 
-    return MovementComplementType.updateOrCreate(
-      { code: input.code, value: input.value },
-      {
-        code: input.code,
-        value: input.value,
-        name: input.name,
-        description: input.description,
-      }
-    )
+    return referenceCatalogRepository.upsertComplementType({
+      code: input.code,
+      value: input.value,
+      name: input.name,
+      description: input.description,
+    })
   }
 
   async judgingBody(input: {
@@ -107,15 +81,12 @@ class ReferenceCatalogService {
       return null
     }
 
-    return JudgingBody.updateOrCreate(
-      { courtId: input.courtId, code: input.code },
-      {
-        courtId: input.courtId,
-        code: input.code,
-        name: input.name,
-        municipalityIbgeCode: input.municipalityIbgeCode,
-      }
-    )
+    return referenceCatalogRepository.upsertJudgingBody({
+      courtId: input.courtId,
+      code: input.code,
+      name: input.name,
+      municipalityIbgeCode: input.municipalityIbgeCode,
+    })
   }
 }
 
