@@ -38,6 +38,21 @@ class LegalPublicationRepository extends BaseRepository<typeof LegalPublication>
     return this.query(tenantId).orderBy('available_at', 'desc').limit(limit)
   }
 
+  listAgendaSource(tenantId: string, limit = 200) {
+    return this.query(tenantId)
+      .whereNot('status', 'dismissed')
+      .where((query) => {
+        query
+          .whereNotNull('manual_due_at')
+          .orWhereNotNull('due_at')
+          .orWhereNotNull('hearing_at')
+          .orWhereNotNull('judgment_at')
+      })
+      .preload('monitoredCase')
+      .orderByRaw('coalesce(manual_due_at, due_at, hearing_at, judgment_at, available_at) asc')
+      .limit(limit)
+  }
+
   findByDjenId(tenantId: string, djenId: string) {
     return this.query(tenantId).where('djen_id', djenId).first()
   }
@@ -65,6 +80,8 @@ class LegalPublicationRepository extends BaseRepository<typeof LegalPublication>
       manualReviewRequired: publication.manualReviewRequired || calculation.manualReviewRequired,
       deadlineReason: calculation.deadlineReason,
       deadlineItems: calculation.deadlineItems,
+      businessDaysUntilHearing: calculation.businessDaysUntilHearing,
+      hearingElapsed: calculation.hearingElapsed,
     })
     await publication.save()
     return publication
