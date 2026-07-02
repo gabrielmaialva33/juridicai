@@ -1,8 +1,7 @@
 import { DateTime } from 'luxon'
 import assetIntelligenceDossierService from '#modules/operations/services/asset_intelligence_dossier_service'
-import AssetFieldEvidence, {
-  type AssetFieldEvidenceStatus,
-} from '#modules/precatorios/models/asset_field_evidence'
+import type { AssetFieldEvidenceStatus } from '#modules/precatorios/models/asset_field_evidence'
+import assetFieldEvidenceRepository from '#modules/precatorios/repositories/asset_field_evidence_repository'
 import type {
   AssetSourceLinkType,
   ExternalIdentifierType,
@@ -110,28 +109,11 @@ class AssetFieldEvidenceService {
 
     if (!options.dryRun) {
       for (const row of rows) {
-        await AssetFieldEvidence.updateOrCreate(
-          {
-            tenantId,
-            assetId,
-            fieldKey: row.fieldKey,
-          },
-          {
-            tenantId,
-            assetId,
-            fieldKey: row.fieldKey,
-            canonicalValue: row.canonicalValue,
-            canonicalSource: row.canonicalSource,
-            canonicalSourceRecordId: row.canonicalSourceRecordId,
-            canonicalSourceDatasetId: row.canonicalSourceDatasetId,
-            confidence: row.confidence.toFixed(4),
-            status: row.status,
-            evidenceCount: row.evidenceCount,
-            conflictingValues: row.conflictingValues,
-            evidence: row.evidence,
-            computedAt,
-          }
-        )
+        await assetFieldEvidenceRepository.upsertResolvedField(tenantId, {
+          assetId,
+          ...row,
+          computedAt,
+        })
       }
     }
 

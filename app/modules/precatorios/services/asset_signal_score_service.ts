@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto'
-import AssetScore from '#modules/precatorios/models/asset_score'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type AssetEvent from '#modules/precatorios/models/asset_event'
 import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
 import type { JsonRecord } from '#shared/types/model_enums'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
+import assetScoreRepository from '#modules/precatorios/repositories/asset_score_repository'
 
 const SCORE_VERSION = 'legal-signals-v2'
 
@@ -33,20 +34,10 @@ const NEGATIVE_WEIGHTS: Record<string, number> = {
 
 class AssetSignalScoreService {
   async refresh(tenantId: string, assetId: string) {
-    const asset = await PrecatorioAsset.query()
-      .where('tenant_id', tenantId)
-      .where('id', assetId)
-      .preload('events', (query) => query.orderBy('event_date', 'desc').limit(200))
-      .preload('valuations', (query) => query.orderBy('computed_at', 'desc').limit(1))
-      .firstOrFail()
+    const asset = await precatorioRepository.findForSignalScore(tenantId, assetId)
     const events = (asset.events ?? []) as AssetEvent[]
     const snapshot = buildScoreSnapshot(asset, events)
-    const latest = await AssetScore.query()
-      .where('tenant_id', tenantId)
-      .where('asset_id', assetId)
-      .where('score_version', SCORE_VERSION)
-      .orderBy('computed_at', 'desc')
-      .first()
+    const latest = await assetScoreRepository.latestByVersion(tenantId, assetId, SCORE_VERSION)
 
     if (latest?.explanation?.fingerprint === snapshot.fingerprint) {
       asset.currentScore = latest.finalScore
@@ -55,8 +46,7 @@ class AssetSignalScoreService {
       return { score: latest, created: false }
     }
 
-    const score = await AssetScore.create({
-      tenantId,
+    const score = await assetScoreRepository.create(tenantId, {
       assetId,
       scoreVersion: SCORE_VERSION,
       dataQualityScore: snapshot.dataQualityScore,
