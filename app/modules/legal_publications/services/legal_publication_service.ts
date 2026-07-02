@@ -2,6 +2,8 @@ import type { DateTime } from 'luxon'
 import type { LegalPublicationOrigin } from '#modules/legal_publications/models/legal_publication'
 import legalPublicationProcessLinkService from '#modules/legal_publications/services/legal_publication_process_link_service'
 import legalPublicationAssetProjectionService from '#modules/legal_publications/services/legal_publication_asset_projection_service'
+import legalPublicationDeadlineService from '#modules/legal_publications/services/legal_publication_deadline_service'
+import legalPublicationInterpretationService from '#modules/legal_publications/services/legal_publication_interpretation_service'
 import legalPublicationRepository from '#modules/legal_publications/repositories/legal_publication_repository'
 import legalPublicationEventRepository from '#modules/legal_publications/repositories/legal_publication_event_repository'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -75,6 +77,8 @@ class LegalPublicationService {
       })
     }
 
+    await legalPublicationInterpretationService.interpretAndPersist(publication)
+    await legalPublicationDeadlineService.calculateAndPersist(publication)
     await legalPublicationAssetProjectionService.project(publication)
 
     return {
