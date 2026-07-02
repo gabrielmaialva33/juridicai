@@ -1,9 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import RadarJobRun from '#modules/admin/models/radar_job_run'
 import auditService from '#shared/services/audit_service'
 import queueService from '#shared/services/queue_service'
-import SiopImport from '#modules/siop/models/siop_import'
-import SiopStagingRow from '#modules/siop/models/siop_staging_row'
 import { SIOP_IMPORT_QUEUE } from '#modules/siop/jobs/siop_import_handler'
 import { TRF6_MANUAL_EXPORT_IMPORT_QUEUE } from '#modules/integrations/jobs/trf6_manual_export_import_handler'
 import { TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL } from '#modules/integrations/services/trf6_precatorio_adapter'
@@ -12,6 +9,9 @@ import governmentSourceStatusService from '#modules/integrations/services/govern
 import siopImportService from '#modules/siop/services/siop_import_service'
 import { uploadValidator } from '#modules/siop/validators/upload_validator'
 import tenantContext from '#shared/helpers/tenant_context'
+import radarJobRunRepository from '#modules/admin/repositories/radar_job_run_repository'
+import siopImportRepository from '#modules/siop/repositories/siop_import_repository'
+import siopStagingRowRepository from '#modules/siop/repositories/siop_staging_row_repository'
 import {
   type OperationalQueueName,
   operationalQueueNames,
@@ -70,12 +70,10 @@ export default class ImportController {
 
     const [job, latestRun] = await Promise.all([
       queueService.getJobSnapshot(queueName, params.id),
-      RadarJobRun.query()
-        .where('tenant_id', tenantId)
-        .where('queue_name', queueName)
-        .where('bullmq_job_id', params.id)
-        .orderBy('created_at', 'desc')
-        .first(),
+      radarJobRunRepository.latestByBullJob(tenantId, {
+        queueName,
+        bullmqJobId: params.id,
+      }),
     ])
 
     if (!job && !latestRun) {
@@ -212,11 +210,7 @@ export default class ImportController {
 
   async show({ inertia, params }: HttpContext) {
     const siopImport = await this.findTenantImport(params.id, tenantContext.requireTenantId())
-    const invalidRows = await SiopStagingRow.query()
-      .where('import_id', siopImport.id)
-      .where('validation_status', 'invalid')
-      .orderBy('created_at', 'desc')
-      .limit(25)
+    const invalidRows = await siopStagingRowRepository.listInvalidByImport(siopImport.id, 25)
 
     return inertia.render('siop/imports/show', {
       import: siopImport.serialize() as any,
@@ -227,11 +221,7 @@ export default class ImportController {
   async errors({ inertia, params, request }: HttpContext) {
     const page = request.input('page', 1)
     const siopImport = await this.findTenantImport(params.id, tenantContext.requireTenantId())
-    const rows = await SiopStagingRow.query()
-      .where('import_id', siopImport.id)
-      .where('validation_status', 'invalid')
-      .orderBy('created_at', 'desc')
-      .paginate(page, 50)
+    const rows = await siopStagingRowRepository.paginateInvalidByImport(siopImport.id, page, 50)
 
     return inertia.render('siop/imports/errors', {
       import: siopImport.serialize() as any,
@@ -297,11 +287,7 @@ export default class ImportController {
   }
 
   private async findTenantImport(id: string, tenantId: string) {
-    return SiopImport.query()
-      .where('id', id)
-      .where('tenant_id', tenantId)
-      .preload('sourceRecord')
-      .firstOrFail()
+    return siopImportRepository.findByIdWithSourceRecord(tenantId, id)
   }
 
   private enqueueImport(tenantId: string, importId: string, jobName: string) {

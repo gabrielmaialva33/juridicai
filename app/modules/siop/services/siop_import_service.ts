@@ -8,20 +8,21 @@ import ExcelJS from 'exceljs'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 import siopImportRepository from '#modules/siop/repositories/siop_import_repository'
+import siopStagingRowRepository from '#modules/siop/repositories/siop_staging_row_repository'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import siopNormalizeService from '#modules/siop/services/siop_normalize_service'
-import AssetEvent from '#modules/precatorios/models/asset_event'
-import AssetScore from '#modules/precatorios/models/asset_score'
-import AssetBudgetFact from '#modules/precatorios/models/asset_budget_fact'
-import AssetValuation from '#modules/precatorios/models/asset_valuation'
-import Debtor from '#modules/debtors/models/debtor'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
-import BudgetUnit from '#modules/reference/models/budget_unit'
-import Court from '#modules/reference/models/court'
-import SiopImport from '#modules/siop/models/siop_import'
-import SiopStagingRow from '#modules/siop/models/siop_staging_row'
-import SourceRecord from '#modules/siop/models/source_record'
+import debtorRepository from '#modules/debtors/repositories/debtor_repository'
+import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import assetBudgetFactRepository from '#modules/precatorios/repositories/asset_budget_fact_repository'
+import assetEventRepository from '#modules/precatorios/repositories/asset_event_repository'
+import assetScoreRepository from '#modules/precatorios/repositories/asset_score_repository'
+import assetValuationRepository from '#modules/precatorios/repositories/asset_valuation_repository'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
+import budgetUnitRepository from '#modules/reference/repositories/budget_unit_repository'
+import referenceCatalogRepository from '#modules/reference/repositories/reference_catalog_repository'
+import type SiopImport from '#modules/siop/models/siop_import'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import type { AssetNature, DebtorType, ImportStatus, JsonRecord } from '#shared/types/model_enums'
+import type { AssetNature, DebtorType, JsonRecord } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 const IMPORT_CHUNK_SIZE = 1_000
@@ -201,10 +202,7 @@ class SiopImportService {
   }
 
   async processImportFile(importId: string) {
-    const siopImport = await SiopImport.query()
-      .where('id', importId)
-      .preload('sourceRecord')
-      .firstOrFail()
+    const siopImport = await siopImportRepository.findAnyByIdWithSourceRecord(importId)
 
     if (!siopImport.sourceRecord.sourceFilePath) {
       throw new Error('SIOP import source file is missing.')
@@ -307,7 +305,7 @@ class SiopImportService {
     const normalized = siopNormalizeService.normalizeRow(input.row)
     const errors = this.validateNormalizedRow(normalized)
 
-    const stagingRow = await SiopStagingRow.create(
+    const stagingRow = await siopStagingRowRepository.createProcessed(
       {
         importId: input.siopImport.id,
         rawData: input.row,
@@ -319,7 +317,7 @@ class SiopImportService {
         errors: errors.length > 0 ? { messages: errors } : null,
         processedAt: DateTime.now(),
       },
-      { client: input.trx }
+      input.trx
     )
 
     if (errors.length > 0) {
@@ -411,7 +409,7 @@ class SiopImportService {
       return stagingRow
     }
 
-    const asset = await PrecatorioAsset.create(
+    const asset = await precatorioRepository.createForSiopImport(
       {
         tenantId: input.payload.tenantId,
         sourceRecordId: input.sourceRecordId,
@@ -439,7 +437,7 @@ class SiopImportService {
         rawData: input.row,
         rowFingerprint: fingerprint,
       },
-      { client: input.trx }
+      input.trx
     )
 
     input.stats.inserted += 1
@@ -492,28 +490,7 @@ class SiopImportService {
 
   private async findOrCreateSourceRecord(payload: SiopImportRowsPayload, checksum: string) {
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('siop-open-data-precatorios')
-    const existing = await SourceRecord.query()
-      .where('tenant_id', payload.tenantId)
-      .where('source', 'siop')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: payload.source?.url ?? existing.sourceUrl,
-        sourceFilePath: payload.source?.filePath ?? existing.sourceFilePath,
-        originalFilename: payload.source?.originalFilename ?? existing.originalFilename,
-        mimeType: payload.source?.mimeType ?? existing.mimeType,
-        fileSizeBytes: payload.source?.fileSizeBytes ?? existing.fileSizeBytes,
-        rawData: payload.source?.metadata ?? existing.rawData,
-      })
-      await existing.save()
-      return existing
-    }
-
-    return SourceRecord.create({
-      tenantId: payload.tenantId,
+    return sourceRecordRepository.upsertByChecksum(payload.tenantId, {
       sourceDatasetId,
       source: 'siop',
       sourceUrl: payload.source?.url ?? null,
@@ -547,12 +524,7 @@ class SiopImportService {
   }
 
   private findExistingImport(tenantId: string, exerciseYear: number, sourceRecordId: string) {
-    return SiopImport.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'siop')
-      .where('exercise_year', exerciseYear)
-      .where('source_record_id', sourceRecordId)
-      .first()
+    return siopImportRepository.findOpenDataImport(tenantId, exerciseYear, sourceRecordId)
   }
 
   private createImport(
@@ -561,18 +533,10 @@ class SiopImportService {
     },
     sourceRecordId: string
   ) {
-    return SiopImport.create({
-      tenantId: payload.tenantId,
+    return siopImportRepository.createPendingImport(payload.tenantId, {
       exerciseYear: payload.exerciseYear,
       sourceRecordId,
-      source: 'siop',
-      status: 'pending',
-      totalRows: 0,
-      inserted: 0,
-      updated: 0,
-      skipped: 0,
-      errors: 0,
-      rawMetadata: payload.source?.metadata ?? null,
+      metadata: payload.source?.metadata ?? null,
       uploadedByUserId: payload.uploadedByUserId ?? null,
     })
   }
@@ -588,27 +552,13 @@ class SiopImportService {
         return false
       }
 
-      const currentImport = await SiopImport.query({ client: trx })
-        .where('id', siopImport.id)
-        .forUpdate()
-        .firstOrFail()
+      const currentImport = await siopImportRepository.findForStart(siopImport.id, trx)
 
       if (currentImport.status === 'running') {
         return false
       }
 
-      currentImport.merge({
-        status: 'running' as ImportStatus,
-        startedAt: DateTime.now(),
-        finishedAt: null,
-        totalRows: 0,
-        inserted: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 0,
-      })
-      currentImport.useTransaction(trx)
-      await currentImport.save()
+      await siopImportRepository.markRunning(currentImport, trx)
 
       siopImport.merge({
         status: currentImport.status,
@@ -620,7 +570,7 @@ class SiopImportService {
         skipped: currentImport.skipped,
         errors: currentImport.errors,
       })
-      await SiopStagingRow.query({ client: trx }).where('import_id', siopImport.id).delete()
+      await siopStagingRowRepository.deleteByImport(siopImport.id, trx)
 
       return true
     })
@@ -686,18 +636,9 @@ class SiopImportService {
     normalizedName: string,
     trx: TransactionClientContract
   ) {
-    const existing = await Debtor.query({ client: trx })
-      .where('tenant_id', tenantId)
-      .where('normalized_key', normalizedName)
-      .first()
-
-    if (existing) {
-      return existing
-    }
-
-    return Debtor.create(
+    return debtorRepository.findOrCreateByNormalizedKey(
+      tenantId,
       {
-        tenantId,
         name:
           extractString(row, ['nome_da_uo_executada', 'devedor', 'debtor', 'debtor_name']) ??
           normalizedName,
@@ -708,7 +649,7 @@ class SiopImportService {
         stateCode: extractStateCode(row) ?? 'BR',
         paymentRegime: 'federal_unique',
       },
-      { client: trx }
+      trx
     )
   }
 
@@ -718,17 +659,7 @@ class SiopImportService {
     externalId: string,
     trx: TransactionClientContract
   ) {
-    const query = PrecatorioAsset.query({ client: trx }).where('tenant_id', tenantId)
-
-    if (cnjNumber) {
-      query.where((builder) => {
-        builder.where('cnj_number', cnjNumber).orWhere('external_id', externalId)
-      })
-    } else {
-      query.where('external_id', externalId)
-    }
-
-    return query.first()
+    return precatorioRepository.findForSiopImport(tenantId, cnjNumber, externalId, trx)
   }
 
   private async createImportEvent(
@@ -739,28 +670,15 @@ class SiopImportService {
     trx: TransactionClientContract
   ) {
     const idempotencyKey = `siop:${fingerprint}`
-    const existing = await AssetEvent.query({ client: trx })
-      .where('tenant_id', tenantId)
-      .where('asset_id', assetId)
-      .where('event_type', 'siop_imported')
-      .where('idempotency_key', idempotencyKey)
-      .first()
-
-    if (existing) {
-      return existing
-    }
-
-    return AssetEvent.create(
+    return assetEventRepository.createSiopImported(
+      tenantId,
       {
-        tenantId,
         assetId,
-        eventType: 'siop_imported',
         eventDate: DateTime.now(),
-        source: 'siop',
         payload: row,
         idempotencyKey,
       },
-      { client: trx }
+      trx
     )
   }
 
@@ -773,50 +691,26 @@ class SiopImportService {
     row: JsonRecord,
     trx: TransactionClientContract
   ) {
-    const query = AssetBudgetFact.query({ client: trx })
-      .where('tenant_id', tenantId)
-      .where('asset_id', assetId)
-      .where('source_record_id', sourceRecordId)
-
-    if (normalized.exerciseYear) {
-      query.where('exercise_year', normalized.exerciseYear)
-    } else {
-      query.whereNull('exercise_year')
-    }
-
-    if (normalized.exerciseYear) {
-      query.where('budget_year', normalized.exerciseYear)
-    } else {
-      query.whereNull('budget_year')
-    }
-
-    const existing = await query.first()
-    const payload = {
+    return assetBudgetFactRepository.upsertForSiopImport(
       tenantId,
-      assetId,
-      exerciseYear: normalized.exerciseYear,
-      budgetYear: normalized.exerciseYear,
-      budgetUnitId,
-      expenseType: normalized.expenseType,
-      causeType: normalized.causeType,
-      natureExpenseCode: normalized.natureExpenseCode,
-      valueRange: normalized.valueRange,
-      taxClaim: normalized.taxClaim,
-      fundef: normalized.fundef,
-      elapsedYears: normalized.elapsedYears,
-      elapsedYearsClass: normalized.elapsedYearsClass,
-      sourceRecordId,
-      rawData: row,
-    }
-
-    if (existing) {
-      existing.useTransaction(trx)
-      existing.merge(payload)
-      await existing.save()
-      return existing
-    }
-
-    return AssetBudgetFact.create(payload, { client: trx })
+      {
+        assetId,
+        exerciseYear: normalized.exerciseYear,
+        budgetYear: normalized.exerciseYear,
+        budgetUnitId,
+        expenseType: normalized.expenseType,
+        causeType: normalized.causeType,
+        natureExpenseCode: normalized.natureExpenseCode,
+        valueRange: normalized.valueRange,
+        taxClaim: normalized.taxClaim,
+        fundef: normalized.fundef,
+        elapsedYears: normalized.elapsedYears,
+        elapsedYearsClass: normalized.elapsedYearsClass,
+        sourceRecordId,
+        rawData: row,
+      },
+      trx
+    )
   }
 
   private async createValuation(
@@ -827,9 +721,9 @@ class SiopImportService {
     row: JsonRecord,
     trx: TransactionClientContract
   ) {
-    return AssetValuation.create(
+    return assetValuationRepository.createForSiopImport(
+      tenantId,
       {
-        tenantId,
         assetId,
         faceValue: normalized.faceValue,
         estimatedUpdatedValue: normalized.updatedValue ?? normalized.faceValue,
@@ -840,7 +734,7 @@ class SiopImportService {
         sourceRecordId,
         rawData: row,
       },
-      { client: trx }
+      trx
     )
   }
 
@@ -926,24 +820,13 @@ class SiopImportService {
       return null
     }
 
-    const existing = await Court.query({ client: trx }).where('code', normalized.courtCode).first()
-    if (existing) {
-      existing.merge({
-        name: normalized.courtName,
-        courtClass: normalized.courtClass,
-      })
-      await existing.save()
-      return existing
-    }
-
-    return Court.create(
+    return referenceCatalogRepository.upsertCourtClass(
       {
         code: normalized.courtCode,
-        alias: null,
         name: normalized.courtName,
         courtClass: normalized.courtClass,
       },
-      { client: trx }
+      trx
     )
   }
 
@@ -955,21 +838,12 @@ class SiopImportService {
       return null
     }
 
-    const existing = await BudgetUnit.query({ client: trx })
-      .where('code', normalized.budgetUnitCode)
-      .first()
-    if (existing) {
-      existing.name = normalized.budgetUnitName
-      await existing.save()
-      return existing
-    }
-
-    return BudgetUnit.create(
+    return budgetUnitRepository.findOrCreateByCode(
       {
         code: normalized.budgetUnitCode,
         name: normalized.budgetUnitName,
       },
-      { client: trx }
+      trx
     )
   }
 
@@ -983,19 +857,14 @@ class SiopImportService {
       [normalized.cnjNumber, normalized.debtorName, normalized.faceValue].filter(Boolean).length *
       30
     const finalScore = Math.min(100, dataQualityScore + 10)
-    const score = await AssetScore.create(
+    const score = await assetScoreRepository.createSiopScore(
+      tenantId,
       {
-        tenantId,
         assetId: asset.id,
-        scoreVersion: 'siop-v1',
         dataQualityScore,
         maturityScore: normalized.exerciseYear
           ? Math.min(100, normalized.exerciseYear - 2000)
           : null,
-        liquidityScore: null,
-        legalSignalScore: null,
-        economicScore: null,
-        riskScore: null,
         finalScore,
         explanation: {
           source: 'siop',
@@ -1004,7 +873,7 @@ class SiopImportService {
           hasFaceValue: Boolean(normalized.faceValue),
         },
       },
-      { client: trx }
+      trx
     )
 
     asset.currentScore = finalScore
