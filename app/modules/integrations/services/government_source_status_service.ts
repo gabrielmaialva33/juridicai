@@ -1,7 +1,7 @@
-import db from '@adonisjs/lucid/services/db'
-import RadarJobRun from '#modules/admin/models/radar_job_run'
-import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
-import SourceDataset from '#modules/integrations/models/source_dataset'
+import radarJobRunRepository from '#modules/admin/repositories/radar_job_run_repository'
+import governmentSourceTargetRepository from '#modules/integrations/repositories/government_source_target_repository'
+import sourceDatasetRepository from '#modules/integrations/repositories/source_dataset_repository'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 
 export type GovernmentSourceStatus = {
   id: string
@@ -34,28 +34,10 @@ export type GovernmentSourceStatus = {
 class GovernmentSourceStatusService {
   async listSources(tenantId: string): Promise<GovernmentSourceStatus[]> {
     const [targets, datasets, sourceRecordCounts, lastRuns] = await Promise.all([
-      GovernmentSourceTarget.query()
-        .preload('sourceDataset')
-        .where('is_active', true)
-        .orderBy('priority', 'asc')
-        .orderBy('name', 'asc'),
-      SourceDataset.query()
-        .where('is_active', true)
-        .orderBy('priority', 'asc')
-        .orderBy('name', 'asc'),
-      db
-        .from('source_records')
-        .select('source_dataset_id')
-        .count('* as records_count')
-        .max('collected_at as last_collected_at')
-        .where('tenant_id', tenantId)
-        .whereNotNull('source_dataset_id')
-        .groupBy('source_dataset_id'),
-      RadarJobRun.query()
-        .select('job_name')
-        .max('created_at as last_created_at')
-        .where('tenant_id', tenantId)
-        .groupBy('job_name'),
+      governmentSourceTargetRepository.listActiveWithDataset(),
+      sourceDatasetRepository.listActive(),
+      sourceRecordRepository.countsByDataset(tenantId),
+      radarJobRunRepository.latestRunByJob(tenantId),
     ])
     const countsByDataset = new Map(
       sourceRecordCounts.map((row) => [

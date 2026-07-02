@@ -9,7 +9,8 @@ import AssetEvent from '#modules/precatorios/models/asset_event'
 import AssetValuation from '#modules/precatorios/models/asset_valuation'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
@@ -54,7 +55,7 @@ type ImportContext = {
 
 class Trf5PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: Trf5PrecatorioImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const extraction = await tribunalDocumentExtractionService.extractSourceRecord(
       sourceRecord.id,
       {

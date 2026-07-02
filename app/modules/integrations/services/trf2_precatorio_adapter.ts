@@ -3,7 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
@@ -120,29 +121,7 @@ class Trf2PrecatorioAdapter {
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
       'trf2-chronological-precatorios'
     )
-    const existing = await SourceRecord.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: link.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: response.headers.get('content-type'),
-        fileSizeBytes: buffer.byteLength,
-        rawData: metadata,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false, contents: decodeCsv(buffer) }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: link.url,
@@ -155,7 +134,11 @@ class Trf2PrecatorioAdapter {
       rawData: metadata,
     })
 
-    return { sourceRecord, created: true, contents: decodeCsv(buffer) }
+    return {
+      sourceRecord,
+      created: sourceRecord.$extras.created === true,
+      contents: decodeCsv(buffer),
+    }
   }
 }
 

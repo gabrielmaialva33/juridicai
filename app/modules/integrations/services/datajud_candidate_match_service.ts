@@ -3,9 +3,8 @@ import dataJudPublicApiAdapter, {
   type DataJudHit,
 } from '#modules/integrations/services/datajud_public_api_adapter'
 import { inferDataJudCourtAliases } from '#modules/integrations/services/datajud_asset_enrichment_service'
-import ProcessMatchCandidate, {
-  type ProcessMatchCandidateStatus,
-} from '#modules/integrations/models/process_match_candidate'
+import type { ProcessMatchCandidateStatus } from '#modules/integrations/models/process_match_candidate'
+import processMatchCandidateRepository from '#modules/integrations/repositories/process_match_candidate_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import type { JsonRecord, SourceType } from '#shared/types/model_enums'
 
@@ -177,13 +176,7 @@ class DataJudCandidateMatchService {
   }
 
   private async persistMatch(asset: CandidateAssetRow, match: DataJudCandidateMatch) {
-    const existing = await ProcessMatchCandidate.query()
-      .where('tenant_id', asset.tenant_id)
-      .where('asset_id', asset.id)
-      .where('candidate_cnj', match.candidateCnj)
-      .where('candidate_datajud_id', match.candidateDatajudId)
-      .first()
-    const payload = {
+    return processMatchCandidateRepository.upsertMatch({
       tenantId: asset.tenant_id,
       assetId: asset.id,
       sourceRecordId: asset.source_record_id,
@@ -196,15 +189,7 @@ class DataJudCandidateMatchService {
       status: classifyStatus(match.score),
       signals: match.signals,
       rawData: match.rawData,
-    }
-
-    if (existing) {
-      existing.merge(payload)
-      await existing.save()
-      return existing
-    }
-
-    return ProcessMatchCandidate.create(payload)
+    })
   }
 }
 

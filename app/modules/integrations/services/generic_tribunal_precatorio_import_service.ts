@@ -12,7 +12,8 @@ import type {
   TribunalExtractedRow,
 } from '#modules/integrations/services/tribunal_document_extraction_service'
 import tribunalDocumentExtractionService from '#modules/integrations/services/tribunal_document_extraction_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
@@ -62,7 +63,7 @@ class GenericTribunalPrecatorioImportService {
     sourceRecordId: string,
     options: GenericTribunalPrecatorioImportOptions = {}
   ) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const extraction = await tribunalDocumentExtractionService.extractSourceRecord(
       sourceRecord.id,
       {

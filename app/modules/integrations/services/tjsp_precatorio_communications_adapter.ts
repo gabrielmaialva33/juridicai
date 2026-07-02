@@ -3,7 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { extname } from 'node:path'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 
@@ -14,10 +15,7 @@ export const TJSP_PRECATORIO_LIST_URL = 'https://www.tjsp.jus.br/Precatorios/Pre
 export const TJSP_PRECATORIO_DATASET_KEY = 'tjsp-precatorio-communications'
 
 export type TjspPrecatorioCommunicationCategory =
-  | 'state_entities'
-  | 'municipal_entities'
-  | 'inss'
-  | 'statistics'
+  'state_entities' | 'municipal_entities' | 'inss' | 'statistics'
 
 export type TjspPrecatorioCommunicationLink = {
   category: TjspPrecatorioCommunicationCategory
@@ -206,26 +204,7 @@ class TjspPrecatorioCommunicationsAdapter {
       .digest('hex')
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(TJSP_PRECATORIO_DATASET_KEY)
     const rawData = buildMetadata(input.link, input.detail)
-    const existing = await SourceRecord.query()
-      .where('tenant_id', input.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: input.link.url,
-        mimeType: input.mimeType,
-        rawData,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId: input.tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(input.tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: input.link.url,
@@ -235,7 +214,7 @@ class TjspPrecatorioCommunicationsAdapter {
       rawData,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 
   private async upsertDocumentSourceRecord(input: {
@@ -251,32 +230,11 @@ class TjspPrecatorioCommunicationsAdapter {
     const directory = app.makePath('storage', 'tribunal', 'tjsp', input.tenantId)
     const filePath = app.makePath('storage', 'tribunal', 'tjsp', input.tenantId, filename)
     const rawData = buildDocumentMetadata(input.link, input.document)
-    const existing = await SourceRecord.query()
-      .where('tenant_id', input.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
 
     await mkdir(directory, { recursive: true })
     await writeFile(filePath, input.buffer)
 
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: input.document.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: input.mimeType,
-        fileSizeBytes: input.buffer.byteLength,
-        rawData,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId: input.tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(input.tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: input.document.url,
@@ -289,7 +247,7 @@ class TjspPrecatorioCommunicationsAdapter {
       rawData,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 

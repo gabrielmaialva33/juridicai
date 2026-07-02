@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
-import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import type GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import governmentSourceTargetRepository from '#modules/integrations/repositories/government_source_target_repository'
+import sourceDatasetRepository from '#modules/integrations/repositories/source_dataset_repository'
 import coverageRunService from '#modules/integrations/services/coverage_run_service'
 import dataJudNationalPrecatorioSyncService from '#modules/integrations/services/datajud_national_precatorio_sync_service'
 import djenPublicationSyncService from '#modules/integrations/services/djen_publication_sync_service'
@@ -36,7 +38,6 @@ import trf5PrecatorioAdapter, {
 import trf5PrecatorioImportService from '#modules/integrations/services/trf5_precatorio_import_service'
 import trf6PrecatorioAdapter from '#modules/integrations/services/trf6_precatorio_adapter'
 import trf6PrecatorioImportService from '#modules/integrations/services/trf6_precatorio_import_service'
-import SourceDataset from '#modules/integrations/models/source_dataset'
 import type { TjspPrecatorioCommunicationCategory } from '#modules/integrations/services/tjsp_precatorio_communications_adapter'
 import type {
   GovernmentSourceTargetStatus,
@@ -163,44 +164,16 @@ class TribunalSourceSyncService {
   }
 
   private async findTargets(options: TribunalSourceSyncOptions) {
-    const query = GovernmentSourceTarget.query().where('is_active', true).preload('sourceDataset')
-
-    if (options.targetKeys?.length) {
-      query.whereIn('key', normalizeList(options.targetKeys))
-    }
-
-    if (options.courtAliases?.length) {
-      query.whereIn('court_alias', normalizeList(options.courtAliases))
-    }
-
-    if (options.adapterKeys?.length) {
-      query.whereIn('adapter_key', normalizeList(options.adapterKeys))
-    }
-
-    if (options.statuses?.length) {
-      query.whereIn('status', options.statuses)
-    }
-
-    if (options.sourceDatasetKeys?.length) {
-      const datasetIds = await this.sourceDatasetIds(options.sourceDatasetKeys)
-      query.whereIn('source_dataset_id', datasetIds)
-    }
-
-    query.orderByRaw(`
-      case priority
-        when 'primary' then 1
-        when 'enrichment' then 2
-        else 3
-      end
-    `)
-    query.orderBy('court_alias', 'asc')
-    query.orderBy('key', 'asc')
-
-    if (options.limit && options.limit > 0) {
-      query.limit(Math.trunc(options.limit))
-    }
-
-    const targets = await query.exec()
+    const targets = await governmentSourceTargetRepository.listForSync({
+      targetKeys: options.targetKeys ? normalizeList(options.targetKeys) : null,
+      courtAliases: options.courtAliases ? normalizeList(options.courtAliases) : null,
+      adapterKeys: options.adapterKeys ? normalizeList(options.adapterKeys) : null,
+      statuses: options.statuses,
+      sourceDatasetIds: options.sourceDatasetKeys
+        ? await this.sourceDatasetIds(options.sourceDatasetKeys)
+        : null,
+      limit: options.limit,
+    })
 
     return options.targetKeys?.length
       ? sortTargetsByTargetKey(targets, options.targetKeys)
@@ -208,8 +181,7 @@ class TribunalSourceSyncService {
   }
 
   private async sourceDatasetIds(keys: string[]) {
-    const datasets = await SourceDataset.query().whereIn('key', normalizeList(keys)).select('id')
-    return datasets.map((dataset) => dataset.id)
+    return sourceDatasetRepository.idsByKeys(normalizeList(keys))
   }
 
   private async syncTarget(target: GovernmentSourceTarget, options: TribunalSourceSyncOptions) {

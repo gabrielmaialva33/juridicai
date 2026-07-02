@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
-import ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
-import AssetEvent from '#modules/precatorios/models/asset_event'
-import JudicialProcess from '#modules/precatorios/models/judicial_process'
+import type ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
+import processMatchCandidateRepository from '#modules/integrations/repositories/process_match_candidate_repository'
+import assetEventRepository from '#modules/precatorios/repositories/asset_event_repository'
+import judicialProcessRepository from '#modules/precatorios/repositories/judicial_process_repository'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
@@ -51,12 +52,7 @@ class DataJudCandidateReviewService {
       await this.createReviewEvent(candidate, 'datajud_candidate_accepted', trx, options)
       await this.writeAuditLog(candidate, 'datajud_candidate_accepted', trx, options)
 
-      await ProcessMatchCandidate.query({ client: trx })
-        .where('tenant_id', candidate.tenantId)
-        .where('asset_id', candidate.assetId)
-        .whereNot('id', candidate.id)
-        .whereIn('status', ['candidate', 'ambiguous'])
-        .update({ status: 'rejected', updated_at: DateTime.now().toSQL() })
+      await processMatchCandidateRepository.rejectOpenSiblings(candidate, trx)
 
       return { candidate, judicialProcess }
     })
@@ -95,13 +91,7 @@ class DataJudCandidateReviewService {
     tenantId: string | undefined,
     trx: TransactionClientContract
   ) {
-    const query = ProcessMatchCandidate.query({ client: trx }).where('id', candidateId).forUpdate()
-
-    if (tenantId) {
-      query.where('tenant_id', tenantId)
-    }
-
-    return query.firstOrFail()
+    return processMatchCandidateRepository.findForReview(candidateId, tenantId, trx)
   }
 
   private async upsertJudicialProcess(
@@ -120,35 +110,23 @@ class DataJudCandidateReviewService {
       code: numberOrNull(readNested(source, ['classe', 'codigo'])),
       name: stringOrNull(readNested(source, ['classe', 'nome'])),
     })
-    const existing = await JudicialProcess.query({ client: trx })
-      .where('tenant_id', candidate.tenantId)
-      .where('cnj_number', candidate.candidateCnj)
-      .first()
-    const payload = {
-      tenantId: candidate.tenantId,
-      assetId: candidate.assetId,
-      sourceRecordId: null,
-      source: 'datajud' as const,
-      cnjNumber: candidate.candidateCnj,
-      courtId: court?.id ?? null,
-      classId: judicialClass?.id ?? null,
-      courtAlias: candidate.courtAlias,
-      filedAt: parseDataJudDate(source.dataAjuizamento),
-      rawData: {
-        ...candidate.rawData,
-        acceptedFromCandidateId: candidate.id,
-        acceptedAt: DateTime.now().toISO(),
+    return judicialProcessRepository.upsertDataJudAccepted(
+      candidate.tenantId,
+      {
+        assetId: candidate.assetId,
+        cnjNumber: candidate.candidateCnj,
+        courtId: court?.id ?? null,
+        classId: judicialClass?.id ?? null,
+        courtAlias: candidate.courtAlias,
+        filedAt: parseDataJudDate(source.dataAjuizamento),
+        rawData: {
+          ...candidate.rawData,
+          acceptedFromCandidateId: candidate.id,
+          acceptedAt: DateTime.now().toISO(),
+        },
       },
-    }
-
-    if (existing) {
-      existing.useTransaction(trx)
-      existing.merge(payload)
-      await existing.save()
-      return existing
-    }
-
-    return JudicialProcess.create(payload, { client: trx })
+      trx
+    )
   }
 
   private async createReviewEvent(
@@ -161,20 +139,9 @@ class DataJudCandidateReviewService {
     context: DataJudCandidateReviewContext
   ) {
     const idempotencyKey = `${eventType}:${candidate.id}`
-    const existing = await AssetEvent.query({ client: trx })
-      .where('tenant_id', candidate.tenantId)
-      .where('asset_id', candidate.assetId)
-      .where('event_type', eventType)
-      .where('idempotency_key', idempotencyKey)
-      .first()
-
-    if (existing) {
-      return existing
-    }
-
-    return AssetEvent.create(
+    return assetEventRepository.upsertEvent(
+      candidate.tenantId,
       {
-        tenantId: candidate.tenantId,
         assetId: candidate.assetId,
         eventType,
         eventDate: DateTime.now(),
@@ -191,7 +158,7 @@ class DataJudCandidateReviewService {
         },
         idempotencyKey,
       },
-      { client: trx }
+      trx
     )
   }
 

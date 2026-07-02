@@ -3,7 +3,8 @@ import { DateTime } from 'luxon'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import Publication from '#modules/precatorios/models/publication'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import publicationSignalClassifierService from '#modules/integrations/services/publication_signal_classifier_service'
@@ -220,26 +221,8 @@ class DjenPublicationAdapter {
       endpoint,
       item,
     }
-    const existing = await SourceRecord.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'djen')
-      .where('source_checksum', checksum)
-      .first()
 
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: endpoint,
-        collectedAt: DateTime.utc(),
-        rawData,
-      })
-      await existing.save()
-      existing.$extras.created = false
-      return existing
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId,
+    return sourceRecordRepository.upsertByChecksum(tenantId, {
       sourceDatasetId,
       source: 'djen',
       sourceUrl: endpoint,
@@ -247,8 +230,6 @@ class DjenPublicationAdapter {
       collectedAt: DateTime.utc(),
       rawData,
     })
-    sourceRecord.$extras.created = true
-    return sourceRecord
   }
 
   private async upsertJudicialProcess(

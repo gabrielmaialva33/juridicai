@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import ExcelJS from 'exceljs'
 import * as XLSX from 'xlsx'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { parseTjmaPrecatorioPdfText } from '#modules/integrations/services/tjma_precatorio_pdf_parser'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
@@ -55,7 +56,7 @@ class TribunalDocumentExtractionService {
     sourceRecordId: string,
     options: TribunalDocumentExtractionOptions = {}
   ): Promise<TribunalDocumentExtractionResult> {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const result = await this.extract(sourceRecord, options)
 
     if (options.annotateSourceRecord) {

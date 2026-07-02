@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
 import { DateTime } from 'luxon'
-import AssetEvent from '#modules/precatorios/models/asset_event'
-import JudicialProcessMovement from '#modules/precatorios/models/judicial_process_movement'
-import JudicialProcessSignal, {
-  type JudicialSignalPolarity,
-} from '#modules/precatorios/models/judicial_process_signal'
+import type JudicialProcessMovement from '#modules/precatorios/models/judicial_process_movement'
+import type JudicialProcessSignal from '#modules/precatorios/models/judicial_process_signal'
+import { type JudicialSignalPolarity } from '#modules/precatorios/models/judicial_process_signal'
+import assetEventRepository from '#modules/precatorios/repositories/asset_event_repository'
+import judicialProcessMovementRepository from '#modules/precatorios/repositories/judicial_process_movement_repository'
+import judicialProcessSignalRepository from '#modules/precatorios/repositories/judicial_process_signal_repository'
 import assetSignalScoreService from '#modules/precatorios/services/asset_signal_score_service'
 import { classifyLegalSignalText } from '#modules/integrations/services/legal_signal_rules'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -71,19 +72,10 @@ class DataJudLegalSignalClassifierService {
   }
 
   private selectMovements(options: DataJudLegalSignalClassifierOptions) {
-    const query = JudicialProcessMovement.query()
-      .where('tenant_id', options.tenantId)
-      .preload('process')
-      .preload('complements')
-      .orderBy('occurred_at', 'desc')
-      .orderBy('created_at', 'desc')
-      .limit(normalizeLimit(options.limit))
-
-    if (options.processId) {
-      query.where('process_id', options.processId)
-    }
-
-    return query
+    return judicialProcessMovementRepository.listForSignalClassification(options.tenantId, {
+      limit: normalizeLimit(options.limit),
+      processId: options.processId,
+    })
   }
 
   private async upsertProcessSignal(
@@ -93,53 +85,36 @@ class DataJudLegalSignalClassifierService {
   ) {
     const idempotencyKey = buildSignalIdempotencyKey(movement, match.code)
 
-    return JudicialProcessSignal.updateOrCreate(
-      {
-        tenantId,
-        idempotencyKey,
-      },
-      {
-        tenantId,
-        processId: movement.processId,
-        movementId: movement.id,
-        signalCode: match.code,
-        polarity: match.polarity,
-        confidence: match.confidence,
-        detectedAt: movement.occurredAt ?? DateTime.utc(),
-        source: 'datajud',
-        evidence: match.evidence,
-        idempotencyKey,
-      }
-    )
+    return judicialProcessSignalRepository.upsertSignal(tenantId, {
+      processId: movement.processId,
+      movementId: movement.id,
+      signalCode: match.code,
+      polarity: match.polarity,
+      confidence: match.confidence,
+      detectedAt: movement.occurredAt ?? DateTime.utc(),
+      evidence: match.evidence,
+      idempotencyKey,
+    })
   }
 
   private async upsertAssetEvent(assetId: string, signal: JudicialProcessSignal) {
     const idempotencyKey = `datajud-signal:${signal.idempotencyKey}`
 
-    return AssetEvent.updateOrCreate(
-      {
-        tenantId: signal.tenantId,
-        assetId,
-        eventType: signal.signalCode,
-        idempotencyKey,
+    return assetEventRepository.upsertEvent(signal.tenantId, {
+      assetId,
+      eventType: signal.signalCode,
+      eventDate: signal.detectedAt,
+      source: 'datajud',
+      payload: {
+        processSignalId: signal.id,
+        processId: signal.processId,
+        movementId: signal.movementId,
+        polarity: signal.polarity,
+        confidence: signal.confidence,
+        evidence: signal.evidence,
       },
-      {
-        tenantId: signal.tenantId,
-        assetId,
-        eventType: signal.signalCode,
-        eventDate: signal.detectedAt,
-        source: 'datajud',
-        payload: {
-          processSignalId: signal.id,
-          processId: signal.processId,
-          movementId: signal.movementId,
-          polarity: signal.polarity,
-          confidence: signal.confidence,
-          evidence: signal.evidence,
-        },
-        idempotencyKey,
-      }
-    )
+      idempotencyKey,
+    })
   }
 }
 

@@ -15,7 +15,8 @@ import sourceEvidenceService from '#modules/integrations/services/source_evidenc
 import tribunalDocumentExtractionService, {
   type TribunalExtractedRow,
 } from '#modules/integrations/services/tribunal_document_extraction_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import { parseBrazilianDecimal, parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
@@ -90,7 +91,7 @@ type Trf3BudgetExecutionRow = {
 
 class Trf3PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: Trf3PrecatorioImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const extraction = await tribunalDocumentExtractionService.extractSourceRecord(
       sourceRecord.id,
       {

@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon'
-import db from '@adonisjs/lucid/services/db'
-import CoverageRun from '#modules/integrations/models/coverage_run'
-import GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import type CoverageRun from '#modules/integrations/models/coverage_run'
+import type GovernmentSourceTarget from '#modules/integrations/models/government_source_target'
+import coverageRunRepository from '#modules/integrations/repositories/coverage_run_repository'
+import governmentSourceTargetRepository from '#modules/integrations/repositories/government_source_target_repository'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceDataQualityService, {
   type SourceDataQualitySummary,
 } from '#modules/integrations/services/source_data_quality_service'
@@ -118,22 +120,9 @@ export type CoverageGap = {
 class GovernmentCoverageMatrixService {
   async build(tenantId: string): Promise<GovernmentCoverageMatrix> {
     const [targets, sourceRecordCounts, recentCoverageRuns] = await Promise.all([
-      GovernmentSourceTarget.query()
-        .where('is_active', true)
-        .orderBy('priority', 'asc')
-        .orderBy('name', 'asc'),
-      db
-        .from('source_records')
-        .select('source_dataset_id')
-        .count('* as records_count')
-        .where('tenant_id', tenantId)
-        .whereNotNull('source_dataset_id')
-        .groupBy('source_dataset_id'),
-      CoverageRun.query()
-        .where('tenant_id', tenantId)
-        .whereNotNull('metrics')
-        .orderBy('started_at', 'desc')
-        .limit(500),
+      governmentSourceTargetRepository.listActive(),
+      sourceRecordRepository.countsByDataset(tenantId),
+      coverageRunRepository.listRecentWithMetrics(tenantId, 500),
     ])
     const countsByDataset = new Map(
       sourceRecordCounts.map((row) => [

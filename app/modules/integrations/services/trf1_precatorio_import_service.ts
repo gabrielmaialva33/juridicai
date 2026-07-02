@@ -13,7 +13,8 @@ import sourceEvidenceService from '#modules/integrations/services/source_evidenc
 import tribunalDocumentExtractionService, {
   type TribunalExtractedRow,
 } from '#modules/integrations/services/tribunal_document_extraction_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
@@ -61,7 +62,7 @@ type ImportContext = {
 
 class Trf1PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: Trf1PrecatorioImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const extraction = await tribunalDocumentExtractionService.extractSourceRecord(
       sourceRecord.id,
       {
@@ -443,10 +444,7 @@ class Trf1PrecatorioImportService {
     sourceRecord: SourceRecord,
     assetId: string,
     identifierType:
-      | 'precatorio_number'
-      | 'requisition_number'
-      | 'origin_process_number'
-      | 'cnj_number',
+      'precatorio_number' | 'requisition_number' | 'origin_process_number' | 'cnj_number',
     identifierValue: string | null,
     isPrimary: boolean,
     row: Trf1ImportRow,

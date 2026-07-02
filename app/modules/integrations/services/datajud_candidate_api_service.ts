@@ -1,6 +1,6 @@
-import ProcessMatchCandidate, {
-  type ProcessMatchCandidateStatus,
-} from '#modules/integrations/models/process_match_candidate'
+import type ProcessMatchCandidate from '#modules/integrations/models/process_match_candidate'
+import { type ProcessMatchCandidateStatus } from '#modules/integrations/models/process_match_candidate'
+import processMatchCandidateRepository from '#modules/integrations/repositories/process_match_candidate_repository'
 import type PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import type SourceRecord from '#modules/siop/models/source_record'
 import { assetValueSnapshot } from '#modules/precatorios/helpers/asset_values'
@@ -24,60 +24,11 @@ export type DataJudCandidateListFilters = {
 
 class DataJudCandidateApiService {
   async list(tenantId: string, filters: DataJudCandidateListFilters) {
-    const query = ProcessMatchCandidate.query()
-      .where('tenant_id', tenantId)
-      .preload('asset', (assetQuery) =>
-        assetQuery.preload('valuations', (valuationQuery) =>
-          valuationQuery.orderBy('computed_at', 'desc').limit(1)
-        )
-      )
-      .preload('sourceRecord')
-      .orderBy(filters.sortBy, filters.sortDirection)
-
-    if (filters.assetId) {
-      query.where('asset_id', filters.assetId)
-    }
-
-    if (filters.source) {
-      query.where('source', filters.source)
-    }
-
-    if (filters.status) {
-      query.where('status', filters.status)
-    }
-
-    if (filters.minScore !== null && filters.minScore !== undefined) {
-      query.where('score', '>=', filters.minScore)
-    }
-
-    if (filters.maxScore !== null && filters.maxScore !== undefined) {
-      query.where('score', '<=', filters.maxScore)
-    }
-
-    if (filters.q) {
-      const pattern = `%${filters.q}%`
-      query.where((builder) => {
-        builder
-          .whereILike('candidate_cnj', pattern)
-          .orWhereILike('candidate_datajud_id', pattern)
-          .orWhereILike('court_alias', pattern)
-      })
-    }
-
-    return query.paginate(filters.page, filters.limit)
+    return processMatchCandidateRepository.listForApi(tenantId, filters)
   }
 
   async show(tenantId: string, candidateId: string) {
-    return ProcessMatchCandidate.query()
-      .where('tenant_id', tenantId)
-      .where('id', candidateId)
-      .preload('asset', (assetQuery) =>
-        assetQuery.preload('valuations', (valuationQuery) =>
-          valuationQuery.orderBy('computed_at', 'desc').limit(1)
-        )
-      )
-      .preload('sourceRecord')
-      .firstOrFail()
+    return processMatchCandidateRepository.findForApi(tenantId, candidateId)
   }
 }
 

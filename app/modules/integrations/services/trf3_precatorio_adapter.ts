@@ -4,7 +4,8 @@ import { basename } from 'node:path'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import type { JsonRecord } from '#shared/types/model_enums'
 
 export const TRF3_CNJ_102_PRECATORIO_URL =
@@ -102,29 +103,7 @@ class Trf3PrecatorioAdapter {
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
       'trf3-cnj-102-precatorios-rpv'
     )
-    const existing = await SourceRecord.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: link.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: response.headers.get('content-type') ?? mimeTypeFor(link.format),
-        fileSizeBytes: buffer.byteLength,
-        rawData: metadata,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: link.url,
@@ -137,7 +116,7 @@ class Trf3PrecatorioAdapter {
       rawData: metadata,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 

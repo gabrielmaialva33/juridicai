@@ -9,7 +9,8 @@ import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import Publication from '#modules/precatorios/models/publication'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import { parseTrf2ChronologicalCsv, type Trf2PrecatorioRow } from './trf2_precatorio_adapter.js'
 import type { AssetNature, JsonRecord } from '#shared/types/model_enums'
@@ -42,7 +43,7 @@ type GroupedPrecatorio = {
 
 class Trf2PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     if (!sourceRecord.sourceFilePath) {
       throw new Error('TRF2 source record file is missing.')
     }

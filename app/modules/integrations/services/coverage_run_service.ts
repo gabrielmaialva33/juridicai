@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
-import CoverageRun from '#modules/integrations/models/coverage_run'
-import SourceDataset from '#modules/integrations/models/source_dataset'
+import type CoverageRun from '#modules/integrations/models/coverage_run'
+import coverageRunRepository from '#modules/integrations/repositories/coverage_run_repository'
+import sourceDatasetRepository from '#modules/integrations/repositories/source_dataset_repository'
 import type { JobRunOrigin, JobRunStatus, JsonRecord } from '#shared/types/model_enums'
 
 type StartCoverageRunInput = {
@@ -26,22 +27,12 @@ type FinishCoverageRunInput = {
 
 class CoverageRunService {
   async start(input: StartCoverageRunInput) {
-    return CoverageRun.create({
-      tenantId: input.tenantId,
+    return coverageRunRepository.start(input.tenantId, {
       sourceDatasetId: await this.resolveSourceDatasetId(input),
       sourceRecordId: input.sourceRecordId ?? null,
-      status: 'running',
       origin: input.origin ?? 'system',
       scope: input.scope ?? null,
       startedAt: DateTime.utc(),
-      discoveredCount: 0,
-      sourceRecordsCount: 0,
-      createdAssetsCount: 0,
-      linkedAssetsCount: 0,
-      enrichedAssetsCount: 0,
-      errorCount: 0,
-      metrics: null,
-      errorMessage: null,
     })
   }
 
@@ -51,7 +42,9 @@ class CoverageRunService {
     input: FinishCoverageRunInput = {}
   ) {
     const run =
-      typeof coverageRun === 'string' ? await CoverageRun.findOrFail(coverageRun) : coverageRun
+      typeof coverageRun === 'string'
+        ? await coverageRunRepository.findAnyByIdOrFail(coverageRun)
+        : coverageRun
     const errorMessage = this.serializeErrorMessage(input.error)
 
     run.merge({
@@ -82,8 +75,7 @@ class CoverageRunService {
       return null
     }
 
-    const dataset = await SourceDataset.query().where('key', input.sourceDatasetKey).firstOrFail()
-    return dataset.id
+    return sourceDatasetRepository.findIdByKeyOrFail(input.sourceDatasetKey)
   }
 
   private serializeErrorMessage(error: unknown) {

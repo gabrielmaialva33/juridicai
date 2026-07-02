@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import { parseTrf2ChronologicalCsv } from '#modules/integrations/services/trf2_precatorio_adapter'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -11,9 +12,7 @@ export const TRF4_CHRONOLOGICAL_QUEUE_URL =
   'https://www.trf4.jus.br/trf4/controlador.php?acao=consulta_precatorios_ordem_cronologica_externa'
 
 export type Trf4PrecatorioQueueKind =
-  | 'federal_budget'
-  | 'extra_budget_general'
-  | 'extra_budget_special'
+  'federal_budget' | 'extra_budget_general' | 'extra_budget_special'
 
 export type Trf4PrecatorioLink = {
   kind: Trf4PrecatorioQueueKind
@@ -150,29 +149,7 @@ class Trf4PrecatorioAdapter {
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey(
       'trf4-chronological-precatorios'
     )
-    const existing = await SourceRecord.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: link.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: response.headers.get('content-type') ?? 'text/csv',
-        fileSizeBytes: buffer.byteLength,
-        rawData: metadata,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false, contents: buffer }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: link.url,
@@ -185,7 +162,7 @@ class Trf4PrecatorioAdapter {
       rawData: metadata,
     })
 
-    return { sourceRecord, created: true, contents: buffer }
+    return { sourceRecord, created: sourceRecord.$extras.created === true, contents: buffer }
   }
 }
 

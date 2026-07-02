@@ -10,7 +10,8 @@ import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import type { AssetNature, DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
@@ -66,7 +67,7 @@ type ImportContext = {
 
 class TjesLupPrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: TjesLupPrecatorioImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const payload = await readPayload(sourceRecord)
     const debtor = debtorFromRawData(sourceRecord.rawData)
     const importRows = payload.results

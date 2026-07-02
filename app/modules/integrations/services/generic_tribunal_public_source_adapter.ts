@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 
@@ -171,32 +171,10 @@ class GenericTribunalPublicSourceAdapter {
       filename
     )
     const rawData = buildRawData(input.target, input.link, contentChecksum)
-    const existing = await SourceRecord.query()
-      .where('tenant_id', input.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
     await mkdir(directory, { recursive: true })
     await writeFile(filePath, input.buffer)
 
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: input.link.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: input.contentType ?? mimeTypeFor(input.link.format),
-        fileSizeBytes: input.buffer.byteLength,
-        rawData,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId: input.tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(input.tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: input.link.url,
@@ -209,7 +187,7 @@ class GenericTribunalPublicSourceAdapter {
       rawData,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 

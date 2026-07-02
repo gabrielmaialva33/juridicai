@@ -5,7 +5,8 @@ import DebtorPaymentStat from '#modules/debtors/models/debtor_payment_stat'
 import Debtor from '#modules/debtors/models/debtor'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import tribunalDocumentExtractionService from '#modules/integrations/services/tribunal_document_extraction_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeDebtorName } from '#modules/siop/parsers/debtor_normalizer'
 import { parseBrazilianMoney } from '#modules/siop/parsers/value_parser'
 import type { DebtorType, JsonRecord, PaymentRegime } from '#shared/types/model_enums'
@@ -46,7 +47,7 @@ export type TjrjAnnualMapRow = {
 
 class TjrjAnnualMapImportService {
   async importSourceRecord(sourceRecordId: string, options: TjrjAnnualMapImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     const extraction = await tribunalDocumentExtractionService.extractSourceRecord(
       sourceRecord.id,
       {

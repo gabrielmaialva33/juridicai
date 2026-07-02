@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
-import AssetEvent from '#modules/precatorios/models/asset_event'
-import JudicialProcess from '#modules/precatorios/models/judicial_process'
-import JudicialProcessSignal from '#modules/precatorios/models/judicial_process_signal'
-import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
+import assetEventRepository from '#modules/precatorios/repositories/asset_event_repository'
+import judicialProcessRepository from '#modules/precatorios/repositories/judicial_process_repository'
+import judicialProcessSignalRepository from '#modules/precatorios/repositories/judicial_process_signal_repository'
+import precatorioRepository from '#modules/precatorios/repositories/precatorio_repository'
 import assetSignalScoreService from '#modules/precatorios/services/asset_signal_score_service'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 
@@ -49,11 +49,7 @@ class DataJudProcessAssetLinkService {
         continue
       }
 
-      const assets = await PrecatorioAsset.query()
-        .where('tenant_id', options.tenantId)
-        .where('cnj_number', cnjNumber)
-        .whereNull('deleted_at')
-        .limit(2)
+      const assets = await precatorioRepository.listByCnj(options.tenantId, cnjNumber, 2)
 
       if (assets.length === 0) {
         metrics.missingAsset += 1
@@ -66,8 +62,7 @@ class DataJudProcessAssetLinkService {
       }
 
       const [asset] = assets
-      process.assetId = asset.id
-      await process.save()
+      await judicialProcessRepository.setAsset(process, asset.id)
       metrics.linked += 1
 
       if (options.projectSignals !== false) {
@@ -91,50 +86,34 @@ class DataJudProcessAssetLinkService {
   }
 
   private findUnlinkedProcesses(options: DataJudProcessAssetLinkOptions) {
-    return JudicialProcess.query()
-      .where('tenant_id', options.tenantId)
-      .where('source', 'datajud')
-      .whereNull('asset_id')
-      .whereNotNull('cnj_number')
-      .whereNull('deleted_at')
-      .orderBy('created_at', 'asc')
-      .limit(normalizeLimit(options.limit))
+    return judicialProcessRepository.listUnlinkedDataJud(
+      options.tenantId,
+      normalizeLimit(options.limit)
+    )
   }
 
   private async projectProcessSignals(tenantId: string, assetId: string, processId: string) {
-    const signals = await JudicialProcessSignal.query()
-      .where('tenant_id', tenantId)
-      .where('process_id', processId)
-      .orderBy('detected_at', 'desc')
+    const signals = await judicialProcessSignalRepository.listByProcess(tenantId, processId)
     let projected = 0
 
     for (const signal of signals) {
       const idempotencyKey = `datajud-signal:${signal.idempotencyKey}`
-      await AssetEvent.updateOrCreate(
-        {
-          tenantId,
-          assetId,
-          eventType: signal.signalCode,
-          idempotencyKey,
+      await assetEventRepository.upsertEvent(tenantId, {
+        assetId,
+        eventType: signal.signalCode,
+        eventDate: signal.detectedAt ?? DateTime.utc(),
+        source: 'datajud',
+        payload: {
+          processSignalId: signal.id,
+          processId: signal.processId,
+          movementId: signal.movementId,
+          polarity: signal.polarity,
+          confidence: signal.confidence,
+          evidence: signal.evidence,
+          projectedBy: 'datajud_exact_cnj_link',
         },
-        {
-          tenantId,
-          assetId,
-          eventType: signal.signalCode,
-          eventDate: signal.detectedAt ?? DateTime.utc(),
-          source: 'datajud',
-          payload: {
-            processSignalId: signal.id,
-            processId: signal.processId,
-            movementId: signal.movementId,
-            polarity: signal.polarity,
-            confidence: signal.confidence,
-            evidence: signal.evidence,
-            projectedBy: 'datajud_exact_cnj_link',
-          },
-          idempotencyKey,
-        }
-      )
+        idempotencyKey,
+      })
       projected += 1
     }
 

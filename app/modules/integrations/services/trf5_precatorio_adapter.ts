@@ -3,7 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import type { JsonRecord } from '#shared/types/model_enums'
 
 export const TRF5_PRECATORIO_MAP_URL = 'https://rpvprecatorio.trf5.jus.br/mapa'
@@ -103,29 +104,7 @@ class Trf5PrecatorioAdapter {
     await writeFile(filePath, buffer)
 
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('trf5-precatorio-reports')
-    const existing = await SourceRecord.query()
-      .where('tenant_id', tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: link.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: response.headers.get('content-type') ?? 'application/pdf',
-        fileSizeBytes: buffer.byteLength,
-        rawData: metadata,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: link.url,
@@ -138,7 +117,7 @@ class Trf5PrecatorioAdapter {
       rawData: metadata,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 

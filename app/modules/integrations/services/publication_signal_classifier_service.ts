@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
-import AssetEvent from '#modules/precatorios/models/asset_event'
-import Publication from '#modules/precatorios/models/publication'
-import PublicationEvent from '#modules/precatorios/models/publication_event'
+import type Publication from '#modules/precatorios/models/publication'
+import type PublicationEvent from '#modules/precatorios/models/publication_event'
+import assetEventRepository from '#modules/precatorios/repositories/asset_event_repository'
+import publicationRepository from '#modules/precatorios/repositories/publication_repository'
+import publicationEventRepository from '#modules/precatorios/repositories/publication_event_repository'
 import assetSignalScoreService from '#modules/precatorios/services/asset_signal_score_service'
 import { classifyLegalSignalText } from '#modules/integrations/services/legal_signal_rules'
 import type { JsonRecord } from '#shared/types/model_enums'
@@ -69,18 +71,10 @@ class PublicationSignalClassifierService {
   }
 
   private selectPublications(options: PublicationSignalClassifierOptions) {
-    const query = Publication.query()
-      .where('tenant_id', options.tenantId)
-      .preload('process')
-      .orderBy('publication_date', 'desc')
-      .orderBy('created_at', 'desc')
-      .limit(normalizeLimit(options.limit))
-
-    if (options.publicationId) {
-      query.where('id', options.publicationId)
-    }
-
-    return query
+    return publicationRepository.listForSignalClassification(options.tenantId, {
+      limit: normalizeLimit(options.limit),
+      publicationId: options.publicationId,
+    })
   }
 
   private async upsertPublicationEvent(
@@ -89,20 +83,13 @@ class PublicationSignalClassifierService {
   ) {
     const idempotencyKey = buildPublicationEventIdempotencyKey(publication, match.code)
 
-    return PublicationEvent.updateOrCreate(
-      {
-        tenantId: publication.tenantId,
-        idempotencyKey,
-      },
-      {
-        tenantId: publication.tenantId,
-        publicationId: publication.id,
-        eventType: match.code,
-        eventDate: publication.publicationDate.startOf('day'),
-        payload: match.evidence,
-        idempotencyKey,
-      }
-    )
+    return publicationEventRepository.upsertEvent(publication.tenantId, {
+      publicationId: publication.id,
+      eventType: match.code,
+      eventDate: publication.publicationDate.startOf('day'),
+      payload: match.evidence,
+      idempotencyKey,
+    })
   }
 
   private async upsertAssetEvent(
@@ -113,30 +100,21 @@ class PublicationSignalClassifierService {
   ) {
     const idempotencyKey = `publication-signal:${event.idempotencyKey}`
 
-    return AssetEvent.updateOrCreate(
-      {
-        tenantId: publication.tenantId,
-        assetId,
-        eventType: match.code,
-        idempotencyKey,
+    return assetEventRepository.upsertEvent(publication.tenantId, {
+      assetId,
+      eventType: match.code,
+      eventDate: event.eventDate,
+      source: publication.source,
+      payload: {
+        publicationEventId: event.id,
+        publicationId: publication.id,
+        processId: publication.processId,
+        polarity: match.polarity,
+        confidence: match.confidence,
+        evidence: match.evidence,
       },
-      {
-        tenantId: publication.tenantId,
-        assetId,
-        eventType: match.code,
-        eventDate: event.eventDate,
-        source: publication.source,
-        payload: {
-          publicationEventId: event.id,
-          publicationId: publication.id,
-          processId: publication.processId,
-          polarity: match.polarity,
-          confidence: match.confidence,
-          evidence: match.evidence,
-        },
-        idempotencyKey,
-      }
-    )
+      idempotencyKey,
+    })
   }
 }
 

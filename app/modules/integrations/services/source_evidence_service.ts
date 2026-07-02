@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
-import AssetSourceLink from '#modules/precatorios/models/asset_source_link'
-import ExternalIdentifier from '#modules/precatorios/models/external_identifier'
-import SourceDataset from '#modules/integrations/models/source_dataset'
+import sourceDatasetRepository from '#modules/integrations/repositories/source_dataset_repository'
+import assetSourceLinkRepository from '#modules/precatorios/repositories/asset_source_link_repository'
+import externalIdentifierRepository from '#modules/precatorios/repositories/external_identifier_repository'
 import type {
   AssetSourceLinkType,
   ExternalIdentifierType,
@@ -43,48 +43,27 @@ class SourceEvidenceService {
       return null
     }
 
-    const query = trx ? SourceDataset.query({ client: trx }) : SourceDataset.query()
-    const dataset = await query.where('key', key).first()
-    return dataset?.id ?? null
+    return sourceDatasetRepository.findIdByKey(key, trx)
   }
 
   async linkAsset(input: LinkAssetInput) {
     const sourceDatasetId = await this.datasetIdByKey(input.sourceDatasetKey, input.trx)
-    const query = input.trx ? AssetSourceLink.query({ client: input.trx }) : AssetSourceLink.query()
-    const existing = await query
-      .where('tenant_id', input.tenantId)
-      .where('asset_id', input.assetId)
-      .where('source_record_id', input.sourceRecordId)
-      .first()
-    const payload = {
-      tenantId: input.tenantId,
-      assetId: input.assetId,
-      sourceRecordId: input.sourceRecordId,
-      sourceDatasetId,
-      linkType: input.linkType,
-      confidence: confidenceString(input.confidence ?? 1),
-      matchReason: input.matchReason ?? null,
-      matchedFields: input.matchedFields ?? null,
-      normalizedPayload: input.normalizedPayload ?? null,
-      rawPointer: input.rawPointer ?? null,
-      lastSeenAt: DateTime.now(),
-    }
-
-    if (existing) {
-      if (input.trx) {
-        existing.useTransaction(input.trx)
-      }
-      existing.merge(payload)
-      await existing.save()
-      return existing
-    }
-
-    return AssetSourceLink.create(
+    return assetSourceLinkRepository.upsertLink(
+      input.tenantId,
       {
-        ...payload,
+        assetId: input.assetId,
+        sourceRecordId: input.sourceRecordId,
+        sourceDatasetId,
+        linkType: input.linkType,
+        confidence: confidenceString(input.confidence ?? 1),
+        matchReason: input.matchReason ?? null,
+        matchedFields: input.matchedFields ?? null,
+        normalizedPayload: input.normalizedPayload ?? null,
+        rawPointer: input.rawPointer ?? null,
         firstSeenAt: DateTime.now(),
+        lastSeenAt: DateTime.now(),
       },
-      clientOptions(input.trx)
+      input.trx
     )
   }
 
@@ -95,44 +74,23 @@ class SourceEvidenceService {
     }
 
     const sourceDatasetId = await this.datasetIdByKey(input.sourceDatasetKey, input.trx)
-    const query = input.trx
-      ? ExternalIdentifier.query({ client: input.trx })
-      : ExternalIdentifier.query()
-    const existing = await query
-      .where('tenant_id', input.tenantId)
-      .where('asset_id', input.assetId)
-      .where('identifier_type', input.identifierType)
-      .where('normalized_value', normalizedValue)
-      .first()
-    const payload = {
-      tenantId: input.tenantId,
-      assetId: input.assetId,
-      sourceRecordId: input.sourceRecordId ?? null,
-      sourceDatasetId,
-      identifierType: input.identifierType,
-      identifierValue: String(input.identifierValue ?? '').trim(),
-      normalizedValue,
-      issuer: input.issuer ?? null,
-      confidence: confidenceString(input.confidence ?? 1),
-      isPrimary: input.isPrimary ?? false,
-      rawData: input.rawData ?? null,
-    }
-
-    if (existing) {
-      if (input.trx) {
-        existing.useTransaction(input.trx)
-      }
-      existing.merge(payload)
-      await existing.save()
-      return existing
-    }
-
-    return ExternalIdentifier.create(payload, clientOptions(input.trx))
+    return externalIdentifierRepository.upsertIdentifier(
+      input.tenantId,
+      {
+        assetId: input.assetId,
+        sourceRecordId: input.sourceRecordId ?? null,
+        sourceDatasetId,
+        identifierType: input.identifierType,
+        identifierValue: String(input.identifierValue ?? '').trim(),
+        normalizedValue,
+        issuer: input.issuer ?? null,
+        confidence: confidenceString(input.confidence ?? 1),
+        isPrimary: input.isPrimary ?? false,
+        rawData: input.rawData ?? null,
+      },
+      input.trx
+    )
   }
-}
-
-function clientOptions(trx?: TransactionClientContract) {
-  return trx ? { client: trx } : undefined
 }
 
 function confidenceString(value: number) {

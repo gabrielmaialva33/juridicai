@@ -1,5 +1,5 @@
-import db from '@adonisjs/lucid/services/db'
-import TribunalBudgetExecution from '#modules/integrations/models/tribunal_budget_execution'
+import type TribunalBudgetExecution from '#modules/integrations/models/tribunal_budget_execution'
+import tribunalBudgetExecutionRepository from '#modules/integrations/repositories/tribunal_budget_execution_repository'
 
 export type TribunalBudgetExecutionFilters = {
   page: number
@@ -24,17 +24,8 @@ export type TribunalBudgetExecutionSortBy =
 
 class TribunalBudgetExecutionService {
   async list(tenantId: string, filters: TribunalBudgetExecutionFilters) {
-    const query = TribunalBudgetExecution.query()
-      .where('tenant_id', tenantId)
-      .preload('sourceRecord')
-      .preload('court')
-      .preload('budgetUnit')
-
-    applyFilters(query, filters)
-    applySorting(query, filters)
-
     const [executions, summary] = await Promise.all([
-      query.paginate(filters.page, filters.limit),
+      tribunalBudgetExecutionRepository.list(tenantId, filters),
       this.summary(tenantId, filters),
     ])
 
@@ -45,16 +36,7 @@ class TribunalBudgetExecutionService {
   }
 
   async summary(tenantId: string, filters: TribunalBudgetExecutionFilters) {
-    const query = db.from('tribunal_budget_executions').where('tenant_id', tenantId)
-
-    applyRawFilters(query, filters)
-
-    const [row] = await query
-      .count('* as rows_count')
-      .sum('net_allocation as net_allocation_total')
-      .sum('committed_amount as committed_amount_total')
-      .sum('liquidated_amount as liquidated_amount_total')
-      .sum('paid_amount as paid_amount_total')
+    const row = await tribunalBudgetExecutionRepository.summary(tenantId, filters)
 
     return {
       rowsCount: Number(row.rows_count ?? 0),
@@ -121,93 +103,6 @@ export function serializeTribunalBudgetExecution(execution: TribunalBudgetExecut
     createdAt: execution.createdAt.toISO(),
     updatedAt: execution.updatedAt.toISO(),
   }
-}
-
-function applyFilters(
-  query: ReturnType<typeof TribunalBudgetExecution.query>,
-  filters: TribunalBudgetExecutionFilters
-) {
-  if (filters.courtAlias) {
-    query.where('court_alias', filters.courtAlias)
-  }
-
-  if (filters.sourceKind) {
-    query.where('source_kind', filters.sourceKind)
-  }
-
-  if (filters.referenceYear !== null) {
-    query.where('reference_year', filters.referenceYear)
-  }
-
-  if (filters.referenceMonth !== null) {
-    query.where('reference_month', filters.referenceMonth)
-  }
-
-  if (filters.budgetUnitCode) {
-    query.where('budget_unit_code', filters.budgetUnitCode)
-  }
-
-  if (filters.q) {
-    const like = `%${filters.q}%`
-    query.where((builder) => {
-      builder
-        .whereILike('budget_unit_name', like)
-        .orWhereILike('program_name', like)
-        .orWhereILike('action_name', like)
-        .orWhereILike('funding_source_name', like)
-    })
-  }
-}
-
-function applyRawFilters(
-  query: ReturnType<typeof db.from>,
-  filters: TribunalBudgetExecutionFilters
-) {
-  if (filters.courtAlias) {
-    query.where('court_alias', filters.courtAlias)
-  }
-
-  if (filters.sourceKind) {
-    query.where('source_kind', filters.sourceKind)
-  }
-
-  if (filters.referenceYear !== null) {
-    query.where('reference_year', filters.referenceYear)
-  }
-
-  if (filters.referenceMonth !== null) {
-    query.where('reference_month', filters.referenceMonth)
-  }
-
-  if (filters.budgetUnitCode) {
-    query.where('budget_unit_code', filters.budgetUnitCode)
-  }
-
-  if (filters.q) {
-    const like = `%${filters.q}%`
-    query.where((builder) => {
-      builder
-        .whereILike('budget_unit_name', like)
-        .orWhereILike('program_name', like)
-        .orWhereILike('action_name', like)
-        .orWhereILike('funding_source_name', like)
-    })
-  }
-}
-
-function applySorting(
-  query: ReturnType<typeof TribunalBudgetExecution.query>,
-  filters: TribunalBudgetExecutionFilters
-) {
-  if (filters.sortBy === 'reference_period') {
-    query
-      .orderBy('reference_year', filters.sortDirection)
-      .orderBy('reference_month', filters.sortDirection)
-      .orderBy('budget_unit_code', 'asc')
-    return
-  }
-
-  query.orderBy(filters.sortBy, filters.sortDirection).orderBy('id', 'asc')
 }
 
 function decimalString(value: unknown) {

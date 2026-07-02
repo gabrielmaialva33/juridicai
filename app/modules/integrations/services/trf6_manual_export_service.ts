@@ -5,7 +5,7 @@ import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
 import { TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL } from '#modules/integrations/services/trf6_precatorio_adapter'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 
 type PersistTrf6ManualExportPayload = {
   tenantId: string
@@ -39,28 +39,7 @@ class Trf6ManualExportService {
     await mkdir(directory, { recursive: true })
     await writeFile(storedPath, payload.buffer)
 
-    const existing = await SourceRecord.query()
-      .where('tenant_id', payload.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
-        sourceFilePath: storedPath,
-        originalFilename: filename,
-        mimeType: payload.mimeType ?? 'text/csv',
-        fileSizeBytes: payload.fileSizeBytes ?? payload.buffer.byteLength,
-        rawData,
-      })
-      await existing.save()
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId: payload.tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(payload.tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: TRF6_EPROC_FEDERAL_PRECATORIO_EXPORT_URL,
@@ -73,7 +52,7 @@ class Trf6ManualExportService {
       rawData,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 

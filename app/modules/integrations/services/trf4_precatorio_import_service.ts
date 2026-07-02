@@ -8,7 +8,8 @@ import Debtor from '#modules/debtors/models/debtor'
 import JudicialProcess from '#modules/precatorios/models/judicial_process'
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import {
   parseTrf2ChronologicalCsv,
@@ -61,7 +62,7 @@ type ImportContext = {
 
 class Trf4PrecatorioImportService {
   async importSourceRecord(sourceRecordId: string, options: Trf4PrecatorioImportOptions = {}) {
-    const sourceRecord = await SourceRecord.findOrFail(sourceRecordId)
+    const sourceRecord = await sourceRecordRepository.findAnyByIdOrFail(sourceRecordId)
     if (!sourceRecord.sourceFilePath) {
       throw new Error('TRF4 source record file is missing.')
     }

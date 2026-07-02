@@ -9,7 +9,8 @@ import JudicialProcessSubject from '#modules/precatorios/models/judicial_process
 import PrecatorioAsset from '#modules/precatorios/models/precatorio_asset'
 import referenceCatalogService from '#modules/reference/services/reference_catalog_service'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import { normalizeCnj } from '#modules/siop/parsers/cnj_parser'
 import type { JsonRecord } from '#shared/types/model_enums'
 
@@ -228,25 +229,7 @@ class DataJudPublicApiAdapter {
       timedOut: input.response.timed_out,
     }
     const sourceDatasetId = await sourceEvidenceService.datasetIdByKey('datajud-public-api')
-    const existing = await SourceRecord.query()
-      .where('tenant_id', input.tenantId)
-      .where('source', 'datajud')
-      .where('source_checksum', checksum)
-      .first()
-
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: endpoint,
-        collectedAt: DateTime.now(),
-        rawData: metadata,
-      })
-      await existing.save()
-      return existing
-    }
-
-    return SourceRecord.create({
-      tenantId: input.tenantId,
+    return sourceRecordRepository.upsertByChecksum(input.tenantId, {
       sourceDatasetId,
       source: 'datajud',
       sourceUrl: endpoint,

@@ -1,10 +1,7 @@
 export type FederativeLevel = 'federal' | 'state' | 'municipal' | 'multi_level'
 
 export type GovernmentSourceKind =
-  | 'open_data_file'
-  | 'soap_webservice'
-  | 'public_search_api'
-  | 'tribunal_publication'
+  'open_data_file' | 'soap_webservice' | 'public_search_api' | 'tribunal_publication'
 
 export type GovernmentSourceAccess = 'public' | 'credentialed' | 'certificate'
 

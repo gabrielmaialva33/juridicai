@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { DateTime } from 'luxon'
 import app from '@adonisjs/core/services/app'
-import SourceRecord from '#modules/siop/models/source_record'
+import type SourceRecord from '#modules/siop/models/source_record'
+import sourceRecordRepository from '#modules/siop/repositories/source_record_repository'
 import sourceEvidenceService from '#modules/integrations/services/source_evidence_service'
 import type { JsonRecord } from '#shared/types/model_enums'
 
@@ -180,32 +181,10 @@ class TjbaPrecatorioApiAdapter {
       contentChecksum,
       debtorNamesByCode: input.debtorNamesByCode,
     } satisfies JsonRecord
-    const existing = await SourceRecord.query()
-      .where('tenant_id', input.tenantId)
-      .where('source', 'tribunal')
-      .where('source_checksum', checksum)
-      .first()
-
     await mkdir(directory, { recursive: true })
     await writeFile(filePath, body)
 
-    if (existing) {
-      existing.merge({
-        sourceDatasetId,
-        sourceUrl: input.url,
-        sourceFilePath: filePath,
-        originalFilename: filename,
-        mimeType: 'application/json',
-        fileSizeBytes: body.byteLength,
-        rawData,
-      })
-      await existing.save()
-
-      return { sourceRecord: existing, created: false }
-    }
-
-    const sourceRecord = await SourceRecord.create({
-      tenantId: input.tenantId,
+    const sourceRecord = await sourceRecordRepository.upsertByChecksum(input.tenantId, {
       sourceDatasetId,
       source: 'tribunal',
       sourceUrl: input.url,
@@ -218,7 +197,7 @@ class TjbaPrecatorioApiAdapter {
       rawData,
     })
 
-    return { sourceRecord, created: true }
+    return { sourceRecord, created: sourceRecord.$extras.created === true }
   }
 }
 
